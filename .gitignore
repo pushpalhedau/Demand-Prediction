@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Data and Models (demand forecasting typically generates these)
+*.csv
+*.xlsx
+*.parquet
+*.pkl
+*.joblib
+
+# Distribution / packaging
+node_modules/
+build/
+dist/
+*.egg-info/
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs and temporary files
+*.log
+.ipynb_checkpoints/

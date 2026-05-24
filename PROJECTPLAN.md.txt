@@ -1,0 +1,753 @@
+# 1. PROJECT OVERVIEW
+
+## Project Name
+
+AI-Powered Automobile Demand Intelligence Platform
+
+# 2. PROJECT GOAL
+
+Build an enterprise-grade AI analytics platform that:
+
+- Forecasts future automobile demand
+- Tracks historical and present sales
+- Compares trends dynamically
+- Provides regional intelligence
+- Performs customer segmentation
+- Generates AI-powered insights
+- Provides inventory intelligence
+- Supports fully customizable dashboards
+- Supports dynamic dataset upload
+- Allows interactive business analytics
+
+# 3. CORE BUSINESS OBJECTIVES
+
+The platform should answer:
+
+- How are sales performing this year?
+- How did they compare with last year?
+- Which regions are growing fastest?
+- Which vehicle categories will grow next quarter?
+- Which dealerships are underperforming?
+- What inventory should be stocked?
+- Which customer segments are most valuable?
+- What external factors influence demand?
+- What are future forecasts for 30/60/90 days?
+
+# 4. RECOMMENDED TECH STACK
+
+## Frontend
+
+| Technology | Purpose |
+| --- | --- |
+| [Streamlit](https://streamlit.io/?utm_source=chatgpt.com) | Main dashboard UI |
+| [Plotly](https://plotly.com/python/?utm_source=chatgpt.com) | Interactive charts |
+| [Altair](https://altair-viz.github.io/?utm_source=chatgpt.com) | Advanced analytics visualizations |
+| [streamlit-option-menu](https://github.com/victoryhb/streamlit-option-menu?utm_source=chatgpt.com) | Sidebar navigation |
+| [streamlit-aggrid](https://github.com/PablocFonseca/streamlit-aggrid?utm_source=chatgpt.com) | Dynamic tables |
+| [streamlit-extras](https://github.com/arnaudmiribel/streamlit-extras?utm_source=chatgpt.com) | Enhanced UI |
+
+---
+
+## Backend / ML
+
+| Technology | Purpose |
+| --- | --- |
+| [Python](https://www.python.org/?utm_source=chatgpt.com) | Core language |
+| [Pandas](https://pandas.pydata.org/?utm_source=chatgpt.com) | Data manipulation |
+| [NumPy](https://numpy.org/?utm_source=chatgpt.com) | Numerical computing |
+| [Scikit-learn](https://scikit-learn.org/?utm_source=chatgpt.com) | ML preprocessing |
+| [Prophet](https://facebook.github.io/prophet/?utm_source=chatgpt.com) | Time-series forecasting |
+| [XGBoost](https://xgboost.readthedocs.io/?utm_source=chatgpt.com) | Predictive modeling |
+| [LightGBM](https://lightgbm.readthedocs.io/?utm_source=chatgpt.com) | Faster boosting |
+| [CatBoost](https://catboost.ai/?utm_source=chatgpt.com) | Categorical prediction |
+| [KMeans Clustering](https://scikit-learn.org/stable/modules/clustering.html?utm_source=chatgpt.com) | Customer segmentation |
+| [SHAP](https://shap.readthedocs.io/?utm_source=chatgpt.com) | Explainable AI |
+
+---
+
+## Database
+
+| Technology | Purpose |
+| --- | --- |
+| [PostgreSQL](https://www.postgresql.org/?utm_source=chatgpt.com) | Primary database |
+| [SQLAlchemy](https://www.sqlalchemy.org/?utm_source=chatgpt.com) | ORM |
+| [Alembic](https://alembic.sqlalchemy.org/?utm_source=chatgpt.com) | DB migrations |
+
+# 5. COMPLETE FOLDER STRUCTURE
+
+```
+automobile-demand-intelligence/
+│
+├── app.py
+├── requirements.txt
+├── README.md
+├── .env
+│
+├── datasets/
+│   ├── raw/
+│   ├── processed/
+│   ├── uploads/
+│   └── external/
+│
+├── models/
+│   ├── prophet/
+│   ├── xgboost/
+│   ├── clustering/
+│   ├── scalers/
+│   └── encoders/
+│
+├── notebooks/
+│   ├── eda/
+│   ├── experimentation/
+│   └── model_training/
+│
+├── preprocessing/
+│   ├── clean_data.py
+│   ├── feature_engineering.py
+│   ├── encoding.py
+│   └── merge_datasets.py
+│
+├── forecasting/
+│   ├── prophet_forecasting.py
+│   ├── demand_forecasting.py
+│   └── forecast_evaluation.py
+│
+├── ml_models/
+│   ├── xgboost_model.py
+│   ├── customer_segmentation.py
+│   ├── inventory_prediction.py
+│   └── recommendation_engine.py
+│
+├── dashboard/
+│   ├── overview.py
+│   ├── forecasting.py
+│   ├── comparison.py
+│   ├── regional.py
+│   ├── customers.py
+│   ├── inventory.py
+│   ├── ai_insights.py
+│   ├── settings.py
+│   └── upload_data.py
+│
+├── utils/
+│   ├── charts.py
+│   ├── metrics.py
+│   ├── cache.py
+│   └── helpers.py
+│
+├── database/
+│   ├── connection.py
+│   ├── models.py
+│   └── queries.py
+│
+└── assets/
+    ├── logos/
+    └── styles/
+```
+
+# 6. DATASETS REQUIRED
+
+The platform should support:
+
+| Dataset | Purpose |
+| --- | --- |
+| Sales Dataset | Forecasting |
+| Customer Dataset | Segmentation |
+| Inventory Dataset | Stock intelligence |
+| Dealer Dataset | Regional analysis |
+| Vehicle Dataset | Product analytics |
+| External Factors Dataset | Economic intelligence |
+
+# 7. CORE MACHINE LEARNING MODULES
+
+# A. Prophet Forecasting Module
+
+## Purpose
+
+Forecast:
+
+- Sales
+- Revenue
+- Demand
+- Vehicle category growth
+
+---
+
+## Forecast Horizons
+
+- 30 days
+- 60 days
+- 90 days
+- 6 months
+- 1 year
+
+---
+
+## Features Used
+
+- Historical sales
+- Region
+- Seasonality
+- Festival effects
+- Fuel prices
+- Economic indicators
+
+---
+
+## Outputs
+
+- Forecast graph
+- Confidence intervals
+- Trend analysis
+- Growth percentage
+
+---
+
+# B. XGBoost Intelligence Module
+
+## Purpose
+
+Predict:
+
+- Customer demand category
+- High-value customers
+- Sales probability
+- Dealer performance
+- Inventory risk
+
+---
+
+## Features Used
+
+- Customer demographics
+- Vehicle category
+- Region
+- Purchase history
+- Pricing
+- Marketing spend
+
+---
+
+## Outputs
+
+- Prediction score
+- Feature importance
+- Risk levels
+- Recommendations
+
+---
+
+# C. Customer Segmentation Module
+
+Use:
+
+- KMeans
+- DBSCAN
+
+---
+
+## Segments
+
+- Budget Buyers
+- Premium Buyers
+- EV Enthusiasts
+- Fleet Buyers
+- High Repeat Customers
+
+---
+
+## Visualizations
+
+- Cluster scatter plot
+- Segment distribution
+- Segment growth trends
+
+---
+
+# D. Inventory Intelligence Module
+
+Predict:
+
+- Stockout risk
+- Overstock risk
+- Reorder recommendations
+
+# 8. STREAMLIT DASHBOARD STRUCTURE
+
+# MAIN SIDEBAR
+
+```
+Dashboard Sections:
+- Executive Overview
+- Forecasting
+- Comparative Analytics
+- Regional Intelligence
+- Customer Intelligence
+- Inventory Intelligence
+- AI Insights
+- Data Upload
+- Model Metrics
+- Settings
+```
+
+# 9. EXECUTIVE OVERVIEW TAB
+
+## KPI Cards
+
+Display:
+
+- Total Sales
+- Total Revenue
+- Forecasted Revenue
+- YoY Growth
+- MoM Growth
+- Top Vehicle
+- Worst Region
+- Inventory Risk
+- Customer Growth
+- Demand Index
+
+---
+
+## Charts
+
+### Revenue Trend
+
+- Line chart
+
+### Sales Distribution
+
+- Pie chart
+
+### Vehicle Category Performance
+
+- Bar chart
+
+### Region-wise Sales
+
+- Geo heatmap
+
+### Monthly Sales Growth
+
+- Area chart
+
+---
+
+# 10. FORECASTING TAB
+
+# Prophet Forecast Dashboard
+
+## Inputs
+
+- Forecast horizon
+- Vehicle category
+- Region
+- Fuel type
+- Dealer
+- Date range
+
+---
+
+## Charts
+
+### Historical vs Forecast
+
+- Interactive line chart
+
+### Confidence Interval Graph
+
+- Forecast uncertainty
+
+### Seasonal Trend Decomposition
+
+- Trend
+- Weekly seasonality
+- Monthly seasonality
+
+### Forecast Heatmap
+
+- Region vs forecast intensity
+
+---
+
+## Metrics
+
+- RMSE
+- MAE
+- Forecast Accuracy
+
+---
+
+# 11. COMPARATIVE ANALYTICS TAB
+
+## Compare:
+
+- Current year vs previous year
+- Quarter comparisons
+- Month comparisons
+- Vehicle comparisons
+- Region comparisons
+
+---
+
+## Charts
+
+### YoY Comparison
+
+- Dual line chart
+
+### Vehicle Market Share
+
+- Donut chart
+
+### Growth Comparison
+
+- Grouped bar chart
+
+### Region Growth Matrix
+
+- Heatmap
+
+---
+
+# 12. REGIONAL INTELLIGENCE TAB
+
+## Features
+
+- Interactive India/UAE map
+- Drill-down analytics
+
+---
+
+## Charts
+
+### Geo Heatmap
+
+- Sales intensity
+
+### Dealer Ranking
+
+- Sortable leaderboard
+
+### Region Forecast
+
+- Regional forecast trends
+
+### Demand Hotspots
+
+- Bubble map
+
+---
+
+# 13. CUSTOMER INTELLIGENCE TAB
+
+## Features
+
+- Segmentation
+- Customer analytics
+- Buying behavior
+
+---
+
+## Charts
+
+### Customer Clusters
+
+- Scatter plot
+
+### Age vs Spending
+
+- Bubble chart
+
+### Customer Segment Distribution
+
+- Pie chart
+
+### Repeat Purchase Analysis
+
+- Bar chart
+
+---
+
+# 14. INVENTORY INTELLIGENCE TAB
+
+## Features
+
+- Stock monitoring
+- Demand vs stock
+- Reorder intelligence
+
+---
+
+## Charts
+
+### Inventory vs Demand
+
+- Dual axis chart
+
+### Stockout Risk
+
+- Gauge chart
+
+### Slow-moving Vehicles
+
+- Bar chart
+
+### Warehouse Distribution
+
+- Treemap
+
+---
+
+# 15. AI INSIGHTS TAB
+
+This is the most important differentiator.
+
+Generate AI-driven business insights dynamically.
+
+---
+
+## Example Insights
+
+```
+SUV demand in Pune expected to rise by 18%.
+
+EV adoption increasing fastest in Bengaluru.
+
+Sedan sales declining for 3 consecutive quarters.
+
+Dealer XYZ underperforming compared to regional average.
+```
+
+---
+
+## Add:
+
+- anomaly detection
+- smart recommendations
+- trend explanations
+
+---
+
+# 16. DATA UPLOAD TAB
+
+## Features
+
+- Upload CSV/XLSX
+- Automatic column detection
+- Schema mapping
+- Data validation
+- Auto preprocessing
+
+---
+
+## Dynamic Dataset Engine
+
+The platform should:
+
+- detect columns automatically
+- infer date fields
+- encode categories
+- retrain models dynamically
+
+# 17. GLOBAL FILTER SYSTEM
+
+Filters must affect ALL charts dynamically.
+
+---
+
+## Global Filters
+
+- Date range
+- Region
+- City
+- Dealer
+- Vehicle category
+- Fuel type
+- Customer type
+- Price range
+- Forecast horizon
+
+# 18. ADVANCED FEATURES
+
+# A. Drill-Down Analytics
+
+```
+Country
+→ State
+→ City
+→ Dealer
+→ Vehicle
+```
+
+---
+
+# B. Scenario Simulation
+
+Example:
+
+- Increase marketing by 20%
+- Increase fuel price
+- Launch EV subsidy
+
+Then:
+
+- recompute forecast
+
+---
+
+# C. Explainable AI
+
+Use SHAP.
+
+Show:
+
+- why prediction happened
+- feature importance
+
+---
+
+# D. Smart Alerts
+
+Examples:
+
+- Inventory shortage
+- Sales drop
+- Demand spike
+- Dealer underperformance
+
+---
+
+# 19. DATABASE DESIGN
+
+## Tables
+
+```
+customers
+vehicles
+sales
+inventory
+dealers
+external_factors
+forecasts
+predictions
+```
+
+---
+
+# 20. MODEL TRAINING PIPELINE
+
+# Prophet Pipeline
+
+Steps:
+
+1. Load sales data
+2. Aggregate by date
+3. Handle missing dates
+4. Add holidays
+5. Train Prophet
+6. Save model
+7. Generate forecast
+
+---
+
+# XGBoost Pipeline
+
+Steps:
+
+1. Feature engineering
+2. Encode categories
+3. Train/test split
+4. Hyperparameter tuning
+5. Save model
+6. Generate predictions
+
+---
+
+# Segmentation Pipeline
+
+Steps:
+
+1. Standardize data
+2. Determine optimal K
+3. Train KMeans
+4. Label segments
+5. Save clustering model
+
+---
+
+# 21. CUSTOMIZATION REQUIREMENTS
+
+Users should customize:
+
+- themes
+- chart types
+- filters
+- metrics shown
+- dashboard layouts
+- export options
+
+---
+
+# 22. EXPORT FEATURES
+
+Allow export to:
+
+- CSV
+- Excel
+- PDF reports
+- PNG charts
+
+---
+
+# 23. PERFORMANCE OPTIMIZATION
+
+Use:
+
+- Streamlit caching
+- lazy loading
+- optimized SQL queries
+- parquet files
+- background preprocessing
+
+# 24. DEVELOPMENT PRIORITY ORDER
+
+## Phase 1
+
+- Data preprocessing
+- Dashboard skeleton
+- Prophet forecasting
+
+---
+
+## Phase 2
+
+- XGBoost predictions
+- Segmentation
+- Inventory intelligence
+
+---
+
+## Phase 3
+
+- AI insights
+- Scenario simulation
+- Explainable AI
+
+---
+
+# 25. REQUIRED DELIVERABLES
+
+The AI coding assistant must generate:
+
+- Complete Streamlit app
+- Modular architecture
+- ML training scripts
+- Database integration
+- Dynamic dashboards
+- Interactive filters
+- Forecasting models
+- Export features
+- Docker deployment
+- README
+- requirements.txt
