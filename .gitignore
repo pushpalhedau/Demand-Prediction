@@ -12,11 +12,11 @@ env/
 .streamlit/secrets.toml
 
 # Data and Models (demand forecasting typically generates these)
-*.csv
-*.xlsx
-*.parquet
-*.pkl
-*.joblib
+# *.csv
+# *.xlsx
+# *.parquet
+# *.pkl
+# *.joblib
 
 # Distribution / packaging
 node_modules/

@@ -1,0 +1,401 @@
+dealer_id,dealer_name,brand,emirate,area,address,po_box,tier,established_year,monthly_capacity,showroom_area_sqft,service_center,ev_charging_station,num_salespeople,annual_target_units,performance_score,google_rating,vat_registered,trn_number,latitude,longitude
+DLR0001,BYD Jumeirah Showroom,BYD,Dubai,Jumeirah,"137, Jumeirah, Dubai, UAE",PO Box 12348,Gold,2000,143,15552,False,False,76,1644,95.67,4.1,True,100552731736,24.9111,54.442
+DLR0002,Audi Muwaileh Showroom,Audi,Sharjah,Muwaileh,"156, Muwaileh, Sharjah, UAE",PO Box 61487,Bronze,1998,46,8865,False,True,18,660,83.7,4.4,True,100194276916,24.1009,53.5131
+DLR0003,Porsche Downtown Dubai Showroom,Porsche,Dubai,Downtown Dubai,"83, Downtown Dubai, Dubai, UAE",PO Box 61566,Gold,2019,151,9490,False,True,14,1752,51.97,4.9,True,100867880497,23.1146,55.4592
+DLR0004,Hyundai Bur Dubai Showroom,Hyundai,Dubai,Bur Dubai,"113, Bur Dubai, Dubai, UAE",PO Box 4054,Silver,1987,70,18523,False,True,18,1128,67.97,3.4,True,100432652652,24.5757,53.4053
+DLR0005,GMC Musaffah Showroom,GMC,Abu Dhabi,Musaffah,"656, Musaffah, Abu Dhabi, UAE",PO Box 28713,Bronze,1988,39,11440,False,True,24,432,95.83,4.1,True,100159933789,23.019,55.8196
+DLR0006,BYD Bur Dubai Showroom,BYD,Dubai,Bur Dubai,"99, Bur Dubai, Dubai, UAE",PO Box 16560,Bronze,1992,29,12698,True,True,60,348,94.9,4.8,True,100442637958,25.0658,55.4898
+DLR0007,BMW Ajman City Showroom,BMW,Ajman,Ajman City,"514, Ajman City, Ajman, UAE",PO Box 38711,Gold,1989,135,22191,True,True,35,1764,66.55,4.7,True,100528863358,23.835,55.5684
+DLR0008,Nissan Bur Dubai Showroom,Nissan,Dubai,Bur Dubai,"790, Bur Dubai, Dubai, UAE",PO Box 59192,Bronze,2010,32,13204,False,True,47,336,92.21,4.5,True,100334724214,25.0448,55.0577
+DLR0009,Ram Industrial Area Showroom,Ram,Sharjah,Industrial Area,"904, Industrial Area, Sharjah, UAE",PO Box 58385,Silver,1990,78,11395,True,False,45,1128,81.98,3.8,True,100612280495,24.3064,56.1492
+DLR0010,Porsche Dubai Marina Showroom,Porsche,Dubai,Dubai Marina,"290, Dubai Marina, Dubai, UAE",PO Box 50670,Bronze,1995,46,22800,False,False,64,372,65.51,4.8,True,100470851735,22.6138,53.2764
+DLR0011,Ford Jumeirah Showroom,Ford,Dubai,Jumeirah,"673, Jumeirah, Dubai, UAE",PO Box 55619,Bronze,2001,48,10577,True,True,59,300,51.07,4.2,True,100101387774,24.2707,56.2495
+DLR0012,Hyundai UAQ City Showroom,Hyundai,Umm Al Quwain,UAQ City,"956, UAQ City, Umm Al Quwain, UAE",PO Box 27908,Bronze,2013,33,16658,True,False,75,540,78.47,4.3,True,100921457170,24.539,52.9375
+DLR0013,Ram Sharjah City Showroom,Ram,Sharjah,Sharjah City,"985, Sharjah City, Sharjah, UAE",PO Box 8643,Platinum,1987,248,12821,True,False,45,2892,85.86,5.0,True,100952142273,23.8629,55.4462
+DLR0014,Lexus Al Quoz Showroom,Lexus,Dubai,Al Quoz,"889, Al Quoz, Dubai, UAE",PO Box 92047,Bronze,2013,47,15747,True,False,30,432,58.51,3.7,True,100714892922,25.3019,54.9988
+DLR0015,Tesla Musaffah Showroom,Tesla,Abu Dhabi,Musaffah,"681, Musaffah, Abu Dhabi, UAE",PO Box 23214,Bronze,2015,27,20421,True,True,74,300,51.2,4.6,True,100177464240,23.6744,55.1686
+DLR0016,Toyota Dubai Marina Showroom,Toyota,Dubai,Dubai Marina,"268, Dubai Marina, Dubai, UAE",PO Box 22755,Silver,2011,69,22272,True,True,12,792,63.49,3.6,True,100911232313,23.5349,55.6892
+DLR0017,Chevrolet Musaffah Showroom,Chevrolet,Abu Dhabi,Musaffah,"497, Musaffah, Abu Dhabi, UAE",PO Box 23523,Bronze,1992,33,12027,False,True,17,504,94.62,4.6,True,100286444583,24.8458,54.763
+DLR0018,Honda Ajman City Showroom,Honda,Ajman,Ajman City,"154, Ajman City, Ajman, UAE",PO Box 72476,Bronze,1993,27,4084,False,False,56,360,64.11,4.6,True,100348631906,24.5679,55.3028
+DLR0019,Nissan Al Quoz Showroom,Nissan,Dubai,Al Quoz,"193, Al Quoz, Dubai, UAE",PO Box 41300,Bronze,2012,30,6641,True,True,74,576,95.21,3.6,True,100832422838,25.1385,55.4138
+DLR0020,BYD Al Salama Showroom,BYD,Umm Al Quwain,Al Salama,"898, Al Salama, Umm Al Quwain, UAE",PO Box 22159,Bronze,1990,53,8454,True,True,40,420,76.82,4.3,True,100121883119,23.562,52.2941
+DLR0021,Genesis Dibba Showroom,Genesis,Fujairah,Dibba,"505, Dibba, Fujairah, UAE",PO Box 57032,Gold,1992,160,5369,True,True,28,1848,81.91,4.7,True,100812954726,23.6463,55.6452
+DLR0022,BYD Khalifa City Showroom,BYD,Abu Dhabi,Khalifa City,"711, Khalifa City, Abu Dhabi, UAE",PO Box 89392,Gold,1994,135,12462,False,True,61,1812,83.64,4.6,True,100286997089,24.2772,56.4582
+DLR0023,Jeep Yas Island Showroom,Jeep,Abu Dhabi,Yas Island,"446, Yas Island, Abu Dhabi, UAE",PO Box 1566,Gold,1991,153,3940,True,True,31,1860,61.23,5.0,True,100373373468,23.1864,55.321
+DLR0024,Nissan Yas Island Showroom,Nissan,Abu Dhabi,Yas Island,"76, Yas Island, Abu Dhabi, UAE",PO Box 22710,Silver,2013,83,10645,True,True,24,960,94.51,3.4,True,100638977948,23.1116,55.1682
+DLR0025,Porsche Deira Showroom,Porsche,Dubai,Deira,"138, Deira, Dubai, UAE",PO Box 63313,Silver,1996,88,11140,True,False,40,840,80.18,4.4,True,100641704082,25.5347,55.7528
+DLR0026,Hyundai Al Ain Showroom,Hyundai,Abu Dhabi,Al Ain,"405, Al Ain, Abu Dhabi, UAE",PO Box 69730,Gold,2011,152,5375,True,True,49,1908,75.49,4.1,True,100204193823,25.1391,51.648
+DLR0027,Mercedes-Benz Abu Dhabi City Showroom,Mercedes-Benz,Abu Dhabi,Abu Dhabi City,"679, Abu Dhabi City, Abu Dhabi, UAE",PO Box 39384,Gold,1988,140,11789,False,True,9,1836,73.64,3.6,True,100491421746,22.965,53.2228
+DLR0028,Hyundai Khalifa City Showroom,Hyundai,Abu Dhabi,Khalifa City,"58, Khalifa City, Abu Dhabi, UAE",PO Box 4567,Gold,2013,146,10589,True,False,18,1932,91.5,3.2,True,100441423824,25.4475,52.7248
+DLR0029,Toyota Abu Dhabi City Showroom,Toyota,Abu Dhabi,Abu Dhabi City,"228, Abu Dhabi City, Abu Dhabi, UAE",PO Box 46031,Platinum,1998,254,11385,True,False,8,2976,51.15,4.0,True,100842895366,25.3009,55.1348
+DLR0030,Genesis Business Bay Showroom,Genesis,Dubai,Business Bay,"335, Business Bay, Dubai, UAE",PO Box 94333,Bronze,2001,36,6823,True,False,39,324,95.24,3.6,True,100450107184,24.5869,52.8549
+DLR0031,GMC Jumeirah Showroom,GMC,Dubai,Jumeirah,"535, Jumeirah, Dubai, UAE",PO Box 3209,Silver,2013,84,11582,True,True,23,1056,45.96,4.1,True,100966551747,24.8526,53.6291
+DLR0032,Hyundai Al Nakheel Showroom,Hyundai,Ras Al Khaimah,Al Nakheel,"945, Al Nakheel, Ras Al Khaimah, UAE",PO Box 14872,Bronze,2019,54,12389,True,True,16,516,94.97,4.0,True,100626223349,23.6832,54.4768
+DLR0033,Tesla Sharjah City Showroom,Tesla,Sharjah,Sharjah City,"884, Sharjah City, Sharjah, UAE",PO Box 54742,Gold,1993,141,16872,False,False,10,1620,51.55,3.8,True,100318697252,24.7369,56.4665
+DLR0034,Ram Musaffah Showroom,Ram,Abu Dhabi,Musaffah,"839, Musaffah, Abu Dhabi, UAE",PO Box 91533,Gold,1993,144,8807,False,True,21,1728,90.46,4.6,True,100514628558,24.6218,51.8884
+DLR0035,Jeep Dibba Showroom,Jeep,Fujairah,Dibba,"772, Dibba, Fujairah, UAE",PO Box 36930,Bronze,1995,48,7051,True,False,16,396,70.57,3.4,True,100412198468,24.5127,52.5875
+DLR0036,Land Rover Al Salama Showroom,Land Rover,Umm Al Quwain,Al Salama,"650, Al Salama, Umm Al Quwain, UAE",PO Box 25165,Gold,2001,149,12280,True,True,50,1812,51.95,4.1,True,100758904728,23.7362,54.0802
+DLR0037,Lexus Musaffah Showroom,Lexus,Abu Dhabi,Musaffah,"743, Musaffah, Abu Dhabi, UAE",PO Box 97157,Silver,2006,77,22029,True,True,62,804,67.99,3.4,True,100105147119,23.2243,56.1661
+DLR0038,GMC Muwaileh Showroom,GMC,Sharjah,Muwaileh,"726, Muwaileh, Sharjah, UAE",PO Box 41698,Gold,2001,140,21185,False,False,32,1644,78.29,3.8,True,100999275638,23.2977,53.5226
+DLR0039,Jeep Silicon Oasis Showroom,Jeep,Dubai,Silicon Oasis,"224, Silicon Oasis, Dubai, UAE",PO Box 46627,Silver,2007,69,4409,False,True,78,1140,81.35,3.6,True,100324089113,25.1951,54.6403
+DLR0040,Ford Silicon Oasis Showroom,Ford,Dubai,Silicon Oasis,"181, Silicon Oasis, Dubai, UAE",PO Box 96484,Silver,2020,81,20494,True,True,10,1008,77.05,3.5,True,100568274078,22.7465,54.1697
+DLR0041,Ram Al Faseel Showroom,Ram,Fujairah,Al Faseel,"567, Al Faseel, Fujairah, UAE",PO Box 44110,Bronze,1996,47,6293,False,False,45,312,81.07,3.8,True,100313312812,24.6343,51.7013
+DLR0042,Audi Silicon Oasis Showroom,Audi,Dubai,Silicon Oasis,"558, Silicon Oasis, Dubai, UAE",PO Box 50737,Silver,2019,76,22402,False,True,41,816,94.6,5.0,True,100477678803,23.0308,52.8087
+DLR0043,BMW Abu Dhabi City Showroom,BMW,Abu Dhabi,Abu Dhabi City,"608, Abu Dhabi City, Abu Dhabi, UAE",PO Box 17282,Silver,2000,84,24761,True,True,60,1116,51.96,4.4,True,100239206654,23.5189,55.0077
+DLR0044,Genesis Sharjah City Showroom,Genesis,Sharjah,Sharjah City,"146, Sharjah City, Sharjah, UAE",PO Box 33367,Silver,2001,78,20158,False,True,41,888,68.45,3.9,True,100999399136,25.6867,51.6469
+DLR0045,Mitsubishi Silicon Oasis Showroom,Mitsubishi,Dubai,Silicon Oasis,"248, Silicon Oasis, Dubai, UAE",PO Box 67514,Silver,2004,66,7157,True,True,53,984,96.68,4.9,True,100481477188,25.0825,54.178
+DLR0046,GMC Abu Dhabi City Showroom,GMC,Abu Dhabi,Abu Dhabi City,"462, Abu Dhabi City, Abu Dhabi, UAE",PO Box 27546,Bronze,1985,45,20192,True,True,8,372,84.32,4.3,True,100267141990,25.7529,53.6571
+DLR0047,Land Rover Al Hamra Showroom,Land Rover,Ras Al Khaimah,Al Hamra,"789, Al Hamra, Ras Al Khaimah, UAE",PO Box 95676,Gold,1986,161,4068,True,True,12,1872,58.45,3.9,True,100498803354,25.6023,53.9913
+DLR0048,BMW Al Reem Island Showroom,BMW,Abu Dhabi,Al Reem Island,"708, Al Reem Island, Abu Dhabi, UAE",PO Box 5182,Silver,1994,90,13802,False,True,76,1092,55.85,3.9,True,100826549918,23.4446,54.0622
+DLR0049,Audi Deira Showroom,Audi,Dubai,Deira,"982, Deira, Dubai, UAE",PO Box 80431,Silver,2001,74,18709,True,False,30,1068,97.68,4.5,True,100348882754,23.1533,54.8717
+DLR0050,Ford Fujairah City Showroom,Ford,Fujairah,Fujairah City,"307, Fujairah City, Fujairah, UAE",PO Box 34529,Silver,1999,75,15891,True,True,28,1116,59.32,4.6,True,100106493659,23.0984,53.8183
+DLR0051,Mercedes-Benz Silicon Oasis Showroom,Mercedes-Benz,Dubai,Silicon Oasis,"336, Silicon Oasis, Dubai, UAE",PO Box 75290,Bronze,1996,29,23220,True,False,59,504,81.08,3.5,True,100601535178,23.2784,52.0886
+DLR0052,Porsche Muwaileh Showroom,Porsche,Sharjah,Muwaileh,"221, Muwaileh, Sharjah, UAE",PO Box 93279,Silver,2006,67,5932,True,False,39,1080,98.38,3.5,True,100362504320,24.8791,56.2966
+DLR0053,Ford Abu Dhabi City Showroom,Ford,Abu Dhabi,Abu Dhabi City,"89, Abu Dhabi City, Abu Dhabi, UAE",PO Box 83643,Platinum,1988,250,15443,True,False,41,2988,63.32,3.2,True,100295951642,24.6877,56.4625
+DLR0054,Mercedes-Benz Business Bay Showroom,Mercedes-Benz,Dubai,Business Bay,"638, Business Bay, Dubai, UAE",PO Box 19793,Gold,1995,150,21635,True,False,25,1980,71.11,4.0,True,100296804308,24.0548,54.0934
+DLR0055,Genesis Dubai Marina Showroom,Genesis,Dubai,Dubai Marina,"798, Dubai Marina, Dubai, UAE",PO Box 13861,Silver,2014,80,4096,False,True,32,816,63.65,3.2,True,100568119103,25.4438,53.0718
+DLR0056,Lexus Al Ain Showroom,Lexus,Abu Dhabi,Al Ain,"956, Al Ain, Abu Dhabi, UAE",PO Box 72801,Bronze,1992,38,20727,True,True,24,516,85.22,3.4,True,100336972540,25.0685,52.7692
+DLR0057,Nissan Downtown Dubai Showroom,Nissan,Dubai,Downtown Dubai,"198, Downtown Dubai, Dubai, UAE",PO Box 29798,Bronze,1987,55,22770,True,True,74,588,45.35,4.0,True,100611389447,23.7278,53.3337
+DLR0058,Chevrolet Al Nakheel Showroom,Chevrolet,Ras Al Khaimah,Al Nakheel,"108, Al Nakheel, Ras Al Khaimah, UAE",PO Box 22944,Gold,2013,153,4347,True,True,44,1908,89.01,3.9,True,100299915760,24.8642,53.8542
+DLR0059,Kia Industrial Area Showroom,Kia,Sharjah,Industrial Area,"262, Industrial Area, Sharjah, UAE",PO Box 71247,Platinum,1986,254,5955,True,True,11,3180,67.94,4.9,True,100500600754,24.808,56.1317
+DLR0060,BMW Khalifa City Showroom,BMW,Abu Dhabi,Khalifa City,"691, Khalifa City, Abu Dhabi, UAE",PO Box 36334,Silver,2006,95,13482,False,True,57,840,77.56,3.6,True,100431481109,25.2726,56.3069
+DLR0061,Kia Yas Island Showroom,Kia,Abu Dhabi,Yas Island,"698, Yas Island, Abu Dhabi, UAE",PO Box 27502,Platinum,1990,238,14274,True,True,36,3144,58.26,4.7,True,100694114188,23.4038,54.311
+DLR0062,Toyota Yas Island Showroom,Toyota,Abu Dhabi,Yas Island,"196, Yas Island, Abu Dhabi, UAE",PO Box 50419,Bronze,2005,33,19306,False,True,29,636,83.35,4.6,True,100819369407,22.6733,51.809
+DLR0063,Kia Khalifa City Showroom,Kia,Abu Dhabi,Khalifa City,"295, Khalifa City, Abu Dhabi, UAE",PO Box 86318,Gold,1993,146,21950,True,True,48,1968,57.91,3.6,True,100563422158,25.5854,55.6243
+DLR0064,Ford Al Reem Island Showroom,Ford,Abu Dhabi,Al Reem Island,"325, Al Reem Island, Abu Dhabi, UAE",PO Box 65176,Platinum,1997,247,14791,True,False,37,2892,95.2,4.7,True,100587098370,23.4985,56.3162
+DLR0065,Chevrolet Al Nakheel Showroom,Chevrolet,Ras Al Khaimah,Al Nakheel,"532, Al Nakheel, Ras Al Khaimah, UAE",PO Box 5904,Bronze,2003,47,10164,True,True,34,336,74.9,4.5,True,100287623428,22.7002,52.4895
+DLR0066,Toyota Al Nuaimiya Showroom,Toyota,Ajman,Al Nuaimiya,"17, Al Nuaimiya, Ajman, UAE",PO Box 33613,Platinum,1995,237,7041,True,True,18,2820,84.06,4.9,True,100955976411,25.3968,53.3572
+DLR0067,Audi Silicon Oasis Showroom,Audi,Dubai,Silicon Oasis,"185, Silicon Oasis, Dubai, UAE",PO Box 62494,Silver,2012,71,19796,True,True,17,912,54.4,3.8,True,100981197248,23.5832,51.7135
+DLR0068,Nissan Al Ain Showroom,Nissan,Abu Dhabi,Al Ain,"767, Al Ain, Abu Dhabi, UAE",PO Box 86438,Silver,2005,72,23061,True,True,42,1104,74.9,4.5,True,100232929087,22.7078,53.9024
+DLR0069,GMC Al Ain Showroom,GMC,Abu Dhabi,Al Ain,"864, Al Ain, Abu Dhabi, UAE",PO Box 11147,Gold,2012,153,11677,True,True,34,1932,72.95,4.9,True,100119378338,24.7663,53.7034
+DLR0070,Tesla Dubai Marina Showroom,Tesla,Dubai,Dubai Marina,"452, Dubai Marina, Dubai, UAE",PO Box 18027,Bronze,2018,42,18226,False,True,69,588,58.24,4.1,True,100216731005,25.4122,51.8417
+DLR0071,Ford RAK City Showroom,Ford,Ras Al Khaimah,RAK City,"129, RAK City, Ras Al Khaimah, UAE",PO Box 69608,Silver,2018,83,16736,False,True,10,888,65.8,4.4,True,100742509670,22.7672,54.5016
+DLR0072,BMW Muwaileh Showroom,BMW,Sharjah,Muwaileh,"646, Muwaileh, Sharjah, UAE",PO Box 64221,Gold,1994,146,21637,True,True,51,1752,81.36,3.6,True,100398709815,23.4898,54.5558
+DLR0073,Tesla Silicon Oasis Showroom,Tesla,Dubai,Silicon Oasis,"664, Silicon Oasis, Dubai, UAE",PO Box 34702,Gold,2002,149,8669,True,False,46,1908,46.58,4.0,True,100118901427,25.3205,51.5713
+DLR0074,BYD Fujairah City Showroom,BYD,Fujairah,Fujairah City,"93, Fujairah City, Fujairah, UAE",PO Box 19223,Silver,2020,77,19813,False,False,31,984,65.09,3.5,True,100126057537,25.1408,52.0148
+DLR0075,Ram Musaffah Showroom,Ram,Abu Dhabi,Musaffah,"796, Musaffah, Abu Dhabi, UAE",PO Box 77573,Silver,2010,93,20029,False,True,8,1008,49.53,4.2,True,100731155656,24.509,52.7213
+DLR0076,Honda Downtown Dubai Showroom,Honda,Dubai,Downtown Dubai,"724, Downtown Dubai, Dubai, UAE",PO Box 38282,Bronze,2000,53,21440,True,True,80,480,87.64,3.8,True,100511020825,25.2206,53.8112
+DLR0077,Ford Downtown Dubai Showroom,Ford,Dubai,Downtown Dubai,"86, Downtown Dubai, Dubai, UAE",PO Box 51010,Gold,1990,140,20460,True,False,26,1692,75.73,4.8,True,100969385809,22.9403,55.9507
+DLR0078,Lexus Al Nuaimiya Showroom,Lexus,Ajman,Al Nuaimiya,"951, Al Nuaimiya, Ajman, UAE",PO Box 11239,Gold,2017,137,16087,True,False,45,1800,55.76,4.2,True,100885551807,23.6567,53.6587
+DLR0079,Ford Al Quoz Showroom,Ford,Dubai,Al Quoz,"146, Al Quoz, Dubai, UAE",PO Box 54483,Silver,1999,79,18791,True,True,56,912,49.07,4.1,True,100329559728,24.1704,54.8899
+DLR0080,Porsche Yas Island Showroom,Porsche,Abu Dhabi,Yas Island,"959, Yas Island, Abu Dhabi, UAE",PO Box 13235,Silver,1998,79,22342,False,True,69,780,55.13,3.3,True,100672086185,24.6739,52.357
+DLR0081,Audi Al Quoz Showroom,Audi,Dubai,Al Quoz,"714, Al Quoz, Dubai, UAE",PO Box 9330,Silver,2007,83,21758,False,True,12,1068,55.69,4.2,True,100966817684,25.4093,52.1708
+DLR0082,Mercedes-Benz Al Hamra Showroom,Mercedes-Benz,Ras Al Khaimah,Al Hamra,"126, Al Hamra, Ras Al Khaimah, UAE",PO Box 33319,Gold,2008,150,12690,True,True,58,1968,87.47,4.5,True,100129972259,22.836,56.4429
+DLR0083,Hyundai Downtown Dubai Showroom,Hyundai,Dubai,Downtown Dubai,"513, Downtown Dubai, Dubai, UAE",PO Box 39013,Bronze,2005,39,4184,False,True,68,360,53.46,3.7,True,100780502351,23.8052,51.6824
+DLR0084,Kia Al Majaz Showroom,Kia,Sharjah,Al Majaz,"35, Al Majaz, Sharjah, UAE",PO Box 27437,Silver,2010,84,5860,True,False,27,852,53.83,4.6,True,100454575694,22.9753,54.0004
+DLR0085,Nissan Bur Dubai Showroom,Nissan,Dubai,Bur Dubai,"402, Bur Dubai, Dubai, UAE",PO Box 31033,Bronze,1994,51,10401,True,False,25,540,52.71,3.7,True,100472892446,24.1014,52.4935
+DLR0086,Honda Dubai Marina Showroom,Honda,Dubai,Dubai Marina,"691, Dubai Marina, Dubai, UAE",PO Box 49496,Silver,1988,72,24159,True,True,9,780,87.88,3.4,True,100650636877,22.627,54.107
+DLR0087,BMW Industrial Area Showroom,BMW,Sharjah,Industrial Area,"354, Industrial Area, Sharjah, UAE",PO Box 76723,Bronze,1989,47,8377,False,True,21,600,47.07,3.8,True,100139352826,23.6464,56.1842
+DLR0088,Mitsubishi RAK City Showroom,Mitsubishi,Ras Al Khaimah,RAK City,"294, RAK City, Ras Al Khaimah, UAE",PO Box 13730,Gold,1988,152,5758,False,True,74,1656,61.27,3.4,True,100596487179,23.3133,55.2136
+DLR0089,Honda Al Nuaimiya Showroom,Honda,Ajman,Al Nuaimiya,"266, Al Nuaimiya, Ajman, UAE",PO Box 57346,Silver,2017,67,9984,False,True,31,912,79.69,4.2,True,100389263181,25.4486,55.3622
+DLR0090,BYD Ajman City Showroom,BYD,Ajman,Ajman City,"69, Ajman City, Ajman, UAE",PO Box 30982,Platinum,1987,246,19762,True,False,35,3156,76.85,4.5,True,100511957005,24.8511,52.3793
+DLR0091,Ram Al Quoz Showroom,Ram,Dubai,Al Quoz,"889, Al Quoz, Dubai, UAE",PO Box 17080,Bronze,2013,25,22297,True,True,58,396,92.77,3.7,True,100878214613,22.89,52.1447
+DLR0092,Tesla Khalifa City Showroom,Tesla,Abu Dhabi,Khalifa City,"186, Khalifa City, Abu Dhabi, UAE",PO Box 30814,Silver,1997,87,17087,True,True,14,996,47.49,4.6,True,100448313087,22.6964,53.6551
+DLR0093,GMC Al Quoz Showroom,GMC,Dubai,Al Quoz,"254, Al Quoz, Dubai, UAE",PO Box 98248,Silver,2011,91,22013,True,False,37,1116,89.71,3.8,True,100157886636,22.6057,51.9102
+DLR0094,Audi Downtown Dubai Showroom,Audi,Dubai,Downtown Dubai,"579, Downtown Dubai, Dubai, UAE",PO Box 12488,Gold,2019,161,22508,False,True,52,1788,92.88,3.9,True,100374733696,23.8877,53.741
+DLR0095,BMW Dubai Marina Showroom,BMW,Dubai,Dubai Marina,"226, Dubai Marina, Dubai, UAE",PO Box 96829,Silver,2018,80,23984,False,True,55,852,76.26,4.9,True,100548965663,25.3769,56.2782
+DLR0096,Ram Dubai Marina Showroom,Ram,Dubai,Dubai Marina,"208, Dubai Marina, Dubai, UAE",PO Box 35099,Bronze,2007,30,12430,True,True,14,408,96.62,4.4,True,100307829151,25.0506,55.8386
+DLR0097,Ford Al Nuaimiya Showroom,Ford,Ajman,Al Nuaimiya,"609, Al Nuaimiya, Ajman, UAE",PO Box 61384,Silver,2014,72,4754,True,False,71,996,74.34,4.7,True,100333577456,22.7103,51.7929
+DLR0098,Tesla Jumeirah Showroom,Tesla,Dubai,Jumeirah,"720, Jumeirah, Dubai, UAE",PO Box 44494,Silver,2001,83,15892,True,True,23,948,54.31,4.8,True,100695172295,23.2151,54.6435
+DLR0099,Hyundai Al Reem Island Showroom,Hyundai,Abu Dhabi,Al Reem Island,"154, Al Reem Island, Abu Dhabi, UAE",PO Box 39795,Gold,2007,140,3844,True,True,41,1656,48.5,4.2,True,100782811422,23.5402,56.0642
+DLR0100,GMC Al Hamra Showroom,GMC,Ras Al Khaimah,Al Hamra,"277, Al Hamra, Ras Al Khaimah, UAE",PO Box 70750,Silver,2009,67,21777,True,False,20,900,78.32,4.1,True,100699423070,25.4075,55.658
+DLR0101,Land Rover Musaffah Showroom,Land Rover,Abu Dhabi,Musaffah,"190, Musaffah, Abu Dhabi, UAE",PO Box 63996,Silver,2010,80,15545,True,True,63,852,76.71,3.7,True,100229371703,24.4675,56.4451
+DLR0102,Ford Dubai Marina Showroom,Ford,Dubai,Dubai Marina,"551, Dubai Marina, Dubai, UAE",PO Box 51704,Bronze,2013,28,3468,False,True,13,300,98.05,4.2,True,100156070727,23.9611,55.634
+DLR0103,Honda Business Bay Showroom,Honda,Dubai,Business Bay,"451, Business Bay, Dubai, UAE",PO Box 17354,Silver,1994,78,17820,True,True,15,1080,71.15,4.8,True,100140807344,25.796,51.7432
+DLR0104,Tesla Musaffah Showroom,Tesla,Abu Dhabi,Musaffah,"709, Musaffah, Abu Dhabi, UAE",PO Box 30639,Platinum,1998,255,14662,False,False,43,3144,76.71,4.1,True,100862819592,22.6541,53.1792
+DLR0105,BYD Muwaileh Showroom,BYD,Sharjah,Muwaileh,"458, Muwaileh, Sharjah, UAE",PO Box 63224,Silver,1985,83,20907,True,True,20,816,47.91,3.7,True,100280688574,24.9854,55.8866
+DLR0106,Audi Al Nakheel Showroom,Audi,Ras Al Khaimah,Al Nakheel,"871, Al Nakheel, Ras Al Khaimah, UAE",PO Box 43736,Gold,2007,135,8530,True,True,80,1884,66.0,3.3,True,100950729040,24.5406,55.6021
+DLR0107,BYD Al Majaz Showroom,BYD,Sharjah,Al Majaz,"950, Al Majaz, Sharjah, UAE",PO Box 6323,Silver,1985,69,15279,True,True,30,1068,65.2,3.4,True,100842749163,24.702,55.0326
+DLR0108,Genesis Al Faseel Showroom,Genesis,Fujairah,Al Faseel,"497, Al Faseel, Fujairah, UAE",PO Box 98322,Gold,2002,158,19558,True,True,79,1668,67.36,4.5,True,100128719991,23.8603,54.8855
+DLR0109,Audi Musaffah Showroom,Audi,Abu Dhabi,Musaffah,"137, Musaffah, Abu Dhabi, UAE",PO Box 39418,Silver,1992,78,20282,True,False,20,864,63.91,4.7,True,100217061012,23.5284,55.2258
+DLR0110,Audi Al Majaz Showroom,Audi,Sharjah,Al Majaz,"947, Al Majaz, Sharjah, UAE",PO Box 67536,Silver,2015,94,16734,True,False,75,1080,61.59,4.5,True,100143823383,22.9651,52.4122
+DLR0111,Mercedes-Benz Downtown Dubai Showroom,Mercedes-Benz,Dubai,Downtown Dubai,"257, Downtown Dubai, Dubai, UAE",PO Box 54493,Bronze,1998,31,17959,True,True,31,456,50.09,4.9,True,100301556086,24.153,52.7188
+DLR0112,Chevrolet Business Bay Showroom,Chevrolet,Dubai,Business Bay,"811, Business Bay, Dubai, UAE",PO Box 3965,Silver,1993,87,12314,True,False,40,816,76.56,4.4,True,100791786520,25.0451,54.2507
+DLR0113,Audi Al Nahda Showroom,Audi,Sharjah,Al Nahda,"471, Al Nahda, Sharjah, UAE",PO Box 27198,Gold,1990,151,18230,True,True,37,1884,85.41,4.7,True,100175484764,25.3021,52.5296
+DLR0114,Honda Silicon Oasis Showroom,Honda,Dubai,Silicon Oasis,"337, Silicon Oasis, Dubai, UAE",PO Box 43407,Gold,1995,135,17647,True,True,37,1896,82.01,4.7,True,100572369380,23.9414,52.0551
+DLR0115,Lexus Ajman City Showroom,Lexus,Ajman,Ajman City,"332, Ajman City, Ajman, UAE",PO Box 92990,Platinum,1994,245,23053,False,True,15,2940,49.12,4.1,True,100357557755,22.6378,52.8425
+DLR0116,Ford Business Bay Showroom,Ford,Dubai,Business Bay,"885, Business Bay, Dubai, UAE",PO Box 75836,Silver,2015,71,12888,False,False,44,1068,48.99,4.7,True,100328752148,25.0541,55.5076
+DLR0117,Tesla Al Rashidiya Showroom,Tesla,Ajman,Al Rashidiya,"18, Al Rashidiya, Ajman, UAE",PO Box 85044,Bronze,2005,48,15629,True,True,46,612,91.0,3.9,True,100145465122,25.0349,53.7976
+DLR0118,Toyota Al Quoz Showroom,Toyota,Dubai,Al Quoz,"924, Al Quoz, Dubai, UAE",PO Box 49871,Gold,2004,154,16107,True,True,33,1776,79.14,3.3,True,100567315080,24.799,56.0729
+DLR0119,Genesis Bur Dubai Showroom,Genesis,Dubai,Bur Dubai,"481, Bur Dubai, Dubai, UAE",PO Box 25388,Bronze,2008,48,4182,True,True,80,420,90.11,4.7,True,100533441644,22.9533,53.0611
+DLR0120,Nissan Deira Showroom,Nissan,Dubai,Deira,"863, Deira, Dubai, UAE",PO Box 36183,Bronze,1994,44,11543,True,True,65,516,77.99,4.6,True,100328238074,23.8649,51.55
+DLR0121,Nissan Yas Island Showroom,Nissan,Abu Dhabi,Yas Island,"168, Yas Island, Abu Dhabi, UAE",PO Box 15439,Bronze,2016,32,4764,True,True,74,360,76.8,4.9,True,100789735935,25.049,51.9668
+DLR0122,Mercedes-Benz Khalifa City Showroom,Mercedes-Benz,Abu Dhabi,Khalifa City,"912, Khalifa City, Abu Dhabi, UAE",PO Box 94099,Bronze,1995,52,10122,True,False,30,600,84.25,3.4,True,100583806280,25.2547,56.2132
+DLR0123,Nissan Al Reem Island Showroom,Nissan,Abu Dhabi,Al Reem Island,"995, Al Reem Island, Abu Dhabi, UAE",PO Box 20267,Bronze,2018,27,14822,False,True,39,324,67.72,4.2,True,100467610235,25.1081,51.6264
+DLR0124,Nissan Abu Dhabi City Showroom,Nissan,Abu Dhabi,Abu Dhabi City,"243, Abu Dhabi City, Abu Dhabi, UAE",PO Box 89562,Silver,2016,72,14379,True,True,77,1116,45.58,4.1,True,100289366379,25.6771,55.8429
+DLR0125,Hyundai Silicon Oasis Showroom,Hyundai,Dubai,Silicon Oasis,"664, Silicon Oasis, Dubai, UAE",PO Box 85009,Silver,1986,68,21609,True,False,34,1116,85.92,3.6,True,100545722593,23.9823,55.0674
+DLR0126,Hyundai Abu Dhabi City Showroom,Hyundai,Abu Dhabi,Abu Dhabi City,"343, Abu Dhabi City, Abu Dhabi, UAE",PO Box 24388,Bronze,1990,48,20148,True,False,76,432,85.71,4.4,True,100737814322,24.7295,51.5282
+DLR0127,GMC Yas Island Showroom,GMC,Abu Dhabi,Yas Island,"241, Yas Island, Abu Dhabi, UAE",PO Box 74543,Silver,2007,94,24252,False,False,20,1020,55.53,4.8,True,100611142709,23.5233,55.5304
+DLR0128,Porsche Dubai Marina Showroom,Porsche,Dubai,Dubai Marina,"348, Dubai Marina, Dubai, UAE",PO Box 89709,Bronze,2019,52,11364,False,True,36,396,88.34,4.5,True,100151926742,24.1683,53.51
+DLR0129,Lexus Fujairah City Showroom,Lexus,Fujairah,Fujairah City,"568, Fujairah City, Fujairah, UAE",PO Box 31540,Silver,2011,86,18917,False,True,54,1116,66.87,4.0,True,100375622648,25.3678,55.0617
+DLR0130,Lexus Fujairah City Showroom,Lexus,Fujairah,Fujairah City,"389, Fujairah City, Fujairah, UAE",PO Box 72793,Bronze,2019,39,23397,False,False,27,468,91.93,4.6,True,100698303106,24.0202,52.0365
+DLR0131,Audi Al Reem Island Showroom,Audi,Abu Dhabi,Al Reem Island,"726, Al Reem Island, Abu Dhabi, UAE",PO Box 58345,Silver,2020,81,21813,False,True,23,1140,75.53,3.7,True,100736530496,24.3705,52.2225
+DLR0132,Chevrolet Al Nakheel Showroom,Chevrolet,Ras Al Khaimah,Al Nakheel,"735, Al Nakheel, Ras Al Khaimah, UAE",PO Box 20017,Platinum,1998,248,11067,False,True,48,2988,96.7,4.8,True,100300724004,24.5584,51.8691
+DLR0133,Mercedes-Benz Industrial Area Showroom,Mercedes-Benz,Sharjah,Industrial Area,"436, Industrial Area, Sharjah, UAE",PO Box 44367,Gold,1985,142,4992,True,True,33,1620,60.92,4.1,True,100736355281,23.7819,56.0042
+DLR0134,Genesis Bur Dubai Showroom,Genesis,Dubai,Bur Dubai,"413, Bur Dubai, Dubai, UAE",PO Box 12289,Gold,2009,140,5865,True,True,26,1788,73.12,3.7,True,100403513891,24.8596,54.0885
+DLR0135,Porsche Al Majaz Showroom,Porsche,Sharjah,Al Majaz,"205, Al Majaz, Sharjah, UAE",PO Box 14336,Silver,2012,69,18112,False,False,22,864,72.58,3.6,True,100419974654,25.3448,53.8683
+DLR0136,Ram Al Nahda Showroom,Ram,Sharjah,Al Nahda,"495, Al Nahda, Sharjah, UAE",PO Box 62254,Gold,2018,164,13444,True,True,39,1656,66.72,3.4,True,100774110140,24.7517,52.303
+DLR0137,Land Rover Al Nahda Showroom,Land Rover,Sharjah,Al Nahda,"943, Al Nahda, Sharjah, UAE",PO Box 34866,Silver,2019,94,23793,True,False,34,960,49.98,3.5,True,100224877399,24.2706,52.5551
+DLR0138,BYD Dubai Marina Showroom,BYD,Dubai,Dubai Marina,"572, Dubai Marina, Dubai, UAE",PO Box 36034,Silver,2015,75,17901,True,False,71,1020,92.91,4.2,True,100949567835,23.4645,53.6682
+DLR0139,Kia Al Hamra Showroom,Kia,Ras Al Khaimah,Al Hamra,"698, Al Hamra, Ras Al Khaimah, UAE",PO Box 20686,Silver,1991,72,19112,True,False,75,984,95.13,4.2,True,100359532104,24.5823,53.5657
+DLR0140,Toyota Jumeirah Showroom,Toyota,Dubai,Jumeirah,"851, Jumeirah, Dubai, UAE",PO Box 2037,Silver,1988,91,3734,True,True,33,936,91.97,4.0,True,100173029608,22.8022,52.0266
+DLR0141,Jeep Dubai Marina Showroom,Jeep,Dubai,Dubai Marina,"859, Dubai Marina, Dubai, UAE",PO Box 44686,Bronze,2004,37,20963,True,False,61,468,61.86,3.3,True,100156130876,25.4806,52.9217
+DLR0142,Land Rover Deira Showroom,Land Rover,Dubai,Deira,"615, Deira, Dubai, UAE",PO Box 18618,Silver,2019,71,3314,False,False,17,864,82.6,4.2,True,100705556796,24.4315,56.1439
+DLR0143,Lexus Deira Showroom,Lexus,Dubai,Deira,"842, Deira, Dubai, UAE",PO Box 12828,Bronze,1994,51,14992,True,False,56,540,65.21,4.5,True,100671494630,25.3481,53.2875
+DLR0144,Land Rover Jumeirah Showroom,Land Rover,Dubai,Jumeirah,"929, Jumeirah, Dubai, UAE",PO Box 53300,Silver,1987,74,9084,True,False,26,1092,82.04,4.7,True,100121692281,23.9128,54.6444
+DLR0145,Kia Musaffah Showroom,Kia,Abu Dhabi,Musaffah,"682, Musaffah, Abu Dhabi, UAE",PO Box 31494,Silver,1991,85,6136,False,True,75,924,77.64,4.9,True,100301334688,23.7349,52.4984
+DLR0146,BMW Al Quoz Showroom,BMW,Dubai,Al Quoz,"729, Al Quoz, Dubai, UAE",PO Box 23691,Bronze,2004,50,17082,True,False,25,564,68.51,5.0,True,100811096213,25.5872,51.7515
+DLR0147,Porsche Al Nahda Showroom,Porsche,Sharjah,Al Nahda,"822, Al Nahda, Sharjah, UAE",PO Box 44579,Bronze,1987,34,10323,True,True,36,336,80.25,3.7,True,100199013911,23.9944,51.6891
+DLR0148,Tesla Al Rashidiya Showroom,Tesla,Ajman,Al Rashidiya,"949, Al Rashidiya, Ajman, UAE",PO Box 1764,Silver,2013,67,5126,True,False,9,924,80.47,4.3,True,100532816386,23.1575,52.6538
+DLR0149,BMW Abu Dhabi City Showroom,BMW,Abu Dhabi,Abu Dhabi City,"70, Abu Dhabi City, Abu Dhabi, UAE",PO Box 61330,Silver,1993,94,18394,True,True,48,1080,81.26,3.6,True,100952483846,24.7813,53.7664
+DLR0150,Nissan Yas Island Showroom,Nissan,Abu Dhabi,Yas Island,"845, Yas Island, Abu Dhabi, UAE",PO Box 23868,Silver,2004,84,14414,False,True,16,876,73.34,4.3,True,100289715235,24.6325,54.2931
+DLR0151,Nissan Abu Dhabi City Showroom,Nissan,Abu Dhabi,Abu Dhabi City,"689, Abu Dhabi City, Abu Dhabi, UAE",PO Box 58631,Gold,2020,160,24634,True,True,17,1980,85.35,4.3,True,100394364083,24.727,55.4523
+DLR0152,Ram Deira Showroom,Ram,Dubai,Deira,"21, Deira, Dubai, UAE",PO Box 23932,Silver,1994,85,20128,False,True,27,1068,69.46,4.0,True,100425029959,22.7355,52.8204
+DLR0153,Nissan Al Rashidiya Showroom,Nissan,Ajman,Al Rashidiya,"674, Al Rashidiya, Ajman, UAE",PO Box 89914,Bronze,2001,47,16670,False,True,28,636,65.62,3.3,True,100242209427,24.1551,52.4409
+DLR0154,Audi Industrial Area Showroom,Audi,Sharjah,Industrial Area,"676, Industrial Area, Sharjah, UAE",PO Box 62117,Silver,1987,89,7205,True,True,54,984,76.94,5.0,True,100568742215,24.1103,52.4724
+DLR0155,GMC Al Faseel Showroom,GMC,Fujairah,Al Faseel,"117, Al Faseel, Fujairah, UAE",PO Box 84281,Gold,2020,137,8626,False,True,72,1776,93.3,4.9,True,100676426341,22.9446,54.0332
+DLR0156,Hyundai Deira Showroom,Hyundai,Dubai,Deira,"95, Deira, Dubai, UAE",PO Box 78658,Gold,2011,163,13282,False,False,10,1752,79.22,4.9,True,100791944808,24.0334,55.7248
+DLR0157,Ram Muwaileh Showroom,Ram,Sharjah,Muwaileh,"20, Muwaileh, Sharjah, UAE",PO Box 91058,Platinum,2010,265,20255,True,True,80,2952,48.45,3.3,True,100680150294,24.9152,51.5379
+DLR0158,BYD Al Majaz Showroom,BYD,Sharjah,Al Majaz,"965, Al Majaz, Sharjah, UAE",PO Box 2175,Bronze,1995,45,15163,True,False,71,660,95.52,4.0,True,100112882637,22.6567,53.5248
+DLR0159,Mitsubishi Al Nahda Showroom,Mitsubishi,Sharjah,Al Nahda,"330, Al Nahda, Sharjah, UAE",PO Box 20886,Bronze,2005,28,3670,False,False,77,396,55.88,3.5,True,100383590182,24.3711,52.3537
+DLR0160,GMC Ajman City Showroom,GMC,Ajman,Ajman City,"630, Ajman City, Ajman, UAE",PO Box 42832,Silver,2017,95,21467,False,True,69,1116,87.67,4.8,True,100103250512,24.9418,56.1835
+DLR0161,Nissan Deira Showroom,Nissan,Dubai,Deira,"62, Deira, Dubai, UAE",PO Box 6709,Bronze,2019,47,19223,False,False,37,552,85.09,3.7,True,100655072463,24.4385,52.1108
+DLR0162,Ford Bur Dubai Showroom,Ford,Dubai,Bur Dubai,"396, Bur Dubai, Dubai, UAE",PO Box 50487,Silver,2006,82,12607,False,True,54,864,70.96,5.0,True,100661070451,23.6132,52.9207
+DLR0163,Kia Al Salama Showroom,Kia,Umm Al Quwain,Al Salama,"711, Al Salama, Umm Al Quwain, UAE",PO Box 44659,Bronze,2009,45,8626,True,False,57,396,76.82,3.3,True,100517247954,24.5086,53.0827
+DLR0164,Ram Dubai Marina Showroom,Ram,Dubai,Dubai Marina,"236, Dubai Marina, Dubai, UAE",PO Box 87618,Silver,2002,76,6969,True,True,39,864,87.02,4.3,True,100538856429,25.5046,53.9393
+DLR0165,BMW Dubai Marina Showroom,BMW,Dubai,Dubai Marina,"490, Dubai Marina, Dubai, UAE",PO Box 31964,Gold,2016,139,3017,False,True,24,1680,77.43,3.4,True,100752570166,23.2457,55.6806
+DLR0166,Ram Al Majaz Showroom,Ram,Sharjah,Al Majaz,"590, Al Majaz, Sharjah, UAE",PO Box 7827,Silver,2012,92,3403,True,False,48,996,84.49,4.3,True,100994726970,24.8175,53.6894
+DLR0167,BYD Al Nahda Showroom,BYD,Sharjah,Al Nahda,"352, Al Nahda, Sharjah, UAE",PO Box 13017,Gold,2012,162,20366,True,False,22,1860,98.4,4.8,True,100267475374,24.5157,53.3889
+DLR0168,Honda Dubai Marina Showroom,Honda,Dubai,Dubai Marina,"799, Dubai Marina, Dubai, UAE",PO Box 95595,Silver,2006,90,20909,True,True,43,840,87.41,3.9,True,100905016833,23.8816,55.5858
+DLR0169,Genesis Bur Dubai Showroom,Genesis,Dubai,Bur Dubai,"204, Bur Dubai, Dubai, UAE",PO Box 68691,Silver,1992,95,19989,False,False,74,960,57.8,3.7,True,100816497563,25.1472,53.8073
+DLR0170,GMC Ajman City Showroom,GMC,Ajman,Ajman City,"392, Ajman City, Ajman, UAE",PO Box 74387,Silver,1987,70,17515,False,False,38,984,62.95,4.4,True,100842731097,25.4827,54.0493
+DLR0171,Ford Abu Dhabi City Showroom,Ford,Abu Dhabi,Abu Dhabi City,"981, Abu Dhabi City, Abu Dhabi, UAE",PO Box 1266,Gold,2000,145,22796,True,False,27,1740,91.42,3.4,True,100760205158,24.2383,54.1986
+DLR0172,Lexus Al Quoz Showroom,Lexus,Dubai,Al Quoz,"691, Al Quoz, Dubai, UAE",PO Box 76683,Gold,2003,143,19062,True,True,40,1620,95.75,4.4,True,100268079559,24.0331,56.2945
+DLR0173,Toyota Dubai Marina Showroom,Toyota,Dubai,Dubai Marina,"288, Dubai Marina, Dubai, UAE",PO Box 94979,Silver,1991,94,12723,True,True,51,780,73.84,3.2,True,100983759845,23.1452,51.6896
+DLR0174,Nissan Al Majaz Showroom,Nissan,Sharjah,Al Majaz,"745, Al Majaz, Sharjah, UAE",PO Box 44383,Bronze,2003,31,5812,True,True,23,396,52.14,4.3,True,100788687869,25.631,54.0123
+DLR0175,BYD Ajman City Showroom,BYD,Ajman,Ajman City,"436, Ajman City, Ajman, UAE",PO Box 35108,Bronze,2015,28,21400,False,True,53,516,97.01,3.5,True,100869127791,23.8044,54.3457
+DLR0176,Genesis Industrial Area Showroom,Genesis,Sharjah,Industrial Area,"797, Industrial Area, Sharjah, UAE",PO Box 89818,Bronze,1998,27,24063,False,True,53,516,49.73,3.3,True,100875600058,24.239,54.4424
+DLR0177,Jeep Downtown Dubai Showroom,Jeep,Dubai,Downtown Dubai,"847, Downtown Dubai, Dubai, UAE",PO Box 68948,Platinum,2011,260,17364,True,True,73,3144,62.95,4.7,True,100781825485,24.9496,55.1371
+DLR0178,Hyundai Al Salama Showroom,Hyundai,Umm Al Quwain,Al Salama,"427, Al Salama, Umm Al Quwain, UAE",PO Box 20914,Bronze,2005,45,17560,True,True,14,312,88.2,4.0,True,100252058278,23.5778,55.0344
+DLR0179,Mitsubishi Downtown Dubai Showroom,Mitsubishi,Dubai,Downtown Dubai,"232, Downtown Dubai, Dubai, UAE",PO Box 5136,Gold,2000,153,19440,True,True,54,1788,84.68,3.8,True,100716787641,23.9141,52.8051
+DLR0180,Genesis Jumeirah Showroom,Genesis,Dubai,Jumeirah,"233, Jumeirah, Dubai, UAE",PO Box 69486,Bronze,2010,40,6154,True,False,67,456,97.61,3.3,True,100323664602,25.1137,52.9879
+DLR0181,Toyota Business Bay Showroom,Toyota,Dubai,Business Bay,"39, Business Bay, Dubai, UAE",PO Box 16985,Gold,1987,141,23839,True,True,56,1812,85.69,4.0,True,100976050566,23.6796,55.2479
+DLR0182,Kia Muwaileh Showroom,Kia,Sharjah,Muwaileh,"458, Muwaileh, Sharjah, UAE",PO Box 98536,Platinum,1988,263,18926,True,False,25,3012,97.98,4.2,True,100941151996,25.0652,54.3434
+DLR0183,Audi Al Ain Showroom,Audi,Abu Dhabi,Al Ain,"949, Al Ain, Abu Dhabi, UAE",PO Box 75561,Silver,1998,73,7861,True,True,39,816,51.27,4.0,True,100882266176,23.4146,54.0068
+DLR0184,Porsche Deira Showroom,Porsche,Dubai,Deira,"642, Deira, Dubai, UAE",PO Box 16562,Silver,2017,68,5094,True,True,47,924,72.47,3.6,True,100429646518,22.8399,54.1063
+DLR0185,Honda Deira Showroom,Honda,Dubai,Deira,"844, Deira, Dubai, UAE",PO Box 29096,Silver,2002,73,13915,False,True,75,1020,76.26,4.2,True,100988069879,25.4842,53.1382
+DLR0186,Nissan Al Quoz Showroom,Nissan,Dubai,Al Quoz,"652, Al Quoz, Dubai, UAE",PO Box 54126,Bronze,2015,36,12408,False,True,22,348,78.71,4.2,True,100672063189,23.8922,53.2481
+DLR0187,Land Rover Sharjah City Showroom,Land Rover,Sharjah,Sharjah City,"720, Sharjah City, Sharjah, UAE",PO Box 21813,Bronze,1996,39,24797,True,False,77,564,64.52,4.2,True,100260186053,24.2428,54.8515
+DLR0188,Tesla Business Bay Showroom,Tesla,Dubai,Business Bay,"380, Business Bay, Dubai, UAE",PO Box 82412,Bronze,2015,26,19840,False,True,29,660,84.39,4.9,True,100301197326,24.1766,56.053
+DLR0189,Lexus Al Ain Showroom,Lexus,Abu Dhabi,Al Ain,"807, Al Ain, Abu Dhabi, UAE",PO Box 25826,Silver,2001,80,11821,False,False,74,804,56.63,4.9,True,100965902228,24.8086,54.3097
+DLR0190,Chevrolet Al Reem Island Showroom,Chevrolet,Abu Dhabi,Al Reem Island,"983, Al Reem Island, Abu Dhabi, UAE",PO Box 95101,Silver,1994,72,8502,True,False,54,828,61.9,4.5,True,100391180575,23.5119,52.3813
+DLR0191,Audi Dubai Marina Showroom,Audi,Dubai,Dubai Marina,"409, Dubai Marina, Dubai, UAE",PO Box 58425,Bronze,1998,33,6051,False,True,32,324,85.08,3.3,True,100687863048,23.6433,55.0871
+DLR0192,Jeep Dubai Marina Showroom,Jeep,Dubai,Dubai Marina,"360, Dubai Marina, Dubai, UAE",PO Box 14546,Silver,1991,71,6140,True,True,41,1008,76.22,4.8,True,100606167217,23.3385,52.7882
+DLR0193,BMW Al Quoz Showroom,BMW,Dubai,Al Quoz,"500, Al Quoz, Dubai, UAE",PO Box 94606,Silver,2008,72,23492,True,False,62,888,80.42,3.7,True,100188409019,23.431,52.6069
+DLR0194,Tesla Khalifa City Showroom,Tesla,Abu Dhabi,Khalifa City,"257, Khalifa City, Abu Dhabi, UAE",PO Box 40069,Silver,2012,70,18761,True,False,33,852,91.42,4.9,True,100109770337,24.245,53.2236
+DLR0195,BYD Musaffah Showroom,BYD,Abu Dhabi,Musaffah,"998, Musaffah, Abu Dhabi, UAE",PO Box 35364,Gold,1989,163,15561,True,True,69,1680,84.45,4.1,True,100111092877,24.1366,54.9365
+DLR0196,Land Rover Khalifa City Showroom,Land Rover,Abu Dhabi,Khalifa City,"807, Khalifa City, Abu Dhabi, UAE",PO Box 59603,Silver,2018,78,12252,True,False,35,1020,95.41,4.0,True,100588791813,22.9757,55.0019
+DLR0197,Jeep Industrial Area Showroom,Jeep,Sharjah,Industrial Area,"634, Industrial Area, Sharjah, UAE",PO Box 54086,Bronze,2013,30,17981,True,True,41,300,56.48,3.7,True,100350323716,23.1665,55.4574
+DLR0198,Chevrolet Al Nakheel Showroom,Chevrolet,Ras Al Khaimah,Al Nakheel,"491, Al Nakheel, Ras Al Khaimah, UAE",PO Box 40424,Bronze,1985,52,24177,True,False,33,384,87.88,4.4,True,100413689170,25.5662,55.2969
+DLR0199,Jeep Al Nahda Showroom,Jeep,Sharjah,Al Nahda,"758, Al Nahda, Sharjah, UAE",PO Box 88560,Gold,1994,156,3474,True,False,74,1824,97.06,4.0,True,100852194606,24.933,53.0165
+DLR0200,Tesla Deira Showroom,Tesla,Dubai,Deira,"543, Deira, Dubai, UAE",PO Box 98862,Gold,2009,165,5948,True,True,36,1824,85.71,4.4,True,100251343693,23.3183,52.8749
+DLR0201,BMW Al Majaz Showroom,BMW,Sharjah,Al Majaz,"175, Al Majaz, Sharjah, UAE",PO Box 56092,Silver,2001,87,15470,True,True,39,1116,89.8,3.3,True,100402729688,24.9594,53.1532
+DLR0202,Hyundai Al Quoz Showroom,Hyundai,Dubai,Al Quoz,"746, Al Quoz, Dubai, UAE",PO Box 62056,Silver,2016,76,13229,True,True,55,816,93.22,4.7,True,100784690340,24.4175,55.2834
+DLR0203,Kia Al Salama Showroom,Kia,Umm Al Quwain,Al Salama,"692, Al Salama, Umm Al Quwain, UAE",PO Box 59405,Silver,1994,86,20491,False,True,78,900,82.91,3.5,True,100734539883,22.6722,52.603
+DLR0204,Jeep Business Bay Showroom,Jeep,Dubai,Business Bay,"477, Business Bay, Dubai, UAE",PO Box 76782,Gold,1989,150,23020,True,False,30,1980,63.91,3.5,True,100531675037,24.1496,52.2698
+DLR0205,Ford Al Majaz Showroom,Ford,Sharjah,Al Majaz,"693, Al Majaz, Sharjah, UAE",PO Box 29900,Silver,2001,93,3374,False,True,74,960,58.86,4.6,True,100965211340,24.865,54.1022
+DLR0206,Audi Al Hamra Showroom,Audi,Ras Al Khaimah,Al Hamra,"27, Al Hamra, Ras Al Khaimah, UAE",PO Box 13487,Bronze,1985,53,24926,True,False,49,300,92.4,4.3,True,100335205908,25.6348,53.0039
+DLR0207,BYD Al Reem Island Showroom,BYD,Abu Dhabi,Al Reem Island,"106, Al Reem Island, Abu Dhabi, UAE",PO Box 38571,Silver,2016,78,11414,True,True,71,1056,49.42,3.3,True,100581681576,24.3413,51.5699
+DLR0208,Ram Sharjah City Showroom,Ram,Sharjah,Sharjah City,"228, Sharjah City, Sharjah, UAE",PO Box 25809,Silver,2000,66,5644,True,True,20,804,48.17,4.5,True,100308889629,23.9486,55.0969
+DLR0209,BMW Al Hamra Showroom,BMW,Ras Al Khaimah,Al Hamra,"216, Al Hamra, Ras Al Khaimah, UAE",PO Box 39606,Bronze,2008,34,21100,False,True,51,444,86.87,4.7,True,100112841685,25.426,55.0679
+DLR0210,Mitsubishi Bur Dubai Showroom,Mitsubishi,Dubai,Bur Dubai,"539, Bur Dubai, Dubai, UAE",PO Box 72190,Silver,2008,77,20707,True,False,68,876,55.41,4.5,True,100523309218,25.6427,54.8923
+DLR0211,Jeep Abu Dhabi City Showroom,Jeep,Abu Dhabi,Abu Dhabi City,"647, Abu Dhabi City, Abu Dhabi, UAE",PO Box 59209,Silver,1988,70,13125,True,True,21,1068,98.37,3.2,True,100672243653,25.7936,54.4383
+DLR0212,Mitsubishi Downtown Dubai Showroom,Mitsubishi,Dubai,Downtown Dubai,"675, Downtown Dubai, Dubai, UAE",PO Box 62068,Gold,2016,144,18679,True,True,18,1680,69.3,3.4,True,100759332460,25.0139,54.9919
+DLR0213,Lexus Al Reem Island Showroom,Lexus,Abu Dhabi,Al Reem Island,"766, Al Reem Island, Abu Dhabi, UAE",PO Box 70748,Bronze,2010,39,10879,True,True,54,396,80.03,3.2,True,100228207262,23.354,52.215
+DLR0214,BMW Al Quoz Showroom,BMW,Dubai,Al Quoz,"471, Al Quoz, Dubai, UAE",PO Box 21483,Silver,2003,82,19299,True,True,42,840,53.37,3.2,True,100563120453,23.6398,56.1689
+DLR0215,Chevrolet Al Quoz Showroom,Chevrolet,Dubai,Al Quoz,"449, Al Quoz, Dubai, UAE",PO Box 18675,Silver,2002,70,3507,True,True,27,948,95.67,4.3,True,100505241777,22.8673,52.5672
+DLR0216,Lexus Al Nahda Showroom,Lexus,Sharjah,Al Nahda,"211, Al Nahda, Sharjah, UAE",PO Box 66831,Silver,1994,85,18271,True,True,75,1044,57.77,4.5,True,100209661985,24.492,54.1
+DLR0217,Genesis Al Quoz Showroom,Genesis,Dubai,Al Quoz,"291, Al Quoz, Dubai, UAE",PO Box 46331,Bronze,2000,30,24931,True,True,78,552,61.04,4.4,True,100420094128,23.8489,52.3006
+DLR0218,Land Rover Business Bay Showroom,Land Rover,Dubai,Business Bay,"634, Business Bay, Dubai, UAE",PO Box 95030,Bronze,1996,40,10579,False,True,62,648,52.54,3.7,True,100271229498,23.933,51.7053
+DLR0219,Jeep Abu Dhabi City Showroom,Jeep,Abu Dhabi,Abu Dhabi City,"504, Abu Dhabi City, Abu Dhabi, UAE",PO Box 81885,Bronze,1992,45,24078,False,True,69,540,70.77,5.0,True,100217767320,25.2229,55.3157
+DLR0220,Chevrolet Business Bay Showroom,Chevrolet,Dubai,Business Bay,"936, Business Bay, Dubai, UAE",PO Box 97448,Silver,2020,85,19227,False,False,40,1020,85.48,3.8,True,100543433344,24.5291,52.7745
+DLR0221,Ford Al Nakheel Showroom,Ford,Ras Al Khaimah,Al Nakheel,"91, Al Nakheel, Ras Al Khaimah, UAE",PO Box 39350,Gold,1992,165,16603,True,True,13,1776,56.25,3.5,True,100824745151,23.2283,53.9013
+DLR0222,Porsche Al Quoz Showroom,Porsche,Dubai,Al Quoz,"962, Al Quoz, Dubai, UAE",PO Box 8671,Gold,2000,156,14617,True,True,69,1740,85.32,4.5,True,100151624147,25.0862,56.4466
+DLR0223,Mercedes-Benz Al Nakheel Showroom,Mercedes-Benz,Ras Al Khaimah,Al Nakheel,"566, Al Nakheel, Ras Al Khaimah, UAE",PO Box 40273,Bronze,2008,27,16833,True,False,74,588,84.02,4.7,True,100447938537,24.8112,53.1319
+DLR0224,GMC Silicon Oasis Showroom,GMC,Dubai,Silicon Oasis,"926, Silicon Oasis, Dubai, UAE",PO Box 66065,Platinum,2013,251,11823,True,False,65,2916,71.47,4.1,True,100807767187,25.6301,54.7823
+DLR0225,Chevrolet Industrial Area Showroom,Chevrolet,Sharjah,Industrial Area,"393, Industrial Area, Sharjah, UAE",PO Box 41337,Gold,2014,139,10945,False,False,44,1764,60.07,3.2,True,100500795901,24.787,54.8836
+DLR0226,Land Rover Al Reem Island Showroom,Land Rover,Abu Dhabi,Al Reem Island,"523, Al Reem Island, Abu Dhabi, UAE",PO Box 19291,Bronze,1990,32,3061,True,True,37,444,48.93,3.9,True,100884309986,22.8066,55.7149
+DLR0227,Mitsubishi Al Quoz Showroom,Mitsubishi,Dubai,Al Quoz,"948, Al Quoz, Dubai, UAE",PO Box 49385,Gold,2009,135,8638,True,True,32,1716,70.44,4.1,True,100700243065,24.4409,53.972
+DLR0228,Kia Bur Dubai Showroom,Kia,Dubai,Bur Dubai,"987, Bur Dubai, Dubai, UAE",PO Box 29660,Silver,2013,92,14594,True,True,46,876,62.83,4.1,True,100971597099,25.122,55.3696
+DLR0229,Mitsubishi Bur Dubai Showroom,Mitsubishi,Dubai,Bur Dubai,"290, Bur Dubai, Dubai, UAE",PO Box 36188,Bronze,1986,32,14356,True,True,75,540,82.22,4.9,True,100317482672,23.6147,52.1428
+DLR0230,Porsche Sharjah City Showroom,Porsche,Sharjah,Sharjah City,"231, Sharjah City, Sharjah, UAE",PO Box 39694,Bronze,2019,25,8386,True,True,60,540,54.25,4.4,True,100758344088,23.6588,52.1409
+DLR0231,Genesis Al Reem Island Showroom,Genesis,Abu Dhabi,Al Reem Island,"676, Al Reem Island, Abu Dhabi, UAE",PO Box 98511,Gold,2003,165,21667,False,True,51,1740,69.64,4.2,True,100206813846,24.9558,51.8632
+DLR0232,Mercedes-Benz Jumeirah Showroom,Mercedes-Benz,Dubai,Jumeirah,"110, Jumeirah, Dubai, UAE",PO Box 50587,Silver,1995,83,6457,True,True,19,1044,64.82,3.7,True,100326577893,24.1708,52.3933
+DLR0233,Land Rover Bur Dubai Showroom,Land Rover,Dubai,Bur Dubai,"233, Bur Dubai, Dubai, UAE",PO Box 79380,Gold,2002,165,12268,False,False,24,1692,95.22,3.2,True,100264877910,23.367,55.5375
+DLR0234,Genesis Al Reem Island Showroom,Genesis,Abu Dhabi,Al Reem Island,"42, Al Reem Island, Abu Dhabi, UAE",PO Box 60081,Silver,2012,79,23890,False,True,9,1044,93.83,3.7,True,100587173001,22.9097,56.2817
+DLR0235,Mercedes-Benz Abu Dhabi City Showroom,Mercedes-Benz,Abu Dhabi,Abu Dhabi City,"4, Abu Dhabi City, Abu Dhabi, UAE",PO Box 49598,Bronze,2016,31,7527,False,True,28,564,52.65,3.3,True,100303895226,25.7558,54.9685
+DLR0236,Ford Al Nakheel Showroom,Ford,Ras Al Khaimah,Al Nakheel,"240, Al Nakheel, Ras Al Khaimah, UAE",PO Box 15869,Silver,2005,74,12924,True,True,22,828,87.45,4.4,True,100315871332,23.4514,53.3254
+DLR0237,BMW Deira Showroom,BMW,Dubai,Deira,"194, Deira, Dubai, UAE",PO Box 22161,Silver,1987,88,23517,True,True,14,816,56.37,3.4,True,100631411487,22.6498,52.1826
+DLR0238,Genesis Jumeirah Showroom,Genesis,Dubai,Jumeirah,"536, Jumeirah, Dubai, UAE",PO Box 83349,Silver,1997,75,5135,False,True,78,1104,88.8,4.3,True,100707283502,24.1698,54.2876
+DLR0239,BMW Al Ain Showroom,BMW,Abu Dhabi,Al Ain,"735, Al Ain, Abu Dhabi, UAE",PO Box 43763,Silver,2004,77,3069,True,False,49,924,85.91,4.9,True,100675190001,25.5298,51.8105
+DLR0240,Kia Al Ain Showroom,Kia,Abu Dhabi,Al Ain,"118, Al Ain, Abu Dhabi, UAE",PO Box 17482,Gold,2003,145,4111,True,True,54,1788,91.92,3.6,True,100461492388,25.1234,54.2054
+DLR0241,Tesla Khalifa City Showroom,Tesla,Abu Dhabi,Khalifa City,"566, Khalifa City, Abu Dhabi, UAE",PO Box 89882,Platinum,1996,258,16096,True,False,66,3084,82.04,4.3,True,100731743949,23.1414,54.5332
+DLR0242,Nissan Jumeirah Showroom,Nissan,Dubai,Jumeirah,"541, Jumeirah, Dubai, UAE",PO Box 59661,Gold,2020,151,12970,False,True,22,1788,82.3,4.4,True,100159373311,24.4724,55.5766
+DLR0243,Chevrolet Al Majaz Showroom,Chevrolet,Sharjah,Al Majaz,"477, Al Majaz, Sharjah, UAE",PO Box 73394,Bronze,2013,31,9791,True,False,19,420,65.81,4.4,True,100969904863,24.7429,53.5926
+DLR0244,Mitsubishi Al Ain Showroom,Mitsubishi,Abu Dhabi,Al Ain,"289, Al Ain, Abu Dhabi, UAE",PO Box 15076,Gold,2003,143,23180,True,False,30,1644,51.93,3.4,True,100647497035,23.1278,56.1936
+DLR0245,Ford Industrial Area Showroom,Ford,Sharjah,Industrial Area,"845, Industrial Area, Sharjah, UAE",PO Box 80559,Silver,2008,88,7218,True,False,63,1044,64.77,4.7,True,100384922865,25.3146,54.1498
+DLR0246,Mitsubishi Al Salama Showroom,Mitsubishi,Umm Al Quwain,Al Salama,"903, Al Salama, Umm Al Quwain, UAE",PO Box 47000,Bronze,1985,43,14692,False,True,77,372,63.5,4.8,True,100370769940,25.472,55.6981
+DLR0247,BMW Industrial Area Showroom,BMW,Sharjah,Industrial Area,"377, Industrial Area, Sharjah, UAE",PO Box 73315,Platinum,2005,247,6449,False,False,34,2820,61.98,4.3,True,100475815730,24.6957,52.49
+DLR0248,Land Rover Khalifa City Showroom,Land Rover,Abu Dhabi,Khalifa City,"446, Khalifa City, Abu Dhabi, UAE",PO Box 70574,Bronze,2006,50,16291,True,False,77,336,84.47,3.2,True,100392889755,23.0108,54.547
+DLR0249,Lexus Jumeirah Showroom,Lexus,Dubai,Jumeirah,"398, Jumeirah, Dubai, UAE",PO Box 27901,Gold,2009,159,17313,True,True,52,1824,71.07,4.3,True,100235698758,23.532,52.9135
+DLR0250,Genesis Silicon Oasis Showroom,Genesis,Dubai,Silicon Oasis,"957, Silicon Oasis, Dubai, UAE",PO Box 62668,Gold,1988,161,8161,True,True,12,1848,90.12,4.4,True,100454471114,22.6068,51.6136
+DLR0251,Tesla Al Nuaimiya Showroom,Tesla,Ajman,Al Nuaimiya,"957, Al Nuaimiya, Ajman, UAE",PO Box 49968,Bronze,2009,50,14247,True,False,70,348,93.19,3.3,True,100663772500,23.6815,52.2841
+DLR0252,Audi Khalifa City Showroom,Audi,Abu Dhabi,Khalifa City,"167, Khalifa City, Abu Dhabi, UAE",PO Box 12756,Silver,1999,90,8431,True,True,28,948,69.67,4.8,True,100294336445,23.0575,53.7192
+DLR0253,GMC Al Faseel Showroom,GMC,Fujairah,Al Faseel,"741, Al Faseel, Fujairah, UAE",PO Box 77692,Silver,2013,95,11911,False,True,47,852,75.65,4.2,True,100329793672,25.6081,53.5695
+DLR0254,BMW Abu Dhabi City Showroom,BMW,Abu Dhabi,Abu Dhabi City,"768, Abu Dhabi City, Abu Dhabi, UAE",PO Box 97876,Bronze,1994,43,13230,True,True,31,372,68.17,3.7,True,100131361824,24.4896,53.795
+DLR0255,Chevrolet Khalifa City Showroom,Chevrolet,Abu Dhabi,Khalifa City,"118, Khalifa City, Abu Dhabi, UAE",PO Box 14836,Gold,2018,164,6010,True,True,41,1656,49.67,4.2,True,100533131292,22.6734,52.8148
+DLR0256,Mercedes-Benz UAQ City Showroom,Mercedes-Benz,Umm Al Quwain,UAQ City,"134, UAQ City, Umm Al Quwain, UAE",PO Box 20505,Silver,1994,73,5883,False,True,76,816,77.57,4.1,True,100493050481,23.3478,52.5409
+DLR0257,Porsche Al Ain Showroom,Porsche,Abu Dhabi,Al Ain,"984, Al Ain, Abu Dhabi, UAE",PO Box 83270,Gold,2016,158,6668,False,True,65,1824,85.48,4.2,True,100963633125,23.918,52.878
+DLR0258,GMC Al Nuaimiya Showroom,GMC,Ajman,Al Nuaimiya,"192, Al Nuaimiya, Ajman, UAE",PO Box 79594,Gold,1986,135,11310,False,True,8,1728,47.8,4.4,True,100430206711,23.0188,56.0388
+DLR0259,Genesis Al Majaz Showroom,Genesis,Sharjah,Al Majaz,"59, Al Majaz, Sharjah, UAE",PO Box 34040,Silver,2007,70,15902,False,False,76,1008,46.29,4.3,True,100785184783,24.8565,54.4988
+DLR0260,Jeep Silicon Oasis Showroom,Jeep,Dubai,Silicon Oasis,"964, Silicon Oasis, Dubai, UAE",PO Box 45004,Silver,2013,85,7430,False,True,54,1068,84.07,4.1,True,100381288829,23.6451,54.2034
+DLR0261,Hyundai Al Quoz Showroom,Hyundai,Dubai,Al Quoz,"674, Al Quoz, Dubai, UAE",PO Box 32529,Bronze,1994,25,12141,False,True,37,300,85.73,4.7,True,100215454572,23.3561,52.511
+DLR0262,Ford Jumeirah Showroom,Ford,Dubai,Jumeirah,"272, Jumeirah, Dubai, UAE",PO Box 59209,Bronze,2019,38,21549,True,False,44,396,64.45,4.9,True,100296460358,24.8028,55.3491
+DLR0263,Lexus Bur Dubai Showroom,Lexus,Dubai,Bur Dubai,"176, Bur Dubai, Dubai, UAE",PO Box 24812,Silver,2015,68,9778,True,True,51,1032,86.53,5.0,True,100819757925,23.9756,53.6974
+DLR0264,Nissan Abu Dhabi City Showroom,Nissan,Abu Dhabi,Abu Dhabi City,"437, Abu Dhabi City, Abu Dhabi, UAE",PO Box 12698,Gold,1999,144,4198,True,True,44,1704,66.28,4.4,True,100343576519,24.8237,54.485
+DLR0265,Mercedes-Benz Deira Showroom,Mercedes-Benz,Dubai,Deira,"553, Deira, Dubai, UAE",PO Box 67239,Platinum,2008,248,8427,True,True,36,3060,63.86,4.2,True,100776643952,24.911,56.4499
+DLR0266,Tesla Yas Island Showroom,Tesla,Abu Dhabi,Yas Island,"429, Yas Island, Abu Dhabi, UAE",PO Box 61189,Silver,2010,76,11145,False,False,58,780,94.09,3.6,True,100789669198,22.922,53.0689
+DLR0267,Genesis Jumeirah Showroom,Genesis,Dubai,Jumeirah,"375, Jumeirah, Dubai, UAE",PO Box 56357,Silver,2000,95,5845,True,False,50,1128,83.95,4.2,True,100310512372,23.5294,55.8018
+DLR0268,Mercedes-Benz Business Bay Showroom,Mercedes-Benz,Dubai,Business Bay,"145, Business Bay, Dubai, UAE",PO Box 43215,Bronze,2011,39,14521,True,True,28,636,70.54,4.4,True,100663907744,25.3809,53.786
+DLR0269,Honda RAK City Showroom,Honda,Ras Al Khaimah,RAK City,"670, RAK City, Ras Al Khaimah, UAE",PO Box 42861,Bronze,2000,44,12445,False,False,80,648,90.67,3.6,True,100548617944,24.2772,56.1953
+DLR0270,Ram Musaffah Showroom,Ram,Abu Dhabi,Musaffah,"779, Musaffah, Abu Dhabi, UAE",PO Box 13512,Silver,2014,81,5094,True,True,59,972,49.39,4.9,True,100482339227,22.9462,52.8885
+DLR0271,Hyundai Al Quoz Showroom,Hyundai,Dubai,Al Quoz,"644, Al Quoz, Dubai, UAE",PO Box 74230,Silver,1988,65,24181,True,True,53,1080,93.14,4.8,True,100185663490,25.7685,55.8284
+DLR0272,Kia Industrial Area Showroom,Kia,Sharjah,Industrial Area,"951, Industrial Area, Sharjah, UAE",PO Box 60418,Gold,1997,143,10750,False,True,14,1668,62.95,3.2,True,100847756516,25.1684,53.2857
+DLR0273,Ram Deira Showroom,Ram,Dubai,Deira,"349, Deira, Dubai, UAE",PO Box 7150,Silver,1994,93,23803,True,False,74,1104,79.76,3.3,True,100202002238,24.7438,52.8657
+DLR0274,BMW Al Rashidiya Showroom,BMW,Ajman,Al Rashidiya,"328, Al Rashidiya, Ajman, UAE",PO Box 45273,Silver,2015,73,9394,True,True,77,1032,78.94,5.0,True,100564830478,25.0434,51.9175
+DLR0275,BMW Muwaileh Showroom,BMW,Sharjah,Muwaileh,"607, Muwaileh, Sharjah, UAE",PO Box 55696,Platinum,1991,264,4805,True,True,46,2844,83.47,3.4,True,100899343817,24.7615,53.9624
+DLR0276,Audi Dubai Marina Showroom,Audi,Dubai,Dubai Marina,"878, Dubai Marina, Dubai, UAE",PO Box 88010,Bronze,2002,33,16153,False,True,16,552,69.42,4.3,True,100504173628,25.3735,54.2378
+DLR0277,Ram Al Nahda Showroom,Ram,Sharjah,Al Nahda,"683, Al Nahda, Sharjah, UAE",PO Box 14667,Gold,2001,153,5464,False,True,15,1620,95.55,4.4,True,100447569688,24.184,54.8425
+DLR0278,Chevrolet Dubai Marina Showroom,Chevrolet,Dubai,Dubai Marina,"979, Dubai Marina, Dubai, UAE",PO Box 95956,Bronze,1997,41,3471,True,False,68,348,97.81,4.3,True,100545617784,23.3959,52.5123
+DLR0279,Mercedes-Benz Bur Dubai Showroom,Mercedes-Benz,Dubai,Bur Dubai,"515, Bur Dubai, Dubai, UAE",PO Box 45222,Bronze,1992,32,12850,True,False,12,552,68.52,4.9,True,100995064328,25.1723,52.8612
+DLR0280,Toyota Business Bay Showroom,Toyota,Dubai,Business Bay,"897, Business Bay, Dubai, UAE",PO Box 83983,Gold,2007,161,20397,True,True,63,1872,62.68,4.8,True,100737751506,22.641,54.7154
+DLR0281,Land Rover Muwaileh Showroom,Land Rover,Sharjah,Muwaileh,"4, Muwaileh, Sharjah, UAE",PO Box 69486,Bronze,2008,44,17519,True,False,54,492,57.24,3.6,True,100750090727,25.5649,54.7421
+DLR0282,Porsche Ajman City Showroom,Porsche,Ajman,Ajman City,"623, Ajman City, Ajman, UAE",PO Box 85457,Silver,1998,88,6953,False,True,64,1044,70.5,4.8,True,100551392399,24.6709,52.268
+DLR0283,BYD Khalifa City Showroom,BYD,Abu Dhabi,Khalifa City,"825, Khalifa City, Abu Dhabi, UAE",PO Box 49018,Gold,2006,150,15788,True,True,12,1692,93.29,3.5,True,100861298249,23.8992,52.6547
+DLR0284,Lexus Al Reem Island Showroom,Lexus,Abu Dhabi,Al Reem Island,"497, Al Reem Island, Abu Dhabi, UAE",PO Box 55908,Silver,1986,73,5960,True,True,23,972,86.13,3.5,True,100770441987,22.7465,52.7277
+DLR0285,Lexus Abu Dhabi City Showroom,Lexus,Abu Dhabi,Abu Dhabi City,"545, Abu Dhabi City, Abu Dhabi, UAE",PO Box 62582,Silver,2002,85,14924,True,False,46,876,73.8,4.0,True,100919183373,24.907,52.6941
+DLR0286,Ram Al Salama Showroom,Ram,Umm Al Quwain,Al Salama,"503, Al Salama, Umm Al Quwain, UAE",PO Box 14826,Silver,2002,76,19822,True,True,47,1020,58.4,4.7,True,100207685973,22.6894,52.4167
+DLR0287,Hyundai Khalifa City Showroom,Hyundai,Abu Dhabi,Khalifa City,"588, Khalifa City, Abu Dhabi, UAE",PO Box 63645,Gold,2000,146,23613,True,False,28,1764,89.81,3.9,True,100122076342,25.3843,56.1414
+DLR0288,Nissan Al Quoz Showroom,Nissan,Dubai,Al Quoz,"448, Al Quoz, Dubai, UAE",PO Box 4454,Silver,1990,91,21780,True,False,50,1140,52.89,4.0,True,100362165900,23.548,53.6058
+DLR0289,Ford Silicon Oasis Showroom,Ford,Dubai,Silicon Oasis,"570, Silicon Oasis, Dubai, UAE",PO Box 13131,Bronze,2017,55,6322,True,True,10,480,73.68,3.9,True,100382991327,23.9604,53.018
+DLR0290,Mercedes-Benz Industrial Area Showroom,Mercedes-Benz,Sharjah,Industrial Area,"903, Industrial Area, Sharjah, UAE",PO Box 17981,Bronze,1997,49,3643,False,True,51,324,79.64,4.9,True,100380561612,23.1069,55.0823
+DLR0291,Tesla Yas Island Showroom,Tesla,Abu Dhabi,Yas Island,"338, Yas Island, Abu Dhabi, UAE",PO Box 42836,Platinum,2008,247,23771,True,True,60,2880,60.63,4.3,True,100624856858,24.4691,52.4181
+DLR0292,Ford Industrial Area Showroom,Ford,Sharjah,Industrial Area,"463, Industrial Area, Sharjah, UAE",PO Box 16660,Silver,2018,81,19614,False,True,36,1116,85.83,4.8,True,100574136320,23.3469,52.2016
+DLR0293,Genesis Downtown Dubai Showroom,Genesis,Dubai,Downtown Dubai,"240, Downtown Dubai, Dubai, UAE",PO Box 15668,Bronze,2010,36,17453,False,True,41,528,77.05,4.7,True,100779247547,24.9203,52.1283
+DLR0294,Hyundai Al Rashidiya Showroom,Hyundai,Ajman,Al Rashidiya,"419, Al Rashidiya, Ajman, UAE",PO Box 41448,Silver,1998,72,11450,True,False,74,780,97.88,3.4,True,100594469888,25.7608,54.8839
+DLR0295,Lexus Muwaileh Showroom,Lexus,Sharjah,Muwaileh,"25, Muwaileh, Sharjah, UAE",PO Box 38811,Silver,1993,81,6531,True,False,58,1128,73.99,3.4,True,100808621642,25.0802,52.443
+DLR0296,Tesla Al Rashidiya Showroom,Tesla,Ajman,Al Rashidiya,"407, Al Rashidiya, Ajman, UAE",PO Box 99291,Silver,2000,83,21628,False,True,19,876,56.21,4.4,True,100926558738,24.7266,53.1331
+DLR0297,BMW Bur Dubai Showroom,BMW,Dubai,Bur Dubai,"941, Bur Dubai, Dubai, UAE",PO Box 72887,Platinum,2007,254,3781,False,True,76,3096,79.07,4.8,True,100454363320,23.6702,54.8616
+DLR0298,Tesla Al Majaz Showroom,Tesla,Sharjah,Al Majaz,"865, Al Majaz, Sharjah, UAE",PO Box 63078,Silver,1997,66,22365,False,True,28,804,98.44,3.6,True,100709945307,25.0949,52.9542
+DLR0299,Nissan Al Quoz Showroom,Nissan,Dubai,Al Quoz,"83, Al Quoz, Dubai, UAE",PO Box 80084,Silver,1992,82,23011,False,True,40,1104,97.75,3.9,True,100705038098,23.4602,55.5083
+DLR0300,Land Rover Al Hamra Showroom,Land Rover,Ras Al Khaimah,Al Hamra,"611, Al Hamra, Ras Al Khaimah, UAE",PO Box 19422,Silver,1995,76,4631,True,True,19,828,53.35,4.7,True,100561200446,22.7406,54.5553
+DLR0301,Lexus Ajman City Showroom,Lexus,Ajman,Ajman City,"799, Ajman City, Ajman, UAE",PO Box 5602,Bronze,2013,37,12010,False,True,55,312,56.89,4.0,True,100323110711,25.4108,55.4356
+DLR0302,Mitsubishi Yas Island Showroom,Mitsubishi,Abu Dhabi,Yas Island,"933, Yas Island, Abu Dhabi, UAE",PO Box 26453,Bronze,2007,27,4844,True,True,12,600,86.25,3.7,True,100484309467,24.0063,52.3867
+DLR0303,Kia Musaffah Showroom,Kia,Abu Dhabi,Musaffah,"282, Musaffah, Abu Dhabi, UAE",PO Box 1370,Bronze,2004,47,12957,False,False,38,516,98.41,3.6,True,100927024998,23.0189,54.7278
+DLR0304,Land Rover Musaffah Showroom,Land Rover,Abu Dhabi,Musaffah,"165, Musaffah, Abu Dhabi, UAE",PO Box 49704,Bronze,1999,52,22409,False,True,39,348,60.41,3.9,True,100486002426,24.7548,53.5267
+DLR0305,Mercedes-Benz Bur Dubai Showroom,Mercedes-Benz,Dubai,Bur Dubai,"649, Bur Dubai, Dubai, UAE",PO Box 47056,Gold,2020,142,4147,True,False,58,1692,78.03,3.8,True,100756541865,25.507,53.9996
+DLR0306,Porsche Al Quoz Showroom,Porsche,Dubai,Al Quoz,"374, Al Quoz, Dubai, UAE",PO Box 43911,Platinum,2014,255,23585,True,False,28,3060,72.79,4.3,True,100685353829,23.8712,55.3185
+DLR0307,Chevrolet Al Nahda Showroom,Chevrolet,Sharjah,Al Nahda,"28, Al Nahda, Sharjah, UAE",PO Box 37209,Silver,1986,77,20320,False,False,79,1092,56.34,4.3,True,100441503766,24.9199,56.0141
+DLR0308,Porsche Downtown Dubai Showroom,Porsche,Dubai,Downtown Dubai,"848, Downtown Dubai, Dubai, UAE",PO Box 60625,Gold,2003,154,19654,True,True,28,1944,91.49,4.8,True,100851285852,22.6661,56.424
+DLR0309,Audi Bur Dubai Showroom,Audi,Dubai,Bur Dubai,"105, Bur Dubai, Dubai, UAE",PO Box 71160,Silver,2014,65,4089,True,False,58,1008,50.04,5.0,True,100348939163,23.1155,53.9958
+DLR0310,Toyota Downtown Dubai Showroom,Toyota,Dubai,Downtown Dubai,"873, Downtown Dubai, Dubai, UAE",PO Box 60867,Silver,1985,75,17140,False,True,36,960,63.82,4.8,True,100665526750,22.8702,55.3337
+DLR0311,Land Rover Jumeirah Showroom,Land Rover,Dubai,Jumeirah,"147, Jumeirah, Dubai, UAE",PO Box 51703,Gold,1998,135,12447,False,True,53,1656,46.19,4.7,True,100470408385,24.6401,52.1968
+DLR0312,Lexus Musaffah Showroom,Lexus,Abu Dhabi,Musaffah,"409, Musaffah, Abu Dhabi, UAE",PO Box 52917,Gold,2012,146,11968,True,True,70,1788,94.9,4.1,True,100537800024,25.2311,54.7574
+DLR0313,Mercedes-Benz Deira Showroom,Mercedes-Benz,Dubai,Deira,"227, Deira, Dubai, UAE",PO Box 90572,Bronze,2016,35,5819,True,False,21,348,65.48,3.5,True,100981647333,23.4805,56.0636
+DLR0314,BYD Dubai Marina Showroom,BYD,Dubai,Dubai Marina,"779, Dubai Marina, Dubai, UAE",PO Box 21256,Gold,1994,149,12172,True,False,56,1800,64.49,4.5,True,100830002762,22.8867,55.1612
+DLR0315,Porsche Al Reem Island Showroom,Porsche,Abu Dhabi,Al Reem Island,"488, Al Reem Island, Abu Dhabi, UAE",PO Box 36663,Bronze,1985,25,5700,True,True,66,420,58.53,4.0,True,100530067641,25.7264,52.6119
+DLR0316,Kia Sharjah City Showroom,Kia,Sharjah,Sharjah City,"72, Sharjah City, Sharjah, UAE",PO Box 4546,Bronze,2007,33,20400,True,True,17,384,82.19,4.4,True,100308170153,25.7423,53.7745
+DLR0317,Chevrolet Business Bay Showroom,Chevrolet,Dubai,Business Bay,"191, Business Bay, Dubai, UAE",PO Box 63019,Bronze,2020,31,24810,True,False,42,396,47.61,4.1,True,100710508794,23.4883,51.823
+DLR0318,Porsche Yas Island Showroom,Porsche,Abu Dhabi,Yas Island,"409, Yas Island, Abu Dhabi, UAE",PO Box 18833,Platinum,2017,242,20946,True,False,78,3084,74.57,4.2,True,100794411431,22.8106,53.708
+DLR0319,Tesla Al Hamra Showroom,Tesla,Ras Al Khaimah,Al Hamra,"377, Al Hamra, Ras Al Khaimah, UAE",PO Box 19132,Silver,1990,92,5185,False,True,57,984,63.96,3.7,True,100400525252,24.439,52.5353
+DLR0320,BYD Dubai Marina Showroom,BYD,Dubai,Dubai Marina,"363, Dubai Marina, Dubai, UAE",PO Box 99261,Silver,2017,73,15241,True,False,17,780,81.44,4.3,True,100349604938,23.9792,54.0955
+DLR0321,Honda Silicon Oasis Showroom,Honda,Dubai,Silicon Oasis,"977, Silicon Oasis, Dubai, UAE",PO Box 90920,Silver,1986,72,11509,False,False,31,852,77.87,3.5,True,100685002193,25.2785,52.667
+DLR0322,BYD Al Nuaimiya Showroom,BYD,Ajman,Al Nuaimiya,"99, Al Nuaimiya, Ajman, UAE",PO Box 95492,Bronze,1997,44,23846,True,True,22,492,69.15,3.6,True,100190341913,22.9587,52.9218
+DLR0323,Toyota Yas Island Showroom,Toyota,Abu Dhabi,Yas Island,"539, Yas Island, Abu Dhabi, UAE",PO Box 33530,Bronze,2020,50,16302,True,False,27,516,93.41,4.9,True,100931559541,22.9653,55.015
+DLR0324,Hyundai Dubai Marina Showroom,Hyundai,Dubai,Dubai Marina,"468, Dubai Marina, Dubai, UAE",PO Box 17767,Silver,1989,93,19432,True,True,48,816,52.83,3.5,True,100997225112,24.3913,51.7447
+DLR0325,Genesis Bur Dubai Showroom,Genesis,Dubai,Bur Dubai,"552, Bur Dubai, Dubai, UAE",PO Box 80592,Silver,1989,76,13323,True,False,69,1032,74.65,4.8,True,100438971477,24.8364,55.0851
+DLR0326,Genesis Yas Island Showroom,Genesis,Abu Dhabi,Yas Island,"680, Yas Island, Abu Dhabi, UAE",PO Box 64616,Bronze,1989,32,5572,True,True,18,528,52.87,4.7,True,100596427694,23.5827,52.9559
+DLR0327,GMC Deira Showroom,GMC,Dubai,Deira,"608, Deira, Dubai, UAE",PO Box 9722,Platinum,1988,255,17508,True,False,60,3048,65.94,4.3,True,100523679755,23.7241,53.7014
+DLR0328,Tesla Business Bay Showroom,Tesla,Dubai,Business Bay,"180, Business Bay, Dubai, UAE",PO Box 56177,Bronze,2020,51,13747,True,False,77,444,66.06,4.4,True,100330007663,24.6398,55.5473
+DLR0329,Porsche Al Majaz Showroom,Porsche,Sharjah,Al Majaz,"253, Al Majaz, Sharjah, UAE",PO Box 19222,Silver,1985,95,5968,False,True,56,960,96.87,5.0,True,100410069194,25.0784,54.6193
+DLR0330,Honda Dubai Marina Showroom,Honda,Dubai,Dubai Marina,"811, Dubai Marina, Dubai, UAE",PO Box 25303,Silver,2007,90,5501,False,True,14,948,62.25,3.6,True,100874517149,23.6545,52.7189
+DLR0331,Mitsubishi Industrial Area Showroom,Mitsubishi,Sharjah,Industrial Area,"490, Industrial Area, Sharjah, UAE",PO Box 50183,Gold,2012,165,15890,True,True,69,1980,84.37,3.2,True,100945052195,24.8314,54.2978
+DLR0332,Audi Sharjah City Showroom,Audi,Sharjah,Sharjah City,"284, Sharjah City, Sharjah, UAE",PO Box 87773,Bronze,2018,41,21995,True,True,29,432,67.52,3.2,True,100502778638,22.6547,55.7829
+DLR0333,BYD Bur Dubai Showroom,BYD,Dubai,Bur Dubai,"66, Bur Dubai, Dubai, UAE",PO Box 88779,Platinum,2016,261,21602,False,False,75,2928,62.28,4.1,True,100711397440,25.6724,55.4316
+DLR0334,BYD Business Bay Showroom,BYD,Dubai,Business Bay,"983, Business Bay, Dubai, UAE",PO Box 64088,Silver,1988,78,7922,False,True,28,1116,89.23,3.5,True,100344389050,25.2534,54.3916
+DLR0335,Toyota Business Bay Showroom,Toyota,Dubai,Business Bay,"311, Business Bay, Dubai, UAE",PO Box 15378,Gold,1990,149,18610,True,True,54,1692,52.84,4.4,True,100851659006,23.9952,54.4806
+DLR0336,Mercedes-Benz Al Ain Showroom,Mercedes-Benz,Abu Dhabi,Al Ain,"877, Al Ain, Abu Dhabi, UAE",PO Box 42464,Silver,1988,73,13272,True,True,50,1068,81.92,3.6,True,100862803652,24.5053,55.6923
+DLR0337,BYD Muwaileh Showroom,BYD,Sharjah,Muwaileh,"15, Muwaileh, Sharjah, UAE",PO Box 25723,Gold,2007,140,18775,True,True,10,1860,83.05,4.2,True,100541250155,24.7649,56.3868
+DLR0338,Mitsubishi Dubai Marina Showroom,Mitsubishi,Dubai,Dubai Marina,"35, Dubai Marina, Dubai, UAE",PO Box 99843,Silver,1995,75,20026,False,False,44,948,68.02,3.8,True,100265419705,24.7213,55.1575
+DLR0339,Mercedes-Benz Jumeirah Showroom,Mercedes-Benz,Dubai,Jumeirah,"739, Jumeirah, Dubai, UAE",PO Box 75474,Bronze,2018,46,6489,False,True,56,660,51.97,4.6,True,100107352639,24.0487,52.1833
+DLR0340,Hyundai Al Salama Showroom,Hyundai,Umm Al Quwain,Al Salama,"466, Al Salama, Umm Al Quwain, UAE",PO Box 34940,Silver,2000,87,7281,True,True,15,1068,87.36,3.2,True,100788446003,24.8031,55.4518
+DLR0341,BMW Al Quoz Showroom,BMW,Dubai,Al Quoz,"531, Al Quoz, Dubai, UAE",PO Box 32355,Silver,2003,75,3172,True,False,23,1032,60.65,4.5,True,100654355040,24.7401,52.091
+DLR0342,Mitsubishi Dubai Marina Showroom,Mitsubishi,Dubai,Dubai Marina,"803, Dubai Marina, Dubai, UAE",PO Box 64209,Bronze,2008,40,15033,True,False,32,468,71.6,4.3,True,100586161870,24.7254,53.0557
+DLR0343,Hyundai Deira Showroom,Hyundai,Dubai,Deira,"886, Deira, Dubai, UAE",PO Box 41910,Silver,1994,68,20415,True,False,58,960,70.43,4.3,True,100453227018,24.1809,56.0545
+DLR0344,Hyundai Khalifa City Showroom,Hyundai,Abu Dhabi,Khalifa City,"853, Khalifa City, Abu Dhabi, UAE",PO Box 66951,Silver,2004,67,6367,True,True,38,912,81.94,4.6,True,100878042848,23.2664,53.7747
+DLR0345,Ford Industrial Area Showroom,Ford,Sharjah,Industrial Area,"591, Industrial Area, Sharjah, UAE",PO Box 73172,Bronze,2002,43,20128,False,True,47,612,98.52,4.5,True,100553686555,23.2118,52.3538
+DLR0346,BYD Yas Island Showroom,BYD,Abu Dhabi,Yas Island,"71, Yas Island, Abu Dhabi, UAE",PO Box 68151,Bronze,1985,54,24592,True,True,18,636,77.25,4.4,True,100365177761,25.3734,56.2996
+DLR0347,Honda Al Nuaimiya Showroom,Honda,Ajman,Al Nuaimiya,"705, Al Nuaimiya, Ajman, UAE",PO Box 64498,Silver,1999,71,11887,True,True,63,888,90.12,3.5,True,100599608335,24.897,56.3896
+DLR0348,BYD Al Nuaimiya Showroom,BYD,Ajman,Al Nuaimiya,"97, Al Nuaimiya, Ajman, UAE",PO Box 49124,Bronze,2017,47,5099,True,True,25,624,61.0,3.7,True,100474228372,24.1536,54.0014
+DLR0349,Chevrolet Al Faseel Showroom,Chevrolet,Fujairah,Al Faseel,"731, Al Faseel, Fujairah, UAE",PO Box 96012,Bronze,1999,47,24197,True,True,56,516,82.31,4.4,True,100682712863,24.8974,52.7075
+DLR0350,Ram Dibba Showroom,Ram,Fujairah,Dibba,"446, Dibba, Fujairah, UAE",PO Box 24073,Bronze,1987,36,18592,True,True,16,588,88.13,4.7,True,100558051129,24.4498,54.9855
+DLR0351,Kia Abu Dhabi City Showroom,Kia,Abu Dhabi,Abu Dhabi City,"973, Abu Dhabi City, Abu Dhabi, UAE",PO Box 36304,Platinum,2014,237,16329,True,True,21,3048,61.37,3.2,True,100677146141,24.0785,56.3866
+DLR0352,BYD RAK City Showroom,BYD,Ras Al Khaimah,RAK City,"469, RAK City, Ras Al Khaimah, UAE",PO Box 76444,Silver,1990,81,6390,True,True,73,984,61.67,3.9,True,100370405830,24.7533,54.5518
+DLR0353,Audi Bur Dubai Showroom,Audi,Dubai,Bur Dubai,"874, Bur Dubai, Dubai, UAE",PO Box 70918,Silver,1993,67,16928,True,True,41,1020,89.14,4.7,True,100780939039,25.2738,53.6563
+DLR0354,Audi Musaffah Showroom,Audi,Abu Dhabi,Musaffah,"917, Musaffah, Abu Dhabi, UAE",PO Box 75514,Gold,2019,142,4768,True,True,35,1824,61.85,3.2,True,100299104613,25.4529,53.0351
+DLR0355,Mitsubishi Al Nakheel Showroom,Mitsubishi,Ras Al Khaimah,Al Nakheel,"355, Al Nakheel, Ras Al Khaimah, UAE",PO Box 12870,Bronze,2009,33,21273,False,True,53,480,68.35,4.6,True,100692652364,23.2186,51.5697
+DLR0356,Chevrolet Ajman City Showroom,Chevrolet,Ajman,Ajman City,"119, Ajman City, Ajman, UAE",PO Box 23109,Gold,2005,165,23174,False,False,34,1968,61.26,4.5,True,100534027336,24.3725,55.3397
+DLR0357,Audi Yas Island Showroom,Audi,Abu Dhabi,Yas Island,"986, Yas Island, Abu Dhabi, UAE",PO Box 45740,Silver,1998,76,16009,True,True,51,912,73.15,4.1,True,100738908619,22.9166,53.6779
+DLR0358,Kia Dibba Showroom,Kia,Fujairah,Dibba,"480, Dibba, Fujairah, UAE",PO Box 56866,Silver,1985,75,21966,True,False,79,852,91.65,4.2,True,100565361947,25.4855,54.2152
+DLR0359,BMW Al Faseel Showroom,BMW,Fujairah,Al Faseel,"388, Al Faseel, Fujairah, UAE",PO Box 98074,Platinum,1991,261,20769,False,True,26,3048,55.71,4.6,True,100298647127,22.8254,53.7872
+DLR0360,Lexus Jumeirah Showroom,Lexus,Dubai,Jumeirah,"684, Jumeirah, Dubai, UAE",PO Box 15034,Silver,2008,86,5856,True,True,80,876,59.89,4.1,True,100227657064,24.8892,52.6712
+DLR0361,Mercedes-Benz Bur Dubai Showroom,Mercedes-Benz,Dubai,Bur Dubai,"666, Bur Dubai, Dubai, UAE",PO Box 58932,Silver,2008,76,14200,True,False,80,1032,46.04,3.4,True,100307431573,22.9872,53.4784
+DLR0362,GMC Muwaileh Showroom,GMC,Sharjah,Muwaileh,"861, Muwaileh, Sharjah, UAE",PO Box 10746,Silver,2000,77,20063,True,True,59,1020,74.63,4.9,True,100957836032,24.4643,52.563
+DLR0363,Nissan Al Majaz Showroom,Nissan,Sharjah,Al Majaz,"103, Al Majaz, Sharjah, UAE",PO Box 44110,Platinum,1987,262,7063,False,True,37,2964,90.27,4.5,True,100281114719,23.8192,54.5472
+DLR0364,Kia Silicon Oasis Showroom,Kia,Dubai,Silicon Oasis,"342, Silicon Oasis, Dubai, UAE",PO Box 59701,Platinum,2016,251,11895,True,True,46,3012,84.08,4.3,True,100863414606,24.5253,53.0319
+DLR0365,Audi Al Rashidiya Showroom,Audi,Ajman,Al Rashidiya,"250, Al Rashidiya, Ajman, UAE",PO Box 90589,Bronze,1997,40,5358,True,False,44,504,86.05,3.2,True,100664706544,22.8811,51.6325
+DLR0366,Mitsubishi Muwaileh Showroom,Mitsubishi,Sharjah,Muwaileh,"839, Muwaileh, Sharjah, UAE",PO Box 23309,Bronze,2004,41,8975,True,False,62,636,86.49,3.4,True,100291728903,22.7732,52.0729
+DLR0367,Chevrolet Khalifa City Showroom,Chevrolet,Abu Dhabi,Khalifa City,"93, Khalifa City, Abu Dhabi, UAE",PO Box 47410,Gold,1988,154,10139,True,True,24,1620,54.02,4.7,True,100158785071,24.3442,56.3244
+DLR0368,Chevrolet Al Majaz Showroom,Chevrolet,Sharjah,Al Majaz,"217, Al Majaz, Sharjah, UAE",PO Box 94610,Silver,1995,92,12069,True,False,36,1008,60.42,4.3,True,100770101479,24.4667,52.1564
+DLR0369,Genesis Al Reem Island Showroom,Genesis,Abu Dhabi,Al Reem Island,"745, Al Reem Island, Abu Dhabi, UAE",PO Box 2879,Gold,2011,137,21512,True,True,48,1968,81.53,4.7,True,100463778511,23.8465,55.5907
+DLR0370,Audi Khalifa City Showroom,Audi,Abu Dhabi,Khalifa City,"724, Khalifa City, Abu Dhabi, UAE",PO Box 29690,Platinum,1994,240,3042,False,True,41,3144,89.18,4.3,True,100255703846,25.3342,51.726
+DLR0371,Kia Al Nakheel Showroom,Kia,Ras Al Khaimah,Al Nakheel,"432, Al Nakheel, Ras Al Khaimah, UAE",PO Box 3312,Silver,2007,79,21567,True,True,69,864,71.96,4.2,True,100513843923,24.6207,55.9002
+DLR0372,Mitsubishi Al Reem Island Showroom,Mitsubishi,Abu Dhabi,Al Reem Island,"603, Al Reem Island, Abu Dhabi, UAE",PO Box 75373,Silver,1991,71,6914,True,False,9,936,97.12,4.3,True,100737094928,24.8797,54.0853
+DLR0373,Ram Abu Dhabi City Showroom,Ram,Abu Dhabi,Abu Dhabi City,"675, Abu Dhabi City, Abu Dhabi, UAE",PO Box 62012,Gold,2004,149,24772,True,False,37,1716,51.52,3.7,True,100124616066,25.4245,52.0753
+DLR0374,Nissan Al Salama Showroom,Nissan,Umm Al Quwain,Al Salama,"399, Al Salama, Umm Al Quwain, UAE",PO Box 30907,Bronze,2008,33,14808,True,True,51,588,49.76,4.5,True,100627232373,25.6235,51.8972
+DLR0375,Genesis Bur Dubai Showroom,Genesis,Dubai,Bur Dubai,"945, Bur Dubai, Dubai, UAE",PO Box 42186,Silver,2017,77,10570,True,False,11,1068,76.98,3.3,True,100364248658,24.7777,54.9051
+DLR0376,GMC Business Bay Showroom,GMC,Dubai,Business Bay,"125, Business Bay, Dubai, UAE",PO Box 64946,Bronze,2002,36,11028,True,True,64,564,55.1,4.6,True,100441017463,24.6634,56.3085
+DLR0377,Honda Industrial Area Showroom,Honda,Sharjah,Industrial Area,"424, Industrial Area, Sharjah, UAE",PO Box 25328,Silver,2007,80,21844,False,True,21,1068,88.21,4.8,True,100845842912,24.5216,55.6611
+DLR0378,GMC Downtown Dubai Showroom,GMC,Dubai,Downtown Dubai,"884, Downtown Dubai, Dubai, UAE",PO Box 21351,Silver,2006,67,16906,True,True,57,864,62.65,3.7,True,100962125468,22.8793,53.6639
+DLR0379,Hyundai Ajman City Showroom,Hyundai,Ajman,Ajman City,"801, Ajman City, Ajman, UAE",PO Box 62122,Silver,1989,66,10717,False,False,52,1116,46.6,3.8,True,100346208802,24.9716,53.9127
+DLR0380,Lexus Al Ain Showroom,Lexus,Abu Dhabi,Al Ain,"11, Al Ain, Abu Dhabi, UAE",PO Box 51391,Bronze,2015,54,21145,False,True,22,432,88.78,3.4,True,100286749809,23.9847,53.8259
+DLR0381,Mercedes-Benz Muwaileh Showroom,Mercedes-Benz,Sharjah,Muwaileh,"118, Muwaileh, Sharjah, UAE",PO Box 1680,Silver,2014,65,21571,True,True,78,792,83.5,4.5,True,100551013173,23.2653,55.0089
+DLR0382,Mercedes-Benz Jumeirah Showroom,Mercedes-Benz,Dubai,Jumeirah,"697, Jumeirah, Dubai, UAE",PO Box 19191,Silver,2004,85,5617,True,True,25,1104,54.19,4.4,True,100499897304,24.8353,53.4868
+DLR0383,Nissan Ajman City Showroom,Nissan,Ajman,Ajman City,"937, Ajman City, Ajman, UAE",PO Box 68785,Gold,2018,135,15908,True,True,75,1644,65.55,3.4,True,100794346184,24.3391,51.9079
+DLR0384,BMW Al Reem Island Showroom,BMW,Abu Dhabi,Al Reem Island,"826, Al Reem Island, Abu Dhabi, UAE",PO Box 96221,Silver,2010,71,9824,True,True,48,780,76.89,3.4,True,100364405134,23.3677,54.2214
+DLR0385,Chevrolet Jumeirah Showroom,Chevrolet,Dubai,Jumeirah,"135, Jumeirah, Dubai, UAE",PO Box 6936,Bronze,2019,39,19006,False,True,72,468,88.89,3.5,True,100298546560,24.8588,54.4747
+DLR0386,Nissan Al Majaz Showroom,Nissan,Sharjah,Al Majaz,"356, Al Majaz, Sharjah, UAE",PO Box 92701,Bronze,2000,49,4471,True,False,17,312,77.98,3.3,True,100202521963,24.6217,55.0755
+DLR0387,Ram Al Ain Showroom,Ram,Abu Dhabi,Al Ain,"714, Al Ain, Abu Dhabi, UAE",PO Box 11612,Gold,1986,142,24151,True,False,63,1968,89.73,4.0,True,100255388135,25.5892,55.7618
+DLR0388,Genesis Al Quoz Showroom,Genesis,Dubai,Al Quoz,"383, Al Quoz, Dubai, UAE",PO Box 41317,Silver,2019,74,5784,False,False,75,936,75.64,4.0,True,100500789564,23.7345,54.7581
+DLR0389,Hyundai Al Nahda Showroom,Hyundai,Sharjah,Al Nahda,"90, Al Nahda, Sharjah, UAE",PO Box 13184,Gold,2006,161,9276,True,True,68,1824,50.22,4.5,True,100161065076,23.0152,52.0765
+DLR0390,Audi Al Nuaimiya Showroom,Audi,Ajman,Al Nuaimiya,"520, Al Nuaimiya, Ajman, UAE",PO Box 88871,Silver,1994,78,13265,False,True,13,1080,76.29,3.7,True,100195459706,24.8971,55.3658
+DLR0391,Toyota Ajman City Showroom,Toyota,Ajman,Ajman City,"639, Ajman City, Ajman, UAE",PO Box 89630,Gold,2008,136,21661,False,True,20,1656,54.42,4.5,True,100733011131,25.1364,52.7285
+DLR0392,Genesis Al Reem Island Showroom,Genesis,Abu Dhabi,Al Reem Island,"755, Al Reem Island, Abu Dhabi, UAE",PO Box 23138,Silver,2009,81,5982,True,False,38,1032,91.85,3.7,True,100380221324,23.2688,54.7907
+DLR0393,Honda Sharjah City Showroom,Honda,Sharjah,Sharjah City,"731, Sharjah City, Sharjah, UAE",PO Box 42909,Silver,2020,72,5301,True,True,39,1128,92.5,4.2,True,100723436162,25.7459,51.5589
+DLR0394,Honda Al Majaz Showroom,Honda,Sharjah,Al Majaz,"242, Al Majaz, Sharjah, UAE",PO Box 51769,Silver,1986,92,17416,True,True,28,924,64.55,4.3,True,100689212606,24.6191,55.1986
+DLR0395,Mercedes-Benz Al Reem Island Showroom,Mercedes-Benz,Abu Dhabi,Al Reem Island,"875, Al Reem Island, Abu Dhabi, UAE",PO Box 27257,Gold,1996,146,7544,False,True,64,1920,82.89,4.9,True,100112292836,23.5561,51.8586
+DLR0396,Hyundai Downtown Dubai Showroom,Hyundai,Dubai,Downtown Dubai,"278, Downtown Dubai, Dubai, UAE",PO Box 68439,Gold,1987,150,21270,False,True,24,1668,53.02,3.8,True,100559386744,23.6067,52.1913
+DLR0397,Hyundai Muwaileh Showroom,Hyundai,Sharjah,Muwaileh,"626, Muwaileh, Sharjah, UAE",PO Box 91197,Silver,1989,76,8062,True,True,62,780,45.28,4.9,True,100490483383,24.5618,52.7958
+DLR0398,Mitsubishi Al Reem Island Showroom,Mitsubishi,Abu Dhabi,Al Reem Island,"627, Al Reem Island, Abu Dhabi, UAE",PO Box 45103,Platinum,2007,256,20958,False,True,62,3072,55.37,4.0,True,100952309100,23.3942,52.2172
+DLR0399,Audi Al Rashidiya Showroom,Audi,Ajman,Al Rashidiya,"466, Al Rashidiya, Ajman, UAE",PO Box 67003,Platinum,1997,236,14095,True,False,15,3036,92.91,3.9,True,100541845165,24.6921,52.3344
+DLR0400,Tesla Khalifa City Showroom,Tesla,Abu Dhabi,Khalifa City,"566, Khalifa City, Abu Dhabi, UAE",PO Box 83693,Silver,2010,87,11161,True,False,67,984,87.47,3.5,True,100268764195,25.6362,52.9891
