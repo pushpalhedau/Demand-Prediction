@@ -1,7 +1,7 @@
 from sqlalchemy import func, and_, or_, extract, desc, asc
 from sqlalchemy.orm import Session
 from database.models import Customer, Vehicle, Dealer, Sale, Inventory, ExternalFactor
-from database.connection import get_db_session
+from database.connection import get_db_session # This line is already present, no change needed
 import pandas as pd
 from datetime import datetime, date
 
@@ -18,15 +18,53 @@ def get_executive_kpis(session: Session, filters: dict = None) -> dict:
         func.avg(Sale.lead_to_close_days).label("avg_lead_close")
     )
 
+    # Initialize delta values
+    total_sales_delta = None
+    total_revenue_delta = None
+    avg_discount_delta = None
+    avg_lead_close_delta = None
+    
     # Apply global filters
-    query = _apply_sale_filters(query, filters)
-
-    res = query.first()
+    current_period_query = _apply_sale_filters(query, filters)
+    res = current_period_query.first()
 
     total_sales = (res.total_sales if res else 0) or 0
     total_revenue = (res.total_revenue if res else 0) or 0
     avg_discount = (res.avg_discount if res else 0.0) or 0.0
     avg_lead_close = (res.avg_lead_close if res else 0.0) or 0.0
+
+    # Calculate YoY deltas if date filters are present
+    if filters and filters.get("start_date") and filters.get("end_date"):
+        current_start_date = filters["start_date"]
+        current_end_date = filters["end_date"]
+
+        # Calculate prior year dates
+        prior_year_start_date = current_start_date.replace(year=current_start_date.year - 1)
+        prior_year_end_date = current_end_date.replace(year=current_end_date.year - 1)
+
+        prior_year_filters = filters.copy()
+        prior_year_filters["start_date"] = prior_year_start_date
+        prior_year_filters["end_date"] = prior_year_end_date
+
+        prior_year_query = session.query(
+            func.sum(Sale.units_sold).label("total_sales"),
+            func.sum(Sale.total_revenue_incl_vat).label("total_revenue"),
+            func.avg(Sale.discount_pct).label("avg_discount"),
+            func.avg(Sale.lead_to_close_days).label("avg_lead_close")
+        )
+        prior_year_query = _apply_sale_filters(prior_year_query, prior_year_filters)
+        prior_res = prior_year_query.first()
+
+        prior_total_sales = (prior_res.total_sales if prior_res else 0) or 0
+        prior_total_revenue = (prior_res.total_revenue if prior_res else 0) or 0
+        prior_avg_discount = (prior_res.avg_discount if prior_res else 0.0) or 0.0
+        prior_avg_lead_close = (prior_res.avg_lead_close if prior_res else 0.0) or 0.0
+
+        # Calculate deltas
+        if prior_total_sales > 0: total_sales_delta = ((total_sales - prior_total_sales) / prior_total_sales) * 100
+        if prior_total_revenue > 0: total_revenue_delta = ((total_revenue - prior_total_revenue) / prior_total_revenue) * 100
+        if prior_avg_discount > 0: avg_discount_delta = avg_discount - prior_avg_discount # Absolute change in percentage points
+        if prior_avg_lead_close > 0: avg_lead_close_delta = prior_avg_lead_close - avg_lead_close # Faster is positive
 
     # Get top vehicle category
     cat_query = session.query(Sale.vehicle_category, func.sum(Sale.units_sold).label("cnt"))
@@ -52,6 +90,10 @@ def get_executive_kpis(session: Session, filters: dict = None) -> dict:
         "total_revenue": total_revenue,
         "avg_discount": avg_discount,
         "avg_lead_close": avg_lead_close,
+        "total_sales_delta": total_sales_delta,
+        "total_revenue_delta": total_revenue_delta,
+        "avg_discount_delta": avg_discount_delta,
+        "avg_lead_close_delta": avg_lead_close_delta,
         "top_vehicle_category": top_cat,
         "worst_region": worst_region,
         "total_customers": cust_count,
@@ -286,5 +328,11 @@ def _apply_sale_filters(query, filters: dict = None):
         query = query.filter(Sale.brand == filters["brand"])
     if filters.get("financing_type"):
         query = query.filter(Sale.financing_type == filters["financing_type"])
+
+    # Apply date filters
+    if filters.get("start_date"):
+        query = query.filter(Sale.sale_date >= filters["start_date"])
+    if filters.get("end_date"):
+        query = query.filter(Sale.sale_date <= filters["end_date"])
 
     return query

@@ -22,13 +22,33 @@ def render_overview(filters: dict):
         # Display KPI Cards
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            render_kpi_card("Total Sales Volume", f"{kpis['total_sales']:,} units", delta="12% YoY", is_positive=True)
+            sales_delta_str = "N/A"
+            if kpis['total_sales_delta'] is not None:
+                is_positive_sales = kpis['total_sales_delta'] >= 0
+                sales_delta_str = f"{kpis['total_sales_delta']:.2f}% YoY"
+            render_kpi_card("Total Sales Volume", f"{kpis['total_sales']:,} units", delta=sales_delta_str, is_positive=is_positive_sales)
         with col2:
-            render_kpi_card("Total Revenue", f"AED {kpis['total_revenue'] / 1_000_000:.2f}M", delta="8.4% YoY", is_positive=True)
+            revenue_delta_str = "N/A"
+            if kpis['total_revenue_delta'] is not None:
+                is_positive_revenue = kpis['total_revenue_delta'] >= 0
+                revenue_delta_str = f"{kpis['total_revenue_delta']:.2f}% YoY"
+            render_kpi_card("Total Revenue", f"AED {kpis['total_revenue'] / 1_000_000:.2f}M", delta=revenue_delta_str, is_positive=is_positive_revenue)
         with col3:
-            render_kpi_card("Average Discount", f"{kpis['avg_discount']:.2f}%", delta="1.2% discount increase", is_positive=False)
+            discount_delta_str = "N/A"
+            is_positive_discount = False # Discount increase is generally negative
+            if kpis['avg_discount_delta'] is not None:
+                sign = "+" if kpis['avg_discount_delta'] > 0 else ""
+                discount_delta_str = f"{sign}{kpis['avg_discount_delta']:.2f}% discount {'increase' if kpis['avg_discount_delta'] > 0 else 'decrease'}"
+                is_positive_discount = kpis['avg_discount_delta'] < 0 # Lower discount is positive
+            render_kpi_card("Average Discount", f"{kpis['avg_discount']:.2f}%", delta=discount_delta_str, is_positive=is_positive_discount)
         with col4:
-            render_kpi_card("Avg Closing Velocity", f"{kpis['avg_lead_close']:.1f} Days", delta="4 days faster", is_positive=True)
+            lead_close_delta_str = "N/A"
+            is_positive_lead_close = True # Faster is positive
+            if kpis['avg_lead_close_delta'] is not None:
+                sign = "+" if kpis['avg_lead_close_delta'] > 0 else ""
+                lead_close_delta_str = f"{abs(kpis['avg_lead_close_delta']):.0f} days {'faster' if kpis['avg_lead_close_delta'] > 0 else 'slower'}"
+                is_positive_lead_close = kpis['avg_lead_close_delta'] >= 0
+            render_kpi_card("Avg Closing Velocity", f"{kpis['avg_lead_close']:.1f} Days", delta=lead_close_delta_str, is_positive=is_positive_lead_close)
             
         st.markdown("<br>", unsafe_allow_html=True)
         
