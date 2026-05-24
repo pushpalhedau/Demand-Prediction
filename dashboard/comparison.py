@@ -114,9 +114,9 @@ def render_comparison(filters: dict):
                 # Group by region and plot a bar chart comparing revenue share
                 fig_reg = px.bar(
                     reg_df,
-                    x='region',
+                    x='emirate',
                     y='revenue',
-                    color='region',
+                    color='emirate',
                     color_discrete_sequence=colors['colors_seq']
                 )
                 fig_reg.update_layout(

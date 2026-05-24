@@ -26,7 +26,7 @@ def render_inventory(filters: dict):
         # 2. Headline KPIs
         total_stock = df_inv['current_stock'].sum()
         total_transit = df_inv['transit_stock'].sum()
-        total_holding = df_inv['estimated_holding_cost'].sum()
+        total_holding = df_inv['estimated_holding_cost_aed'].sum()
         stockouts_cnt = df_inv[df_inv['current_stock'] == 0].shape[0]
         reorders_cnt = df_inv[df_inv['reorder_needed'] == True].shape[0]
         
@@ -38,7 +38,7 @@ def render_inventory(filters: dict):
         with col3:
             render_kpi_card("Reorder Triggers", f"{reorders_cnt} Alerts", delta="Below threshold", is_positive=False)
         with col4:
-            render_kpi_card("Est. Holding Cost", f"₹{total_holding:,.0f}", delta="Holding cost/month", is_positive=False)
+            render_kpi_card("Est. Holding Cost", f"AED {total_holding:,.0f}", delta="Holding cost/month", is_positive=False)
             
         st.markdown("<br>", unsafe_allow_html=True)
         
@@ -52,14 +52,14 @@ def render_inventory(filters: dict):
             reorder_df.rename(columns={
                 'brand': 'Brand',
                 'model': 'Model',
-                'city': 'City',
+                'emirate': 'Emirate',
                 'current_stock': 'Current Stock',
                 'reorder_point': 'Reorder Point',
                 'days_in_stock': 'Days in Stock'
             }, inplace=True)
             
             st.dataframe(
-                reorder_df[['Brand', 'Model', 'City', 'Current Stock', 'Reorder Point', 'Deficit', 'Urgency Score', 'Days in Stock']]
+                reorder_df[['Brand', 'Model', 'Emirate', 'Current Stock', 'Reorder Point', 'Deficit', 'Urgency Score', 'Days in Stock']]
                 .sort_values(by='Urgency Score', ascending=False)
                 .head(10),
                 use_container_width=True,
@@ -114,7 +114,7 @@ def render_inventory(filters: dict):
             st.markdown("### Slow-Moving Inventory (Longest in Lot)")
             slow_df = df_inv[df_inv['current_stock'] > 0].sort_values(by='days_in_stock', ascending=False).head(8)
             if not slow_df.empty:
-                slow_df['Model Label'] = slow_df['brand'] + " " + slow_df['model'] + " (" + slow_df['city'] + ")"
+                slow_df['Model Label'] = slow_df['brand'] + " " + slow_df['model'] + " (" + slow_df['emirate'] + ")"
                 fig_slow = px.bar(
                     slow_df,
                     y='Model Label',
@@ -140,12 +140,12 @@ def render_inventory(filters: dict):
                 
         with sub_col2:
             st.markdown("### Warehouse Stock Allocation")
-            wh_df = df_inv.groupby('warehouse_location')['current_stock'].sum().reset_index()
+            wh_df = df_inv.groupby('warehouse_zone')['current_stock'].sum().reset_index()
             if not wh_df.empty:
                 fig_wh = px.pie(
                     wh_df,
                     values='current_stock',
-                    names='warehouse_location',
+                    names='warehouse_zone',
                     hole=0.4,
                     color_discrete_sequence=colors['colors_seq']
                 )

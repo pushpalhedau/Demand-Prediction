@@ -43,7 +43,7 @@ def render_regional(filters: dict):
                 size="units_sold",
                 color="revenue",
                 hover_name="dealer_name",
-                hover_data={"city": True, "tier": True, "performance_score": True, "units_sold": True, "revenue": True},
+                hover_data={"emirate": True, "area": True, "tier": True, "performance_score": True, "units_sold": True, "revenue": True},
                 color_continuous_scale="Viridis",
                 zoom=3.8,
                 mapbox_style="open-street-map"
@@ -85,11 +85,11 @@ def render_regional(filters: dict):
         
         # Format columns for displays
         disp_df = df_dealers.copy()
-        disp_df['Total Revenue (INR)'] = disp_df['revenue'].apply(lambda x: f"₹{x:,.0f}")
+        disp_df['Total Revenue (AED)'] = disp_df['revenue'].apply(lambda x: f"AED {x:,.0f}")
         disp_df.rename(columns={
             'dealer_name': 'Dealer Name',
-            'city': 'City',
-            'region': 'Region',
+            'emirate': 'Emirate',
+            'area': 'Area',
             'performance_score': 'Performance Score',
             'tier': 'Tier',
             'units_sold': 'Units Sold'
@@ -97,14 +97,14 @@ def render_regional(filters: dict):
         
         # Display table
         st.dataframe(
-            disp_df[['Dealer Name', 'City', 'Region', 'Tier', 'Performance Score', 'Units Sold', 'Total Revenue (INR)']],
+            disp_df[['Dealer Name', 'Emirate', 'Area', 'Tier', 'Performance Score', 'Units Sold', 'Total Revenue (AED)']],
             use_container_width=True,
             hide_index=True
         )
         
         # Print leader insight
         top_dealer = df_dealers.iloc[0]
-        st.success(f"🏆 **Top Dealer Alert:** **{top_dealer['dealer_name']}** based in **{top_dealer['city']}** is leading this period with **{top_dealer['units_sold']:,} units sold** driving a total revenue of **₹{top_dealer['revenue']:,.2f}**.")
+        st.success(f"🏆 **Top Dealer Alert:** **{top_dealer['dealer_name']}** based in **{top_dealer['emirate']}** is leading this period with **{top_dealer['units_sold']:,} units sold** driving a total revenue of **AED {top_dealer['revenue']:,.2f}**.")
         
     except Exception as e:
         st.error(f"Error rendering Regional Intelligence: {e}")

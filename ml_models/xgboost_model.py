@@ -34,11 +34,11 @@ def train_xgboost_pipeline():
             Sale.marketing_channel,
             Sale.vehicle_category,
             Sale.fuel_type,
-            Sale.region,
+            Sale.emirate,
             Customer.age,
             Customer.gender,
             Customer.occupation,
-            Customer.estimated_annual_income,
+            Customer.estimated_monthly_income_aed,
             Customer.credit_score,
             Customer.loyalty_score
         ).join(Customer, Sale.customer_id == Customer.customer_id) \
@@ -52,8 +52,8 @@ def train_xgboost_pipeline():
         df['test_drive_converted'] = df['test_drive_converted'].fillna(False).astype(int)
         
         # Features to use
-        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'region', 'gender', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income', 'credit_score', 'loyalty_score']
+        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'emirate', 'gender', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'estimated_monthly_income_aed', 'credit_score', 'loyalty_score']
         
         # Handle missing values
         for cat in cat_features:
@@ -148,8 +148,8 @@ def predict_deal_probability(input_data: dict) -> dict:
             feature_names = pickle.load(f)
             
         # Compile input into record
-        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'region', 'gender', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income', 'credit_score', 'loyalty_score']
+        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'emirate', 'gender', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'estimated_monthly_income_aed', 'credit_score', 'loyalty_score']
         
         record = {}
         # Assign values with fallbacks
@@ -157,14 +157,14 @@ def predict_deal_probability(input_data: dict) -> dict:
         record['marketing_channel'] = input_data.get('marketing_channel', 'Referral')
         record['vehicle_category'] = input_data.get('vehicle_category', 'SUV')
         record['fuel_type'] = input_data.get('fuel_type', 'Petrol')
-        record['region'] = input_data.get('region', 'South')
+        record['emirate'] = input_data.get('emirate', 'Dubai')
         record['gender'] = input_data.get('gender', 'Male')
         record['occupation'] = input_data.get('occupation', 'Salaried')
         
         record['base_price'] = float(input_data.get('base_price', 1200000))
         record['discount_pct'] = float(input_data.get('discount_pct', 5.0))
         record['age'] = float(input_data.get('age', 35))
-        record['estimated_annual_income'] = float(input_data.get('estimated_annual_income', 1000000))
+        record['estimated_monthly_income_aed'] = float(input_data.get('estimated_monthly_income_aed', 25000))
         record['credit_score'] = float(input_data.get('credit_score', 720))
         record['loyalty_score'] = float(input_data.get('loyalty_score', 60))
         
@@ -221,7 +221,7 @@ def predict_deal_probability(input_data: dict) -> dict:
             
             # High discount and high income usually drive conversion positively, while low credit score drives it negatively
             discount = record['discount_pct']
-            income = record['estimated_annual_income']
+            income = record['estimated_monthly_income_aed']
             credit = record['credit_score']
             
             shap_explanations = [
@@ -238,10 +238,10 @@ def predict_deal_probability(input_data: dict) -> dict:
                     "description": f"Credit score ({int(credit)}) affects closing eligibility."
                 },
                 {
-                    "feature": "estimated_annual_income",
-                    "score": 0.12 if income > 1500000 else (-0.08 if income < 400000 else 0.01),
-                    "direction": "positive" if income >= 400000 else "negative",
-                    "description": f"Annual income bracket capacity matches model pricing."
+                    "feature": "estimated_monthly_income_aed",
+                    "score": 0.12 if income > 35000 else (-0.08 if income < 8000 else 0.01),
+                    "direction": "positive" if income >= 8000 else "negative",
+                    "description": f"Monthly income ({int(income):,} AED) matches target segment."
                 }
             ]
             shap_explanations = sorted(shap_explanations, key=lambda x: abs(x['score']), reverse=True)

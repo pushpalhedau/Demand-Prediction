@@ -59,13 +59,13 @@ def render_customers(filters: dict):
                 sampled_df = df_cust.sample(min(2000, len(df_cust)), random_state=42)
                 fig_scat = px.scatter(
                     sampled_df,
-                    x='estimated_annual_income',
+                    x='estimated_monthly_income_aed',
                     y='loyalty_score',
                     color='customer_segment',
                     size='number_of_past_purchases',
                     hover_name='customer_id',
                     color_discrete_sequence=colors['colors_seq'],
-                    labels={'estimated_annual_income': 'Annual Income (INR)', 'loyalty_score': 'Loyalty Index'}
+                    labels={'estimated_monthly_income_aed': 'Monthly Income (AED)', 'loyalty_score': 'Loyalty Index'}
                 )
                 fig_scat.update_layout(
                     paper_bgcolor='rgba(0,0,0,0)',
@@ -84,7 +84,7 @@ def render_customers(filters: dict):
                 sampled_df,
                 x='age',
                 y='churn_risk_score',
-                size='estimated_annual_income',
+                size='estimated_monthly_income_aed',
                 color='customer_segment',
                 hover_data={'credit_score': True},
                 color_discrete_sequence=colors['colors_seq']
@@ -111,7 +111,7 @@ def render_customers(filters: dict):
                 age = st.slider("Customer Age", min_value=21, max_value=75, value=38)
                 gender = st.selectbox("Gender", options=["Male", "Female", "Other"])
                 occupation = st.selectbox("Occupation", options=["Salaried", "Business Owner", "Self-Employed", "Government Employee"])
-                income = st.number_input("Annual Income (INR)", min_value=100000, max_value=10000000, value=950000, step=50000)
+                income = st.number_input("Monthly Income (AED)", min_value=2000, max_value=200000, value=25000, step=1000)
                 
             with form_col2:
                 credit_score = st.slider("Credit Score", min_value=400, max_value=850, value=710)
@@ -131,7 +131,7 @@ def render_customers(filters: dict):
                     "age": age,
                     "gender": gender,
                     "occupation": occupation,
-                    "estimated_annual_income": income,
+                    "estimated_monthly_income_aed": income,
                     "credit_score": credit_score,
                     "loyalty_score": loyalty_score,
                     "vehicle_category": vehicle_category,

@@ -24,7 +24,7 @@ def render_overview(filters: dict):
         with col1:
             render_kpi_card("Total Sales Volume", f"{kpis['total_sales']:,} units", delta="12% YoY", is_positive=True)
         with col2:
-            render_kpi_card("Total Revenue", f"₹{kpis['total_revenue'] / 10_000_000:.2f} Cr", delta="8.4% YoY", is_positive=True)
+            render_kpi_card("Total Revenue", f"AED {kpis['total_revenue'] / 1_000_000:.2f}M", delta="8.4% YoY", is_positive=True)
         with col3:
             render_kpi_card("Average Discount", f"{kpis['avg_discount']:.2f}%", delta="1.2% discount increase", is_positive=False)
         with col4:
@@ -42,11 +42,11 @@ def render_overview(filters: dict):
             fig.add_trace(go.Scatter(
                 x=trend_df['date'], 
                 y=trend_df['revenue'],
-                name='Revenue (INR)',
+                name='Revenue (AED)',
                 line=dict(color=colors['primary'], width=3.5),
                 mode='lines+markers',
                 marker=dict(size=8, color=colors['secondary']),
-                hovertemplate='Date: %{x|%B %Y}<br>Revenue: ₹%{y:,.0f}'
+                hovertemplate='Date: %{x|%B %Y}<br>Revenue: AED %{y:,.0f}'
             ))
             
             # Sales bars on secondary Y axis
@@ -73,7 +73,7 @@ def render_overview(filters: dict):
                     title=""
                 ),
                 yaxis=dict(
-                    title=dict(text="Monthly Revenue (INR)", font=dict(color=colors['primary'])),
+                    title=dict(text="Monthly Revenue (AED)", font=dict(color=colors['primary'])),
                     showgrid=True, 
                     gridcolor='rgba(255,255,255,0.05)',
                     tickfont=dict(color=colors['primary'])
@@ -157,11 +157,11 @@ def render_overview(filters: dict):
         if not reg_df.empty:
             fig = px.bar(
                 reg_df, 
-                x='region', 
+                x='emirate', 
                 y='revenue', 
                 color='revenue',
                 color_continuous_scale='Viridis',
-                labels={'revenue': 'Revenue (INR)'}
+                labels={'revenue': 'Revenue (AED)'}
             )
             fig.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',

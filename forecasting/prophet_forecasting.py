@@ -29,12 +29,12 @@ def train_prophet_model(
         sale_query = session.query(
             Sale.sale_date,
             Sale.units_sold,
-            Sale.total_revenue
+            Sale.total_revenue_incl_vat
         )
         if category:
             sale_query = sale_query.filter(Sale.vehicle_category == category)
         if region:
-            sale_query = sale_query.filter(Sale.region == region)
+            sale_query = sale_query.filter(Sale.emirate == region)
         if fuel_type:
             sale_query = sale_query.filter(Sale.fuel_type == fuel_type)
             
@@ -48,7 +48,7 @@ def train_prophet_model(
             daily_series = sales_df.groupby('sale_date')['units_sold'].sum().reset_index()
             daily_series.columns = ['ds', 'y']
         else:
-            daily_series = sales_df.groupby('sale_date')['total_revenue'].sum().reset_index()
+            daily_series = sales_df.groupby('sale_date')['total_revenue_incl_vat'].sum().reset_index()
             daily_series.columns = ['ds', 'y']
             
         # Complete missing dates with zero sales/revenue
@@ -61,16 +61,15 @@ def train_prophet_model(
         # 2. Fetch external factors
         ext_query = session.query(
             ExternalFactor.date,
-            ExternalFactor.petrol_price_per_litre,
-            ExternalFactor.diesel_price_per_litre,
+            ExternalFactor.petrol_95_price_aed_per_litre,
+            ExternalFactor.diesel_price_aed_per_litre,
             ExternalFactor.gdp_growth_pct,
             ExternalFactor.cpi_inflation_pct,
             ExternalFactor.consumer_confidence_index,
-            ExternalFactor.auto_industry_index,
-            ExternalFactor.festival_month
+            ExternalFactor.ramadan_month
         )
         if region:
-            ext_query = ext_query.filter(ExternalFactor.region == region)
+            ext_query = ext_query.filter(ExternalFactor.emirate == region)
             
         ext_df = pd.read_sql(ext_query.statement, session.bind)
         if not ext_df.empty:
@@ -106,13 +105,12 @@ def train_prophet_model(
         
         # Add external regressors if they exist in dataframe
         regressors = [
-            'petrol_price_per_litre', 
-            'diesel_price_per_litre', 
+            'petrol_95_price_aed_per_litre', 
+            'diesel_price_aed_per_litre', 
             'gdp_growth_pct', 
             'cpi_inflation_pct', 
             'consumer_confidence_index', 
-            'auto_industry_index',
-            'festival_month'
+            'ramadan_month'
         ]
         
         active_regressors = []

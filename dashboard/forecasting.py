@@ -20,8 +20,8 @@ def render_forecasting(filters: dict):
     with col1:
         target = st.selectbox(
             "Forecast Target",
-            options=["units_sold", "total_revenue"],
-            format_func=lambda x: "Sales Volume (Units)" if x == "units_sold" else "Revenue (INR)"
+            options=["units_sold", "total_revenue_incl_vat"],
+            format_func=lambda x: "Sales Volume (Units)" if x == "units_sold" else "Revenue (AED)"
         )
     with col2:
         horizon = st.selectbox(
@@ -64,7 +64,7 @@ def render_forecasting(filters: dict):
     st.markdown("### Model Evaluation (Historical Validation)")
     m_col1, m_col2, m_col3 = st.columns(3)
     
-    unit_label = "Units" if target == "units_sold" else "INR"
+    unit_label = "Units" if target == "units_sold" else "AED"
     with m_col1:
         st.metric(
             label="Historical Validation RMSE", 

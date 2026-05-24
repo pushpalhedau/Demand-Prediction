@@ -25,12 +25,12 @@ def render_ai_insights(filters: dict):
         rec_col1, rec_col2 = st.columns(2)
         
         with rec_col1:
-            st.info("💡 **Growth Hotspot Identified:** SUV demand is expected to spike by **14.8%** in Southern regions (led by Kochi and Bengaluru) over the next 60 days. **Action:** Reposition 25% of Hatchback transit inventory into SUVs at Bangalore warehouses.")
-            st.warning("⚠️ **Dealer Network Anomaly:** Showroom *XYZ Motors* in Pune is underperforming regional averages by **18.2%** despite a high local credit-score profile. **Action:** Review Pune showroom marketing allocation and test drive conversion statistics.")
+            st.info("💡 **Growth Hotspot Identified:** SUV and Luxury demand is expected to spike by **14.8%** in Dubai and Abu Dhabi over the next 60 days, driven by Dubai Motor Show momentum. **Action:** Reposition 25% of Sedan transit inventory into SUV/Luxury at Dubai South and Jebel Ali port warehouses.")
+            st.warning("⚠️ **Dealer Network Anomaly:** Showrooms in *Sharjah Industrial Area* are underperforming emirate averages by **18.2%** despite a strong local credit-score profile. **Action:** Review Sharjah area marketing allocation and test drive conversion statistics.")
             
         with rec_col2:
-            st.success("⚡ **EV Adoption Acceleration:** Hybrid and EV categories show a compound **9.4% MoM growth rate** in West and South regions. **Action:** Install active fast-charging capacity at Platinum and Gold tier dealerships in Pune and Mumbai.")
-            st.error("🚨 **Holding Cost Risk:** Slow-moving Sedan inventory in East region has exceeded an average of **72 days in stock**, accumulating high estimated holding cost. **Action:** Authorize a selective **4.5% dealer discount** to flush lot stock.")
+            st.success("⚡ **EV Adoption Acceleration:** Electric and Hybrid categories show a compound **9.4% MoM growth rate** in Dubai and Abu Dhabi, aided by expanding EV charging infrastructure. **Action:** Prioritize fast-charger installation at Platinum and Gold tier dealerships in Business Bay and Khalifa City.")
+            st.error("🚨 **Holding Cost Risk:** Slow-moving Pickup Truck inventory in Northern Emirates (Ras Al Khaimah, Fujairah) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
             
         st.markdown("<br>", unsafe_allow_html=True)
         
@@ -41,23 +41,23 @@ def render_ai_insights(filters: dict):
         sim_col1, sim_col2 = st.columns(2)
         
         with sim_col1:
-            fuel_shift = st.slider("Petrol Price Shift (INR/Litre)", min_value=-15.0, max_value=25.0, value=0.0, step=1.0)
-            subsidy_active = st.checkbox("Active EV Subsidy Boost", value=True)
-            semiconductor_risk = st.select_slider("Semiconductor Supply Constrains", options=["None", "Moderate Shortage", "Severe Shortage"])
+            fuel_shift = st.slider("Petrol 95 Price Shift (AED/Litre)", min_value=-1.0, max_value=2.0, value=0.0, step=0.1)
+            ev_subsidy_active = st.checkbox("Dubai EV Incentive / Green Plate Active", value=True)
+            semiconductor_risk = st.select_slider("Supply Chain Constraints", options=["None", "Moderate Shortage", "Severe Shortage"])
             
         with sim_col2:
-            inflation_shift = st.slider("CPI Inflation Rate Shift (%)", min_value=-3.0, max_value=5.0, value=0.0, step=0.5)
+            inflation_shift = st.slider("CPI Inflation Rate Shift (%)", min_value=-2.0, max_value=4.0, value=0.0, step=0.5)
             marketing_multiplier = st.slider("Marketing Spend Multiplier", min_value=0.5, max_value=2.0, value=1.0, step=0.1)
             
         # Calculate impact of simulator based on coefficients (simulated Prophet shift)
-        # Standard baseline sales for next 90 days
-        base_forecast = 15420  # average aggregate baseline
+        # Standard baseline sales for next 90 days (based on ~107K sales / 4 years)
+        base_forecast = 6800  # average aggregate 90-day baseline for UAE market
         
         # Calculate shifts
-        fuel_impact = -0.012 * fuel_shift # Petrol increase lowers sales
-        subsidy_impact = 0.085 if subsidy_active else -0.04
+        fuel_impact = -0.018 * fuel_shift        # AED petrol increase has immediate demand dampening
+        subsidy_impact = 0.085 if ev_subsidy_active else -0.04
         semi_impact = -0.15 if semiconductor_risk == "Severe Shortage" else (-0.05 if semiconductor_risk == "Moderate Shortage" else 0.0)
-        inflation_impact = -0.025 * inflation_shift
+        inflation_impact = -0.030 * inflation_shift
         mktg_impact = 0.06 * (marketing_multiplier - 1.0)
         
         net_impact = fuel_impact + subsidy_impact + semi_impact + inflation_impact + mktg_impact
@@ -86,9 +86,9 @@ def render_ai_insights(filters: dict):
                 delta=f"Net {change_direction}"
             )
             
-        # Plot comparison
-        months = ["June 2026", "July 2026", "August 2026"]
-        baseline_trend = [5140, 5280, 5000]
+        # Plot comparison — next 3 months from end of dataset (Q2 2025)
+        months = ["April 2025", "May 2025", "June 2025"]
+        baseline_trend = [2267, 2300, 2233]
         simulated_trend = [int(x * (1.0 + net_impact)) for x in baseline_trend]
         
         fig = go.Figure()
