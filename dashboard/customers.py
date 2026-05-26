@@ -26,7 +26,7 @@ def render_customers(filters: dict):
             return
             
         # Create tab sub-sections
-        tab1, tab2 = st.tabs(["👥 Customer Segmentation (KMeans)", "🎯 Lead Close Score (XGBoost + Explainable AI)"])
+        tab1, tab2 = st.tabs(["👥 Customer Segmentation (KMeans)", "🎯 Lead Close Score (XGBoost)"])
         
         with tab1:
             st.markdown("### KMeans Clustering Analysis")

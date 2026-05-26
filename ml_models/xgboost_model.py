@@ -28,7 +28,7 @@ def train_xgboost_pipeline():
         # Join Sales, Customers, and Vehicles to compile a rich feature set
         query = session.query(
             Sale.test_drive_converted,
-            Sale.base_price,
+            Sale.base_price_aed.label('base_price'),
             Sale.discount_pct,
             Sale.financing_type,
             Sale.marketing_channel,

@@ -17,12 +17,12 @@ from dashboard.regional import render_regional
 from dashboard.customers import render_customers
 from dashboard.inventory import render_inventory
 from dashboard.ai_insights import render_ai_insights
-from dashboard.upload_data import render_upload_data
-from dashboard.metrics import render_metrics
+# from dashboard.upload_data import render_upload_data
+# from dashboard.metrics import render_metrics
 
 # 1. Page Configuration
 st.set_page_config(
-    page_title="AI Automobile Demand Intelligence Platform",
+    page_title="Automobile Demand Intelligence Platform",
     page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -51,7 +51,7 @@ finally:
 # 4. HEADER BRANDING
 st.markdown("""
     <div style="text-align: center; margin-top: -30px; margin-bottom: 20px;">
-        <h1 class="main-title"><span class="gradient-text">🚗 AI Automobile Demand Intelligence Platform</span></h1>
+        <h1 class="main-title"><span class="gradient-text">🚗 Automobile Demand Intelligence Platform</span></h1>
         <p style="color: #9ca3af; font-size: 15px; margin-top: -10px;">Enterprise Decision Support Suite — Demand Forecasting & Customer Analytics</p>
     </div>
 """, unsafe_allow_html=True)
@@ -74,9 +74,9 @@ with st.sidebar:
             "Regional Intelligence",
             "Customer Intelligence",
             "Inventory Intelligence",
-            "AI Insights & Simulator",
-            "Data Ingestion Engine",
-            "Model Performance Metrics"
+            "Insights & Simulator",
+            # "Data Ingestion Engine",
+            # "Model Performance Metrics"
         ],
         icons=[
             "speedometer2",
@@ -86,8 +86,8 @@ with st.sidebar:
             "people",
             "box-seam",
             "cpu",
-            "cloud-arrow-up",
-            "bar-chart-steps"
+            # "cloud-arrow-up",
+            # "bar-chart-steps"
         ],
         menu_icon="cast",
         default_index=0,
@@ -158,9 +158,9 @@ elif selected_page == "Customer Intelligence":
     render_customers(filters)
 elif selected_page == "Inventory Intelligence":
     render_inventory(filters)
-elif selected_page == "AI Insights & Simulator":
+elif selected_page == "Insights & Simulator":
     render_ai_insights(filters)
-elif selected_page == "Data Ingestion Engine":
-    render_upload_data()
-elif selected_page == "Model Performance Metrics":
-    render_metrics()
+# elif selected_page == "Data Ingestion Engine":
+#     render_upload_data()
+# elif selected_page == "Model Performance Metrics":
+#     render_metrics()

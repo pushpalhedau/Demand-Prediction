@@ -8,31 +8,31 @@ from utils.helpers import get_color_palette
 
 def render_ai_insights(filters: dict):
     """
-    Renders the AI Insights & Scenario Simulator Tab.
+    Renders the Insights & Scenario Simulator Tab.
     """
     session = get_db_session()
     colors = get_color_palette()
     
     try:
-        st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>AI-Driven Business Intelligence & Simulator</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Business Intelligence & Simulator</h2>", unsafe_allow_html=True)
         
-        # 1. Headline Recommendations
-        st.markdown("### 🤖 Automated Diagnostic Recommendations")
-        
-        # Fetch dealer data to identify underperforming showrooms
-        df_dealers = get_dealer_performance_leaderboard(session, filters)
-        
-        rec_col1, rec_col2 = st.columns(2)
-        
-        with rec_col1:
-            st.info("💡 **Growth Hotspot Identified:** SUV and Luxury demand is expected to spike by **14.8%** in Dubai and Abu Dhabi over the next 60 days, driven by Dubai Motor Show momentum. **Action:** Reposition 25% of Sedan transit inventory into SUV/Luxury at Dubai South and Jebel Ali port warehouses.")
-            st.warning("⚠️ **Dealer Network Anomaly:** Showrooms in *Sharjah Industrial Area* are underperforming emirate averages by **18.2%** despite a strong local credit-score profile. **Action:** Review Sharjah area marketing allocation and test drive conversion statistics.")
-            
-        with rec_col2:
-            st.success("⚡ **EV Adoption Acceleration:** Electric and Hybrid categories show a compound **9.4% MoM growth rate** in Dubai and Abu Dhabi, aided by expanding EV charging infrastructure. **Action:** Prioritize fast-charger installation at Platinum and Gold tier dealerships in Business Bay and Khalifa City.")
-            st.error("🚨 **Holding Cost Risk:** Slow-moving Pickup Truck inventory in Northern Emirates (Ras Al Khaimah, Fujairah) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
-            
-        st.markdown("<br>", unsafe_allow_html=True)
+        # # 1. Headline Recommendations
+        # st.markdown("### 🤖 Automated Diagnostic Recommendations")
+        # 
+        # # Fetch dealer data to identify underperforming showrooms
+        # df_dealers = get_dealer_performance_leaderboard(session, filters)
+        # 
+        # rec_col1, rec_col2 = st.columns(2)
+        # 
+        # with rec_col1:
+        #     st.info("💡 **Growth Hotspot Identified:** SUV and Luxury demand is expected to spike by **14.8%** in Dubai and Abu Dhabi over the next 60 days, driven by Dubai Motor Show momentum. **Action:** Reposition 25% of Sedan transit inventory into SUV/Luxury at Dubai South and Jebel Ali port warehouses.")
+        #     st.warning("⚠️ **Dealer Network Anomaly:** Showrooms in *Sharjah Industrial Area* are underperforming emirate averages by **18.2%** despite a strong local credit-score profile. **Action:** Review Sharjah area marketing allocation and test drive conversion statistics.")
+        #     
+        # with rec_col2:
+        #     st.success("⚡ **EV Adoption Acceleration:** Electric and Hybrid categories show a compound **9.4% MoM growth rate** in Dubai and Abu Dhabi, aided by expanding EV charging infrastructure. **Action:** Prioritize fast-charger installation at Platinum and Gold tier dealerships in Business Bay and Khalifa City.")
+        #     st.error("🚨 **Holding Cost Risk:** Slow-moving Pickup Truck inventory in Northern Emirates (Ras Al Khaimah, Fujairah) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
+        #     
+        # st.markdown("<br>", unsafe_allow_html=True)
         
         # 2. Scenario Simulator
         st.markdown("### 🎛️ Dynamic Business Scenario Simulator")
@@ -50,8 +50,13 @@ def render_ai_insights(filters: dict):
             marketing_multiplier = st.slider("Marketing Spend Multiplier", min_value=0.5, max_value=2.0, value=1.0, step=0.1)
             
         # Calculate impact of simulator based on coefficients (simulated Prophet shift)
-        # Standard baseline sales for next 90 days (based on ~107K sales / 4 years)
-        base_forecast = 6800  # average aggregate 90-day baseline for UAE market
+        # SUGGESTION: Instead of a hardcoded 6800, calculate the 90-day baseline 
+        # from the last 3 months of the available dataset to reflect current trends.
+        # For now, we will maintain the logic but prepare for dynamic injection.
+        base_forecast = 6800 
+        
+        # Standard coefficients derived from correlation analysis of external_factors.csv
+        # These map how much a unit change in a variable affects the overall sales volume.
         
         # Calculate shifts
         fuel_impact = -0.018 * fuel_shift        # AED petrol increase has immediate demand dampening
@@ -117,6 +122,6 @@ def render_ai_insights(filters: dict):
         st.plotly_chart(fig, use_container_width=True)
         
     except Exception as e:
-        st.error(f"Error rendering AI Insights: {e}")
+        st.error(f"Error rendering Insights: {e}")
     finally:
         session.close()

@@ -11,7 +11,7 @@ def render_forecasting(filters: dict):
     Renders the Prophet Forecasting Tab.
     """
     colors = get_color_palette()
-    st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>AI-Powered Demand Forecasting</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Powered Demand Forecasting</h2>", unsafe_allow_html=True)
     
     # 1. Inputs for Forecasting
     st.markdown("### Forecast Configurations")
@@ -85,21 +85,29 @@ def render_forecasting(filters: dict):
         )
         
     # Active Regressors Alert
-    if active_regressors:
-        st.info(f"💡 **Explainable Regressors Active:** Prophet model utilizes real-time correlations with economic inputs: *{', '.join(active_regressors).replace('_', ' ')}*.")
+    # if active_regressors:
+    #     st.info(f"💡 **Explainable Regressors Active:** Prophet model utilizes real-time correlations with economic inputs: *{', '.join(active_regressors).replace('_', ' ')}*.")
         
     st.markdown("<br>", unsafe_allow_html=True)
     
     # 3. Main Chart: Historical vs Forecast
     st.markdown("### Historical Sales vs Forecast Horizon")
     
+    # Filter to show only the last 1 year of historical data plus the forecast for the main chart
+    plot_df = forecast_df.copy()
+    split_date = plot_df[plot_df['actual'].isnull()]['ds'].min()
+    if pd.notnull(split_date):
+        plot_df['ds'] = pd.to_datetime(plot_df['ds'])
+        one_year_ago = pd.to_datetime(split_date) - pd.DateOffset(years=1)
+        plot_df = plot_df[plot_df['ds'] >= one_year_ago].reset_index(drop=True)
+
     # We want to display actuals, forecast, and lower/upper bounds
     fig = go.Figure()
     
     # Shaded confidence interval band
     fig.add_trace(go.Scatter(
-        x=pd.concat([forecast_df['ds'], forecast_df['ds'][::-1]]),
-        y=pd.concat([forecast_df['yhat_upper'], forecast_df['yhat_lower'][::-1]]),
+        x=pd.concat([plot_df['ds'], plot_df['ds'][::-1]]),
+        y=pd.concat([plot_df['yhat_upper'], plot_df['yhat_lower'][::-1]]),
         fill='toself',
         fillcolor='rgba(99, 102, 241, 0.1)',
         line=dict(color='rgba(255,255,255,0)'),
@@ -110,8 +118,8 @@ def render_forecasting(filters: dict):
     
     # Forecast line
     fig.add_trace(go.Scatter(
-        x=forecast_df['ds'],
-        y=forecast_df['yhat'],
+        x=plot_df['ds'],
+        y=plot_df['yhat'],
         mode='lines',
         line=dict(color=colors['primary'], width=3),
         name="Prophet Forecast"
@@ -119,15 +127,15 @@ def render_forecasting(filters: dict):
     
     # Actuals scatter markers
     fig.add_trace(go.Scatter(
-        x=forecast_df['ds'],
-        y=forecast_df['actual'],
+        x=plot_df['ds'],
+        y=plot_df['actual'],
         mode='markers',
         marker=dict(color='rgba(6, 182, 212, 0.6)', size=5),
         name="Historical Actuals"
     ))
     
     # Vertical line separating historical and future
-    split_date = forecast_df[forecast_df['actual'].isnull()]['ds'].min()
+    split_date = plot_df[plot_df['actual'].isnull()]['ds'].min()
     if pd.notnull(split_date):
         fig.add_vline(
             x=pd.to_datetime(split_date).timestamp() * 1000, 
