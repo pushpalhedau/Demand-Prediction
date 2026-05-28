@@ -17,7 +17,8 @@ def train_prophet_model(
     region: str = None, 
     fuel_type: str = None, 
     target: str = "units_sold", 
-    horizon_days: int = 90
+    horizon_days: int = 90,
+    interval_width: float = 0.95
 ):
     """
     Train a Prophet model using aggregated sales data and monthly external factors as regressors.
@@ -100,7 +101,7 @@ def train_prophet_model(
             yearly_seasonality=True, 
             weekly_seasonality=True, 
             daily_seasonality=False,
-            interval_width=0.95  # 95% confidence intervals
+            interval_width=interval_width
         )
         
         # Add external regressors if they exist in dataframe
@@ -154,7 +155,7 @@ def train_prophet_model(
             yearly_seasonality=True, 
             weekly_seasonality=True, 
             daily_seasonality=False,
-            interval_width=0.95
+            interval_width=interval_width
         )
         for reg in active_regressors:
             full_model.add_regressor(reg)

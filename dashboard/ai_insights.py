@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from database.connection import get_db_session
-from database.queries import get_dealer_performance_leaderboard
+from database.queries import get_dealer_performance_leaderboard, get_monthly_revenue_trend
 from utils.helpers import get_color_palette
 
 def render_ai_insights(filters: dict):
@@ -49,11 +49,26 @@ def render_ai_insights(filters: dict):
             inflation_shift = st.slider("CPI Inflation Rate Shift (%)", min_value=-2.0, max_value=4.0, value=0.0, step=0.5)
             marketing_multiplier = st.slider("Marketing Spend Multiplier", min_value=0.5, max_value=2.0, value=1.0, step=0.1)
             
-        # Calculate impact of simulator based on coefficients (simulated Prophet shift)
-        # SUGGESTION: Instead of a hardcoded 6800, calculate the 90-day baseline 
-        # from the last 3 months of the available dataset to reflect current trends.
-        # For now, we will maintain the logic but prepare for dynamic injection.
-        base_forecast = 6800 
+        # Calculate dynamic baseline from the last 3 months of data to reflect current trends
+        trend_df = get_monthly_revenue_trend(session, filters)
+        if not trend_df.empty:
+            # Sum of the last 3 available months in the filtered dataset
+            last_3_data = trend_df.sort_values(by='date', ascending=False).head(3).sort_values(by='date')
+            base_forecast = int(last_3_data['sales'].sum())
+            baseline_trend = last_3_data['sales'].tolist()
+            
+            # Generate future month labels for the projection
+            last_date = trend_df['date'].max()
+            months = [(last_date + pd.DateOffset(months=i)).strftime('%B %Y') for i in range(1, 4)]
+            
+            # Ensure we have 3 data points for the visualization
+            while len(baseline_trend) < 3:
+                baseline_trend.append(baseline_trend[-1] if baseline_trend else 0)
+        else:
+            # Fallback to defaults if no historical data is found
+            base_forecast = 6812 
+            months = ["June 2026", "July 2026", "August 2026"]
+            baseline_trend = [2267, 2300, 2233]
         
         # Standard coefficients derived from correlation analysis of external_factors.csv
         # These map how much a unit change in a variable affects the overall sales volume.
@@ -91,9 +106,6 @@ def render_ai_insights(filters: dict):
                 delta=f"Net {change_direction}"
             )
             
-        # Plot comparison — next 3 months from end of dataset (Q2 2025)
-        months = ["April 2025", "May 2025", "June 2025"]
-        baseline_trend = [2267, 2300, 2233]
         simulated_trend = [int(x * (1.0 + net_impact)) for x in baseline_trend]
         
         fig = go.Figure()

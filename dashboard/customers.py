@@ -54,32 +54,61 @@ def render_customers(filters: dict):
                 st.plotly_chart(fig_pie, use_container_width=True)
                 
             with sub_col1:
-                st.markdown("#### Segment Profile Scatter (Income vs Loyalty)")
-                # Sample 2000 customers for high-performance plotting
-                sampled_df = df_cust.sample(min(2000, len(df_cust)), random_state=42)
-                fig_scat = px.scatter(
-                    sampled_df,
-                    x='estimated_monthly_income_aed',
-                    y='loyalty_score',
-                    color='customer_segment',
-                    size='number_of_past_purchases',
-                    hover_name='customer_id',
-                    color_discrete_sequence=colors['colors_seq'],
-                    labels={'estimated_monthly_income_aed': 'Monthly Income (AED)', 'loyalty_score': 'Loyalty Index'}
-                )
-                fig_scat.update_layout(
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-                    xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                    yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                    margin=dict(l=0, r=0, t=10, b=0),
-                    height=300
-                )
-                st.plotly_chart(fig_scat, use_container_width=True)
+                st.markdown("#### Segment Characteristic Analysis")
+                
+                # Define available metrics for comparison
+                metrics_map = {
+                    'loyalty_score': 'Loyalty Score',
+                    'credit_score': 'Credit Score',
+                    'age': 'Average Age',
+                    'number_of_past_purchases': 'Past Purchases',
+                    'estimated_monthly_income_aed': 'Monthly Income (AED)',
+                    'churn_risk_score': 'Churn Risk'
+                }
+                
+                # Interactive filters for the comparison chart
+                f_col1, f_col2 = st.columns(2)
+                with f_col1:
+                    sel_metrics = st.multiselect("Select Metrics", options=list(metrics_map.keys()), 
+                                                 default=['loyalty_score', 'credit_score'], 
+                                                 format_func=lambda x: metrics_map[x])
+                with f_col2:
+                    sel_segments = st.multiselect("Filter Segments", options=df_cust['customer_segment'].unique(), 
+                                                  default=df_cust['customer_segment'].unique())
+
+                if sel_metrics and sel_segments:
+                    # Aggregate and melt data for the clustered bar chart
+                    agg_df = df_cust[df_cust['customer_segment'].isin(sel_segments)].groupby('customer_segment')[sel_metrics].mean().reset_index()
+                    melted_df = agg_df.melt(id_vars='customer_segment', var_name='Metric', value_name='Value')
+                    melted_df['Metric Name'] = melted_df['Metric'].map(metrics_map)
+                    
+                    fig_bar = px.bar(
+                        melted_df,
+                        x='customer_segment',
+                        y='Value',
+                        color='Metric Name',
+                        barmode='group',
+                        color_discrete_sequence=colors['colors_seq'],
+                        labels={'Value': 'Average Value', 'customer_segment': 'Segment'}
+                    )
+                    fig_bar.update_layout(
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
+                        xaxis=dict(showgrid=False),
+                        yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                        margin=dict(l=0, r=0, t=10, b=0),
+                        height=350
+                    )
+                    st.plotly_chart(fig_bar, use_container_width=True)
+                else:
+                    st.info("Select metrics and segments to visualize the comparison.")
                 
             # Customer Age vs Spending Bubble Chart
             st.markdown("### Age vs Churn Risk Profile")
+            # Sample 2000 customers for high-performance plotting
+            sampled_df = df_cust.sample(min(2000, len(df_cust)), random_state=42)
             fig_bubble = px.scatter(
                 sampled_df,
                 x='age',

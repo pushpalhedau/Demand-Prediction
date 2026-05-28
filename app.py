@@ -43,7 +43,7 @@ except Exception:
         "categories": ["SUV", "Sedan", "Luxury", "EV", "Sports Car", "Pickup Truck", "Van/Commercial"],
         "fuel_types": ["Petrol", "Diesel", "Electric", "Hybrid"],
         "brands": ["Toyota", "Nissan", "Hyundai", "Kia", "Honda", "Mercedes-Benz", "BMW", "Audi", "Lexus", "Land Rover", "Tesla", "BYD"],
-        "years": [2021, 2022, 2023, 2024, 2025]
+        "years": [2021, 2022, 2023, 2024, 2025, 2026]
     }
 finally:
     session.close()
@@ -75,6 +75,7 @@ with st.sidebar:
             "Customer Intelligence",
             "Inventory Intelligence",
             "Insights & Simulator",
+            "Sentimental  analysis",
             # "Data Ingestion Engine",
             # "Model Performance Metrics"
         ],
@@ -86,31 +87,53 @@ with st.sidebar:
             "people",
             "box-seam",
             "cpu",
+            "chat-left-quote",
             # "cloud-arrow-up",
             # "bar-chart-steps"
         ],
         menu_icon="cast",
         default_index=0,
         styles={
-            "container": {"padding": "0!important", "background-color": "transparent"},
+            "container": {"padding": "0!important", "background-color": "transparent", "font-family": "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"},
             "icon": {"color": "#06b6d4", "font-size": "15px"}, 
             "nav-link": {
                 "font-size": "13px", 
                 "text-align": "left", 
                 "margin": "0px", 
                 "color": "#9ca3af",
-                "font-family": "Plus Jakarta Sans"
+                "font-family": "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
             },
-            "nav-link-selected": {"background-color": "rgba(99, 102, 241, 0.18)", "color": "#f3f4f6", "font-weight": "600", "border-left": "4px solid #6366f1"}
+            "nav-link-selected": {
+                "background-color": "rgba(99, 102, 241, 0.18)", 
+                "color": "#f3f4f6", 
+                "font-weight": "600", 
+                "border-left": "4px solid #6366f1",
+                "font-family": "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+            }
         }
     )
     
     st.markdown("<hr style='border-color: rgba(255,255,255,0.08); margin: 15px 0;'>", unsafe_allow_html=True)
+    
+    # Inject custom CSS for global filter fonts
+    st.markdown("""
+        <style>
+            /* Apply Plus Jakarta Sans to all Streamlit widget labels */
+            div[data-testid="stWidgetLabel"] p,
+            .stDateInput label,
+            .stSelectbox label,
+            .stDateInput input,
+            .stSelectbox div[data-baseweb="select"] div[role="button"]
+            {
+                font-family: "Plus Jakarta Sans", sans-serif !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
     st.markdown("<h3 style='color: #f3f4f6; font-size: 15px; margin-bottom: 10px;'>⚡ Global Filters</h3>", unsafe_allow_html=True)
     
     # Global Filters Inputs
     start_date = st.date_input("Start Date", value=date(2021, 1, 1))
-    end_date = st.date_input("End Date", value=date(2025, 3, 31))
+    end_date = st.date_input("End Date", value=date(2026, 5, 31))
     
     region = st.selectbox("Emirate", options=["All"] + options["regions"])
 
@@ -160,6 +183,26 @@ elif selected_page == "Inventory Intelligence":
     render_inventory(filters)
 elif selected_page == "Insights & Simulator":
     render_ai_insights(filters)
+elif selected_page == "Sentimental  analysis":
+    st.markdown("""
+        <div style="
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            border-top: 4px solid #6366f1;
+        ">
+            <h2 style="color: #f3f4f6; font-family: 'Outfit', sans-serif; font-weight: 700; margin-bottom: 10px;">📊 Sentimental Analysis</h2>
+            <div style="font-size: 48px; margin: 20px 0;">🚧</div>
+            <h3 style="color: #f3f4f6; font-family: 'Outfit', sans-serif; font-weight: 600; margin-bottom: 10px;">Work in Progress</h3>
+            <p style="color: #9ca3af; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px;">This module is currently under active development.</p>
+            <p style="color: #6366f1; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 14px; margin-top: 10px;">✨ Coming Soon: Social Media Sentiment, Customer Feedback Mining, & Market Perception Analytics</p>
+        </div>
+    """, unsafe_allow_html=True)
 # elif selected_page == "Data Ingestion Engine":
 #     render_upload_data()
 # elif selected_page == "Model Performance Metrics":

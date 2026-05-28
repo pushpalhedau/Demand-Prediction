@@ -16,7 +16,7 @@ def render_forecasting(filters: dict):
     # 1. Inputs for Forecasting
     st.markdown("### Forecast Configurations")
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         target = st.selectbox(
             "Forecast Target",
@@ -37,9 +37,12 @@ def render_forecasting(filters: dict):
             st.caption("⚠️ Select a category in the global filters sidebar.")
     with col4:
         region_opt = st.checkbox("Filter Region for Forecast", value=False)
-        region = filters.get("region") if region_opt else None
+        region = filters.get("emirate") if region_opt else None
         if region_opt and not region:
-            st.caption("⚠️ Select a region in the global filters sidebar.")
+            st.caption("⚠️ Select an Emirate in the global filters sidebar.")
+    with col5:
+        # Added dynamic confidence level selection
+        confidence_level = st.slider("Confidence Level (%)", 70, 99, 95, help="Determines the width of the uncertainty interval.")
             
     # Trigger Forecast training and prediction
     with st.spinner("Training predictive Prophet forecasting model..."):
@@ -49,7 +52,8 @@ def render_forecasting(filters: dict):
             region=region,
             fuel_type=fuel_type,
             target=target,
-            horizon_days=horizon
+            horizon_days=horizon,
+            interval_width=confidence_level / 100
         )
         
     if err:
@@ -77,12 +81,12 @@ def render_forecasting(filters: dict):
             value=f"{metrics['mae']:,.1f} {unit_label}",
             help="Average absolute difference between actual sales and predictions."
         )
-    with m_col3:
-        st.metric(
-            label="Average Forecast Accuracy", 
-            value=f"{metrics['accuracy']:.2f}%",
-            help="Percentage accuracy metric calculated based on mean absolute error relative to average sales."
-        )
+    # with m_col3:
+    #     st.metric(
+    #         label="Average Forecast Accuracy", 
+    #         value=f"{metrics['accuracy']:.2f}%",
+    #         help="Percentage accuracy metric calculated based on mean absolute error relative to average sales."
+    #     )
         
     # Active Regressors Alert
     # if active_regressors:
@@ -113,7 +117,7 @@ def render_forecasting(filters: dict):
         line=dict(color='rgba(255,255,255,0)'),
         hoverinfo="skip",
         showlegend=True,
-        name="95% Confidence Interval"
+        name=f"{confidence_level}% Confidence Interval"
     ))
     
     # Forecast line
