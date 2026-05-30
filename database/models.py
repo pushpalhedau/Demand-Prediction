@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, Date, Boolean, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, Date, DateTime, Boolean, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database.connection import Base
 
@@ -232,3 +232,79 @@ class ExternalFactor(Base):
     unemployment_rate_pct = Column(Float, nullable=True)
     population_millions = Column(Float, nullable=True)
     ev_charging_stations_uae = Column(Integer, nullable=True)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Sentiment Analysis Tables
+# ─────────────────────────────────────────────────────────────────────────────
+
+class NewsArticle(Base):
+    """Raw articles fetched from GDELT Doc v2 API."""
+    __tablename__ = "news_articles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    url = Column(String(1000), unique=True, nullable=False)
+    title = Column(Text, nullable=True)
+    source_domain = Column(String(300), nullable=True)
+    source_country = Column(String(10), nullable=True)
+    published_date = Column(Date, nullable=True)
+    fetched_at = Column(DateTime, nullable=False)
+    search_query = Column(String(300), nullable=True)
+    language = Column(String(10), nullable=True)
+    social_image_url = Column(String(1000), nullable=True)
+
+    # Relationship to AI-extracted signal (one article → one signal)
+    sentiment_signal = relationship("SentimentSignal", back_populates="article", uselist=False)
+
+
+class SentimentSignal(Base):
+    """Grok AI-extracted forecasting signals for each news article."""
+    __tablename__ = "sentiment_signals"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    article_id = Column(Integer, ForeignKey("news_articles.id"), nullable=False, unique=True)
+    analyzed_at = Column(DateTime, nullable=False)
+
+    # Grok-extracted fields
+    sentiment_score = Column(Float, nullable=True)             # -1.0 (very negative) to +1.0 (very positive)
+    impact_score = Column(Float, nullable=True)                # 0.0 (no impact) to 1.0 (high impact)
+    affected_vehicle_category = Column(String(100), nullable=True)  # SUV, EV, Luxury, Sedan, All, etc.
+    economic_risk = Column(String(20), nullable=True)          # low | medium | high
+    demand_direction = Column(String(10), nullable=True)       # up | down | neutral
+    estimated_demand_change_pct = Column(Float, nullable=True) # e.g. +3.5 or -2.1
+    confidence = Column(Float, nullable=True)                  # 0.0 to 1.0
+    summary = Column(Text, nullable=True)                      # one-sentence Grok summary
+    raw_response = Column(Text, nullable=True)                 # full JSON from Grok (for debugging)
+
+    # Relationship back to article
+    article = relationship("NewsArticle", back_populates="sentiment_signal")
+
+
+class DailySentimentSummary(Base):
+    """
+    Daily aggregated sentiment scores per vehicle category.
+    Used as external regressors in Prophet forecasting.
+    One row per (summary_date, vehicle_category).
+    NULL vehicle_category = aggregate across all categories.
+    """
+    __tablename__ = "daily_sentiment_summary"
+    __table_args__ = (
+        UniqueConstraint("summary_date", "vehicle_category", name="uq_daily_sentiment"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    summary_date = Column(Date, nullable=False, index=True)
+    vehicle_category = Column(String(100), nullable=True)  # NULL = all categories combined
+
+    avg_sentiment_score = Column(Float, nullable=True)
+    avg_impact_score = Column(Float, nullable=True)
+    avg_demand_change_pct = Column(Float, nullable=True)
+    geopolitical_risk_score = Column(Float, nullable=True) # derived: avg_impact * negative_ratio
+
+    positive_signals = Column(Integer, nullable=True)
+    negative_signals = Column(Integer, nullable=True)
+    neutral_signals = Column(Integer, nullable=True)
+    total_articles = Column(Integer, nullable=True)
+    dominant_demand_direction = Column(String(10), nullable=True)  # up | down | neutral
+
+    computed_at = Column(DateTime, nullable=False)

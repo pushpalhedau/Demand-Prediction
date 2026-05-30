@@ -41,9 +41,16 @@ def render_forecasting(filters: dict):
         if region_opt and not region:
             st.caption("⚠️ Select an Emirate in the global filters sidebar.")
     with col5:
-        # Added dynamic confidence level selection
         confidence_level = st.slider("Confidence Level (%)", 70, 99, 95, help="Determines the width of the uncertainty interval.")
-            
+
+    # Sentiment toggle — shown only when sentiment data is available
+    use_sentiment = st.checkbox(
+        "Use Sentiment Regressors (avg_sentiment_score + geopolitical_risk_score)",
+        value=False,
+        help="Adds daily sentiment signals from the Sentiment Intelligence Platform as Prophet regressors. "
+             "Requires at least one Refresh on the Sentiment Analysis tab.",
+    )
+
     # Trigger Forecast training and prediction
     with st.spinner("Training predictive Prophet forecasting model..."):
         fuel_type = filters.get("fuel_type")
@@ -53,7 +60,8 @@ def render_forecasting(filters: dict):
             fuel_type=fuel_type,
             target=target,
             horizon_days=horizon,
-            interval_width=confidence_level / 100
+            interval_width=confidence_level / 100,
+            use_sentiment=use_sentiment,
         )
         
     if err:
@@ -63,6 +71,24 @@ def render_forecasting(filters: dict):
     forecast_df = result["forecast"]
     metrics = result["metrics"]
     active_regressors = result["active_regressors"]
+    sentiment_regressors = result.get("sentiment_regressors", [])
+
+    # Show active regressor badges
+    if active_regressors:
+        badges = []
+        for r in active_regressors:
+            label = r.replace("_", " ").title()
+            color = "#ec4899" if r in sentiment_regressors else "#06b6d4"
+            badges.append(
+                f'<span style="background:{color}22;color:{color};border:1px solid {color}44;'
+                f'border-radius:6px;padding:2px 8px;font-size:11px;margin-right:4px;">{label}</span>'
+            )
+        tag = " <b style='color:#f59e0b;font-size:11px;'>[SENTIMENT]</b>" if sentiment_regressors else ""
+        st.markdown(
+            f"<div style='margin-bottom:12px;'><b style='color:#9ca3af;font-size:12px;'>Active Regressors{tag}:</b> "
+            + "".join(badges) + "</div>",
+            unsafe_allow_html=True,
+        )
     
     # 2. Display Model Performance Metrics
     st.markdown("### Model Evaluation (Historical Validation)")

@@ -34,3 +34,14 @@ def get_db_session():
     except Exception as e:
         db.close()
         raise e
+
+
+def init_all_tables():
+    """
+    Create all tables registered with Base (idempotent — safe to call multiple times).
+    Called by the sentiment module at startup to ensure new tables exist even when
+    train_models.py has not been re-run after adding the sentiment models.
+    """
+    # Import models here to ensure all ORM classes are registered with Base
+    import database.models  # noqa: F401
+    Base.metadata.create_all(engine)

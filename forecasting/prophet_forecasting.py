@@ -13,16 +13,22 @@ from database.connection import get_db_session
 from database.models import Sale, ExternalFactor
 
 def train_prophet_model(
-    category: str = None, 
-    region: str = None, 
-    fuel_type: str = None, 
-    target: str = "units_sold", 
+    category: str = None,
+    region: str = None,
+    fuel_type: str = None,
+    target: str = "units_sold",
     horizon_days: int = 90,
-    interval_width: float = 0.95
+    interval_width: float = 0.95,
+    use_sentiment: bool = False,
 ):
     """
-    Train a Prophet model using aggregated sales data and monthly external factors as regressors.
+    Train a Prophet model using aggregated sales data and external factors as regressors.
     Generates dynamic forecasts for 30/60/90/180/365 days.
+
+    Args:
+        use_sentiment: When True, merges avg_sentiment_score and geopolitical_risk_score
+                       from DailySentimentSummary as additional Prophet regressors.
+                       Falls back gracefully if no sentiment data is available.
     """
     session = get_db_session()
     try:
@@ -92,10 +98,33 @@ def train_prophet_model(
         else:
             data = daily_series
             
+        # 2a. Optionally merge sentiment regressors from DailySentimentSummary
+        sentiment_regressor_candidates = []
+        sent_df_for_future = None
+
+        if use_sentiment:
+            try:
+                from sentiment.signal_processor import get_daily_summaries
+                sent_df = get_daily_summaries(days_back=3650, vehicle_category=None)
+                if not sent_df.empty:
+                    sent_cols = ["avg_sentiment_score", "geopolitical_risk_score"]
+                    sent_df = sent_df[["summary_date"] + sent_cols].copy()
+                    sent_df.rename(columns={"summary_date": "ds"}, inplace=True)
+                    sent_df["ds"] = pd.to_datetime(sent_df["ds"])
+                    # Merge into daily data
+                    data = pd.merge(data, sent_df, on="ds", how="left")
+                    # Forward-fill / backward-fill gaps; fill remaining with 0
+                    for col in sent_cols:
+                        data[col] = data[col].ffill().bfill().fillna(0.0)
+                    sentiment_regressor_candidates = sent_cols
+                    sent_df_for_future = sent_df  # saved for future-dataframe merge below
+            except Exception:
+                pass  # sentiment module not yet available — skip silently
+
         # Ensure we have enough data to train (at least 30 historical days)
         if len(data) < 30:
             return None, "Insufficient historical data (minimum 30 days) to train the forecasting model."
-            
+
         # 3. Model setup
         model = Prophet(
             yearly_seasonality=True, 
@@ -106,14 +135,14 @@ def train_prophet_model(
         
         # Add external regressors if they exist in dataframe
         regressors = [
-            'petrol_95_price_aed_per_litre', 
-            'diesel_price_aed_per_litre', 
-            'gdp_growth_pct', 
-            'cpi_inflation_pct', 
-            'consumer_confidence_index', 
-            'ramadan_month'
-        ]
-        
+            'petrol_95_price_aed_per_litre',
+            'diesel_price_aed_per_litre',
+            'gdp_growth_pct',
+            'cpi_inflation_pct',
+            'consumer_confidence_index',
+            'ramadan_month',
+        ] + sentiment_regressor_candidates  # appended when use_sentiment=True
+
         active_regressors = []
         for reg in regressors:
             if reg in data.columns and data[reg].nunique() > 1:
@@ -152,24 +181,34 @@ def train_prophet_model(
         
         # Retrain model on full dataset for future forecast
         full_model = Prophet(
-            yearly_seasonality=True, 
-            weekly_seasonality=True, 
+            yearly_seasonality=True,
+            weekly_seasonality=True,
             daily_seasonality=False,
             interval_width=interval_width
         )
         for reg in active_regressors:
             full_model.add_regressor(reg)
         full_model.fit(data)
-        
+
         # Create future dataframe
         future = full_model.make_future_dataframe(periods=horizon_days)
-        
-        # Map/populate external regressors for future dates
-        if active_regressors:
-            # We merge the future dataframe with our upsampled external factors df
-            future = pd.merge(future, ext_df[['ds'] + active_regressors], on='ds', how='left')
-            # For the dates beyond our dataset, forward-fill the last available economic indicators
+
+        # Populate macro-economic regressors for future dates
+        econ_active = [r for r in active_regressors if r not in sentiment_regressor_candidates]
+        if econ_active and not ext_df.empty:
+            future = pd.merge(future, ext_df[['ds'] + econ_active], on='ds', how='left')
             future = future.ffill().bfill()
+
+        # Populate sentiment regressors for future dates (forward-fill last known value)
+        sent_active = [r for r in active_regressors if r in sentiment_regressor_candidates]
+        if sent_active and sent_df_for_future is not None:
+            future = pd.merge(
+                future,
+                sent_df_for_future[['ds'] + sent_active],
+                on='ds', how='left',
+            )
+            for col in sent_active:
+                future[col] = future[col].ffill().bfill().fillna(0.0)
             
         forecast = full_model.predict(future)
         
@@ -185,7 +224,8 @@ def train_prophet_model(
             "forecast": forecast,
             "metrics": metrics,
             "active_regressors": active_regressors,
-            "historical_data": data
+            "sentiment_regressors": [r for r in active_regressors if r in sentiment_regressor_candidates],
+            "historical_data": data,
         }, None
         
     except Exception as e:

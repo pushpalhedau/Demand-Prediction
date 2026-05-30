@@ -17,6 +17,7 @@ from dashboard.regional import render_regional
 from dashboard.customers import render_customers
 from dashboard.inventory import render_inventory
 from dashboard.ai_insights import render_ai_insights
+from dashboard.sentiment_analysis import render_sentiment_analysis
 # from dashboard.upload_data import render_upload_data
 # from dashboard.metrics import render_metrics
 
@@ -184,25 +185,7 @@ elif selected_page == "Inventory Intelligence":
 elif selected_page == "Insights & Simulator":
     render_ai_insights(filters)
 elif selected_page == "Sentimental  analysis":
-    st.markdown("""
-        <div style="
-            background: rgba(17, 24, 39, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            margin-top: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            border-top: 4px solid #6366f1;
-        ">
-            <h2 style="color: #f3f4f6; font-family: 'Outfit', sans-serif; font-weight: 700; margin-bottom: 10px;">📊 Sentimental Analysis</h2>
-            <div style="font-size: 48px; margin: 20px 0;">🚧</div>
-            <h3 style="color: #f3f4f6; font-family: 'Outfit', sans-serif; font-weight: 600; margin-bottom: 10px;">Work in Progress</h3>
-            <p style="color: #9ca3af; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px;">This module is currently under active development.</p>
-            <p style="color: #6366f1; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 14px; margin-top: 10px;">✨ Coming Soon: Social Media Sentiment, Customer Feedback Mining, & Market Perception Analytics</p>
-        </div>
-    """, unsafe_allow_html=True)
+    render_sentiment_analysis(filters)
 # elif selected_page == "Data Ingestion Engine":
 #     render_upload_data()
 # elif selected_page == "Model Performance Metrics":
