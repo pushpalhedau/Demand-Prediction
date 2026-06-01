@@ -44,15 +44,16 @@ def render_forecasting(filters: dict):
         confidence_level = st.slider("Confidence Level (%)", 70, 99, 95, help="Determines the width of the uncertainty interval.")
 
     # Sentiment toggle — shown only when sentiment data is available
-    use_sentiment = st.checkbox(
-        "Use Sentiment Regressors (avg_sentiment_score + geopolitical_risk_score)",
-        value=False,
-        help="Adds daily sentiment signals from the Sentiment Intelligence Platform as Prophet regressors. "
-             "Requires at least one Refresh on the Sentiment Analysis tab.",
-    )
+    # use_sentiment = st.checkbox(
+    #     "Use Sentiment Regressors (avg_sentiment_score + geopolitical_risk_score)",
+    #     value=False,
+    #     help="Adds daily sentiment signals from the Sentiment Intelligence Platform as forecast regressors. "
+    #          "Requires at least one Refresh on the Sentiment Analysis tab.",
+    # )
+    use_sentiment = False
 
     # Trigger Forecast training and prediction
-    with st.spinner("Training predictive Prophet forecasting model..."):
+    with st.spinner("Training predictive forecasting model..."):
         fuel_type = filters.get("fuel_type")
         result, err = train_prophet_model(
             category=category,
@@ -152,7 +153,7 @@ def render_forecasting(filters: dict):
         y=plot_df['yhat'],
         mode='lines',
         line=dict(color=colors['primary'], width=3),
-        name="Prophet Forecast"
+        name="Forecast"
     ))
     
     # Actuals scatter markers

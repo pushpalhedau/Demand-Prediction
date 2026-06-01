@@ -26,10 +26,10 @@ def render_customers(filters: dict):
             return
             
         # Create tab sub-sections
-        tab1, tab2 = st.tabs(["👥 Customer Segmentation (KMeans)", "🎯 Lead Close Score (XGBoost)"])
+        tab1, tab2 = st.tabs(["👥 Customer Segmentation", "🎯 Lead Close Score"])
         
         with tab1:
-            st.markdown("### KMeans Clustering Analysis")
+            st.markdown("### Clustering Analysis")
             
             # Segment distribution pie
             seg_dist = df_cust['customer_segment'].value_counts().reset_index()

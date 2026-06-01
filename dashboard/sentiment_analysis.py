@@ -136,17 +136,17 @@ def render_sentiment_analysis(filters: dict):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── 5 Sub-tabs ────────────────────────────────────────────────────────
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "Sentiment Intelligence",
+    # ── 4 Sub-tabs ────────────────────────────────────────────────────────
+    tab2, tab3, tab4, tab5 = st.tabs([
+        # "Sentiment Intelligence",
         "Geopolitical Risk",
         "Economic Signals",
         "Forecast Comparison",
         "AI Insights",
     ])
 
-    with tab1:
-        _render_sentiment_intelligence(colors)
+    # with tab1:
+    #     _render_sentiment_intelligence(colors)
 
     with tab2:
         _render_geopolitical_risk(colors)
@@ -576,7 +576,7 @@ def _render_forecast_comparison(filters: dict, colors: dict):
     st.markdown("### Sentiment-Enhanced Forecast Comparison")
     st.markdown(
         "<p style='color:#9ca3af;font-size:13px;margin-bottom:16px;'>"
-        "Runs two Prophet models side-by-side: one with economic regressors only (baseline), "
+        "Runs two predictive models side-by-side: one with economic regressors only (baseline), "
         "and one that additionally uses <b style='color:#ec4899;'>avg_sentiment_score</b> and "
         "<b style='color:#ec4899;'>geopolitical_risk_score</b> from the sentiment pipeline.</p>",
         unsafe_allow_html=True,
@@ -606,12 +606,12 @@ def _render_forecast_comparison(filters: dict, colors: dict):
         fuel_filter     = filters.get("fuel_type")
 
         if run_cmp:
-            with st.spinner("Training baseline Prophet model..."):
+            with st.spinner("Training baseline model..."):
                 base_result, base_err = train_prophet_model(
                     category=category_filter, region=region_filter, fuel_type=fuel_filter,
                     target=target, horizon_days=horizon, use_sentiment=False,
                 )
-            with st.spinner("Training sentiment-enhanced Prophet model..."):
+            with st.spinner("Training sentiment-enhanced model..."):
                 sent_result, sent_err = train_prophet_model(
                     category=category_filter, region=region_filter, fuel_type=fuel_filter,
                     target=target, horizon_days=horizon, use_sentiment=True,
@@ -770,28 +770,28 @@ def _render_forecast_comparison(filters: dict, colors: dict):
         st.plotly_chart(fig, use_container_width=True)
 
         # ── Forecast delta chart ──────────────────────────────────────────
-        if sent_result and not sent_err:
-            st.markdown("#### Sentiment Adjustment (Enhanced − Baseline)")
-            sent_fc = sent_result["forecast"]
-            sent_fc["ds"] = pd.to_datetime(sent_fc["ds"])
-            merged = base_fc[["ds", "yhat"]].merge(sent_fc[["ds", "yhat"]], on="ds", suffixes=("_base", "_sent"))
-            merged["delta"] = merged["yhat_sent"] - merged["yhat_base"]
-            fut_merged = merged[merged["ds"] >= split_date] if pd.notnull(split_date) else merged
-
-            if not fut_merged.empty:
-                delta_fig = go.Figure(go.Bar(
-                    x=fut_merged["ds"],
-                    y=fut_merged["delta"],
-                    marker_color=["#10b981" if v >= 0 else "#ef4444" for v in fut_merged["delta"]],
-                    hovertemplate="Date: %{x|%d %b %Y}<br>Δ: %{y:+.2f}<extra></extra>",
-                    name="Sentiment Adjustment",
-                ))
-                delta_fig.add_hline(y=0, line_dash="dot", line_color="rgba(156,163,175,0.3)")
-                delta_fig.update_layout(**_layout(
-                    height=220,
-                    yaxis=dict(title=f"Δ {unit_label}"),
-                ))
-                st.plotly_chart(delta_fig, use_container_width=True)
+        # if sent_result and not sent_err:
+        #     st.markdown("#### Sentiment Adjustment (Enhanced − Baseline)")
+        #     sent_fc = sent_result["forecast"]
+        #     sent_fc["ds"] = pd.to_datetime(sent_fc["ds"])
+        #     merged = base_fc[["ds", "yhat"]].merge(sent_fc[["ds", "yhat"]], on="ds", suffixes=("_base", "_sent"))
+        #     merged["delta"] = merged["yhat_sent"] - merged["yhat_base"]
+        #     fut_merged = merged[merged["ds"] >= split_date] if pd.notnull(split_date) else merged
+        #
+        #     if not fut_merged.empty:
+        #         delta_fig = go.Figure(go.Bar(
+        #             x=fut_merged["ds"],
+        #             y=fut_merged["delta"],
+        #             marker_color=["#10b981" if v >= 0 else "#ef4444" for v in fut_merged["delta"]],
+        #             hovertemplate="Date: %{x|%d %b %Y}<br>Δ: %{y:+.2f}<extra></extra>",
+        #             name="Sentiment Adjustment",
+        #         ))
+        #         delta_fig.add_hline(y=0, line_dash="dot", line_color="rgba(156,163,175,0.3)")
+        #         delta_fig.update_layout(**_layout(
+        #             height=220,
+        #             yaxis=dict(title=f"Δ {unit_label}"),
+        #         ))
+        #         st.plotly_chart(delta_fig, use_container_width=True)
 
         # Note when no sentiment data added regressors
         if not sent_regs_active:

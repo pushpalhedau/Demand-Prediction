@@ -13,7 +13,7 @@ def render_metrics():
     st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>ML Models & Evaluation Metrics</h2>", unsafe_allow_html=True)
     
     # 1. XGBoost Model details
-    st.markdown("### 🎯 Lead close prediction Model (XGBoost)")
+    st.markdown("### 🎯 Lead Close Prediction Model")
     
     xgb_dir = "models/xgboost"
     scaler_exists = os.path.exists(os.path.join(xgb_dir, "scaler.pkl"))
@@ -68,14 +68,14 @@ def render_metrics():
                 st.plotly_chart(fig, use_container_width=True)
                 
         except Exception as e:
-            st.error(f"Error loading XGBoost metrics: {e}")
+            st.error(f"Error loading model metrics: {e}")
     else:
-        st.info("XGBoost lead classifier model not trained yet. Run pipeline runner to generate models.")
+        st.info("Lead classifier model not trained yet. Run pipeline runner to generate models.")
         
     st.markdown("<hr style='border-color: rgba(255,255,255,0.08);'>", unsafe_allow_html=True)
     
     # 2. KMeans details
-    st.markdown("### 👥 Customer Segmentation Model (KMeans)")
+    st.markdown("### 👥 Customer Segmentation Model")
     
     cluster_dir = "models/clustering"
     kmeans_exists = os.path.exists(os.path.join(cluster_dir, "kmeans.pkl"))
@@ -89,7 +89,7 @@ def render_metrics():
             with col1:
                 st.markdown("#### Cluster Architecture")
                 st.code(
-                    f"Algorithm: KMeans Clustering\n"
+                    f"Algorithm: Clustering\n"
                     f"Defined Clusters (K): {kmeans.n_clusters}\n"
                     f"Initialization: k-means++\n"
                     f"Max Iterations: {kmeans.max_iter}\n"
@@ -123,6 +123,6 @@ def render_metrics():
                 st.plotly_chart(fig_elbow, use_container_width=True)
                 
         except Exception as e:
-            st.error(f"Error loading KMeans metrics: {e}")
+            st.error(f"Error loading clustering metrics: {e}")
     else:
-        st.info("KMeans customer clustering model not trained yet. Run pipeline runner to generate models.")
+        st.info("Customer clustering model not trained yet. Run pipeline runner to generate models.")

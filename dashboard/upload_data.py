@@ -61,7 +61,7 @@ def render_upload_data():
                 
             # 4. Trigger Ingestion and Retraining
             st.markdown("### Trigger ML Model Retraining")
-            st.write("Retrains the full system (KMeans clustering, XGBoost lead classifiers, and Prophet forecasting indices) with this uploaded dataset.")
+            st.write("Retrains the full system (customer clustering, lead classifiers, and forecasting models) with this uploaded dataset.")
             
             if st.button("Ingest Dataset & Retrain Pipelines", type="primary"):
                 with st.spinner("Executing dynamic preprocessing, loading database, and retraining full ML pipeline suite..."):
