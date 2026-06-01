@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 import numpy as np
-from forecasting.prophet_forecasting import train_prophet_model
+from forecasting.prophet_forecasting import train_prophet_model, train_india_prophet_model
 from utils.helpers import render_kpi_card, get_color_palette
 
 def render_forecasting(filters: dict):
@@ -20,49 +20,61 @@ def render_forecasting(filters: dict):
     with col1:
         target = st.selectbox(
             "Forecast Target",
-            options=["units_sold", "total_revenue_incl_vat"],
-            format_func=lambda x: "Sales Volume (Units)" if x == "units_sold" else "Revenue (AED)"
+            options=["registrations_count", "units_sold"],
+            format_func=lambda x: "Registrations (India)" if x == "registrations_count" else "Sales Volume (UAE)"
         )
     with col2:
         horizon = st.selectbox(
             "Forecast Horizon",
             options=[30, 60, 90, 180, 365],
             format_func=lambda x: f"{x} Days ({'1 Month' if x==30 else '2 Months' if x==60 else '3 Months' if x==90 else '6 Months' if x==180 else '1 Year'})",
-            index=2 # 90 days default
+            index=2
         )
     with col3:
-        category_opt = st.checkbox("Filter Category for Forecast", value=False)
+        category_opt = st.checkbox("Filter Vehicle Class", value=False)
         category = filters.get("vehicle_category") if category_opt else None
         if category_opt and not category:
-            st.caption("⚠️ Select a category in the global filters sidebar.")
+            st.caption("Select a category in the sidebar.")
     with col4:
-        region_opt = st.checkbox("Filter Region for Forecast", value=False)
-        region = filters.get("emirate") if region_opt else None
+        region_opt = st.checkbox("Filter State / Region", value=False)
+        region = (filters.get("state") or filters.get("emirate")) if region_opt else None
         if region_opt and not region:
-            st.caption("⚠️ Select an Emirate in the global filters sidebar.")
+            st.caption("Select a state in the sidebar.")
     with col5:
-        confidence_level = st.slider("Confidence Level (%)", 70, 99, 95, help="Determines the width of the uncertainty interval.")
+        confidence_level = st.slider("Confidence Level (%)", 70, 99, 95)
 
-    # Sentiment toggle — shown only when sentiment data is available
     use_sentiment = st.checkbox(
         "Use Sentiment Regressors (avg_sentiment_score + geopolitical_risk_score)",
         value=False,
-        help="Adds daily sentiment signals from the Sentiment Intelligence Platform as Prophet regressors. "
-             "Requires at least one Refresh on the Sentiment Analysis tab.",
+        help="Adds daily sentiment signals as Prophet regressors. Requires a Refresh on the Sentiment tab.",
     )
 
-    # Trigger Forecast training and prediction
-    with st.spinner("Training predictive Prophet forecasting model..."):
+    # Choose India vs UAE model based on target
+    with st.spinner("Training Prophet forecasting model..."):
         fuel_type = filters.get("fuel_type")
-        result, err = train_prophet_model(
-            category=category,
-            region=region,
-            fuel_type=fuel_type,
-            target=target,
-            horizon_days=horizon,
-            interval_width=confidence_level / 100,
-            use_sentiment=use_sentiment,
-        )
+        maker = filters.get("brand") if target == "registrations_count" else None
+
+        if target == "registrations_count":
+            result, err = train_india_prophet_model(
+                state=region,
+                maker=maker,
+                fuel_type=fuel_type,
+                vehicle_class=category,
+                target=target,
+                horizon_days=horizon,
+                interval_width=confidence_level / 100,
+                use_sentiment=use_sentiment,
+            )
+        else:
+            result, err = train_prophet_model(
+                category=category,
+                region=region,
+                fuel_type=fuel_type,
+                target=target,
+                horizon_days=horizon,
+                interval_width=confidence_level / 100,
+                use_sentiment=use_sentiment,
+            )
         
     if err:
         st.error(err)
@@ -94,7 +106,7 @@ def render_forecasting(filters: dict):
     st.markdown("### Model Evaluation (Historical Validation)")
     m_col1, m_col2, m_col3 = st.columns(3)
     
-    unit_label = "Units" if target == "units_sold" else "AED"
+    unit_label = "Registrations" if target == "registrations_count" else ("Units" if target == "units_sold" else "AED")
     with m_col1:
         st.metric(
             label="Historical Validation RMSE", 

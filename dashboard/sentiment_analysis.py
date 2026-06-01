@@ -91,6 +91,7 @@ def _mode_banner():
 
 def render_sentiment_analysis(filters: dict):
     colors = get_color_palette()
+    brand = filters.get("brand")  # global brand filter
 
     st.markdown(
         "<h2 class='gradient-text' style='margin-bottom:8px;'>Sentiment Intelligence Platform</h2>",
@@ -98,9 +99,19 @@ def render_sentiment_analysis(filters: dict):
     )
     st.markdown(
         "<p style='color:#9ca3af;font-size:14px;margin-bottom:20px;'>"
-        "Real-time geopolitical, economic & social sentiment signals for UAE automobile demand forecasting.</p>",
+        "Real-time economic, policy & social sentiment signals for India automobile demand forecasting.</p>",
         unsafe_allow_html=True,
     )
+
+    # Brand filter indicator
+    if brand:
+        st.markdown(
+            f'<div style="background:#6366f122;border-left:4px solid #6366f1;border-radius:8px;'
+            f'padding:10px 16px;margin-bottom:16px;color:#a5b4fc;font-size:13px;">'
+            f'<b>Brand Filter Active:</b> Showing sentiment signals for <b>{brand}</b> only. '
+            f'Select "All" in the Brand filter to see the full market view.</div>',
+            unsafe_allow_html=True,
+        )
 
     _mode_banner()
 
@@ -126,6 +137,7 @@ def render_sentiment_analysis(filters: dict):
                 timespan=timespan,
                 max_articles_per_query=50,
                 analyze_limit=200,
+                brand=brand,
             )
         st.session_state["sentiment_pipeline_status"] = status
         _show_pipeline_status(status)
@@ -146,29 +158,29 @@ def render_sentiment_analysis(filters: dict):
     ])
 
     with tab1:
-        _render_sentiment_intelligence(colors)
+        _render_sentiment_intelligence(colors, brand=brand)
 
     with tab2:
-        _render_geopolitical_risk(colors)
+        _render_geopolitical_risk(colors, brand=brand)
 
     with tab3:
-        _render_economic_signals(colors)
+        _render_economic_signals(colors, brand=brand)
 
     with tab4:
         _render_forecast_comparison(filters, colors)
 
     with tab5:
-        _render_ai_insights(colors)
+        _render_ai_insights(colors, brand=brand)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Tab 1 — Sentiment Intelligence
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _render_sentiment_intelligence(colors: dict):
+def _render_sentiment_intelligence(colors: dict, brand: str = None):
     st.markdown("### Sentiment Intelligence")
 
-    stats = get_overall_sentiment_stats()
+    stats = get_overall_sentiment_stats(brand=brand)
     art_stats = get_article_stats()
 
     # KPI Cards
@@ -214,8 +226,8 @@ def _render_sentiment_intelligence(colors: dict):
 
     # Sentiment timeline
     st.markdown("#### Daily Sentiment Score by Vehicle Category")
-    df_all = get_daily_summaries(days_back=90, vehicle_category=None)
-    cat_df  = get_category_sentiment_summary(days_back=90)
+    df_all = get_daily_summaries(days_back=90, vehicle_category=None, brand=brand)
+    cat_df = get_category_sentiment_summary(days_back=90, brand=brand)
 
     if not cat_df.empty:
         cat_df["date"] = pd.to_datetime(cat_df["date"])
@@ -317,7 +329,9 @@ def _render_sentiment_intelligence(colors: dict):
 
     # News feed table
     st.markdown("#### Recent News Articles")
-    articles = get_stored_articles(days_back=90, analyzed_only=False, limit=50)
+    articles = get_stored_articles(days_back=90, analyzed_only=False, limit=50, brand=brand)
+    if not articles and brand:
+        st.info(f"No news articles found for **{brand}**. Try clicking **Refresh Data** to fetch the latest news, or select **All** brands for a broader view.")
     if articles:
         rows = []
         for a in articles:
@@ -348,11 +362,11 @@ def _render_sentiment_intelligence(colors: dict):
 # Tab 2 — Geopolitical Risk
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _render_geopolitical_risk(colors: dict):
+def _render_geopolitical_risk(colors: dict, brand: str = None):
     st.markdown("### Geopolitical Risk Monitor")
 
-    stats  = get_overall_sentiment_stats()
-    df_all = get_daily_summaries(days_back=90, vehicle_category=None)
+    stats  = get_overall_sentiment_stats(brand=brand)
+    df_all = get_daily_summaries(days_back=90, vehicle_category=None, brand=brand)
 
     geo_risk = stats.get("geopolitical_risk", 0.0)
     risk_label = "HIGH" if geo_risk > 0.4 else ("MEDIUM" if geo_risk > 0.2 else "LOW")
@@ -429,9 +443,8 @@ def _render_geopolitical_risk(colors: dict):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # High-impact articles
     st.markdown("#### High-Impact Events (Impact Score > 0.4)")
-    articles = get_stored_articles(days_back=90, analyzed_only=True, limit=200)
+    articles = get_stored_articles(days_back=90, analyzed_only=True, limit=200, brand=brand)
     high_impact = [a for a in articles if (a.get("impact_score") or 0) > 0.4]
     high_impact.sort(key=lambda x: x.get("impact_score") or 0, reverse=True)
 
@@ -456,18 +469,17 @@ def _render_geopolitical_risk(colors: dict):
 # Tab 3 — Economic Signals
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _render_economic_signals(colors: dict):
+def _render_economic_signals(colors: dict, brand: str = None):
     st.markdown("### Economic Signal Tracker")
 
-    cat_df = get_category_sentiment_summary(days_back=90)
-    df_all = get_daily_summaries(days_back=90, vehicle_category=None)
+    cat_df = get_category_sentiment_summary(days_back=90, brand=brand)
+    df_all = get_daily_summaries(days_back=90, vehicle_category=None, brand=brand)
 
     if cat_df.empty and df_all.empty:
         st.info("No economic signal data available. Click **Refresh Data** to load news.")
         return
 
-    # KPIs from the "All" aggregate
-    stats = get_overall_sentiment_stats()
+    stats = get_overall_sentiment_stats(brand=brand)
     ec1, ec2, ec3, ec4 = st.columns(4)
     with ec1:
         render_kpi_card("Avg Demand Change", f"{stats.get('avg_demand_change', 0):+.2f}%",
@@ -545,7 +557,7 @@ def _render_economic_signals(colors: dict):
     # Economic risk distribution
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("#### Economic Risk Distribution (Analysed Articles)")
-    articles = get_stored_articles(days_back=90, analyzed_only=True, limit=500)
+    articles = get_stored_articles(days_back=90, analyzed_only=True, limit=500, brand=brand)
     if articles:
         risk_counts = {"low": 0, "medium": 0, "high": 0}
         for a in articles:
@@ -809,7 +821,7 @@ def _render_forecast_comparison(filters: dict, colors: dict):
 # Tab 5 — AI Insights
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _render_ai_insights(colors: dict):
+def _render_ai_insights(colors: dict, brand: str = None):
     st.markdown("### AI Market Intelligence Briefing")
 
     mode_label = "Grok AI (Live)" if is_live_mode() else "Template Engine (Mock)"
@@ -828,8 +840,8 @@ def _render_ai_insights(colors: dict):
     if generate or "sentiment_briefing" in st.session_state:
         if generate:
             with st.spinner("Generating market briefing..."):
-                stats    = get_overall_sentiment_stats()
-                cat_df   = get_category_sentiment_summary(days_back=30)
+                stats    = get_overall_sentiment_stats(brand=brand)
+                cat_df   = get_category_sentiment_summary(days_back=30, brand=brand)
                 cat_rows = []
                 if not cat_df.empty:
                     cat_agg = (
@@ -854,7 +866,7 @@ def _render_ai_insights(colors: dict):
         if briefing:
             _glass_card(f"""
                 <div style="color:#a5b4fc;font-size:11px;font-weight:600;letter-spacing:1px;margin-bottom:10px;">
-                  UAE AUTOMOBILE MARKET INTELLIGENCE BRIEFING
+                  INDIA AUTOMOBILE MARKET INTELLIGENCE BRIEFING{f" — {brand.upper()}" if brand else ""}
                 </div>
                 <div style="color:#f3f4f6;font-size:14px;line-height:1.8;white-space:pre-wrap;">{briefing}</div>
             """)
@@ -881,7 +893,7 @@ def _render_ai_insights(colors: dict):
             # Top signals table
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("#### Top Signals by Impact")
-            articles = get_stored_articles(days_back=30, analyzed_only=True, limit=200)
+            articles = get_stored_articles(days_back=30, analyzed_only=True, limit=200, brand=brand)
             if articles:
                 top_sigs = sorted(articles, key=lambda x: x.get("impact_score") or 0, reverse=True)[:10]
                 rows = [{
@@ -902,7 +914,7 @@ def _render_ai_insights(colors: dict):
               </div>
               <div style="color:#9ca3af;font-size:13px;">
                 Click <b>Generate Briefing</b> above to produce a data-driven
-                UAE automobile market intelligence report from current sentiment signals.
+                India automobile market intelligence report from current sentiment signals.
               </div>
             </div>
         """)

@@ -3,7 +3,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from database.connection import get_db_session
-from database.queries import get_yoy_comparison, get_sales_by_category, get_sales_by_region
+from database.queries import (
+    get_yoy_comparison, get_sales_by_category, get_sales_by_region,
+    get_yoy_registration_comparison, get_registrations_by_vehicle_class, get_registrations_by_state,
+)
 from utils.helpers import get_color_palette
 
 def render_comparison(filters: dict):
@@ -15,38 +18,46 @@ def render_comparison(filters: dict):
     
     try:
         st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Comparative Analytics Dashboard</h2>", unsafe_allow_html=True)
-        
-        # 1. Fetch YoY Data
-        df_yoy = get_yoy_comparison(session, filters)
-        
+
+        # Detect India vs UAE data
+        df_india_yoy = get_yoy_registration_comparison(session, filters)
+        use_india = not df_india_yoy.empty
+
+        if use_india:
+            df_yoy = df_india_yoy
+            metric_col, metric_label = 'registrations', 'Registrations'
+        else:
+            df_yoy = get_yoy_comparison(session, filters)
+            metric_col, metric_label = 'revenue', 'Revenue (AED)'
+
         if not df_yoy.empty:
             st.markdown("### Year-over-Year (YoY) Overlap Analysis")
-            
-            # Map month numbers to short names for plotting
-            months_map = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun', 
+
+            months_map = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
                           7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'}
             df_yoy['month_name'] = df_yoy['month'].map(months_map)
-            df_yoy['year'] = df_yoy['year'].astype(str) # category line coloring
-            
-            # Reorder months
+            df_yoy['year'] = df_yoy['year'].astype(str)
             months_order = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-            
-            target_metric = st.radio(
-                "Compare Metric",
-                options=["revenue", "sales"],
-                format_func=lambda x: "Revenue (INR)" if x == "revenue" else "Sales Volume (Units)",
-                horizontal=True
-            )
-            
+
+            if not use_india:
+                target_metric = st.radio(
+                    "Compare Metric",
+                    options=["revenue", "sales"],
+                    format_func=lambda x: "Revenue (AED)" if x == "revenue" else "Sales Volume (Units)",
+                    horizontal=True
+                )
+                metric_col = target_metric
+                metric_label = "Revenue (AED)" if target_metric == "revenue" else "Sales Volume"
+
             fig = px.line(
                 df_yoy,
                 x='month_name',
-                y=target_metric,
+                y=metric_col,
                 color='year',
                 markers=True,
                 category_orders={'month_name': months_order},
                 color_discrete_sequence=colors['colors_seq'],
-                labels={'month_name': 'Month', 'revenue': 'Revenue (INR)', 'sales': 'Sales Volume', 'year': 'Year'}
+                labels={'month_name': 'Month', metric_col: metric_label, 'year': 'Year'}
             )
             
             fig.update_layout(

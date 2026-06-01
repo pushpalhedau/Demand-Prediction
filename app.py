@@ -8,7 +8,7 @@ from streamlit_option_menu import option_menu
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from database.connection import get_db_session
-from database.queries import get_unique_filter_options
+from database.queries import get_unique_filter_options, get_india_filter_options
 from utils.helpers import inject_custom_css
 from dashboard.overview import render_overview
 from dashboard.forecasting import render_forecasting
@@ -35,19 +35,36 @@ inject_custom_css()
 # 3. Fetch unique sidebar filter choices dynamically from DB
 session = get_db_session()
 try:
-    options = get_unique_filter_options(session)
+    # Try India filter options first (VAHAN data); fall back to UAE options
+    india_options = get_india_filter_options(session)
+    if india_options.get("regions"):
+        options = india_options
+    else:
+        options = get_unique_filter_options(session)
 except Exception:
-    # Fail-safe fallbacks if DB is not seeded or active
-    options = {
-        "regions": ["Abu Dhabi", "Ajman", "Dubai", "Fujairah", "Ras Al Khaimah", "Sharjah", "Umm Al Quwain"],
-        "cities": ["Abu Dhabi City", "Al Quoz", "Business Bay", "Deira", "Downtown Dubai", "Dubai Marina", "Jumeirah", "Khalifa City", "Musaffah", "Sharjah City"],
-        "categories": ["SUV", "Sedan", "Luxury", "EV", "Sports Car", "Pickup Truck", "Van/Commercial"],
-        "fuel_types": ["Petrol", "Diesel", "Electric", "Hybrid"],
-        "brands": ["Toyota", "Nissan", "Hyundai", "Kia", "Honda", "Mercedes-Benz", "BMW", "Audi", "Lexus", "Land Rover", "Tesla", "BYD"],
-        "years": [2021, 2022, 2023, 2024, 2025, 2026]
-    }
+    options = {}
 finally:
     session.close()
+
+# Fallback defaults (India-centric)
+if not options.get("regions"):
+    options = {
+        "regions": [
+            "Andhra Pradesh", "Assam", "Bihar", "Chandigarh", "Delhi",
+            "Gujarat", "Haryana", "Karnataka", "Kerala", "Madhya Pradesh",
+            "Maharashtra", "Odisha", "Punjab", "Rajasthan", "Tamil Nadu",
+            "Telangana", "Uttar Pradesh", "Uttarakhand", "West Bengal", "All India",
+        ],
+        "cities": [],
+        "categories": ["Motor Car", "Motor Cycle", "Three Wheeler", "Goods Vehicle", "Bus/Minibus"],
+        "fuel_types": ["Petrol", "Diesel", "Electric", "CNG", "Hybrid"],
+        "brands": [
+            "Maruti Suzuki", "Hyundai", "Tata Motors", "Mahindra", "Kia",
+            "Honda", "Toyota", "MG Motor", "Renault", "Nissan",
+            "Bajaj", "Hero MotoCorp", "TVS", "Ola Electric",
+        ],
+        "years": list(range(2019, 2027)),
+    }
 
 # 4. HEADER BRANDING
 st.markdown("""
@@ -133,40 +150,43 @@ with st.sidebar:
     st.markdown("<h3 style='color: #f3f4f6; font-size: 15px; margin-bottom: 10px;'>⚡ Global Filters</h3>", unsafe_allow_html=True)
     
     # Global Filters Inputs
-    start_date = st.date_input("Start Date", value=date(2021, 1, 1))
-    end_date = st.date_input("End Date", value=date(2026, 5, 31))
-    
-    region = st.selectbox("Emirate", options=["All"] + options["regions"])
+    start_date = st.date_input("Start Date", value=date(2019, 1, 1))
+    end_date = st.date_input("End Date", value=date(2026, 6, 30))
 
-    # Filter areas dynamically based on emirate
+    region = st.selectbox("State", options=["All"] + options["regions"])
+
+    # Filter RTOs dynamically based on selected state
     if region != "All":
-        # Simply load cities belonging to chosen region
         session = get_db_session()
         try:
-            from database.models import Sale
-            region_cities = [c[0] for c in session.query(Sale.area).filter(Sale.emirate == region).distinct().all() if c[0]]
-            city_options = sorted(region_cities)
+            from database.models import Registration
+            rto_list = [c[0] for c in session.query(Registration.rto_code).filter(
+                Registration.state == region, Registration.rto_code != None, Registration.rto_code != ""
+            ).distinct().all() if c[0]]
+            city_options = sorted(rto_list)
         except Exception:
-            city_options = options["cities"]
+            city_options = options.get("cities", [])
         finally:
             session.close()
     else:
-        city_options = options["cities"]
-        
-    city = st.selectbox("Area", options=["All"] + city_options)
+        city_options = options.get("cities", [])
+
+    city = st.selectbox("RTO / Area", options=["All"] + city_options)
     brand = st.selectbox("Brand", options=["All"] + options["brands"])
     category = st.selectbox("Vehicle Category", options=["All"] + options["categories"])
     fuel_type = st.selectbox("Fuel Type", options=["All"] + options["fuel_types"])
-    
-    # Compile global filter dictionary
+
+    # Compile global filter dictionary (state/rto keys for India; emirate/area as aliases for UAE legacy)
     filters = {
         "start_date": start_date,
         "end_date": end_date,
-        "emirate": None if region == "All" else region,
-        "area": None if city == "All" else city,
+        "state": None if region == "All" else region,
+        "emirate": None if region == "All" else region,   # alias for UAE legacy queries
+        "rto": None if city == "All" else city,
+        "area": None if city == "All" else city,           # alias for UAE legacy queries
         "brand": None if brand == "All" else brand,
         "vehicle_category": None if category == "All" else category,
-        "fuel_type": None if fuel_type == "All" else fuel_type
+        "fuel_type": None if fuel_type == "All" else fuel_type,
     }
 
 # 6. ROUTING MAIN VIEWS

@@ -235,6 +235,80 @@ class ExternalFactor(Base):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# India Tables (VAHAN-based)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class Registration(Base):
+    """Monthly vehicle registrations from VAHAN (India fact table)."""
+    __tablename__ = "registrations"
+
+    reg_id = Column(Integer, primary_key=True, autoincrement=True)
+    reg_date = Column(Date, nullable=False, index=True)
+    year = Column(Integer, nullable=True)
+    month = Column(Integer, nullable=True)
+    quarter = Column(String(10), nullable=True)
+
+    state = Column(String(100), nullable=True, index=True)
+    rto_code = Column(String(20), nullable=True)
+
+    maker = Column(String(100), nullable=True, index=True)
+    vehicle_class = Column(String(100), nullable=True)
+    vehicle_category_group = Column(String(100), nullable=True)
+    fuel_type = Column(String(50), nullable=True, index=True)
+    norms = Column(String(50), nullable=True)   # BS4, BS6, etc.
+
+    registrations_count = Column(Integer, nullable=True)
+
+
+class StateProfile(Base):
+    """Geographic dimension: Indian states with centroid coords and market segment."""
+    __tablename__ = "state_profiles"
+
+    state_code = Column(String(10), primary_key=True)
+    state_name = Column(String(100), nullable=False)
+    region = Column(String(50), nullable=True)          # North/South/East/West/Central/Northeast
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    is_metro = Column(Boolean, nullable=True)
+    total_area_km2 = Column(Float, nullable=True)
+    population_millions = Column(Float, nullable=True)
+    market_segment = Column(String(100), nullable=True) # written back by KMeans
+
+
+class IndiaExternalFactor(Base):
+    """Monthly Indian macro-economic and policy indicators per state."""
+    __tablename__ = "india_external_factors"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False, index=True)
+    year = Column(Integer, nullable=True)
+    month = Column(Integer, nullable=True)
+    quarter = Column(String(10), nullable=True)
+    state = Column(String(100), nullable=True)
+
+    petrol_price_inr = Column(Float, nullable=True)
+    diesel_price_inr = Column(Float, nullable=True)
+    cng_price_inr = Column(Float, nullable=True)
+
+    rbi_repo_rate_pct = Column(Float, nullable=True)
+    india_gdp_growth_pct = Column(Float, nullable=True)
+    india_cpi_pct = Column(Float, nullable=True)
+    usd_inr_rate = Column(Float, nullable=True)
+    consumer_confidence_index = Column(Float, nullable=True)
+
+    diwali_month = Column(Integer, nullable=True)
+    navratri_month = Column(Integer, nullable=True)
+    eid_month = Column(Integer, nullable=True)
+    financial_year_end = Column(Integer, nullable=True)
+    budget_month = Column(Integer, nullable=True)
+
+    new_model_launches = Column(Integer, nullable=True)
+    gst_rate_pct = Column(Float, nullable=True)
+    bs6_norms_active = Column(Integer, nullable=True)
+    ev_subsidy_active = Column(Integer, nullable=True)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Sentiment Analysis Tables
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -269,6 +343,7 @@ class SentimentSignal(Base):
     sentiment_score = Column(Float, nullable=True)             # -1.0 (very negative) to +1.0 (very positive)
     impact_score = Column(Float, nullable=True)                # 0.0 (no impact) to 1.0 (high impact)
     affected_vehicle_category = Column(String(100), nullable=True)  # SUV, EV, Luxury, Sedan, All, etc.
+    affected_maker = Column(String(100), nullable=True)              # Maruti Suzuki, Tata, All, etc.
     economic_risk = Column(String(20), nullable=True)          # low | medium | high
     demand_direction = Column(String(10), nullable=True)       # up | down | neutral
     estimated_demand_change_pct = Column(Float, nullable=True) # e.g. +3.5 or -2.1

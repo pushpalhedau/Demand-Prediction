@@ -42,9 +42,9 @@ _BATCH_SIZE: int = 10  # articles per Grok API call
 # Grok system prompt
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You are a financial and automotive market intelligence analyst specializing in the UAE automobile market.
+_SYSTEM_PROMPT = """You are a financial and automotive market intelligence analyst specializing in the Indian automobile market.
 
-For each news article title provided, extract structured demand forecasting signals relevant to the UAE auto market.
+For each news article title provided, extract structured demand forecasting signals relevant to the India auto market.
 
 Return a JSON object with this exact schema:
 {
@@ -52,8 +52,9 @@ Return a JSON object with this exact schema:
     {
       "article_index": <integer, 0-based index matching the input list>,
       "sentiment_score": <float -1.0 to 1.0, where -1=very negative, 0=neutral, 1=very positive>,
-      "impact_score": <float 0.0 to 1.0, how much this news could impact UAE auto demand>,
-      "affected_vehicle_category": <one of: "EV", "Luxury", "SUV", "Sedan", "Commercial", "All">,
+      "impact_score": <float 0.0 to 1.0, how much this news could impact India auto demand>,
+      "affected_vehicle_category": <one of: "EV", "Luxury", "SUV", "Sedan", "Hatchback", "Commercial", "Two-Wheeler", "All">,
+      "affected_maker": <the most impacted brand/maker name exactly, e.g. "Maruti Suzuki", "Tata Motors", "Hyundai", "Mahindra", "Kia", "All">,
       "economic_risk": <one of: "low", "medium", "high">,
       "demand_direction": <one of: "up", "down", "neutral">,
       "estimated_demand_change_pct": <float, estimated % change in demand, e.g. 3.5 or -2.1>,
@@ -64,11 +65,12 @@ Return a JSON object with this exact schema:
 }
 
 Rules:
-- Consider context: UAE is oil-rich, EV adoption is rising, luxury cars are popular, fuel prices affect demand.
-- Geopolitical tension in MENA reduces consumer confidence → negative for all categories.
-- EV policy/incentives → positive for EV category.
-- Oil price drops → positive for petrol vehicles, neutral for EV.
-- Economic growth → positive for luxury and SUV.
+- Context: India is the world's third-largest auto market with strong two-wheeler and small-car segments.
+- RBI rate changes and fuel price hikes directly affect EMI-driven demand.
+- FAME II EV subsidy, GST reductions → positive for EV and overall segment.
+- BS6 norm compliance adds cost → slight negative for budget segment.
+- Festive season (Diwali, Navratri) → demand surge across all segments.
+- Maruti Suzuki dominates mass market; Tata leads EVs; Mahindra dominates SUVs.
 - Return exactly one signal per input article in the same order.
 - Only return valid JSON, nothing else."""
 
@@ -103,11 +105,28 @@ _MEDIUM_IMPACT_WORDS = {
 }
 
 _CATEGORY_KEYWORDS = {
-    "EV":         {"electric", "ev", "tesla", "byd", "charging", "battery", "hybrid", "zero-emission"},
-    "Luxury":     {"luxury", "mercedes", "bmw", "porsche", "lexus", "rolls", "ferrari", "lamborghini", "premium", "audi"},
-    "SUV":        {"suv", "4x4", "land rover", "range rover", "jeep", "pickup", "off-road", "crossover"},
-    "Sedan":      {"sedan", "compact", "hatchback", "saloon"},
-    "Commercial": {"truck", "van", "commercial", "fleet", "cargo", "logistics"},
+    "EV":          {"electric", "ev", "tata ev", "nexon ev", "mg zs", "ola electric", "ather", "fame", "charging", "battery", "hybrid", "zero-emission", "byd", "tesla"},
+    "Luxury":      {"luxury", "mercedes", "bmw", "porsche", "lexus", "rolls", "audi", "premium", "skoda", "volkswagen"},
+    "SUV":         {"suv", "xuv", "scorpio", "fortuner", "creta", "venue", "nexon", "brezza", "seltos", "thar", "4x4", "crossover"},
+    "Hatchback":   {"hatchback", "swift", "baleno", "i20", "alto", "wagonr", "tiago", "punch"},
+    "Sedan":       {"sedan", "city", "verna", "dzire", "slavia", "virtus"},
+    "Commercial":  {"truck", "van", "commercial", "fleet", "cargo", "logistics", "tata ace"},
+    "Two-Wheeler": {"motorcycle", "two-wheeler", "scooter", "bike", "hero", "bajaj", "tvs", "honda two", "ola scooter"},
+}
+
+_MAKER_KEYWORDS = {
+    "Maruti Suzuki": {"maruti", "suzuki", "swift", "baleno", "wagonr", "alto", "dzire", "brezza", "ertiga", "vitara", "fronx", "jimny"},
+    "Hyundai":       {"hyundai", "creta", "venue", "i20", "verna", "tucson", "ioniq", "alcazar"},
+    "Tata Motors":   {"tata", "nexon", "harrier", "safari", "punch", "tiago", "tigor", "curvv", "altroz"},
+    "Mahindra":      {"mahindra", "scorpio", "xuv", "thar", "bolero", "be 6", "xev", "kuv"},
+    "Kia":           {"kia", "seltos", "sonet", "carens", "ev6", "ev9"},
+    "Honda":         {"honda", "city", "amaze", "elevate", "wr-v"},
+    "Toyota":        {"toyota", "innova", "fortuner", "urban cruiser", "glanza", "camry", "hilux"},
+    "MG Motor":      {"mg", "mg motor", "hector", "gloster", "zs", "comet", "windsor"},
+    "Bajaj":         {"bajaj", "pulsar", "chetak", "dominar", "platina"},
+    "Hero MotoCorp": {"hero", "splendor", "passion", "glamour", "xtreme"},
+    "TVS":           {"tvs", "apache", "jupiter", "ntorq", "iqube"},
+    "Ola Electric":  {"ola electric", "ola s1", "ola scooter"},
 }
 
 _HIGH_RISK_WORDS  = {"war", "conflict", "sanction", "crisis", "recession", "crash", "emergency", "attack"}
@@ -151,6 +170,13 @@ def _mock_signal_for_title(title: str, article_index: int) -> Dict:
             affected_category = cat
             break
 
+    # Affected maker
+    affected_maker = "All"
+    for maker, kw_set in _MAKER_KEYWORDS.items():
+        if words & kw_set or any(k in title_lower for k in kw_set):
+            affected_maker = maker
+            break
+
     # Economic risk
     if words & _HIGH_RISK_WORDS or any(w in title_lower for w in _HIGH_RISK_WORDS):
         economic_risk = "high"
@@ -177,15 +203,16 @@ def _mock_signal_for_title(title: str, article_index: int) -> Dict:
     confidence = round(rng.uniform(0.55, 0.80), 3)
 
     return {
-        "article_index":            article_index,
-        "sentiment_score":          sentiment_score,
-        "impact_score":             impact_score,
-        "affected_vehicle_category": affected_category,
-        "economic_risk":            economic_risk,
-        "demand_direction":         demand_direction,
+        "article_index":               article_index,
+        "sentiment_score":             sentiment_score,
+        "impact_score":                impact_score,
+        "affected_vehicle_category":   affected_category,
+        "affected_maker":              affected_maker,
+        "economic_risk":               economic_risk,
+        "demand_direction":            demand_direction,
         "estimated_demand_change_pct": estimated_demand_change_pct,
-        "confidence":               confidence,
-        "summary":                  f"[MOCK] {demand_direction.capitalize()} signal for {affected_category} — sentiment {sentiment_score:+.2f}",
+        "confidence":                  confidence,
+        "summary":                     f"[MOCK] {demand_direction.capitalize()} signal for {affected_category} ({affected_maker}) — sentiment {sentiment_score:+.2f}",
         "_mock": True,
     }
 
@@ -363,6 +390,7 @@ def save_signals_to_db(
                     sentiment_score=_safe_float(sig.get("sentiment_score")),
                     impact_score=_safe_float(sig.get("impact_score")),
                     affected_vehicle_category=sig.get("affected_vehicle_category"),
+                    affected_maker=sig.get("affected_maker"),
                     economic_risk=sig.get("economic_risk"),
                     demand_direction=sig.get("demand_direction"),
                     estimated_demand_change_pct=_safe_float(sig.get("estimated_demand_change_pct")),
@@ -418,8 +446,8 @@ def get_unanalyzed_articles(limit: int = 100) -> List[Dict]:
 # Market Briefing Generator
 # ─────────────────────────────────────────────────────────────────────────────
 
-_BRIEFING_SYSTEM_PROMPT = """You are a senior UAE automobile market intelligence analyst.
-Write a concise, data-driven market briefing for automobile dealership executives.
+_BRIEFING_SYSTEM_PROMPT = """You are a senior India automobile market intelligence analyst.
+Write a concise, data-driven market briefing for automobile dealership and OEM executives in India.
 Use the signal data provided. Be specific, actionable, and professional.
 Structure your response with exactly three clearly labeled sections:
 
@@ -470,11 +498,11 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
     if is_live_mode():
         # ── Live: call Grok ──────────────────────────────────────────────
         user_msg = (
-            f"UAE Automobile Market Signal Data (last 30 days):\n"
+            f"India Automobile Market Signal Data (last 30 days):\n"
             f"- Average sentiment score: {avg_sentiment:+.3f} (scale: -1 to +1)\n"
             f"- Dominant demand direction: {direction}\n"
             f"- Estimated demand change: {demand_change:+.1f}%\n"
-            f"- Geopolitical risk score: {geo_risk:.3f} (scale: 0 to 1)\n"
+            f"- Geopolitical/macro risk score: {geo_risk:.3f} (scale: 0 to 1)\n"
             f"- Average news impact score: {avg_impact:.3f}\n"
             f"- Articles analysed: {total_articles} ({positive_pct:.0f}% positive, {negative_pct:.0f}% negative)\n"
             f"- 7-day sentiment trend: {trend_7d:+.3f}\n"

@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from database.connection import get_db_session
-from database.models import Customer
+from database.models import Customer, StateProfile
 
 # Setup folder for saving model files
 MODEL_DIR = "models/clustering"
@@ -178,3 +178,95 @@ def predict_customer_segment(customer_data: dict) -> str:
     except Exception as e:
         print(f"Prediction error: {e}")
         return "Regular Buyer"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# India Market Segmentation (state-level KMeans)
+# ─────────────────────────────────────────────────────────────────────────────
+
+INDIA_SEGMENT_MODEL_DIR = "models/india_clustering"
+os.makedirs(INDIA_SEGMENT_MODEL_DIR, exist_ok=True)
+
+
+def train_market_segmentation(n_clusters: int = 5):
+    """
+    Cluster Indian states into market segments using VAHAN-derived features.
+    Features (per state): ev_share_pct, yoy_growth_pct, total_registrations,
+    dominant_fuel_diesel_share, top_maker_share, suv_share_pct.
+    Writes market_segment back to StateProfile table.
+    """
+    session = get_db_session()
+    try:
+        from database.queries import get_state_growth_data
+        df = get_state_growth_data(session)
+
+        if df.empty or len(df) < n_clusters:
+            return None, "Insufficient state data for market segmentation. Seed registration data first."
+
+        # Feature engineering
+        df['diesel_share'] = (df['dominant_fuel'] == 'Diesel').astype(float)
+        feature_cols = ['total_registrations', 'ev_share_pct', 'diesel_share']
+
+        # Add YoY growth if available (requires two years of data)
+        if 'yoy_growth_pct' in df.columns:
+            df['yoy_growth_pct'] = df['yoy_growth_pct'].fillna(0.0)
+            feature_cols.append('yoy_growth_pct')
+
+        df_features = df[feature_cols].fillna(0)
+
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(df_features)
+
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+        df['cluster'] = kmeans.fit_predict(X_scaled)
+
+        # Assign human-readable segment labels
+        cluster_means = df.groupby('cluster')[feature_cols].mean()
+
+        def assign_segment(row):
+            c = int(row['cluster'])
+            cm = cluster_means.loc[c]
+            if cm['ev_share_pct'] == cluster_means['ev_share_pct'].max():
+                return "EV Pioneer Markets"
+            if 'yoy_growth_pct' in cm and cm['yoy_growth_pct'] == cluster_means.get('yoy_growth_pct', pd.Series()).max():
+                return "High Growth Markets"
+            if cm['diesel_share'] == cluster_means['diesel_share'].max():
+                return "Diesel-Dominant States"
+            if cm['total_registrations'] == cluster_means['total_registrations'].max():
+                return "Metro Premium Markets"
+            return "Mass Market States"
+
+        df['market_segment'] = df.apply(assign_segment, axis=1)
+
+        # Write segments back to StateProfile table
+        segment_map = dict(zip(df['state'], df['market_segment']))
+        state_records = session.query(StateProfile).all()
+        for sp in state_records:
+            if sp.state_name in segment_map:
+                sp.market_segment = segment_map[sp.state_name]
+        session.commit()
+
+        cluster_mapping = dict(zip(df['cluster'].unique(),
+                                   [assign_segment(df[df['cluster'] == c].iloc[0]) for c in df['cluster'].unique()]))
+
+        with open(os.path.join(INDIA_SEGMENT_MODEL_DIR, "scaler.pkl"), "wb") as f:
+            pickle.dump(scaler, f)
+        with open(os.path.join(INDIA_SEGMENT_MODEL_DIR, "kmeans.pkl"), "wb") as f:
+            pickle.dump(kmeans, f)
+        with open(os.path.join(INDIA_SEGMENT_MODEL_DIR, "segment_mapping.pkl"), "wb") as f:
+            pickle.dump(cluster_mapping, f)
+
+        print(f"Market segmentation complete: {n_clusters} segments across {len(df)} states.")
+        return {
+            "states_df": df,
+            "cluster_means": cluster_means,
+            "segment_mapping": cluster_mapping,
+        }, None
+
+    except Exception as e:
+        session.rollback()
+        import traceback
+        traceback.print_exc()
+        return None, f"Market segmentation error: {str(e)}"
+    finally:
+        session.close()

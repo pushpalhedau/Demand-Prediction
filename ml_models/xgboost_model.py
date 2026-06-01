@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from database.connection import get_db_session
-from database.models import Sale, Customer, Vehicle
+from database.models import Sale, Customer, Vehicle, Registration, IndiaExternalFactor
 
 # Setup folder for saving model files
 MODEL_DIR = "models/xgboost"
@@ -256,3 +256,197 @@ def predict_deal_probability(input_data: dict) -> dict:
             "close_probability": 0.5,
             "explanations": []
         }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# India Regional Demand Growth Classifier
+# ─────────────────────────────────────────────────────────────────────────────
+
+INDIA_XGB_MODEL_DIR = "models/india_xgboost"
+os.makedirs(INDIA_XGB_MODEL_DIR, exist_ok=True)
+
+
+def train_india_demand_classifier():
+    """
+    XGBoost classifier: predict whether a state × vehicle_class combination
+    will see >10% YoY growth in registrations.
+
+    Features: prior year registrations, ev_share, petrol_price_inr,
+    india_gdp_growth_pct, india_cpi_pct, diwali_month, financial_year_end,
+    bs6_norms_active, ev_subsidy_active.
+    Target: yoy_growth_over_10pct (binary 0/1).
+    """
+    session = get_db_session()
+    try:
+        # Build state × vehicle_class × year registration pivot
+        reg_rows = session.query(
+            Registration.state,
+            Registration.vehicle_class,
+            Registration.year,
+            Registration.fuel_type,
+        ).all()
+
+        if not reg_rows:
+            return None, "No registration data found. Seed the database first."
+
+        reg_df = pd.DataFrame(reg_rows, columns=['state', 'vehicle_class', 'year', 'fuel_type'])
+        reg_df['count'] = 1  # each row = one record; aggregate properly below
+
+        # Fetch actual counts
+        from sqlalchemy import func
+        agg_rows = (
+            session.query(
+                Registration.state,
+                Registration.vehicle_class,
+                Registration.year,
+                func.sum(Registration.registrations_count).label('cnt'),
+            )
+            .filter(Registration.vehicle_class != None, Registration.vehicle_class != "")
+            .group_by(Registration.state, Registration.vehicle_class, Registration.year)
+            .all()
+        )
+        agg_df = pd.DataFrame(agg_rows, columns=['state', 'vehicle_class', 'year', 'cnt'])
+
+        # Compute YoY growth
+        agg_df = agg_df.sort_values(['state', 'vehicle_class', 'year'])
+        agg_df['prev_cnt'] = agg_df.groupby(['state', 'vehicle_class'])['cnt'].shift(1)
+        agg_df = agg_df.dropna(subset=['prev_cnt'])
+        agg_df['yoy_growth'] = (agg_df['cnt'] - agg_df['prev_cnt']) / agg_df['prev_cnt'].replace(0, 1)
+        agg_df['target'] = (agg_df['yoy_growth'] > 0.10).astype(int)
+
+        # Fetch macro features
+        ext_rows = (
+            session.query(
+                IndiaExternalFactor.year,
+                IndiaExternalFactor.state,
+                IndiaExternalFactor.petrol_price_inr,
+                IndiaExternalFactor.india_gdp_growth_pct,
+                IndiaExternalFactor.india_cpi_pct,
+                IndiaExternalFactor.diwali_month,
+                IndiaExternalFactor.financial_year_end,
+                IndiaExternalFactor.bs6_norms_active,
+                IndiaExternalFactor.ev_subsidy_active,
+            )
+            .distinct(IndiaExternalFactor.year, IndiaExternalFactor.state)
+            .all()
+        )
+        ext_df = pd.DataFrame(ext_rows, columns=[
+            'year', 'state', 'petrol_price_inr', 'india_gdp_growth_pct',
+            'india_cpi_pct', 'diwali_month', 'financial_year_end',
+            'bs6_norms_active', 'ev_subsidy_active',
+        ]).drop_duplicates(subset=['year', 'state'])
+
+        # EV share per state per year
+        ev_agg = (
+            session.query(
+                Registration.state,
+                Registration.year,
+                func.sum(Registration.registrations_count).label('ev_cnt'),
+            )
+            .filter(Registration.fuel_type == 'Electric')
+            .group_by(Registration.state, Registration.year)
+            .all()
+        )
+        ev_df = pd.DataFrame(ev_agg, columns=['state', 'year', 'ev_cnt'])
+        total_agg = (
+            session.query(
+                Registration.state,
+                Registration.year,
+                func.sum(Registration.registrations_count).label('total'),
+            )
+            .group_by(Registration.state, Registration.year)
+            .all()
+        )
+        tot_df = pd.DataFrame(total_agg, columns=['state', 'year', 'total'])
+        ev_share_df = ev_df.merge(tot_df, on=['state', 'year'], how='right').fillna(0)
+        ev_share_df['ev_share_pct'] = (ev_share_df['ev_cnt'] / ev_share_df['total'].replace(0, 1) * 100).round(2)
+
+        # Merge everything
+        data = agg_df.merge(ext_df, on=['state', 'year'], how='left')
+        data = data.merge(ev_share_df[['state', 'year', 'ev_share_pct']], on=['state', 'year'], how='left')
+        data = data.fillna(0)
+
+        # Encode vehicle_class
+        le = LabelEncoder()
+        data['vehicle_class_enc'] = le.fit_transform(data['vehicle_class'].astype(str))
+
+        feature_cols = [
+            'prev_cnt', 'ev_share_pct', 'petrol_price_inr',
+            'india_gdp_growth_pct', 'india_cpi_pct', 'diwali_month',
+            'financial_year_end', 'bs6_norms_active', 'ev_subsidy_active',
+            'vehicle_class_enc',
+        ]
+        X = data[feature_cols].values
+        y = data['target'].values
+
+        if len(X) < 20:
+            return None, "Not enough samples to train demand classifier (need 20+)."
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y if y.sum() >= 2 else None)
+
+        model = XGBClassifier(n_estimators=100, max_depth=4, random_state=42, eval_metric='logloss')
+        model.fit(X_train, y_train)
+
+        acc = float((model.predict(X_test) == y_test).mean() * 100)
+        feature_importance = dict(zip(feature_cols, model.feature_importances_.tolist()))
+
+        with open(os.path.join(INDIA_XGB_MODEL_DIR, "model.pkl"), "wb") as f:
+            pickle.dump(model, f)
+        with open(os.path.join(INDIA_XGB_MODEL_DIR, "label_encoder.pkl"), "wb") as f:
+            pickle.dump(le, f)
+        with open(os.path.join(INDIA_XGB_MODEL_DIR, "feature_cols.pkl"), "wb") as f:
+            pickle.dump(feature_cols, f)
+
+        print(f"India demand classifier trained. Accuracy: {acc:.1f}%")
+        return {
+            "accuracy": acc,
+            "feature_importance": feature_importance,
+            "training_samples": len(X_train),
+            "feature_cols": feature_cols,
+        }, None
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return None, f"India demand classifier error: {str(e)}"
+    finally:
+        session.close()
+
+
+def predict_india_demand_growth(state: str, vehicle_class: str, year: int, extra_features: dict = None) -> dict:
+    """
+    Predict whether a state × vehicle_class will grow >10% YoY.
+    Returns probability and feature importances.
+    """
+    try:
+        with open(os.path.join(INDIA_XGB_MODEL_DIR, "model.pkl"), "rb") as f:
+            model = pickle.load(f)
+        with open(os.path.join(INDIA_XGB_MODEL_DIR, "label_encoder.pkl"), "rb") as f:
+            le = pickle.load(f)
+        with open(os.path.join(INDIA_XGB_MODEL_DIR, "feature_cols.pkl"), "rb") as f:
+            feature_cols = pickle.load(f)
+
+        features = extra_features or {}
+        try:
+            vc_enc = le.transform([vehicle_class])[0]
+        except Exception:
+            vc_enc = 0
+
+        record = {
+            'prev_cnt': features.get('prev_cnt', 10000),
+            'ev_share_pct': features.get('ev_share_pct', 2.0),
+            'petrol_price_inr': features.get('petrol_price_inr', 94.77),
+            'india_gdp_growth_pct': features.get('india_gdp_growth_pct', 7.0),
+            'india_cpi_pct': features.get('india_cpi_pct', 5.0),
+            'diwali_month': features.get('diwali_month', 0),
+            'financial_year_end': features.get('financial_year_end', 0),
+            'bs6_norms_active': features.get('bs6_norms_active', 1),
+            'ev_subsidy_active': features.get('ev_subsidy_active', 1),
+            'vehicle_class_enc': vc_enc,
+        }
+        X = np.array([[record[c] for c in feature_cols]])
+        prob = float(model.predict_proba(X)[0, 1])
+        importance = dict(zip(feature_cols, model.feature_importances_.tolist()))
+        return {"growth_probability": prob, "feature_importance": importance}
+    except Exception as e:
+        return {"growth_probability": 0.5, "feature_importance": {}}

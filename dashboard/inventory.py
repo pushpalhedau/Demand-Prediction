@@ -14,9 +14,29 @@ def render_inventory(filters: dict):
     colors = get_color_palette()
     
     try:
-        st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Inventory & Stock Intelligence</h2>", unsafe_allow_html=True)
-        
-        # 1. Fetch Inventory Status
+        st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Supply Intelligence</h2>", unsafe_allow_html=True)
+
+        # Check if SIAM production data is available
+        import os
+        siam_path = os.path.join("automobile_datasets", "india", "siam_production.csv")
+        if os.path.exists(siam_path):
+            import pandas as pd
+            siam_df = pd.read_csv(siam_path)
+            st.markdown("### Monthly Production Data (SIAM)")
+            st.dataframe(siam_df.head(50), use_container_width=True, hide_index=True)
+        else:
+            # India placeholder
+            st.info(
+                "**SIAM Production Data** not yet available.\n\n"
+                "To populate this tab with real supply-side data, drop a `siam_production.csv` file "
+                "into `automobile_datasets/india/`. "
+                "The file should have columns: `date`, `maker`, `vehicle_class`, `fuel_type`, `production_units`.\n\n"
+                "SIAM (Society of Indian Automobile Manufacturers) publishes monthly production figures "
+                "publicly at [www.siam.in](https://www.siam.in)."
+            )
+            st.markdown("---")
+            st.markdown("#### In the meantime — UAE Inventory Data (Legacy)")
+            # Fallback to UAE inventory
         df_inv = get_inventory_status(session, filters)
         
         if df_inv.empty:

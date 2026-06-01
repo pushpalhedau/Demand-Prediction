@@ -53,6 +53,7 @@ def run_full_pipeline(
     timespan: str = "30d",
     max_articles_per_query: int = 50,
     analyze_limit: int = 200,
+    brand: Optional[str] = None,
 ) -> Dict:
     """
     Run the complete fetch → analyze → summarize pipeline.
@@ -80,6 +81,7 @@ def run_full_pipeline(
         raw_articles = fetch_all_themes(
             timespan=timespan,
             max_records_per_query=max_articles_per_query,
+            brand=brand,
         )
         fetch_result = save_articles_to_db(raw_articles)
         status["fetch"] = {
@@ -251,21 +253,62 @@ def _safe_mean(series: pd.Series) -> Optional[float]:
 def get_daily_summaries(
     days_back: int = 365,
     vehicle_category: Optional[str] = None,
+    brand: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Return a DataFrame of DailySentimentSummary rows for use as Prophet regressors.
-
-    Columns: summary_date, avg_sentiment_score, avg_impact_score,
-             avg_demand_change_pct, geopolitical_risk_score,
-             dominant_demand_direction, total_articles
-
-    Args:
-        days_back:        How many days back to include.
-        vehicle_category: Filter to a specific category; None = "All" aggregate rows.
+    Return a DataFrame of daily sentiment summaries for Prophet regressors.
+    When brand is set, bypasses DailySentimentSummary and queries SentimentSignal
+    directly to avoid pre-aggregated table dimension explosion.
     """
+    cutoff = date.today() - timedelta(days=days_back)
+
+    if brand:
+        # Brand-filtered path: aggregate directly from SentimentSignal
+        session = get_db_session()
+        try:
+            from database.models import NewsArticle as _NA
+            rows = (
+                session.query(
+                    _NA.published_date,
+                    SentimentSignal.sentiment_score,
+                    SentimentSignal.impact_score,
+                    SentimentSignal.estimated_demand_change_pct,
+                    SentimentSignal.geopolitical_risk_score if hasattr(SentimentSignal, 'geopolitical_risk_score') else SentimentSignal.impact_score,
+                    SentimentSignal.demand_direction,
+                )
+                .join(SentimentSignal, _NA.id == SentimentSignal.article_id)
+                .filter(
+                    _NA.published_date >= cutoff,
+                    SentimentSignal.affected_maker == brand,
+                )
+                .all()
+            )
+            if not rows:
+                return pd.DataFrame()
+            df = pd.DataFrame(rows, columns=[
+                "published_date", "sentiment_score", "impact_score",
+                "estimated_demand_change_pct", "geo_risk", "demand_direction",
+            ])
+            df["published_date"] = pd.to_datetime(df["published_date"])
+            for col in ["sentiment_score", "impact_score", "estimated_demand_change_pct", "geo_risk"]:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+
+            # Aggregate to daily
+            daily = df.groupby("published_date").agg(
+                avg_sentiment_score=("sentiment_score", "mean"),
+                avg_impact_score=("impact_score", "mean"),
+                avg_demand_change_pct=("estimated_demand_change_pct", "mean"),
+                geopolitical_risk_score=("geo_risk", "mean"),
+                total_articles=("sentiment_score", "count"),
+            ).reset_index().rename(columns={"published_date": "summary_date"})
+            daily["dominant_demand_direction"] = "neutral"
+            return daily
+        finally:
+            session.close()
+
+    # Standard path: query DailySentimentSummary (no brand filter)
     session = get_db_session()
     try:
-        cutoff = date.today() - timedelta(days=days_back)
         q = session.query(DailySentimentSummary).filter(
             DailySentimentSummary.summary_date >= cutoff
         )
@@ -275,7 +318,6 @@ def get_daily_summaries(
             q = q.filter(DailySentimentSummary.vehicle_category.is_(None))
 
         rows = q.order_by(DailySentimentSummary.summary_date).all()
-
         if not rows:
             return pd.DataFrame()
 
@@ -300,7 +342,7 @@ def get_daily_summaries(
         session.close()
 
 
-def get_overall_sentiment_stats() -> Dict:
+def get_overall_sentiment_stats(brand: Optional[str] = None) -> Dict:
     """
     Aggregate stats across all DailySentimentSummary rows (vehicle_category=None).
     Used for the dashboard KPI header cards.
@@ -312,35 +354,61 @@ def get_overall_sentiment_stats() -> Dict:
     """
     session = get_db_session()
     try:
-        # Pull "All" rows from last 30 days
         cutoff_30 = date.today() - timedelta(days=30)
         cutoff_7  = date.today() - timedelta(days=7)
 
-        rows_30 = (
-            session.query(DailySentimentSummary)
-            .filter(
-                DailySentimentSummary.vehicle_category.is_(None),
-                DailySentimentSummary.summary_date >= cutoff_30,
+        if brand:
+            # Brand-filtered: query SentimentSignal directly
+            from database.models import NewsArticle as _NA
+            brand_rows = (
+                session.query(
+                    _NA.published_date,
+                    SentimentSignal.sentiment_score,
+                    SentimentSignal.impact_score,
+                    SentimentSignal.estimated_demand_change_pct,
+                    SentimentSignal.demand_direction,
+                )
+                .join(SentimentSignal, _NA.id == SentimentSignal.article_id)
+                .filter(_NA.published_date >= cutoff_30, SentimentSignal.affected_maker == brand)
+                .all()
             )
-            .order_by(DailySentimentSummary.summary_date)
-            .all()
-        )
+            if not brand_rows:
+                return _empty_stats()
+            df = pd.DataFrame(brand_rows, columns=["date", "sentiment", "impact", "demand_change", "direction"])
+            for col in ["sentiment", "impact", "demand_change"]:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+            df["date"] = pd.to_datetime(df["date"])
+            df["geo_risk"] = df["impact"] * (df["sentiment"] < -0.15).astype(float)
+            df["total"] = 1
+            df["positive"] = (df["sentiment"] > 0.15).astype(int)
+            df["negative"] = (df["sentiment"] < -0.15).astype(int)
+        else:
+            rows_30 = (
+                session.query(DailySentimentSummary)
+                .filter(
+                    DailySentimentSummary.vehicle_category.is_(None),
+                    DailySentimentSummary.summary_date >= cutoff_30,
+                )
+                .order_by(DailySentimentSummary.summary_date)
+                .all()
+            )
+            if not rows_30:
+                return _empty_stats()
+            df = pd.DataFrame([{
+                "date":          r.summary_date,
+                "sentiment":     r.avg_sentiment_score or 0.0,
+                "impact":        r.avg_impact_score or 0.0,
+                "demand_change": r.avg_demand_change_pct or 0.0,
+                "geo_risk":      r.geopolitical_risk_score or 0.0,
+                "positive":      r.positive_signals or 0,
+                "negative":      r.negative_signals or 0,
+                "total":         r.total_articles or 0,
+                "direction":     r.dominant_demand_direction or "neutral",
+                "computed_at":   r.computed_at,
+            } for r in rows_30])
 
-        if not rows_30:
+        if df.empty:
             return _empty_stats()
-
-        df = pd.DataFrame([{
-            "date":            r.summary_date,
-            "sentiment":       r.avg_sentiment_score or 0.0,
-            "impact":          r.avg_impact_score or 0.0,
-            "demand_change":   r.avg_demand_change_pct or 0.0,
-            "geo_risk":        r.geopolitical_risk_score or 0.0,
-            "positive":        r.positive_signals or 0,
-            "negative":        r.negative_signals or 0,
-            "total":           r.total_articles or 0,
-            "direction":       r.dominant_demand_direction or "neutral",
-            "computed_at":     r.computed_at,
-        } for r in rows_30])
 
         total_articles = int(df["total"].sum())
         total_pos = int(df["positive"].sum())
@@ -353,10 +421,10 @@ def get_overall_sentiment_stats() -> Dict:
         trend_7d = round(float(last_7 - prior), 4) if pd.notna(last_7) and pd.notna(prior) else 0.0
 
         # Dominant direction (plurality across all days)
-        dir_counts = df["direction"].value_counts()
+        dir_counts = df["direction"].value_counts() if "direction" in df.columns else pd.Series()
         dominant_dir = dir_counts.index[0] if not dir_counts.empty else "neutral"
 
-        last_updated = df["computed_at"].max()
+        last_updated = df["computed_at"].max() if "computed_at" in df.columns else None
 
         return {
             "avg_sentiment":    round(float(df["sentiment"].mean()), 3),
@@ -375,14 +443,36 @@ def get_overall_sentiment_stats() -> Dict:
         session.close()
 
 
-def get_category_sentiment_summary(days_back: int = 30) -> pd.DataFrame:
+def get_category_sentiment_summary(days_back: int = 30, brand: Optional[str] = None) -> pd.DataFrame:
     """
     Return average sentiment per vehicle_category over the past N days.
-    Used for category comparison charts on the dashboard.
+    When brand is set, queries SentimentSignal directly filtered by affected_maker.
     """
+    cutoff = date.today() - timedelta(days=days_back)
     session = get_db_session()
     try:
-        cutoff = date.today() - timedelta(days=days_back)
+        if brand:
+            from database.models import NewsArticle as _NA
+            rows = (
+                session.query(
+                    _NA.published_date,
+                    SentimentSignal.affected_vehicle_category,
+                    SentimentSignal.sentiment_score,
+                    SentimentSignal.impact_score,
+                    SentimentSignal.estimated_demand_change_pct,
+                )
+                .join(SentimentSignal, _NA.id == SentimentSignal.article_id)
+                .filter(_NA.published_date >= cutoff, SentimentSignal.affected_maker == brand)
+                .all()
+            )
+            if not rows:
+                return pd.DataFrame()
+            df = pd.DataFrame(rows, columns=["date", "category", "sentiment", "impact", "demand_change"])
+            for col in ["sentiment", "impact", "demand_change"]:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+            df["category"] = df["category"].fillna("All")
+            return df
+
         rows = (
             session.query(DailySentimentSummary)
             .filter(
@@ -395,17 +485,16 @@ def get_category_sentiment_summary(days_back: int = 30) -> pd.DataFrame:
             return pd.DataFrame()
 
         records = [{
-            "category":         r.vehicle_category,
-            "date":             r.summary_date,
-            "sentiment":        r.avg_sentiment_score or 0.0,
-            "impact":           r.avg_impact_score or 0.0,
-            "demand_change":    r.avg_demand_change_pct or 0.0,
-            "geo_risk":         r.geopolitical_risk_score or 0.0,
-            "total_articles":   r.total_articles or 0,
-            "positive":         r.positive_signals or 0,
-            "negative":         r.negative_signals or 0,
+            "category":      r.vehicle_category,
+            "date":          r.summary_date,
+            "sentiment":     r.avg_sentiment_score or 0.0,
+            "impact":        r.avg_impact_score or 0.0,
+            "demand_change": r.avg_demand_change_pct or 0.0,
+            "geo_risk":      r.geopolitical_risk_score or 0.0,
+            "total_articles": r.total_articles or 0,
+            "positive":      r.positive_signals or 0,
+            "negative":      r.negative_signals or 0,
         } for r in rows]
-
         return pd.DataFrame(records)
     finally:
         session.close()

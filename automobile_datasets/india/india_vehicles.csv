@@ -1,0 +1,101 @@
+vehicle_id,maker,model,variant,category,vehicle_class,fuel_type,ex_showroom_price_inr,engine_cc,horsepower,mileage_kmpl,range_km,seating_capacity,transmission,drive_type,safety_rating,launch_year,is_active,warranty_years,ev_subsidy_eligible
+IND001,Maruti Suzuki,Swift,VXI,Hatchback,Motor Car,Petrol,649000,1197,89,23.2,,5,Manual,FWD,4,2021,1,2,0
+IND002,Maruti Suzuki,Swift,ZXI+,Hatchback,Motor Car,Petrol,799000,1197,89,23.2,,5,Automatic,FWD,4,2021,1,2,0
+IND003,Maruti Suzuki,Baleno,Delta,Hatchback,Motor Car,Petrol,664000,1197,89,22.9,,5,Manual,FWD,4,2022,1,2,0
+IND004,Maruti Suzuki,Baleno,Alpha,Hatchback,Motor Car,CNG,794000,1197,89,30.6,,5,Manual,FWD,4,2022,1,2,0
+IND005,Maruti Suzuki,WagonR,LXI,Hatchback,Motor Car,Petrol,584000,998,67,24.4,,5,Manual,FWD,4,2019,1,2,0
+IND006,Maruti Suzuki,WagonR,ZXI+,Hatchback,Motor Car,CNG,700000,998,58,34.0,,5,Manual,FWD,4,2019,1,2,0
+IND007,Maruti Suzuki,Alto K10,STD,Hatchback,Motor Car,Petrol,399000,998,67,24.4,,5,Manual,FWD,3,2022,1,2,0
+IND008,Maruti Suzuki,Dzire,LXI,Sedan,Motor Car,Petrol,649000,1197,89,23.3,,5,Manual,FWD,4,2021,1,2,0
+IND009,Maruti Suzuki,Dzire,ZXI+,Sedan,Motor Car,CNG,832000,1197,89,31.1,,5,Automatic,FWD,4,2021,1,2,0
+IND010,Maruti Suzuki,Ertiga,VXI,MPV,Motor Car,Petrol,896000,1462,103,19.3,,7,Manual,FWD,4,2022,1,2,0
+IND011,Maruti Suzuki,Ertiga,ZXI,MPV,Motor Car,CNG,1019000,1462,87,26.1,,7,Manual,FWD,4,2022,1,2,0
+IND012,Maruti Suzuki,Brezza,VXI,SUV,Motor Car,Petrol,1090000,1462,103,17.4,,5,Manual,FWD,5,2022,1,2,0
+IND013,Maruti Suzuki,Brezza,ZXI+,SUV,Motor Car,Petrol,1390000,1462,103,17.4,,5,Automatic,FWD,5,2022,1,2,0
+IND014,Maruti Suzuki,Grand Vitara,Delta,SUV,Motor Car,Petrol,1099000,1490,103,19.4,,5,Manual,FWD,5,2022,1,2,0
+IND015,Maruti Suzuki,Grand Vitara,Alpha Hybrid,SUV,Motor Car,Hybrid,1679000,1490,116,27.97,,5,Automatic,FWD,5,2022,1,2,0
+IND016,Maruti Suzuki,Fronx,Delta,Hatchback,Motor Car,Petrol,749000,1197,89,21.8,,5,Manual,FWD,4,2023,1,2,0
+IND017,Maruti Suzuki,Jimny,Zeta,SUV,Motor Car,Petrol,1299000,1462,103,16.3,,4,Manual,4WD,4,2023,1,2,0
+IND018,Hyundai,i20,Magna,Hatchback,Motor Car,Petrol,730000,1197,83,20.3,,5,Manual,FWD,4,2020,1,3,0
+IND019,Hyundai,i20,Asta(O) Turbo,Hatchback,Motor Car,Petrol,1190000,998,118,20.0,,5,Automatic,FWD,4,2020,1,3,0
+IND020,Hyundai,Creta,E,SUV,Motor Car,Petrol,1099000,1497,113,15.0,,5,Manual,FWD,5,2024,1,3,0
+IND021,Hyundai,Creta,SX(O) Turbo,SUV,Motor Car,Petrol,1999000,1482,160,16.8,,5,Automatic,FWD,5,2024,1,3,0
+IND022,Hyundai,Creta,SX(O) Electric,SUV,Motor Car,Electric,1999000,,,,,5,Automatic,FWD,5,2024,1,3,1
+IND023,Hyundai,Venue,S,SUV,Motor Car,Petrol,789000,1197,83,17.5,,5,Manual,FWD,4,2022,1,3,0
+IND024,Hyundai,Venue,SX(O) Turbo,SUV,Motor Car,Petrol,1249000,998,118,18.15,,5,Automatic,FWD,4,2022,1,3,0
+IND025,Hyundai,i10 Nios,Era,Hatchback,Motor Car,Petrol,566000,1086,69,20.3,,5,Manual,FWD,3,2023,1,3,0
+IND026,Hyundai,Verna,EX,Sedan,Motor Car,Petrol,1099000,1497,113,18.6,,5,Manual,FWD,5,2023,1,3,0
+IND027,Hyundai,Ioniq 5,Base,SUV,Motor Car,Electric,4599000,,215,,481,5,Automatic,AWD,5,2022,1,3,1
+IND028,Hyundai,Alcazar,Platinum,SUV,Motor Car,Petrol,2099000,1999,159,14.2,,7,Automatic,FWD,5,2023,1,3,0
+IND029,Tata Motors,Punch,Pure,Hatchback,Motor Car,Petrol,599000,1199,86,18.8,,5,Manual,FWD,5,2021,1,2,0
+IND030,Tata Motors,Punch EV,Smart,SUV,Motor Car,Electric,999000,,,,,5,Automatic,FWD,5,2024,1,3,1
+IND031,Tata Motors,Nexon,Smart,SUV,Motor Car,Petrol,809000,1199,118,17.0,,5,Manual,FWD,5,2023,1,2,0
+IND032,Tata Motors,Nexon EV,Medium Range,SUV,Motor Car,Electric,1499000,,,,,5,Automatic,FWD,5,2023,1,3,1
+IND033,Tata Motors,Nexon EV,Long Range,SUV,Motor Car,Electric,1699000,,,,,5,Automatic,FWD,5,2023,1,3,1
+IND034,Tata Motors,Harrier,Smart,SUV,Motor Car,Diesel,1499000,1956,168,14.6,,5,Manual,FWD,5,2023,1,2,0
+IND035,Tata Motors,Safari,Smart,SUV,Motor Car,Diesel,1599000,1956,168,14.08,,7,Manual,FWD,5,2021,1,2,0
+IND036,Tata Motors,Tiago,XE,Hatchback,Motor Car,Petrol,499000,1199,86,19.8,,5,Manual,FWD,4,2023,1,2,0
+IND037,Tata Motors,Tiago EV,XE,Hatchback,Motor Car,Electric,849000,,,,,5,Automatic,FWD,4,2022,1,3,1
+IND038,Tata Motors,Tigor EV,XE,Sedan,Motor Car,Electric,1199000,,,,,5,Automatic,FWD,4,2022,1,3,1
+IND039,Tata Motors,Curvv EV,Creative,SUV,Motor Car,Electric,1799000,,,,,5,Automatic,FWD,5,2024,1,3,1
+IND040,Mahindra,Scorpio-N,Z2,SUV,Motor Car,Diesel,1330000,2184,130,15.2,,7,Manual,RWD,5,2022,1,2,0
+IND041,Mahindra,Scorpio-N,Z8L 4WD,SUV,Motor Car,Diesel,2499000,2184,130,15.2,,7,Automatic,4WD,5,2022,1,2,0
+IND042,Mahindra,XUV700,MX Petrol,SUV,Motor Car,Petrol,1399000,1997,197,14.0,,7,Manual,FWD,5,2021,1,3,0
+IND043,Mahindra,XUV700,AX7 AWD Diesel,SUV,Motor Car,Diesel,2699000,2184,185,14.3,,7,Automatic,AWD,5,2021,1,3,0
+IND044,Mahindra,Thar,LX Diesel,SUV,Motor Car,Diesel,1599000,2184,130,15.2,,4,Manual,4WD,5,2023,1,2,0
+IND045,Mahindra,BE 6,Pack One,SUV,Motor Car,Electric,1899000,,,,,5,Automatic,AWD,5,2025,1,3,1
+IND046,Mahindra,XEV 9e,Pack One,SUV,Motor Car,Electric,2199000,,,,,5,Automatic,AWD,5,2025,1,3,1
+IND047,Mahindra,Bolero,B4,MPV,Motor Car,Diesel,999000,1493,75,16.0,,7,Manual,4WD,3,2020,1,2,0
+IND048,Mahindra,XUV400 EV,EC Pro,SUV,Motor Car,Electric,1399000,,,,,5,Automatic,FWD,5,2023,1,3,1
+IND049,Kia,Seltos,HTX,SUV,Motor Car,Petrol,1137000,1497,113,16.1,,5,Manual,FWD,5,2023,1,3,0
+IND050,Kia,Seltos,GTX+ Turbo,SUV,Motor Car,Petrol,2199000,1482,160,16.5,,5,Automatic,FWD,5,2023,1,3,0
+IND051,Kia,Sonet,HTX,SUV,Motor Car,Petrol,1018000,1197,83,18.4,,5,Manual,FWD,4,2023,1,3,0
+IND052,Kia,Carens,Premium,MPV,Motor Car,Petrol,1098000,1497,113,16.5,,7,Manual,FWD,5,2022,1,3,0
+IND053,Kia,EV6,GT Line AWD,SUV,Motor Car,Electric,6095000,,,320,,5,Automatic,AWD,5,2022,1,3,1
+IND054,Kia,EV9,GT Line AWD,SUV,Motor Car,Electric,1360000,,,541,,7,Automatic,AWD,5,2024,1,3,1
+IND055,Honda,Amaze,E CVT,Sedan,Motor Car,Petrol,829000,1199,89,18.6,,5,Automatic,FWD,4,2023,1,3,0
+IND056,Honda,City,V,Sedan,Motor Car,Petrol,1158000,1498,119,17.8,,5,Manual,FWD,5,2023,1,3,0
+IND057,Honda,City,ZX e:HEV,Sedan,Motor Car,Hybrid,2000000,1498,107,26.5,,5,Automatic,FWD,5,2022,1,3,0
+IND058,Honda,Elevate,V,SUV,Motor Car,Petrol,1148000,1498,119,15.3,,5,Manual,FWD,5,2023,1,3,0
+IND059,Toyota,Innova Crysta,GX,MPV,Motor Car,Diesel,1929000,2393,148,11.3,,7,Manual,RWD,5,2020,1,3,0
+IND060,Toyota,Innova HyCross,G,MPV,Motor Car,Hybrid,1929000,1987,186,21.1,,8,Automatic,FWD,5,2022,1,3,0
+IND061,Toyota,Fortuner,2WD MT,SUV,Motor Car,Diesel,3299000,2755,201,14.2,,7,Manual,RWD,5,2021,1,3,0
+IND062,Toyota,Urban Cruiser Taisor,E,SUV,Motor Car,Petrol,749000,1197,89,21.5,,5,Manual,FWD,4,2024,1,3,0
+IND063,Toyota,Glanza,E,Hatchback,Motor Car,Petrol,664000,1197,89,22.4,,5,Manual,FWD,4,2022,1,3,0
+IND064,Toyota,bZ4X,Premium AWD,SUV,Motor Car,Electric,6500000,,,500,,5,Automatic,AWD,5,2023,1,3,1
+IND065,MG Motor,Hector,Style,SUV,Motor Car,Petrol,1399000,1451,140,14.16,,5,Manual,FWD,5,2023,1,3,0
+IND066,MG Motor,Windsor EV,Excite,SUV,Motor Car,Electric,1399000,,,331,,5,Automatic,FWD,5,2024,1,3,1
+IND067,MG Motor,Comet EV,Excite,Hatchback,Motor Car,Electric,799000,,,230,,4,Automatic,FWD,4,2023,1,3,1
+IND068,MG Motor,ZS EV,Excite,SUV,Motor Car,Electric,1999000,,,461,,5,Automatic,FWD,5,2022,1,3,1
+IND069,Renault,Kwid,RXE,Hatchback,Motor Car,Petrol,455000,999,67,22.3,,5,Manual,FWD,3,2022,1,2,0
+IND070,Renault,Triber,RXE,MPV,Motor Car,Petrol,606000,999,72,19.0,,7,Manual,FWD,4,2019,1,2,0
+IND071,Renault,Kiger,RXE,SUV,Motor Car,Petrol,600000,999,72,18.2,,5,Manual,FWD,4,2021,1,2,0
+IND072,Nissan,Magnite,XE,SUV,Motor Car,Petrol,600000,999,72,18.1,,5,Manual,FWD,4,2020,1,2,0
+IND073,Nissan,Magnite,XV Prime Turbo CVT,SUV,Motor Car,Petrol,1199000,999,100,17.4,,5,Automatic,FWD,4,2020,1,2,0
+IND074,Skoda,Slavia,Active,Sedan,Motor Car,Petrol,1099000,1498,113,18.7,,5,Manual,FWD,5,2022,1,4,0
+IND075,Skoda,Kushaq,Active,SUV,Motor Car,Petrol,1099000,1498,113,17.0,,5,Manual,FWD,5,2021,1,4,0
+IND076,Skoda,Kodiaq,Sportline,SUV,Motor Car,Petrol,3999000,1984,190,12.5,,7,Automatic,4WD,5,2023,1,4,0
+IND077,Volkswagen,Virtus,Trendline,Sedan,Motor Car,Petrol,1124000,1498,113,18.7,,5,Manual,FWD,5,2022,1,4,0
+IND078,Volkswagen,Taigun,Trendline,SUV,Motor Car,Petrol,1175000,1498,113,17.3,,5,Manual,FWD,5,2021,1,4,0
+IND079,Jeep,Compass,Sport,SUV,Motor Car,Petrol,2099000,1368,163,15.0,,5,Manual,FWD,5,2022,1,3,0
+IND080,Jeep,Meridian,Sport Plus,SUV,Motor Car,Diesel,2999000,1956,168,14.8,,7,Automatic,4WD,5,2022,1,3,0
+IND081,Citroen,C3,You,Hatchback,Motor Car,Petrol,604000,1199,81,19.8,,5,Manual,FWD,4,2022,1,2,0
+IND082,Citroen,C3 Aircross,You,SUV,Motor Car,Petrol,999000,1199,81,17.7,,5,Manual,FWD,4,2023,1,2,0
+IND083,Mercedes-Benz,C-Class,C 200,Sedan,Motor Car,Petrol,5700000,1999,204,14.5,,5,Automatic,RWD,5,2022,1,4,0
+IND084,Mercedes-Benz,GLE,300d,SUV,Motor Car,Diesel,9400000,1950,245,,,5,Automatic,4WD,5,2021,1,4,0
+IND085,Mercedes-Benz,EQS,580 4MATIC,Sedan,Motor Car,Electric,16300000,,,770,,5,Automatic,AWD,5,2022,1,4,1
+IND086,BMW,3 Series,320d M Sport,Sedan,Motor Car,Diesel,5500000,1995,190,,,5,Automatic,RWD,5,2022,1,4,0
+IND087,BMW,X1,sDrive18i,SUV,Motor Car,Petrol,4599000,1498,136,,,5,Automatic,FWD,5,2023,1,4,0
+IND088,BMW,iX,xDrive40,SUV,Motor Car,Electric,11199000,,,425,,5,Automatic,AWD,5,2022,1,4,1
+IND089,Audi,A4,Premium Plus Petrol,Sedan,Motor Car,Petrol,4599000,1984,190,,,5,Automatic,FWD,5,2021,1,4,0
+IND090,Audi,Q5,Premium Plus,SUV,Motor Car,Petrol,6799000,1984,249,,,5,Automatic,4WD,5,2021,1,4,0
+IND091,BYD,Atto 3,Standard Range,SUV,Motor Car,Electric,3399000,,,420,,5,Automatic,FWD,5,2023,1,3,1
+IND092,BYD,Seal,Dynamic,Sedan,Motor Car,Electric,4199000,,,510,,5,Automatic,RWD,5,2023,1,3,1
+IND093,BYD,e6,Comfort,MPV,Motor Car,Electric,2999000,,,520,,5,Automatic,FWD,5,2023,1,3,1
+IND094,Ola Electric,S1 Pro,Standard,Two-Wheeler,Two Wheeler,Electric,149999,,8.5,,181,2,Automatic,,3,2022,1,2,1
+IND095,Ola Electric,S1 Air,Standard,Two-Wheeler,Two Wheeler,Electric,109999,,6,,151,2,Automatic,,3,2023,1,2,1
+IND096,Hero Electric,Optima CX,Standard,Two-Wheeler,Two Wheeler,Electric,74990,,1.2,,115,2,Automatic,,2,2020,1,1,1
+IND097,Bajaj,Pulsar 150,Standard,Two-Wheeler,Two Wheeler,Petrol,100900,149,14,,350,2,Manual,,3,2021,1,2,0
+IND098,Bajaj,Chetak EV,Urbane,Two-Wheeler,Two Wheeler,Electric,134999,,4.08,,113,2,Automatic,,4,2021,1,2,1
+IND099,TVS,Jupiter Classic,Standard,Two-Wheeler,Two Wheeler,Petrol,82496,109,7.5,,62,2,Automatic,,3,2022,1,2,0
+IND100,TVS,iQube S,Standard,Two-Wheeler,Two Wheeler,Electric,159995,,11,,100,2,Automatic,,4,2022,1,2,1

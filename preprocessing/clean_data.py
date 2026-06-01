@@ -268,3 +268,108 @@ def clean_external_factors(filepath):
     df['ev_charging_stations_uae'] = df['ev_charging_stations_uae'].fillna(0).astype(int)
 
     return df
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# India / VAHAN clean functions
+# ─────────────────────────────────────────────────────────────────────────────
+
+def clean_registrations(filepath):
+    """Clean VAHAN registrations CSV (India fact table)."""
+    df = pd.read_csv(filepath)
+
+    df['reg_date'] = pd.to_datetime(df['date']).dt.date
+    df['year'] = pd.to_datetime(df['date']).dt.year.astype(int)
+    df['month'] = pd.to_datetime(df['date']).dt.month.astype(int)
+    df['quarter'] = df['month'].apply(lambda m: f"Q{(m - 1) // 3 + 1}")
+
+    df['state'] = df['state'].fillna("Unknown")
+    df['rto_code'] = df['rto_code'].fillna("")
+    df['maker'] = df['maker'].fillna("")
+    df['vehicle_class'] = df['vehicle_class'].fillna("")
+    df['vehicle_category_group'] = df.get('vehicle_category_group', pd.Series("")).fillna("")
+    df['fuel_type'] = df['fuel_type'].fillna("")
+    df['norms'] = df.get('norms', pd.Series("")).fillna("")
+
+    df['registrations_count'] = (
+        df['registrations_count']
+        .apply(lambda x: int(str(x).replace(",", "").split(".")[0]) if pd.notnull(x) else 0)
+    )
+
+    # Drop rows with zero registrations (noise from API)
+    df = df[df['registrations_count'] > 0].copy()
+    df = df.drop(columns=['date'], errors='ignore')
+    return df
+
+
+def clean_state_profiles(filepath):
+    """Clean state profiles CSV (geographic dimension)."""
+    df = pd.read_csv(filepath)
+    df['state_code'] = df['state_code'].fillna("XX")
+    df['state_name'] = df['state_name'].fillna("Unknown")
+    df['region'] = df['region'].fillna("Unknown")
+    df['latitude'] = df['latitude'].fillna(20.5937)
+    df['longitude'] = df['longitude'].fillna(78.9629)
+    df['is_metro'] = df['is_metro'].fillna(False).astype(bool)
+    df['total_area_km2'] = df['total_area_km2'].fillna(0.0)
+    df['population_millions'] = df['population_millions'].fillna(0.0)
+    df['market_segment'] = df['market_segment'].fillna("")
+    return df
+
+
+def clean_india_external_factors(filepath):
+    """Clean india_external_factors.csv."""
+    df = pd.read_csv(filepath)
+
+    df['date'] = pd.to_datetime(df['date']).dt.date
+    df['year'] = df['year'].fillna(pd.to_datetime(df['date']).dt.year).astype(int)
+    df['month'] = df['month'].fillna(pd.to_datetime(df['date']).dt.month).astype(int)
+    df['quarter'] = df['quarter'].fillna("Q1")
+    df['state'] = df['state'].fillna("All India")
+
+    for col in ['petrol_price_inr', 'diesel_price_inr', 'cng_price_inr',
+                'rbi_repo_rate_pct', 'india_gdp_growth_pct', 'india_cpi_pct',
+                'usd_inr_rate', 'consumer_confidence_index']:
+        df[col] = df[col].fillna(df[col].median())
+
+    for col in ['diwali_month', 'navratri_month', 'eid_month',
+                'financial_year_end', 'budget_month', 'new_model_launches',
+                'bs6_norms_active', 'ev_subsidy_active']:
+        df[col] = df[col].fillna(0).astype(int)
+
+    df['gst_rate_pct'] = df['gst_rate_pct'].fillna(43.0)
+    return df
+
+
+def clean_india_vehicles(filepath):
+    """Clean india_vehicles.csv — maps to existing Vehicle ORM model."""
+    df = pd.read_csv(filepath)
+
+    df = df.rename(columns={
+        'vehicle_id': 'vehicle_id',
+        'maker': 'brand',
+        'ex_showroom_price_inr': 'price_aed',  # reusing column; values in INR
+        'vehicle_class': 'category',
+    })
+
+    df['brand'] = df['brand'].fillna("Unknown")
+    df['model'] = df['model'].fillna("Unknown")
+    df['variant'] = df['variant'].fillna("Base")
+    df['category'] = df['category'].fillna("Hatchback")
+    df['fuel_type'] = df['fuel_type'].fillna("Petrol")
+    df['transmission'] = df['transmission'].fillna("Manual")
+    df['drive_type'] = df['drive_type'].fillna("FWD")
+    df['price_aed'] = df['price_aed'].fillna(0).astype(int)
+    df['engine_cc'] = df['engine_cc'].apply(lambda x: int(x) if pd.notnull(x) else None)
+    df['horsepower'] = df['horsepower'].apply(lambda x: int(x) if pd.notnull(x) else None)
+    df['mileage_kmpl'] = df['mileage_kmpl'].apply(lambda x: float(x) if pd.notnull(x) else None)
+    df['range_km'] = df['range_km'].apply(lambda x: int(x) if pd.notnull(x) else None)
+    df['seating_capacity'] = df['seating_capacity'].fillna(5).astype(int)
+    df['safety_rating'] = df['safety_rating'].fillna(4).astype(int)
+    df['launch_year'] = df['launch_year'].fillna(2022).astype(int)
+    df['warranty_years'] = df['warranty_years'].fillna(2).astype(int)
+    df['is_active'] = df['is_active'].fillna(1).astype(bool)
+    df['vat_inclusive_price'] = (df['price_aed'] * 1.28).astype(int)  # approx GST
+    df['gcc_spec'] = False
+    df['service_contract_available'] = False
+    return df

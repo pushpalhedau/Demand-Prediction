@@ -1,7 +1,10 @@
 from sqlalchemy import func, and_, or_, extract, desc, asc
 from sqlalchemy.orm import Session
-from database.models import Customer, Vehicle, Dealer, Sale, Inventory, ExternalFactor
-from database.connection import get_db_session # This line is already present, no change needed
+from database.models import (
+    Customer, Vehicle, Dealer, Sale, Inventory, ExternalFactor,
+    Registration, StateProfile, IndiaExternalFactor,
+)
+from database.connection import get_db_session
 import pandas as pd
 from datetime import datetime, date
 
@@ -334,5 +337,252 @@ def _apply_sale_filters(query, filters: dict = None):
         query = query.filter(Sale.sale_date >= filters["start_date"])
     if filters.get("end_date"):
         query = query.filter(Sale.sale_date <= filters["end_date"])
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# India / VAHAN Query Functions
+# ─────────────────────────────────────────────────────────────────────────────
+
+def get_india_filter_options(session: Session) -> dict:
+    """Returns filter lists for India dashboard sidebar."""
+    states = sorted([r[0] for r in session.query(Registration.state).distinct().all() if r[0]])
+    makers = sorted([r[0] for r in session.query(Registration.maker).distinct().all() if r[0]])
+    vehicle_classes = sorted([r[0] for r in session.query(Registration.vehicle_class).distinct().all() if r[0]])
+    fuel_types = sorted([r[0] for r in session.query(Registration.fuel_type).distinct().all() if r[0]])
+    years = sorted([r[0] for r in session.query(Registration.year).distinct().all() if r[0]])
+    rtos = sorted([r[0] for r in session.query(Registration.rto_code).distinct().all() if r[0] and r[0] != ""])
+    return {
+        "regions": states,
+        "cities": rtos,
+        "categories": vehicle_classes,
+        "fuel_types": fuel_types,
+        "brands": makers,
+        "years": years,
+    }
+
+
+def _apply_registration_filters(query, filters: dict = None):
+    """Apply global filters to Registration table queries."""
+    if not filters:
+        return query
+    if filters.get("state") or filters.get("emirate"):
+        state_val = filters.get("state") or filters.get("emirate")
+        query = query.filter(Registration.state == state_val)
+    if filters.get("rto") or filters.get("area"):
+        rto_val = filters.get("rto") or filters.get("area")
+        query = query.filter(Registration.rto_code == rto_val)
+    if filters.get("brand"):
+        query = query.filter(Registration.maker == filters["brand"])
+    if filters.get("vehicle_category"):
+        query = query.filter(Registration.vehicle_class == filters["vehicle_category"])
+    if filters.get("fuel_type"):
+        query = query.filter(Registration.fuel_type == filters["fuel_type"])
+    if filters.get("start_date"):
+        query = query.filter(Registration.reg_date >= filters["start_date"])
+    if filters.get("end_date"):
+        query = query.filter(Registration.reg_date <= filters["end_date"])
+    return query
+
+
+def get_registration_kpis(session: Session, filters: dict = None) -> dict:
+    """Core KPIs for India Executive Overview tab."""
+    base = session.query(func.sum(Registration.registrations_count).label("total"))
+    base = _apply_registration_filters(base, filters)
+    total_reg = (base.scalar() or 0)
+
+    ev_q = session.query(func.sum(Registration.registrations_count).label("ev_total"))
+    ev_filters = (filters or {}).copy()
+    ev_filters["fuel_type"] = "Electric"
+    ev_q = _apply_registration_filters(ev_q, ev_filters)
+    ev_total = (ev_q.scalar() or 0)
+    ev_share = round((ev_total / total_reg * 100), 2) if total_reg > 0 else 0.0
+
+    # YoY growth
+    yoy_delta = None
+    if filters and filters.get("start_date") and filters.get("end_date"):
+        sd, ed = filters["start_date"], filters["end_date"]
+        try:
+            prior_filters = filters.copy()
+            prior_filters["start_date"] = sd.replace(year=sd.year - 1)
+            prior_filters["end_date"] = ed.replace(year=ed.year - 1)
+            prior_q = session.query(func.sum(Registration.registrations_count))
+            prior_q = _apply_registration_filters(prior_q, prior_filters)
+            prior_total = prior_q.scalar() or 0
+            if prior_total > 0:
+                yoy_delta = round((total_reg - prior_total) / prior_total * 100, 2)
+        except Exception:
+            pass
+
+    top_maker_res = (
+        session.query(Registration.maker, func.sum(Registration.registrations_count).label("cnt"))
+        .filter(Registration.maker != None, Registration.maker != "")
+        .group_by(Registration.maker).order_by(desc("cnt")).first()
+    )
+    top_maker = top_maker_res[0] if top_maker_res else "N/A"
+
+    worst_state_res = (
+        session.query(Registration.state, func.sum(Registration.registrations_count).label("cnt"))
+        .filter(Registration.state != None)
+        .group_by(Registration.state).order_by(asc("cnt")).first()
+    )
+    worst_state = worst_state_res[0] if worst_state_res else "N/A"
+
+    return {
+        "total_registrations": total_reg,
+        "ev_share_pct": ev_share,
+        "yoy_growth_pct": yoy_delta,
+        "top_maker": top_maker,
+        "worst_state": worst_state,
+        "total_ev_registrations": ev_total,
+    }
+
+
+def get_monthly_registration_trend(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Monthly registration counts for time-series chart."""
+    query = session.query(
+        Registration.year,
+        Registration.month,
+        func.sum(Registration.registrations_count).label("registrations"),
+    )
+    query = _apply_registration_filters(query, filters)
+    query = query.group_by(Registration.year, Registration.month).order_by(
+        Registration.year, Registration.month
+    )
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
+    return df
+
+
+def get_registrations_by_state(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Registrations aggregated per state for choropleth map."""
+    query = session.query(
+        Registration.state,
+        func.sum(Registration.registrations_count).label("registrations"),
+    )
+    query = _apply_registration_filters(query, filters)
+    query = query.filter(Registration.state != None).group_by(Registration.state).order_by(desc("registrations"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_registrations_by_maker(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Registrations aggregated per maker/brand."""
+    query = session.query(
+        Registration.maker,
+        func.sum(Registration.registrations_count).label("registrations"),
+    )
+    query = _apply_registration_filters(query, filters)
+    query = (
+        query.filter(Registration.maker != None, Registration.maker != "")
+        .group_by(Registration.maker).order_by(desc("registrations"))
+    )
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_registrations_by_fuel(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Registrations aggregated per fuel type."""
+    query = session.query(
+        Registration.fuel_type,
+        func.sum(Registration.registrations_count).label("registrations"),
+    )
+    query = _apply_registration_filters(query, filters)
+    query = (
+        query.filter(Registration.fuel_type != None, Registration.fuel_type != "")
+        .group_by(Registration.fuel_type).order_by(desc("registrations"))
+    )
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_registrations_by_vehicle_class(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Registrations aggregated per vehicle class/category."""
+    query = session.query(
+        Registration.vehicle_class,
+        func.sum(Registration.registrations_count).label("registrations"),
+    )
+    query = _apply_registration_filters(query, filters)
+    query = (
+        query.filter(Registration.vehicle_class != None, Registration.vehicle_class != "")
+        .group_by(Registration.vehicle_class).order_by(desc("registrations"))
+    )
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_ev_adoption_trend(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Monthly EV vs total registrations for EV share trend chart."""
+    total_q = session.query(
+        Registration.year,
+        Registration.month,
+        func.sum(Registration.registrations_count).label("total"),
+    )
+    total_q = _apply_registration_filters(total_q, filters)
+    total_q = total_q.group_by(Registration.year, Registration.month)
+    df_total = pd.read_sql(total_q.statement, session.bind)
+
+    ev_filters = (filters or {}).copy()
+    ev_filters["fuel_type"] = "Electric"
+    ev_q = session.query(
+        Registration.year,
+        Registration.month,
+        func.sum(Registration.registrations_count).label("ev_count"),
+    )
+    ev_q = _apply_registration_filters(ev_q, ev_filters)
+    ev_q = ev_q.group_by(Registration.year, Registration.month)
+    df_ev = pd.read_sql(ev_q.statement, session.bind)
+
+    if df_total.empty:
+        return pd.DataFrame()
+    df = df_total.merge(df_ev, on=["year", "month"], how="left").fillna(0)
+    df["ev_share_pct"] = (df["ev_count"] / df["total"].replace(0, 1) * 100).round(2)
+    df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
+    return df
+
+
+def get_yoy_registration_comparison(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Monthly YoY comparison for Comparative Analytics tab."""
+    query = session.query(
+        Registration.year,
+        Registration.month,
+        func.sum(Registration.registrations_count).label("registrations"),
+    )
+    query = _apply_registration_filters(query, filters)
+    query = query.group_by(Registration.year, Registration.month).order_by(
+        Registration.month, Registration.year
+    )
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_state_growth_data(session: Session, filters: dict = None) -> pd.DataFrame:
+    """
+    Per-state summary for market segmentation:
+    total_registrations, ev_share_pct, yoy_growth_pct, dominant_fuel, top_maker.
+    """
+    query = session.query(
+        Registration.state,
+        Registration.fuel_type,
+        Registration.maker,
+        Registration.year,
+        func.sum(Registration.registrations_count).label("cnt"),
+    )
+    query = _apply_registration_filters(query, filters)
+    query = query.filter(Registration.state != None).group_by(
+        Registration.state, Registration.fuel_type, Registration.maker, Registration.year
+    )
+    df = pd.read_sql(query.statement, session.bind)
+    if df.empty:
+        return pd.DataFrame()
+
+    state_total = df.groupby("state")["cnt"].sum().rename("total_registrations")
+    ev_df = df[df["fuel_type"] == "Electric"].groupby("state")["cnt"].sum().rename("ev_count")
+    dominant_fuel = df.groupby(["state", "fuel_type"])["cnt"].sum().reset_index()
+    dominant_fuel = dominant_fuel.loc[dominant_fuel.groupby("state")["cnt"].idxmax()][["state", "fuel_type"]].rename(columns={"fuel_type": "dominant_fuel"})
+    top_maker = df.groupby(["state", "maker"])["cnt"].sum().reset_index()
+    top_maker = top_maker.loc[top_maker.groupby("state")["cnt"].idxmax()][["state", "maker"]].rename(columns={"maker": "top_maker"})
+
+    result = state_total.reset_index()
+    result = result.merge(ev_df.reset_index(), on="state", how="left").fillna(0)
+    result["ev_share_pct"] = (result["ev_count"] / result["total_registrations"].replace(0, 1) * 100).round(2)
+    result = result.merge(dominant_fuel, on="state", how="left")
+    result = result.merge(top_maker, on="state", how="left")
+    return result
 
     return query

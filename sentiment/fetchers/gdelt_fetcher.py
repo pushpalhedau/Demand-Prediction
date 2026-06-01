@@ -1,5 +1,5 @@
 """
-GDELT Doc v2 API fetcher for UAE automobile market intelligence.
+GDELT Doc v2 API fetcher for India automobile market intelligence.
 
 GDELT (Global Database of Events, Language, and Tone) is a free, real-time
 global news database with no API key required.
@@ -42,51 +42,53 @@ GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 # UAE automobile market themed search queries
 # Each entry maps to a thematic bucket used later for per-theme aggregation.
 # ─────────────────────────────────────────────────────────────────────────────
-UAE_AUTO_QUERIES: List[Dict] = [
+INDIA_AUTO_QUERIES: List[Dict] = [
     {
-        "name": "uae_auto_demand",
-        "label": "UAE Auto Demand",
-        # Keep query short: GDELT works best with 2-3 keywords or one short phrase
-        "query": "UAE automobile car sales Dubai",
+        "name": "india_auto_demand",
+        "label": "India Auto Demand",
+        "query": "India automobile car sales registration",
         "theme": "auto_demand",
         "affected_category": "All",
     },
     {
-        "name": "ev_market_uae",
-        "label": "EV Market UAE",
-        "query": "electric vehicle UAE Dubai EV",
+        "name": "ev_market_india",
+        "label": "EV Market India",
+        "query": "electric vehicle India EV FAME subsidy charging",
         "theme": "ev_market",
         "affected_category": "EV",
     },
     {
-        "name": "fuel_oil_prices",
-        "label": "Fuel & Oil Prices",
-        "query": "oil price UAE OPEC fuel Dubai",
+        "name": "fuel_prices_india",
+        "label": "Fuel Prices India",
+        "query": "petrol diesel price India fuel hike",
         "theme": "fuel_economic",
         "affected_category": "All",
     },
     {
-        "name": "uae_macro_economy",
-        "label": "UAE Economy",
-        "query": "UAE economy inflation GDP Dubai",
+        "name": "india_macro_economy",
+        "label": "India Economy",
+        "query": "India economy inflation GDP RBI rate",
         "theme": "macro_economic",
         "affected_category": "All",
     },
     {
-        "name": "geopolitical_risk",
-        "label": "Geopolitical Risk",
-        "query": "Middle East geopolitical oil supply Gulf",
-        "theme": "geopolitical",
+        "name": "india_auto_policy",
+        "label": "India Auto Policy",
+        "query": "India automobile GST FAME EV policy BS6",
+        "theme": "auto_policy",
         "affected_category": "All",
     },
     {
-        "name": "luxury_suv_uae",
-        "label": "Luxury & SUV UAE",
-        "query": "luxury car SUV UAE Dubai Mercedes BMW",
+        "name": "premium_india",
+        "label": "Premium & SUV India",
+        "query": "luxury car SUV India premium segment Mahindra Kia",
         "theme": "luxury_suv",
-        "affected_category": "Luxury",
+        "affected_category": "SUV",
     },
 ]
+
+# Keep UAE alias for backwards compatibility
+UAE_AUTO_QUERIES = INDIA_AUTO_QUERIES
 
 # GDELT seendate format
 _GDELT_DATE_FMT = "%Y%m%dT%H%M%SZ"
@@ -176,20 +178,23 @@ def fetch_articles_for_query(
     query: str,
     timespan: str = "30d",
     max_records: int = 75,
+    brand: Optional[str] = None,
 ) -> List[Dict]:
     """
     Fetch English-language news articles from GDELT Doc v2 ArtList for one query.
 
     Args:
-        query:       GDELT query string (supports OR, AND, quoted phrases).
+        query:       GDELT query string.
         timespan:    e.g. "7d", "30d", "90d".
         max_records: 1–250 (GDELT hard cap is 250).
+        brand:       Optional brand name to append to the query for brand-scoped results.
 
     Returns:
         List of raw article dicts from GDELT, English only.
     """
+    effective_query = f"{query} {brand}" if brand else query
     data = _get(GDELT_DOC_API, {
-        "query": query,
+        "query": effective_query,
         "mode": "ArtList",
         "maxrecords": min(max_records, 250),
         "format": "json",
@@ -209,9 +214,10 @@ def fetch_all_themes(
     timespan: str = "30d",
     max_records_per_query: int = 50,
     delay_between_queries: float = 5.0,
+    brand: Optional[str] = None,
 ) -> List[Dict]:
     """
-    Fetch articles for all UAE auto-market themes and return a deduplicated list.
+    Fetch articles for all India auto-market themes and return a deduplicated list.
 
     Each article dict is enriched with:
         _theme, _query_name, _query_label, _affected_category
@@ -220,6 +226,7 @@ def fetch_all_themes(
         timespan:               GDELT timespan string.
         max_records_per_query:  Articles to request per theme (max 250).
         delay_between_queries:  Seconds to wait between GDELT calls (be polite).
+        brand:                  Optional brand name to scope results (e.g. "Maruti Suzuki").
 
     Returns:
         Flat, URL-deduplicated list of article dicts.
@@ -227,11 +234,12 @@ def fetch_all_themes(
     seen_urls: set = set()
     all_articles: List[Dict] = []
 
-    for q in UAE_AUTO_QUERIES:
+    for q in INDIA_AUTO_QUERIES:
         raw = fetch_articles_for_query(
             query=q["query"],
             timespan=timespan,
             max_records=max_records_per_query,
+            brand=brand,
         )
 
         new_for_theme = 0
@@ -356,11 +364,11 @@ def fetch_tone_timeline(
 
 def fetch_all_tone_timelines(timespan: str = "90d") -> Dict[str, List[Dict]]:
     """
-    Fetch tone timelines for all UAE auto themes.
+    Fetch tone timelines for all India auto themes.
     Returns dict: {theme_name: [{"date": date, "tone": float}, ...]}
     """
     timelines: Dict[str, List[Dict]] = {}
-    for q in UAE_AUTO_QUERIES:
+    for q in INDIA_AUTO_QUERIES:
         tl = fetch_tone_timeline(q["query"], timespan=timespan)
         timelines[q["name"]] = tl
         logger.info("Tone timeline | theme='%s' | points=%d", q["label"], len(tl))
@@ -373,6 +381,7 @@ def get_stored_articles(
     theme: Optional[str] = None,
     analyzed_only: bool = False,
     limit: int = 500,
+    brand: Optional[str] = None,
 ) -> List[Dict]:
     """
     Load stored NewsArticle records (with joined SentimentSignal) from SQLite.
@@ -399,6 +408,9 @@ def get_stored_articles(
             q = q.filter(NewsArticle.search_query == theme)
         if analyzed_only:
             q = q.join(SentimentSignal, NewsArticle.id == SentimentSignal.article_id)
+        if brand:
+            q = (q.join(SentimentSignal, NewsArticle.id == SentimentSignal.article_id, isouter=True)
+                  .filter(SentimentSignal.affected_maker == brand))
 
         q = q.order_by(NewsArticle.published_date.desc()).limit(limit)
 
@@ -413,11 +425,11 @@ def get_stored_articles(
                 "country":           art.source_country,
                 "published_date":    art.published_date,
                 "theme":             art.search_query,
-                # sentiment signal fields (None if not yet analyzed)
                 "sentiment_score":        sig.sentiment_score if sig else None,
                 "impact_score":           sig.impact_score if sig else None,
                 "demand_direction":       sig.demand_direction if sig else None,
                 "affected_category":      sig.affected_vehicle_category if sig else None,
+                "affected_maker":         sig.affected_maker if sig else None,
                 "economic_risk":          sig.economic_risk if sig else None,
                 "demand_change_pct":      sig.estimated_demand_change_pct if sig else None,
                 "confidence":             sig.confidence if sig else None,
