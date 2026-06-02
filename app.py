@@ -24,7 +24,7 @@ from dashboard.sentiment_analysis import render_sentiment_analysis
 # 1. Page Configuration
 st.set_page_config(
     page_title="Automobile Demand Intelligence Platform",
-    page_icon="🚗",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -52,7 +52,7 @@ finally:
 # 4. HEADER BRANDING
 st.markdown("""
     <div style="text-align: center; margin-top: -30px; margin-bottom: 20px;">
-        <h1 class="main-title"><span class="gradient-text">🚗 Automobile Demand Intelligence Platform</span></h1>
+        <h1 class="main-title"><span class="gradient-text">Automobile Demand Intelligence Platform</span></h1>
         <p style="color: #9ca3af; font-size: 15px; margin-top: -10px;">Enterprise Decision Support Suite — Demand Forecasting & Customer Analytics</p>
     </div>
 """, unsafe_allow_html=True)
@@ -61,7 +61,7 @@ st.markdown("""
 with st.sidebar:
     st.markdown("""
         <div style="text-align: center; padding: 10px 0;">
-            <h3 style="color: #f3f4f6; font-size: 18px; margin-bottom: 5px;">📍 Navigation</h3>
+            <h3 style="color: #f3f4f6; font-size: 18px; margin-bottom: 5px;">Navigation</h3>
         </div>
     """, unsafe_allow_html=True)
     
@@ -130,7 +130,7 @@ with st.sidebar:
             }
         </style>
     """, unsafe_allow_html=True)
-    st.markdown("<h3 style='color: #f3f4f6; font-size: 15px; margin-bottom: 10px;'>⚡ Global Filters</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #f3f4f6; font-size: 15px; margin-bottom: 10px;'>Global Filters</h3>", unsafe_allow_html=True)
     
     # Global Filters Inputs
     start_date = st.date_input("Start Date", value=date(2021, 1, 1))

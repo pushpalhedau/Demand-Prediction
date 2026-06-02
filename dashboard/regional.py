@@ -104,7 +104,7 @@ def render_regional(filters: dict):
         
         # Print leader insight
         top_dealer = df_dealers.iloc[0]
-        st.success(f"🏆 **Top Dealer Alert:** **{top_dealer['dealer_name']}** based in **{top_dealer['emirate']}** is leading this period with **{top_dealer['units_sold']:,} units sold** driving a total revenue of **AED {top_dealer['revenue']:,.2f}**.")
+        st.success(f"**Top Dealer Alert:** **{top_dealer['dealer_name']}** based in **{top_dealer['emirate']}** is leading this period with **{top_dealer['units_sold']:,} units sold** driving a total revenue of **AED {top_dealer['revenue']:,.2f}**.")
         
     except Exception as e:
         st.error(f"Error rendering Regional Intelligence: {e}")

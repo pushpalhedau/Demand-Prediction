@@ -43,7 +43,7 @@ def render_inventory(filters: dict):
         st.markdown("<br>", unsafe_allow_html=True)
         
         # 3. Critical Restock Alerts Leaderboard
-        st.markdown("### 🚨 Urgent Restock & Reorder Requirements")
+        st.markdown("### Urgent Restock & Reorder Requirements")
         reorder_df = df_inv[df_inv['reorder_needed'] == True].copy()
         
         if not reorder_df.empty:
@@ -66,7 +66,7 @@ def render_inventory(filters: dict):
                 hide_index=True
             )
         else:
-            st.success("✅ All stock levels are currently healthy! No active reorder alerts.")
+            st.success("All stock levels are currently healthy! No active reorder alerts.")
             
         st.markdown("<br>", unsafe_allow_html=True)
         

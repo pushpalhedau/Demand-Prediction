@@ -12,6 +12,42 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from database.connection import get_db_session
 from database.models import Sale, ExternalFactor
 
+def get_external_factor_stats(region: str = None) -> dict:
+    """Return last known value, min, and max for each external factor column."""
+    session = get_db_session()
+    try:
+        query = session.query(ExternalFactor)
+        if region:
+            query = query.filter(ExternalFactor.emirate == region)
+        df = pd.read_sql(query.statement, session.bind)
+        if df.empty:
+            return {}
+        numeric_cols = [
+            'petrol_95_price_aed_per_litre', 'diesel_price_aed_per_litre',
+            'crude_oil_price_usd', 'gdp_growth_pct', 'cpi_inflation_pct',
+            'us_fed_rate_pct', 'consumer_confidence_index', 'tourism_index',
+            'luxury_demand_index', 'usd_aed_rate', 'import_duty_pct',
+            'unemployment_rate_pct', 'new_model_launches', 'ev_charging_stations_uae',
+        ]
+        binary_cols = [
+            'ramadan_month', 'national_day_month', 'dubai_motor_show', 'abu_dhabi_motor_show',
+        ]
+        stats = {}
+        for col in numeric_cols + binary_cols:
+            if col in df.columns:
+                series = df[col].dropna()
+                if len(series) > 0:
+                    stats[col] = {
+                        'last': float(series.iloc[-1]),
+                        'min': float(series.min()),
+                        'max': float(series.max()),
+                        'is_binary': col in binary_cols,
+                    }
+        return stats
+    finally:
+        session.close()
+
+
 def train_prophet_model(
     category: str = None,
     region: str = None,
@@ -20,6 +56,7 @@ def train_prophet_model(
     horizon_days: int = 90,
     interval_width: float = 0.95,
     use_sentiment: bool = False,
+    market_overrides: dict = None,
 ):
     """
     Train a Prophet model using aggregated sales data and external factors as regressors.
@@ -135,12 +172,12 @@ def train_prophet_model(
         
         # Add external regressors if they exist in dataframe
         regressors = [
-            'petrol_95_price_aed_per_litre',
-            'diesel_price_aed_per_litre',
-            'gdp_growth_pct',
-            'cpi_inflation_pct',
-            'consumer_confidence_index',
-            'ramadan_month',
+            'petrol_95_price_aed_per_litre', 'diesel_price_aed_per_litre',
+            'crude_oil_price_usd', 'gdp_growth_pct', 'cpi_inflation_pct',
+            'us_fed_rate_pct', 'consumer_confidence_index', 'tourism_index',
+            'luxury_demand_index', 'usd_aed_rate', 'import_duty_pct',
+            'unemployment_rate_pct', 'new_model_launches', 'ev_charging_stations_uae',
+            'ramadan_month', 'national_day_month', 'dubai_motor_show', 'abu_dhabi_motor_show',
         ] + sentiment_regressor_candidates  # appended when use_sentiment=True
 
         active_regressors = []
@@ -198,6 +235,14 @@ def train_prophet_model(
         if econ_active and not ext_df.empty:
             future = pd.merge(future, ext_df[['ds'] + econ_active], on='ds', how='left')
             future = future.ffill().bfill()
+
+            # Apply user-supplied market overrides to forecast-period dates only
+            if market_overrides:
+                last_hist_date = data['ds'].max()
+                future_mask = future['ds'] > last_hist_date
+                for col, val in market_overrides.items():
+                    if col in future.columns:
+                        future.loc[future_mask, col] = float(val)
 
         # Populate sentiment regressors for future dates (forward-fill last known value)
         sent_active = [r for r in active_regressors if r in sentiment_regressor_candidates]

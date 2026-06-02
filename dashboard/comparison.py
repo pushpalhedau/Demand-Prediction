@@ -71,7 +71,7 @@ def render_comparison(filters: dict):
                 
                 if y2 > 0:
                     pct_growth = ((y1 - y2) / y2) * 100
-                    st.info(f"📊 **YoY Performance Summary:** Total {target_metric.replace('_', ' ').title()} in **{top_years[0]}** compared to **{top_years[1]}** is **{pct_growth:+.2f}%**.")
+                    st.info(f"**YoY Performance Summary:** Total {target_metric.replace('_', ' ').title()} in **{top_years[0]}** compared to **{top_years[1]}** is **{pct_growth:+.2f}%**.")
         else:
             st.warning("Insufficient time-series data for Year-over-Year comparison.")
             

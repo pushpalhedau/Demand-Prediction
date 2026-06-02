@@ -18,14 +18,14 @@ def render_upload_data():
         try:
             # Load file
             df = pd.read_csv(uploaded_file)
-            st.success("✅ File loaded successfully!")
+            st.success("File loaded successfully!")
             
             # 1. Preview
             st.markdown("### Dataset Preview (First 5 Rows)")
             st.dataframe(df.head(5), use_container_width=True)
             
             # 2. Dynamic Column Detection
-            st.markdown("### 🔍 Auto-Detected Schema Mapping")
+            st.markdown("### Auto-Detected Schema Mapping")
             
             cols = list(df.columns)
             
@@ -41,11 +41,11 @@ def render_upload_data():
             # Render Detected Schema
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.info(f"📅 **Date Fields Detected:**\n* {', '.join(date_cols) if date_cols else 'None detected'}")
+                st.info(f"**Date Fields Detected:**\n* {', '.join(date_cols) if date_cols else 'None detected'}")
             with col2:
-                st.success(f"🔢 **Numerical Metrics:**\n* {', '.join(num_cols[:6])} {'...' if len(num_cols) > 6 else ''}")
+                st.success(f"**Numerical Metrics:**\n* {', '.join(num_cols[:6])} {'...' if len(num_cols) > 6 else ''}")
             with col3:
-                st.warning(f"🔤 **Categorical Attributes:**\n* {', '.join(cat_cols[:6])} {'...' if len(cat_cols) > 6 else ''}")
+                st.warning(f"**Categorical Attributes:**\n* {', '.join(cat_cols[:6])} {'...' if len(cat_cols) > 6 else ''}")
                 
             st.markdown("<br>", unsafe_allow_html=True)
             
@@ -71,7 +71,7 @@ def render_upload_data():
                     train_xgboost_pipeline()
                     
                     st.balloons()
-                    st.success("🎉 **System Retrained Successfully!** All dashboards, time-series projections, and customer segmentation matrices have been updated live.")
+                    st.success("**System Retrained Successfully!** All dashboards, time-series projections, and customer segmentation matrices have been updated live.")
                     
         except Exception as e:
             st.error(f"Failed to process uploaded file: {e}")
@@ -80,4 +80,4 @@ def render_upload_data():
             
     else:
         # If no file uploaded, show default instruction guide
-        st.info("ℹ️ **Standard Schema Expectations:** The platform automatically maps CSV tables matching the relational tables (`sales`, `customers`, `inventory`, `dealers`, `vehicles`). Standard templates can be exported from settings.")
+        st.info("**Standard Schema Expectations:** The platform automatically maps CSV tables matching the relational tables (`sales`, `customers`, `inventory`, `dealers`, `vehicles`). Standard templates can be exported from settings.")

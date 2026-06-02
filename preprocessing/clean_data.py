@@ -222,7 +222,7 @@ def clean_external_factors(filepath):
     """
     df = pd.read_csv(filepath)
 
-    df['date'] = pd.to_datetime(df['date']).dt.date
+    df['date'] = pd.to_datetime(df['date'], format='mixed').dt.date
     df['year'] = df['year'].fillna(pd.to_datetime(df['date']).dt.year).astype(int)
     df['month'] = df['month'].fillna(pd.to_datetime(df['date']).dt.month).astype(int)
     df['quarter'] = df['quarter'].fillna("Q1")

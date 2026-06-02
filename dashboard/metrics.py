@@ -13,7 +13,7 @@ def render_metrics():
     st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>ML Models & Evaluation Metrics</h2>", unsafe_allow_html=True)
     
     # 1. XGBoost Model details
-    st.markdown("### 🎯 Lead Close Prediction Model")
+    st.markdown("### Lead Close Prediction Model")
     
     xgb_dir = "models/xgboost"
     scaler_exists = os.path.exists(os.path.join(xgb_dir, "scaler.pkl"))
@@ -75,7 +75,7 @@ def render_metrics():
     st.markdown("<hr style='border-color: rgba(255,255,255,0.08);'>", unsafe_allow_html=True)
     
     # 2. KMeans details
-    st.markdown("### 👥 Customer Segmentation Model")
+    st.markdown("### Customer Segmentation Model")
     
     cluster_dir = "models/clustering"
     kmeans_exists = os.path.exists(os.path.join(cluster_dir, "kmeans.pkl"))

@@ -685,12 +685,12 @@ def _render_forecast_comparison(filters: dict, colors: dict):
             for r in sent_regs_active:
                 badges_html += (
                     f'<span style="background:#ec489922;color:#ec4899;border:1px solid #ec489944;'
-                    f'border-radius:6px;padding:2px 8px;font-size:11px;margin-right:4px;">{r.replace("_"," ").title()} ✦</span>'
+                    f'border-radius:6px;padding:2px 8px;font-size:11px;margin-right:4px;">{r.replace("_"," ").title()}</span>'
                 )
             st.markdown(
                 f"<div style='margin:10px 0 16px;'><b style='color:#9ca3af;font-size:12px;'>Regressors:</b> "
                 + badges_html +
-                "<span style='color:#9ca3af;font-size:11px;margin-left:8px;'>✦ = sentiment regressor</span></div>",
+                "<span style='color:#9ca3af;font-size:11px;margin-left:8px;'>* = sentiment regressor</span></div>",
                 unsafe_allow_html=True,
             )
 
@@ -896,7 +896,7 @@ def _render_ai_insights(colors: dict):
     else:
         _glass_card("""
             <div style="text-align:center;padding:30px 0;">
-              <div style="font-size:36px;margin-bottom:12px;">🤖</div>
+              <div style="margin-bottom:12px;"></div>
               <div style="color:#f3f4f6;font-size:16px;font-weight:600;margin-bottom:8px;">
                 Ready to Generate Briefing
               </div>

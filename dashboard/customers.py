@@ -26,7 +26,7 @@ def render_customers(filters: dict):
             return
             
         # Create tab sub-sections
-        tab1, tab2 = st.tabs(["👥 Customer Segmentation", "🎯 Lead Close Score"])
+        tab1, tab2 = st.tabs(["Customer Segmentation", "Lead Close Score"])
         
         with tab1:
             st.markdown("### Clustering Analysis")
@@ -239,11 +239,11 @@ def render_customers(filters: dict):
                         
                 # Provide recommendation based on scores
                 if prob >= 0.75:
-                    st.success("🎯 **Smart Action Recommendation:** This is a **High-Conversion Lead**. Fast track scheduling showroom VIP visit, offer finance approvals immediately, and secure downpayment within 48 hours.")
+                    st.success("**Smart Action Recommendation:** This is a **High-Conversion Lead**. Fast track scheduling showroom VIP visit, offer finance approvals immediately, and secure downpayment within 48 hours.")
                 elif prob >= 0.4:
-                    st.warning("⚠️ **Smart Action Recommendation:** Moderate Close Probability. **Action:** Consider offering an additional **1.5% to 2% discount** or shifting financing to Bank Loan to increase closing prospects to over 80%.")
+                    st.warning("**Smart Action Recommendation:** Moderate Close Probability. **Action:** Consider offering an additional **1.5% to 2% discount** or shifting financing to Bank Loan to increase closing prospects to over 80%.")
                 else:
-                    st.error("🚨 **Smart Action Recommendation:** High risk of lead drop. **Action:** Low conversion score. Target a different vehicle category that matches their budget profile, or contact customer to review downpayment capacity.")
+                    st.error("**Smart Action Recommendation:** High risk of lead drop. **Action:** Low conversion score. Target a different vehicle category that matches their budget profile, or contact customer to review downpayment capacity.")
                     
     except Exception as e:
         st.error(f"Error rendering Customer Intelligence: {e}")

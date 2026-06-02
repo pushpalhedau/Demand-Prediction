@@ -17,7 +17,7 @@ def render_ai_insights(filters: dict):
         st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Business Intelligence & Simulator</h2>", unsafe_allow_html=True)
         
         # # 1. Headline Recommendations
-        # st.markdown("### 🤖 Automated Diagnostic Recommendations")
+        # st.markdown("### Automated Diagnostic Recommendations")
         # 
         # # Fetch dealer data to identify underperforming showrooms
         # df_dealers = get_dealer_performance_leaderboard(session, filters)
@@ -25,17 +25,17 @@ def render_ai_insights(filters: dict):
         # rec_col1, rec_col2 = st.columns(2)
         # 
         # with rec_col1:
-        #     st.info("💡 **Growth Hotspot Identified:** SUV and Luxury demand is expected to spike by **14.8%** in Dubai and Abu Dhabi over the next 60 days, driven by Dubai Motor Show momentum. **Action:** Reposition 25% of Sedan transit inventory into SUV/Luxury at Dubai South and Jebel Ali port warehouses.")
-        #     st.warning("⚠️ **Dealer Network Anomaly:** Showrooms in *Sharjah Industrial Area* are underperforming emirate averages by **18.2%** despite a strong local credit-score profile. **Action:** Review Sharjah area marketing allocation and test drive conversion statistics.")
+        #     st.info("**Growth Hotspot Identified:** SUV and Luxury demand is expected to spike by **14.8%** in Dubai and Abu Dhabi over the next 60 days, driven by Dubai Motor Show momentum. **Action:** Reposition 25% of Sedan transit inventory into SUV/Luxury at Dubai South and Jebel Ali port warehouses.")
+        #     st.warning("**Dealer Network Anomaly:** Showrooms in *Sharjah Industrial Area* are underperforming emirate averages by **18.2%** despite a strong local credit-score profile. **Action:** Review Sharjah area marketing allocation and test drive conversion statistics.")
         #     
         # with rec_col2:
-        #     st.success("⚡ **EV Adoption Acceleration:** Electric and Hybrid categories show a compound **9.4% MoM growth rate** in Dubai and Abu Dhabi, aided by expanding EV charging infrastructure. **Action:** Prioritize fast-charger installation at Platinum and Gold tier dealerships in Business Bay and Khalifa City.")
-        #     st.error("🚨 **Holding Cost Risk:** Slow-moving Pickup Truck inventory in Northern Emirates (Ras Al Khaimah, Fujairah) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
+        #     st.success("**EV Adoption Acceleration:** Electric and Hybrid categories show a compound **9.4% MoM growth rate** in Dubai and Abu Dhabi, aided by expanding EV charging infrastructure. **Action:** Prioritize fast-charger installation at Platinum and Gold tier dealerships in Business Bay and Khalifa City.")
+        #     st.error("**Holding Cost Risk:** Slow-moving Pickup Truck inventory in Northern Emirates (Ras Al Khaimah, Fujairah) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
         #     
         # st.markdown("<br>", unsafe_allow_html=True)
         
         # 2. Scenario Simulator
-        st.markdown("### 🎛️ Dynamic Business Scenario Simulator")
+        st.markdown("### Dynamic Business Scenario Simulator")
         st.write("Alter market external conditions below to simulate forecasted impact on automobile sales volume over the next 90 days.")
         
         sim_col1, sim_col2 = st.columns(2)
