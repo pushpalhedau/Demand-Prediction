@@ -32,3 +32,6 @@ dist/
 # Logs and temporary files
 *.log
 .ipynb_checkpoints/
+
+#database
+*.db
