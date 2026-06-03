@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 # Load environment variables
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./automobile_demand.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./real_estate_demand.db")
 
 # Create engine
 # For SQLite, we want to allow multithreaded access from Streamlit

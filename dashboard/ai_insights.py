@@ -1,139 +1,407 @@
 import streamlit as st
+import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
+
 from database.connection import get_db_session
-from database.queries import get_dealer_performance_leaderboard, get_monthly_revenue_trend
-from utils.helpers import get_color_palette
+from database.queries import get_market_factor_trend, get_market_factor_stats
+from forecasting.prophet_forecasting import train_prophet_model, get_market_factor_stats as get_prophet_stats
+from utils.helpers import get_re_colors, plotly_dark_layout, section_header, fmt_aed
+
 
 def render_ai_insights(filters: dict):
-    """
-    Renders the Insights & Scenario Simulator Tab.
-    """
+    colors = get_re_colors()
+
+    st.markdown("""<p class="subtitle-text">
+        Market intelligence & scenario simulation — analyze UAE economic drivers, model what-if scenarios
+        (UAE CB rate changes, Golden Visa activity, mortgage rates, Expo effect), and identify investment signals.
+    </p>""", unsafe_allow_html=True)
+
     session = get_db_session()
-    colors = get_color_palette()
-    
     try:
-        st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Business Intelligence & Simulator</h2>", unsafe_allow_html=True)
-        
-        # # 1. Headline Recommendations
-        # st.markdown("### Automated Diagnostic Recommendations")
-        # 
-        # # Fetch dealer data to identify underperforming showrooms
-        # df_dealers = get_dealer_performance_leaderboard(session, filters)
-        # 
-        # rec_col1, rec_col2 = st.columns(2)
-        # 
-        # with rec_col1:
-        #     st.info("**Growth Hotspot Identified:** SUV and Luxury demand is expected to spike by **14.8%** in Dubai and Abu Dhabi over the next 60 days, driven by Dubai Motor Show momentum. **Action:** Reposition 25% of Sedan transit inventory into SUV/Luxury at Dubai South and Jebel Ali port warehouses.")
-        #     st.warning("**Dealer Network Anomaly:** Showrooms in *Sharjah Industrial Area* are underperforming emirate averages by **18.2%** despite a strong local credit-score profile. **Action:** Review Sharjah area marketing allocation and test drive conversion statistics.")
-        #     
-        # with rec_col2:
-        #     st.success("**EV Adoption Acceleration:** Electric and Hybrid categories show a compound **9.4% MoM growth rate** in Dubai and Abu Dhabi, aided by expanding EV charging infrastructure. **Action:** Prioritize fast-charger installation at Platinum and Gold tier dealerships in Business Bay and Khalifa City.")
-        #     st.error("**Holding Cost Risk:** Slow-moving Pickup Truck inventory in Northern Emirates (Ras Al Khaimah, Fujairah) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
-        #     
-        # st.markdown("<br>", unsafe_allow_html=True)
-        
-        # 2. Scenario Simulator
-        st.markdown("### Dynamic Business Scenario Simulator")
-        st.write("Alter market external conditions below to simulate forecasted impact on automobile sales volume over the next 90 days.")
-        
-        sim_col1, sim_col2 = st.columns(2)
-        
-        with sim_col1:
-            fuel_shift = st.slider("Petrol 95 Price Shift (AED/Litre)", min_value=-1.0, max_value=2.0, value=0.0, step=0.1)
-            ev_subsidy_active = st.checkbox("Dubai EV Incentive / Green Plate Active", value=True)
-            semiconductor_risk = st.select_slider("Supply Chain Constraints", options=["None", "Moderate Shortage", "Severe Shortage"])
-            
-        with sim_col2:
-            inflation_shift = st.slider("CPI Inflation Rate Shift (%)", min_value=-2.0, max_value=4.0, value=0.0, step=0.5)
-            marketing_multiplier = st.slider("Marketing Spend Multiplier", min_value=0.5, max_value=2.0, value=1.0, step=0.1)
-            
-        # Calculate dynamic baseline from the last 3 months of data to reflect current trends
-        trend_df = get_monthly_revenue_trend(session, filters)
-        if not trend_df.empty:
-            # Sum of the last 3 available months in the filtered dataset
-            last_3_data = trend_df.sort_values(by='date', ascending=False).head(3).sort_values(by='date')
-            base_forecast = int(last_3_data['sales'].sum())
-            baseline_trend = last_3_data['sales'].tolist()
-            
-            # Generate future month labels for the projection
-            last_date = trend_df['date'].max()
-            months = [(last_date + pd.DateOffset(months=i)).strftime('%B %Y') for i in range(1, 4)]
-            
-            # Ensure we have 3 data points for the visualization
-            while len(baseline_trend) < 3:
-                baseline_trend.append(baseline_trend[-1] if baseline_trend else 0)
-        else:
-            # Fallback to defaults if no historical data is found
-            base_forecast = 6812 
-            months = ["June 2026", "July 2026", "August 2026"]
-            baseline_trend = [2267, 2300, 2233]
-        
-        # Standard coefficients derived from correlation analysis of external_factors.csv
-        # These map how much a unit change in a variable affects the overall sales volume.
-        
-        # Calculate shifts
-        fuel_impact = -0.018 * fuel_shift        # AED petrol increase has immediate demand dampening
-        subsidy_impact = 0.085 if ev_subsidy_active else -0.04
-        semi_impact = -0.15 if semiconductor_risk == "Severe Shortage" else (-0.05 if semiconductor_risk == "Moderate Shortage" else 0.0)
-        inflation_impact = -0.030 * inflation_shift
-        mktg_impact = 0.06 * (marketing_multiplier - 1.0)
-        
-        net_impact = fuel_impact + subsidy_impact + semi_impact + inflation_impact + mktg_impact
-        simulated_sales = int(base_forecast * (1.0 + net_impact))
-        
-        st.markdown("#### Simulation Forecast Analysis")
-        
-        sim_k1, sim_k2, sim_k3 = st.columns(3)
-        with sim_k1:
-            st.metric(
-                label="Baseline 90D Forecast", 
-                value=f"{base_forecast:,} Units"
-            )
-        with sim_k2:
-            st.metric(
-                label="Simulated 90D Forecast", 
-                value=f"{simulated_sales:,} Units",
-                delta=f"{net_impact*100:+.2f}% change",
-                delta_color="normal" if net_impact >= 0 else "inverse"
-            )
-        with sim_k3:
-            change_direction = "Increase" if net_impact >= 0 else "Decrease"
-            st.metric(
-                label="Forecast Net Shift", 
-                value=f"{abs(simulated_sales - base_forecast):,} Units",
-                delta=f"Net {change_direction}"
-            )
-            
-        simulated_trend = [int(x * (1.0 + net_impact)) for x in baseline_trend]
-        
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=months, y=baseline_trend,
-            name="Baseline Forecast",
-            line=dict(color=colors['muted'], width=3, dash='dash')
-        ))
-        fig.add_trace(go.Scatter(
-            x=months, y=simulated_trend,
-            name="Simulated Scenario Forecast",
-            line=dict(color=colors['primary'], width=4),
-            marker=dict(size=8, color=colors['secondary'])
-        ))
-        
-        fig.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-            xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', title="Units Sold"),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            margin=dict(l=0, r=0, t=10, b=0),
-            height=300
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-    except Exception as e:
-        st.error(f"Error rendering Insights: {e}")
+        city_filter = filters.get("city") if filters else None
+        df_market = get_market_factor_trend(session, city=city_filter)
+        factor_stats = get_market_factor_stats(session, city=city_filter)
     finally:
         session.close()
+
+    tab_eco, tab_sim, tab_invest = st.tabs([
+        "Economic Indicators", "Scenario Simulator", "Investment Signals"
+    ])
+
+    # ══ TAB 1: Economic Indicators ═════════════════════════
+    with tab_eco:
+        if df_market.empty:
+            st.info("Market factor data not available.")
+        else:
+            mf = df_market.copy()
+            if not city_filter:
+                mf = mf.groupby("date").mean(numeric_only=True).reset_index()
+
+            # ── UAE CB Rate + Mortgage Rate ────────────────
+            section_header("Interest Rate Environment", icon="🏦")
+            col_a, col_b = st.columns(2)
+
+            with col_a:
+                if "uae_central_bank_base_rate_pct" in mf.columns and "mortgage_rate_avg_pct" in mf.columns:
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=mf["date"], y=mf["uae_central_bank_base_rate_pct"],
+                        name="UAE CB Base Rate", mode="lines",
+                        line=dict(color=colors["danger"], width=2.5),
+                    ))
+                    fig.add_trace(go.Scatter(
+                        x=mf["date"], y=mf["mortgage_rate_avg_pct"],
+                        name="Avg Mortgage Rate", mode="lines",
+                        line=dict(color=colors["gold"], width=2.5),
+                    ))
+                    layout = plotly_dark_layout("UAE Central Bank Rate vs Mortgage Rate", 300)
+                    layout["yaxis"]["title"] = "Rate (%)"
+                    layout["hovermode"] = "x unified"
+                    layout["legend"] = dict(orientation="h", y=-0.2, x=0, bgcolor="rgba(0,0,0,0)")
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+            with col_b:
+                if "consumer_confidence_index" in mf.columns and "gdp_growth_pct" in mf.columns:
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=mf["date"], y=mf["consumer_confidence_index"],
+                        name="Consumer Confidence", mode="lines",
+                        line=dict(color=colors["primary"], width=2.5),
+                        fill="tozeroy", fillcolor="rgba(16,185,129,0.08)",
+                    ))
+                    fig.add_trace(go.Scatter(
+                        x=mf["date"], y=mf["gdp_growth_pct"] * 10,
+                        name="GDP Growth (×10)", mode="lines",
+                        line=dict(color=colors["indigo"], width=2, dash="dot"),
+                        yaxis="y2",
+                    ))
+                    layout = plotly_dark_layout("Consumer Confidence & GDP Growth", 300)
+                    layout["yaxis"] = dict(title="CCI", gridcolor="rgba(255,255,255,0.04)")
+                    layout["yaxis2"] = dict(
+                        title="GDP % (×10)", overlaying="y", side="right",
+                        gridcolor="rgba(0,0,0,0)",
+                    )
+                    layout["hovermode"] = "x unified"
+                    layout["legend"] = dict(orientation="h", y=-0.2, x=0, bgcolor="rgba(0,0,0,0)")
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+            # ── Inflation + DLD Registration Fee ───────────
+            col_c, col_d = st.columns(2)
+
+            with col_c:
+                if "cpi_inflation_pct" in mf.columns:
+                    fig = go.Figure(go.Scatter(
+                        x=mf["date"], y=mf["cpi_inflation_pct"],
+                        mode="lines",
+                        line=dict(color=colors["warning"], width=2),
+                        fill="tozeroy", fillcolor="rgba(245,158,11,0.08)",
+                        name="CPI Inflation",
+                    ))
+                    layout = plotly_dark_layout("CPI Inflation Rate (%)", 280)
+                    layout["showlegend"] = False
+                    layout["yaxis"]["title"] = "CPI (%)"
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+            with col_d:
+                if "property_registration_fee_pct" in mf.columns:
+                    fig = go.Figure(go.Scatter(
+                        x=mf["date"], y=mf["property_registration_fee_pct"],
+                        mode="lines+markers",
+                        line=dict(color=colors["cyan"], width=2),
+                        marker=dict(size=5),
+                        name="DLD Registration Fee",
+                    ))
+                    layout = plotly_dark_layout("DLD Property Registration Fee (%)", 280)
+                    layout["showlegend"] = False
+                    layout["yaxis"]["title"] = "Fee (%)"
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+            # ── New project launches + Golden Visa ──────────
+            col_e, col_f = st.columns(2)
+            with col_e:
+                if "new_project_launches" in mf.columns:
+                    fig = go.Figure(go.Bar(
+                        x=mf["date"], y=mf["new_project_launches"],
+                        marker_color=colors["indigo"], opacity=0.7,
+                        name="New Launches",
+                    ))
+                    layout = plotly_dark_layout("Monthly New DLD/RERA Project Launches", 280)
+                    layout["showlegend"] = False
+                    layout["yaxis"]["title"] = "Projects"
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+            with col_f:
+                if "golden_visa_applications" in mf.columns:
+                    fig = go.Figure(go.Scatter(
+                        x=mf["date"], y=mf["golden_visa_applications"],
+                        mode="lines",
+                        line=dict(color=colors["gold"], width=2),
+                        fill="tozeroy", fillcolor="rgba(245,158,11,0.08)",
+                        name="Golden Visa Applications",
+                    ))
+                    layout = plotly_dark_layout("Monthly Golden Visa Applications", 280)
+                    layout["showlegend"] = False
+                    layout["yaxis"]["title"] = "Applications"
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+    # ══ TAB 2: Scenario Simulator ══════════════════════════
+    with tab_sim:
+        st.markdown("""<div class="insight-box">
+            Adjust economic levers below and run a what-if forecast to see how demand shifts
+            with changes to UAE CB rate, mortgage rates, Golden Visa activity, and Expo/market events.
+        </div>""", unsafe_allow_html=True)
+
+        prophet_stats = get_prophet_stats(city=filters.get("city") if filters else None)
+
+        if not prophet_stats:
+            st.warning("Run the database seeding and model training first to enable the simulator.")
+        else:
+            col_s1, col_s2 = st.columns(2)
+            overrides = {}
+
+            with col_s1:
+                section_header("Monetary Policy", icon="🏛")
+                if "uae_central_bank_base_rate_pct" in prophet_stats:
+                    s = prophet_stats["uae_central_bank_base_rate_pct"]
+                    overrides["uae_central_bank_base_rate_pct"] = st.slider(
+                        "UAE CB Base Rate (%)", float(s["min"]), float(s["max"]), float(s["last"]), 0.1,
+                        help="Lower rate → cheaper mortgages → demand surge",
+                    )
+                if "mortgage_rate_avg_pct" in prophet_stats:
+                    s = prophet_stats["mortgage_rate_avg_pct"]
+                    overrides["mortgage_rate_avg_pct"] = st.slider(
+                        "Avg Mortgage Rate (%)", float(s["min"]), float(s["max"]), float(s["last"]), 0.1,
+                    )
+                if "property_registration_fee_pct" in prophet_stats:
+                    s = prophet_stats["property_registration_fee_pct"]
+                    overrides["property_registration_fee_pct"] = st.slider(
+                        "DLD Registration Fee (%)", float(s["min"]), float(s["max"]), float(s["last"]), 0.25,
+                        help="Fee changes affect transaction cost and volume",
+                    )
+
+            with col_s2:
+                section_header("Market & Demand Signals", icon="📊")
+                if "consumer_confidence_index" in prophet_stats:
+                    s = prophet_stats["consumer_confidence_index"]
+                    overrides["consumer_confidence_index"] = st.slider(
+                        "Consumer Confidence Index", float(s["min"]), float(s["max"]), float(s["last"]), 0.5,
+                    )
+                if "expo_effect" in prophet_stats:
+                    overrides["expo_effect"] = int(st.checkbox(
+                        "Dubai Expo Effect Active", value=bool(prophet_stats["expo_effect"]["last"]),
+                        help="Expo effect → tourism and investment surge → demand boost",
+                    ))
+                if "ramadan_month" in prophet_stats:
+                    overrides["ramadan_month"] = int(st.checkbox(
+                        "Ramadan Month",
+                        value=bool(prophet_stats["ramadan_month"]["last"]),
+                        help="Ramadan typically slows transactions; post-Ramadan surge follows",
+                    ))
+
+            sim_horizon = st.select_slider("Simulation Horizon", [30, 60, 90], value=90, key="sim_h")
+
+            if st.button("Run Scenario Simulation", type="primary", use_container_width=True):
+                with st.spinner("Simulating scenario with overridden market levers..."):
+                    result_base, _ = train_prophet_model(
+                        city=filters.get("city") if filters else None,
+                        target="units", horizon_days=sim_horizon,
+                    )
+                    result_sim, err = train_prophet_model(
+                        city=filters.get("city") if filters else None,
+                        target="units", horizon_days=sim_horizon,
+                        market_overrides=overrides,
+                    )
+
+                if err:
+                    st.error(f"Simulation error: {err}")
+                elif result_base and result_sim:
+                    fc_base = result_base["forecast"]
+                    fc_sim = result_sim["forecast"]
+                    last_hist = fc_base[fc_base["actual"].notna()]["ds"].max()
+                    fut_base = fc_base[fc_base["ds"] > last_hist]
+                    fut_sim = fc_sim[fc_sim["ds"] > last_hist]
+
+                    base_total = fut_base["yhat"].sum()
+                    sim_total = fut_sim["yhat"].sum()
+                    delta_pct = ((sim_total - base_total) / max(base_total, 1)) * 100
+
+                    res_col1, res_col2, res_col3 = st.columns(3)
+                    res_col1.metric("Baseline Forecast", f"{int(base_total):,} units")
+                    res_col2.metric(
+                        "Scenario Forecast",
+                        f"{int(sim_total):,} units",
+                        delta=f"{delta_pct:+.1f}%",
+                    )
+                    res_col3.metric(
+                        "Demand Impact",
+                        f"{abs(sim_total - base_total):,.0f} units",
+                        delta="Increase" if delta_pct > 0 else "Decrease",
+                    )
+
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=fut_base["ds"], y=fut_base["yhat"],
+                        name="Baseline", mode="lines",
+                        line=dict(color=colors["indigo"], width=2, dash="dot"),
+                    ))
+                    fig.add_trace(go.Scatter(
+                        x=fut_sim["ds"], y=fut_sim["yhat"],
+                        name="Scenario",
+                        mode="lines",
+                        line=dict(color=colors["primary"], width=2.5),
+                        fill="tonexty" if delta_pct > 0 else None,
+                        fillcolor="rgba(16,185,129,0.10)",
+                    ))
+                    layout = plotly_dark_layout("Baseline vs Scenario Demand Forecast", 380)
+                    layout["yaxis"]["title"] = "Units/Day"
+                    layout["legend"] = dict(orientation="h", y=-0.15, x=0, bgcolor="rgba(0,0,0,0)")
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+                    if delta_pct > 0:
+                        st.markdown(f"""<div class="insight-box">
+                            The scenario generates <b>{delta_pct:+.1f}%</b> more demand over {sim_horizon} days.
+                            Key levers: lower mortgage rates boost affordability; Expo and Golden Visa activity
+                            drive foreign and high-value buyer segments.
+                        </div>""", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""<div class="alert-box">
+                            The scenario reduces demand by <b>{abs(delta_pct):.1f}%</b> over {sim_horizon} days.
+                            Higher rates or Ramadan slowdown constrain purchasing power and transaction volumes.
+                        </div>""", unsafe_allow_html=True)
+
+    # ══ TAB 3: Investment Signals ══════════════════════════
+    with tab_invest:
+        if df_market.empty:
+            st.info("Market factor data not available.")
+            return
+
+        mf_inv = df_market.copy()
+        if not city_filter:
+            mf_inv = mf_inv.groupby("date").mean(numeric_only=True).reset_index()
+
+        section_header("Foreign & Institutional Investment Flows", icon="💹")
+        col_i1, col_i2 = st.columns(2)
+
+        with col_i1:
+            if "foreign_investment_inflow_bn_aed" in mf_inv.columns:
+                fi = mf_inv[["date", "foreign_investment_inflow_bn_aed"]].dropna()
+                if not fi.empty:
+                    fig = go.Figure()
+                    fig.add_trace(go.Bar(
+                        x=fi["date"], y=fi["foreign_investment_inflow_bn_aed"],
+                        marker_color=colors["gold"], opacity=0.8,
+                        name="Foreign Inflows",
+                    ))
+                    fig.add_trace(go.Scatter(
+                        x=fi["date"],
+                        y=fi["foreign_investment_inflow_bn_aed"].rolling(3).mean(),
+                        name="3-Month MA",
+                        line=dict(color=colors["primary"], width=2),
+                        mode="lines",
+                    ))
+                    layout = plotly_dark_layout("Foreign Investment Inflows (AED Billion)", 320)
+                    layout["yaxis"]["title"] = "AED Billion"
+                    layout["legend"] = dict(orientation="h", y=-0.2, x=0, bgcolor="rgba(0,0,0,0)")
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+        with col_i2:
+            if "institutional_investment_bn_aed" in mf_inv.columns:
+                inst = mf_inv[["date", "institutional_investment_bn_aed", "reit_activity_index"]].dropna()
+                if not inst.empty:
+                    fig = go.Figure()
+                    fig.add_trace(go.Bar(
+                        x=inst["date"], y=inst["institutional_investment_bn_aed"],
+                        marker_color=colors["indigo"], opacity=0.8,
+                        name="Institutional (AED Bn)", yaxis="y",
+                    ))
+                    fig.add_trace(go.Scatter(
+                        x=inst["date"], y=inst["reit_activity_index"],
+                        name="REIT Activity Index",
+                        line=dict(color=colors["cyan"], width=2),
+                        mode="lines", yaxis="y2",
+                    ))
+                    layout = plotly_dark_layout("Institutional Investment & REIT Activity", 320)
+                    layout["yaxis"] = dict(title="AED Billion", gridcolor="rgba(255,255,255,0.04)")
+                    layout["yaxis2"] = dict(
+                        title="REIT Index", overlaying="y", side="right",
+                        gridcolor="rgba(0,0,0,0)",
+                    )
+                    layout["legend"] = dict(orientation="h", y=-0.2, x=0, bgcolor="rgba(0,0,0,0)")
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+        # ── Tourism + Golden Visa ──────────────────────────
+        section_header("Tourism & Golden Visa Demand Drivers", icon="✈️")
+        col_j1, col_j2 = st.columns(2)
+
+        with col_j1:
+            if "tourism_arrivals_index" in mf_inv.columns:
+                tourism = mf_inv[["date", "tourism_arrivals_index"]].dropna()
+                if not tourism.empty:
+                    fig = go.Figure(go.Scatter(
+                        x=tourism["date"], y=tourism["tourism_arrivals_index"],
+                        mode="lines",
+                        line=dict(color=colors["cyan"], width=2),
+                        fill="tozeroy", fillcolor="rgba(6,182,212,0.08)",
+                    ))
+                    layout = plotly_dark_layout("Tourism Arrivals Index (Dubai/UAE)", 300)
+                    layout["showlegend"] = False
+                    layout["yaxis"]["title"] = "Arrivals Index"
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+        with col_j2:
+            if "off_plan_sales_share_pct" in mf_inv.columns:
+                op = mf_inv[["date", "off_plan_sales_share_pct"]].dropna()
+                if not op.empty:
+                    fig = go.Figure(go.Bar(
+                        x=op["date"], y=op["off_plan_sales_share_pct"],
+                        marker_color=colors["primary"], opacity=0.8,
+                    ))
+                    layout = plotly_dark_layout("Off-Plan Sales Share (% of Total)", 300)
+                    layout["showlegend"] = False
+                    layout["yaxis"]["title"] = "Off-Plan Share (%)"
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+        # ── Key signals summary ────────────────────────────
+        section_header("Current Market Signal Scorecard", icon="📋")
+        if factor_stats:
+            signals = []
+            def get_signal(key, label, good_low=True, unit=""):
+                if key not in factor_stats:
+                    return
+                stat = factor_stats[key]
+                val = stat["last"]
+                mid = (stat["min"] + stat["max"]) / 2
+                is_good = val < mid if good_low else val > mid
+                signals.append({
+                    "Signal": label,
+                    "Current": f"{val:.2f}{unit}",
+                    "Status": "🟢 Positive" if is_good else "🔴 Caution",
+                })
+
+            get_signal("uae_central_bank_base_rate_pct", "UAE CB Base Rate", good_low=True, unit="%")
+            get_signal("mortgage_rate_avg_pct", "Avg Mortgage Rate", good_low=True, unit="%")
+            get_signal("consumer_confidence_index", "Consumer Confidence", good_low=False)
+            get_signal("tourism_arrivals_index", "Tourism Arrivals Index", good_low=False)
+            get_signal("foreign_investment_inflow_bn_aed", "Foreign Investment Inflows", good_low=False, unit=" Bn")
+            get_signal("cpi_inflation_pct", "CPI Inflation", good_low=True, unit="%")
+            get_signal("property_registration_fee_pct", "DLD Registration Fee", good_low=True, unit="%")
+            get_signal("off_plan_sales_share_pct", "Off-Plan Sales Share", good_low=False, unit="%")
+
+            if signals:
+                st.dataframe(
+                    pd.DataFrame(signals),
+                    use_container_width=True,
+                    hide_index=True,
+                )

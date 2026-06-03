@@ -8,7 +8,7 @@ Execution order:
   4. Analyze them via Grok (or mock fallback)
   5. Persist SentimentSignal records
   6. Recompute DailySentimentSummary aggregates
-     (one row per date × vehicle_category; used as Prophet regressors)
+     (one row per date × property_category; used as Prophet regressors)
 
 Entry points:
   run_full_pipeline()  — called from the dashboard's Refresh button
@@ -138,7 +138,7 @@ def recompute_daily_summaries() -> Dict:
     Rebuild the daily_sentiment_summary table from all analyzed articles.
 
     Logic:
-      - Group signals by (published_date, affected_vehicle_category)
+      - Group signals by (published_date, affected_property_category)
       - Also compute an "All" row per date aggregating across categories
       - Deletes all existing rows and reinserts (fast for this data volume)
 
@@ -165,10 +165,10 @@ def recompute_daily_summaries() -> Dict:
     # Per-category daily rows
     for category in df["affected_category"].unique():
         cat_df = df[df["affected_category"] == category]
-        summaries.extend(_compute_daily_stats(cat_df, vehicle_category=category))
+        summaries.extend(_compute_daily_stats(cat_df, property_category=category))
 
     # "All" category — aggregate everything (all categories per date)
-    summaries.extend(_compute_daily_stats(df, vehicle_category=None))
+    summaries.extend(_compute_daily_stats(df, property_category=None))
 
     # Persist
     session = get_db_session()
@@ -186,7 +186,7 @@ def recompute_daily_summaries() -> Dict:
     finally:
         session.close()
 
-    categories_covered = list({s["vehicle_category"] for s in summaries if s["vehicle_category"]})
+    categories_covered = list({s["property_category"] for s in summaries if s["property_category"]})
     logger.info("Daily summaries recomputed: %d rows across %d categories", len(summaries), len(categories_covered))
     return {
         "rows_computed": len(summaries),
@@ -194,10 +194,10 @@ def recompute_daily_summaries() -> Dict:
     }
 
 
-def _compute_daily_stats(df: pd.DataFrame, vehicle_category: Optional[str]) -> List[Dict]:
+def _compute_daily_stats(df: pd.DataFrame, property_category: Optional[str]) -> List[Dict]:
     """
     For each unique published_date in df, compute one summary row.
-    vehicle_category=None → "All" aggregate row.
+    property_category=None → "All" aggregate row.
     """
     if df.empty:
         return []
@@ -223,7 +223,7 @@ def _compute_daily_stats(df: pd.DataFrame, vehicle_category: Optional[str]) -> L
 
         summaries.append({
             "summary_date":             day,
-            "vehicle_category":         vehicle_category,
+            "property_category":         property_category,
             "avg_sentiment_score":      round(avg_sentiment, 4) if avg_sentiment is not None else None,
             "avg_impact_score":         round(avg_impact, 4)    if avg_impact    is not None else None,
             "avg_demand_change_pct":    round(avg_demand_chg, 4) if avg_demand_chg is not None else None,
@@ -250,7 +250,7 @@ def _safe_mean(series: pd.Series) -> Optional[float]:
 
 def get_daily_summaries(
     days_back: int = 365,
-    vehicle_category: Optional[str] = None,
+    property_category: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Return a DataFrame of DailySentimentSummary rows for use as Prophet regressors.
@@ -261,7 +261,7 @@ def get_daily_summaries(
 
     Args:
         days_back:        How many days back to include.
-        vehicle_category: Filter to a specific category; None = "All" aggregate rows.
+        property_category: Filter to a specific category; None = "All" aggregate rows.
     """
     session = get_db_session()
     try:
@@ -269,10 +269,10 @@ def get_daily_summaries(
         q = session.query(DailySentimentSummary).filter(
             DailySentimentSummary.summary_date >= cutoff
         )
-        if vehicle_category is not None:
-            q = q.filter(DailySentimentSummary.vehicle_category == vehicle_category)
+        if property_category is not None:
+            q = q.filter(DailySentimentSummary.property_category == property_category)
         else:
-            q = q.filter(DailySentimentSummary.vehicle_category.is_(None))
+            q = q.filter(DailySentimentSummary.property_category.is_(None))
 
         rows = q.order_by(DailySentimentSummary.summary_date).all()
 
@@ -302,7 +302,7 @@ def get_daily_summaries(
 
 def get_overall_sentiment_stats() -> Dict:
     """
-    Aggregate stats across all DailySentimentSummary rows (vehicle_category=None).
+    Aggregate stats across all DailySentimentSummary rows (property_category=None).
     Used for the dashboard KPI header cards.
 
     Returns dict with:
@@ -319,7 +319,7 @@ def get_overall_sentiment_stats() -> Dict:
         rows_30 = (
             session.query(DailySentimentSummary)
             .filter(
-                DailySentimentSummary.vehicle_category.is_(None),
+                DailySentimentSummary.property_category.is_(None),
                 DailySentimentSummary.summary_date >= cutoff_30,
             )
             .order_by(DailySentimentSummary.summary_date)
@@ -377,7 +377,7 @@ def get_overall_sentiment_stats() -> Dict:
 
 def get_category_sentiment_summary(days_back: int = 30) -> pd.DataFrame:
     """
-    Return average sentiment per vehicle_category over the past N days.
+    Return average sentiment per property_category over the past N days.
     Used for category comparison charts on the dashboard.
     """
     session = get_db_session()
@@ -386,7 +386,7 @@ def get_category_sentiment_summary(days_back: int = 30) -> pd.DataFrame:
         rows = (
             session.query(DailySentimentSummary)
             .filter(
-                DailySentimentSummary.vehicle_category.isnot(None),
+                DailySentimentSummary.property_category.isnot(None),
                 DailySentimentSummary.summary_date >= cutoff,
             )
             .all()
@@ -395,7 +395,7 @@ def get_category_sentiment_summary(days_back: int = 30) -> pd.DataFrame:
             return pd.DataFrame()
 
         records = [{
-            "category":         r.vehicle_category,
+            "category":         r.property_category,
             "date":             r.summary_date,
             "sentiment":        r.avg_sentiment_score or 0.0,
             "impact":           r.avg_impact_score or 0.0,
@@ -443,7 +443,7 @@ if __name__ == "__main__":
         print(f"    {k}: {v}")
 
     print("\n[3] Daily summaries DataFrame (All categories)...")
-    df = get_daily_summaries(days_back=400, vehicle_category=None)
+    df = get_daily_summaries(days_back=400, property_category=None)
     if df.empty:
         print("    No summary data found.")
     else:

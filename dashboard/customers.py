@@ -1,253 +1,284 @@
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
+
 from database.connection import get_db_session
-from database.queries import get_customer_segments_data
-from ml_models.xgboost_model import predict_deal_probability
-from utils.helpers import get_color_palette
+from database.queries import get_buyer_segments_data, get_buyer_segment_summary, get_lead_conversion_data
+from ml_models.customer_segmentation import train_buyer_segmentation, predict_buyer_segment
+from ml_models.xgboost_model import train_xgboost_pipeline, predict_booking_probability
+from utils.helpers import get_re_colors, plotly_dark_layout, section_header, fmt_aed
+
+
+SEGMENT_COLORS = {
+    "Portfolio Investor": "#f43f5e",
+    "Upgrader": "#06b6d4",
+    "Golden Visa Seeker": "#f59e0b",
+    "First-Home Buyer": "#10b981",
+    "End User": "#6366f1",
+    "Rental Investor": "#0ea5e9",
+}
+
 
 def render_customers(filters: dict):
-    """
-    Renders the Customer Intelligence tab.
-    """
-    session = get_db_session()
-    colors = get_color_palette()
-    
-    try:
-        st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Customer Intelligence & Lead Optimization</h2>", unsafe_allow_html=True)
-        
-        # 1. Fetch Customer Segmentation data
-        df_cust = get_customer_segments_data(session)
-        
-        if df_cust.empty:
-            st.warning("No customer records found. Please seed the database first.")
-            return
-            
-        # Create tab sub-sections
-        tab1, tab2 = st.tabs(["Customer Segmentation", "Lead Close Score"])
-        
-        with tab1:
-            st.markdown("### Clustering Analysis")
-            
-            # Segment distribution pie
-            seg_dist = df_cust['customer_segment'].value_counts().reset_index()
-            seg_dist.columns = ['customer_segment', 'count']
-            
-            sub_col1, sub_col2 = st.columns([2, 1])
-            with sub_col2:
-                st.markdown("#### Segment Distribution")
-                fig_pie = px.pie(
-                    seg_dist,
-                    values='count',
-                    names='customer_segment',
-                    hole=0.4,
-                    color_discrete_sequence=colors['colors_seq']
-                )
-                fig_pie.update_layout(
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-                    margin=dict(l=0, r=0, t=10, b=0),
-                    height=280
-                )
-                st.plotly_chart(fig_pie, use_container_width=True)
-                
-            with sub_col1:
-                st.markdown("#### Segment Characteristic Analysis")
-                
-                # Define available metrics for comparison
-                metrics_map = {
-                    'loyalty_score': 'Loyalty Score',
-                    'credit_score': 'Credit Score',
-                    'age': 'Average Age',
-                    'number_of_past_purchases': 'Past Purchases',
-                    'estimated_monthly_income_aed': 'Monthly Income (AED)',
-                    'churn_risk_score': 'Churn Risk'
-                }
-                
-                # Interactive filters for the comparison chart
-                f_col1, f_col2 = st.columns(2)
-                with f_col1:
-                    sel_metrics = st.multiselect("Select Metrics", options=list(metrics_map.keys()), 
-                                                 default=['loyalty_score', 'credit_score'], 
-                                                 format_func=lambda x: metrics_map[x])
-                with f_col2:
-                    sel_segments = st.multiselect("Filter Segments", options=df_cust['customer_segment'].unique(), 
-                                                  default=df_cust['customer_segment'].unique())
+    colors = get_re_colors()
 
-                if sel_metrics and sel_segments:
-                    # Aggregate and melt data for the clustered bar chart
-                    agg_df = df_cust[df_cust['customer_segment'].isin(sel_segments)].groupby('customer_segment')[sel_metrics].mean().reset_index()
-                    melted_df = agg_df.melt(id_vars='customer_segment', var_name='Metric', value_name='Value')
-                    melted_df['Metric Name'] = melted_df['Metric'].map(metrics_map)
-                    
-                    fig_bar = px.bar(
-                        melted_df,
-                        x='customer_segment',
-                        y='Value',
-                        color='Metric Name',
-                        barmode='group',
-                        color_discrete_sequence=colors['colors_seq'],
-                        labels={'Value': 'Average Value', 'customer_segment': 'Segment'}
-                    )
-                    fig_bar.update_layout(
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-                        xaxis=dict(showgrid=False),
-                        yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                        margin=dict(l=0, r=0, t=10, b=0),
-                        height=350
-                    )
-                    st.plotly_chart(fig_bar, use_container_width=True)
+    st.markdown("""<p class="subtitle-text">
+        KMeans buyer segmentation + XGBoost lead scoring — understand your buyer personas,
+        predict booking conversion probability, and identify high-value leads.
+    </p>""", unsafe_allow_html=True)
+
+    tab_seg, tab_lead = st.tabs(["Buyer Segmentation", "Lead Scoring"])
+
+    # ══ TAB 1: Buyer Segmentation ══════════════════════════
+    with tab_seg:
+        session = get_db_session()
+        try:
+            df_buyers = get_buyer_segments_data(session)
+            df_seg_summary = get_buyer_segment_summary(session)
+        finally:
+            session.close()
+
+        col_train, col_info = st.columns([1, 3])
+        with col_train:
+            if st.button("Train Segmentation Model", type="primary", use_container_width=True):
+                with st.spinner("Running KMeans clustering..."):
+                    result, err = train_buyer_segmentation(n_clusters=6)
+                if err:
+                    st.error(err)
                 else:
-                    st.info("Select metrics and segments to visualize the comparison.")
-                
-            # Customer Age vs Spending Bubble Chart
-            st.markdown("### Age vs Churn Risk Profile")
-            # Sample 2000 customers for high-performance plotting
-            sampled_df = df_cust.sample(min(2000, len(df_cust)), random_state=42)
-            fig_bubble = px.scatter(
-                sampled_df,
-                x='age',
-                y='churn_risk_score',
-                size='estimated_monthly_income_aed',
-                color='customer_segment',
-                hover_data={'credit_score': True},
-                color_discrete_sequence=colors['colors_seq']
-            )
-            fig_bubble.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', title="Customer Age"),
-                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', title="Churn Probability"),
-                margin=dict(l=0, r=0, t=10, b=0),
-                height=300
-            )
-            st.plotly_chart(fig_bubble, use_container_width=True)
-            
-        with tab2:
-            st.markdown("### Live Lead Conversion Prediction")
-            st.write("Input a lead profile below to calculate closing probability and explain features dynamically using SHAP.")
-            
-            # Interactive form parameters
-            form_col1, form_col2, form_col3 = st.columns(3)
-            
-            with form_col1:
-                age = st.slider("Customer Age", min_value=21, max_value=75, value=38)
-                gender = st.selectbox("Gender", options=["Male", "Female", "Other"])
-                occupation = st.selectbox("Occupation", options=["Salaried", "Business Owner", "Self-Employed", "Government Employee"])
-                income = st.number_input("Monthly Income (AED)", min_value=2000, max_value=200000, value=25000, step=1000)
-                
-            with form_col2:
-                credit_score = st.slider("Credit Score", min_value=400, max_value=850, value=710)
-                loyalty_score = st.slider("Loyalty Rating", min_value=0, max_value=100, value=65)
-                vehicle_category = st.selectbox("Vehicle Category", options=["SUV", "Sedan", "Hatchback", "Luxury", "EV", "Commercial"])
-                fuel_type = st.selectbox("Fuel Type", options=["Petrol", "Diesel", "CNG", "Electric", "Hybrid"])
-                
-            with form_col3:
-                discount_pct = st.slider("Applied Discount (%)", min_value=0.0, max_value=25.0, value=6.5, step=0.5)
-                financing_type = st.selectbox("Financing Type", options=["Bank Loan", "Cash", "Dealer Finance", "Lease"])
-                marketing_channel = st.selectbox("Lead Source Channel", options=["Referral", "Digital", "Showroom Walk-in", "Auto Expo", "TV"])
-                base_price = st.number_input("Vehicle Base Price (INR)", min_value=200000, max_value=15000000, value=1250000, step=50000)
-                
-            if st.button("Evaluate Conversion Probability", type="primary"):
-                # Call prediction pipeline
-                lead_data = {
-                    "age": age,
-                    "gender": gender,
-                    "occupation": occupation,
-                    "estimated_monthly_income_aed": income,
-                    "credit_score": credit_score,
-                    "loyalty_score": loyalty_score,
-                    "vehicle_category": vehicle_category,
-                    "fuel_type": fuel_type,
-                    "discount_pct": discount_pct,
-                    "financing_type": financing_type,
-                    "marketing_channel": marketing_channel,
-                    "base_price": base_price
-                }
-                
-                results = predict_deal_probability(lead_data)
-                prob = results["close_probability"]
-                explanations = results["explanations"]
-                
-                # Render results nicely
-                st.markdown("<br>", unsafe_allow_html=True)
-                r_col1, r_col2 = st.columns([1, 2])
-                
-                with r_col1:
-                    # Circular Gauge for conversion
-                    fig_gauge = go.Figure(go.Indicator(
-                        mode = "gauge+number",
-                        value = prob * 100,
-                        domain = {'x': [0, 1], 'y': [0, 1]},
-                        title = {'text': "Closing Score", 'font': {'size': 20}},
-                        gauge = {
-                            'axis': {'range': [0, 100], 'tickwidth': 1},
-                            'bar': {'color': colors['primary']},
-                            'bgcolor': "rgba(0,0,0,0)",
-                            'borderwidth': 2,
-                            'bordercolor': "gray",
-                            'steps': [
-                                {'range': [0, 40], 'color': 'rgba(239, 68, 68, 0.2)'},
-                                {'range': [40, 75], 'color': 'rgba(245, 158, 11, 0.2)'},
-                                {'range': [75, 100], 'color': 'rgba(16, 185, 129, 0.2)'}
-                            ]
-                        }
+                    st.success("Segmentation complete! Reload to see updated clusters.")
+
+        with col_info:
+            st.markdown("""<div class="insight-box">
+                KMeans clusters buyers into 6 segments based on annual income (AED),
+                past purchases, budget ceiling, loyalty score, Golden Visa intent and off-plan preference.
+                Segments: <b>Portfolio Investor | Golden Visa Seeker | Upgrader |
+                First-Home Buyer | Rental Investor | End User</b>
+            </div>""", unsafe_allow_html=True)
+
+        if not df_buyers.empty and "customer_segment" in df_buyers.columns:
+            # ── KPI strip ─────────────────────────────────
+            seg_counts = df_buyers["customer_segment"].value_counts()
+            k_cols = st.columns(min(len(seg_counts), 6))
+            for i, (seg, cnt) in enumerate(seg_counts.items()):
+                with k_cols[i % 6]:
+                    seg_color = SEGMENT_COLORS.get(seg, colors["primary"])
+                    st.markdown(f"""<div class="kpi-card" style="border-top-color:{seg_color}">
+                        <div class="kpi-title" style="color:{seg_color}">{seg}</div>
+                        <div class="kpi-value">{cnt:,}</div>
+                        <div class="kpi-delta neutral">{cnt/len(df_buyers)*100:.1f}% of buyers</div>
+                    </div>""", unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # ── 2D scatter ───────────────────────────────
+            col_scatter, col_profile = st.columns([3, 2])
+
+            with col_scatter:
+                section_header("Buyer Segment Scatter (Income vs Loyalty)", icon="🎯")
+                plot_df = df_buyers.dropna(subset=["estimated_annual_income_aed", "loyalty_score"]).copy()
+                if not plot_df.empty:
+                    sample = plot_df.sample(min(3000, len(plot_df)), random_state=42)
+                    fig = go.Figure()
+                    for seg in sample["customer_segment"].unique():
+                        sub = sample[sample["customer_segment"] == seg]
+                        fig.add_trace(go.Scatter(
+                            x=sub["estimated_annual_income_aed"] / 1e3,
+                            y=sub["loyalty_score"],
+                            mode="markers",
+                            name=seg,
+                            marker=dict(
+                                size=6, opacity=0.7,
+                                color=SEGMENT_COLORS.get(seg, colors["primary"]),
+                                line=dict(width=0),
+                            ),
+                        ))
+                    layout = plotly_dark_layout("", 400)
+                    layout["xaxis"]["title"] = "Annual Income (AED '000)"
+                    layout["yaxis"]["title"] = "Loyalty Score"
+                    layout["legend"] = dict(orientation="v", y=0.5, bgcolor="rgba(0,0,0,0)")
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+            with col_profile:
+                section_header("Segment Distribution", icon="🥧")
+                if not df_seg_summary.empty:
+                    fig = go.Figure(go.Pie(
+                        labels=df_seg_summary["customer_segment"],
+                        values=df_seg_summary["count"],
+                        hole=0.52,
+                        marker=dict(
+                            colors=[SEGMENT_COLORS.get(s, colors["primary"])
+                                    for s in df_seg_summary["customer_segment"]],
+                            line=dict(color="#080d18", width=2),
+                        ),
+                        textinfo="percent",
+                        textfont=dict(size=11),
                     ))
-                    fig_gauge.update_layout(
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-                        margin=dict(l=20, r=20, t=40, b=20),
-                        height=250
+                    layout = plotly_dark_layout("", 400)
+                    layout["legend"] = dict(
+                        orientation="v", x=1.02, y=0.5,
+                        bgcolor="rgba(0,0,0,0)", font=dict(size=10),
                     )
-                    st.plotly_chart(fig_gauge, use_container_width=True)
-                    
-                with r_col2:
-                    st.markdown("#### Feature Attributions (SHAP explainers)")
-                    if explanations:
-                        # Draw bar chart of explainers
-                        exp_df = pd.DataFrame(explanations)
-                        # Standardize name for display
-                        exp_df['feature_clean'] = exp_df['feature'].apply(lambda x: x.replace('_', ' ').title())
-                        
-                        fig_shap = px.bar(
-                            exp_df,
-                            x='score',
-                            y='feature_clean',
-                            color='direction',
-                            color_discrete_map={'positive': colors['success'], 'negative': colors['danger']},
-                            orientation='h',
-                            labels={'score': 'Contribution Strength', 'feature_clean': 'Attribute', 'direction': 'Influence'}
-                        )
-                        fig_shap.update_layout(
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-                            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                            yaxis=dict(showgrid=False),
-                            margin=dict(l=0, r=0, t=10, b=0),
-                            height=250
-                        )
-                        st.plotly_chart(fig_shap, use_container_width=True)
-                    else:
-                        st.info("SHAP attribution model not trained yet.")
-                        
-                # Provide recommendation based on scores
-                if prob >= 0.75:
-                    st.success("**Smart Action Recommendation:** This is a **High-Conversion Lead**. Fast track scheduling showroom VIP visit, offer finance approvals immediately, and secure downpayment within 48 hours.")
-                elif prob >= 0.4:
-                    st.warning("**Smart Action Recommendation:** Moderate Close Probability. **Action:** Consider offering an additional **1.5% to 2% discount** or shifting financing to Bank Loan to increase closing prospects to over 80%.")
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+            # ── Segment profile table ────────────────────
+            section_header("Segment Profile Benchmarks", icon="📊")
+            if not df_seg_summary.empty:
+                profile = df_seg_summary.copy()
+                profile["avg_income"] = profile["avg_income"].apply(
+                    lambda v: f"AED {v/1e3:.0f}K" if v else "—"
+                )
+                profile["avg_budget"] = profile["avg_budget"].apply(
+                    lambda v: fmt_aed(v) if v else "—"
+                )
+                profile["avg_loyalty"] = profile["avg_loyalty"].apply(lambda v: f"{v:.1f}/100" if v else "—")
+                profile["avg_churn_risk"] = profile["avg_churn_risk"].apply(
+                    lambda v: f"{v:.0%}" if v else "—"
+                )
+                st.dataframe(
+                    profile.rename(columns={
+                        "customer_segment": "Segment",
+                        "count": "Buyers",
+                        "avg_income": "Avg Income",
+                        "avg_budget": "Avg Budget",
+                        "avg_loyalty": "Loyalty",
+                        "avg_churn_risk": "Churn Risk",
+                    })[["Segment", "Buyers", "Avg Income", "Avg Budget", "Loyalty", "Churn Risk"]],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+            # ── Budget distribution by segment ───────────
+            st.markdown("<br>", unsafe_allow_html=True)
+            section_header("Budget Range by Segment (AED)", icon="💰")
+            plot_df2 = df_buyers.dropna(subset=["budget_max_aed", "customer_segment"])
+            if not plot_df2.empty:
+                fig = go.Figure()
+                for seg in plot_df2["customer_segment"].unique():
+                    sub = plot_df2[plot_df2["customer_segment"] == seg]
+                    fig.add_trace(go.Box(
+                        x=sub["customer_segment"],
+                        y=sub["budget_max_aed"] / 1e6,
+                        name=seg,
+                        marker_color=SEGMENT_COLORS.get(seg, colors["primary"]),
+                        boxmean=True,
+                        line=dict(width=1.5),
+                    ))
+                layout = plotly_dark_layout("", 360)
+                layout["yaxis"]["title"] = "Max Budget (AED Millions)"
+                layout["showlegend"] = False
+                layout["xaxis"]["tickangle"] = -20
+                fig.update_layout(**layout)
+                st.plotly_chart(fig, use_container_width=True)
+
+    # ══ TAB 2: Lead Scoring ════════════════════════════════
+    with tab_lead:
+        col_train2, col_info2 = st.columns([1, 3])
+        with col_train2:
+            if st.button("Train Lead Scoring Model", type="primary", use_container_width=True):
+                with st.spinner("Training XGBoost booking conversion model..."):
+                    result, err = train_xgboost_pipeline()
+                if err:
+                    st.error(err)
                 else:
-                    st.error("**Smart Action Recommendation:** High risk of lead drop. **Action:** Low conversion score. Target a different vehicle category that matches their budget profile, or contact customer to review downpayment capacity.")
-                    
-    except Exception as e:
-        st.error(f"Error rendering Customer Intelligence: {e}")
-        import traceback
-        st.code(traceback.format_exc())
-    finally:
-        session.close()
+                    st.success(f"Model trained! Accuracy: {result['accuracy']:.1%}")
+                    feat_df = result["feature_importance"].head(10)
+                    section_header("Feature Importance", icon="📋")
+                    fig = go.Figure(go.Bar(
+                        x=feat_df["Importance"],
+                        y=feat_df["Feature"],
+                        orientation="h",
+                        marker=dict(
+                            color=feat_df["Importance"],
+                            colorscale=[[0, "#1a3350"], [1, colors["gold"]]],
+                            line=dict(width=0),
+                        ),
+                        text=[f"{v:.3f}" for v in feat_df["Importance"]],
+                        textposition="outside",
+                        textfont=dict(size=10, color="#94a3b8"),
+                    ))
+                    layout = plotly_dark_layout("", 340)
+                    layout["xaxis"]["title"] = "Feature Importance"
+                    layout["yaxis"]["autorange"] = "reversed"
+                    layout["margin"]["l"] = 150
+                    fig.update_layout(**layout)
+                    st.plotly_chart(fig, use_container_width=True)
+
+        with col_info2:
+            st.markdown("""<div class="insight-box">
+                XGBoost predicts <b>booking conversion probability</b> using buyer profile features:
+                site visit, annual income (AED), property preferences, Golden Visa intent,
+                expat status, off-plan preference, and marketing channel.
+                <br><b>Top drivers:</b> Site Visit > Income > Buyer Type > Golden Visa Intent > Lead Source
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        section_header("Lead Conversion Probability Predictor", icon="🎲")
+
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            age = st.slider("Age", 21, 75, 35, key="ls_age")
+            income = st.number_input("Annual Income (AED)", 60000, 5000000, 300000, 50000, key="ls_income")
+            loyalty = st.slider("Loyalty Score", 0, 100, 60, key="ls_loyalty")
+        with c2:
+            site_visit = st.toggle("Site Visit Taken", value=True, key="ls_visit")
+            expat = st.toggle("Expat Status", value=True, key="ls_expat")
+            golden_visa = st.toggle("Golden Visa Intent", value=False, key="ls_gv")
+            off_plan = st.toggle("Off-Plan Preference", value=False, key="ls_offplan")
+            mortgage = st.toggle("Mortgage Preferred", value=True, key="ls_mortgage")
+        with c3:
+            buyer_type = st.selectbox("Buyer Type", ["End User", "Investor", "Off-Plan Investor", "Portfolio Investor", "HNI"], key="ls_btype")
+            prop_cat = st.selectbox("Property Category", ["Affordable", "Mid-Market", "Premium", "Luxury", "Ultra-Luxury"], key="ls_pcat")
+            channel = st.selectbox("Lead Source", ["Property Finder", "Bayut", "Referral", "Digital", "Property Expo", "Walk-in", "WhatsApp", "Social Media"], key="ls_ch")
+            city = st.selectbox("City", ["Dubai", "Abu Dhabi", "Sharjah", "Ras Al Khaimah", "Ajman", "Fujairah", "Umm Al Quwain"], key="ls_city")
+
+        if st.button("Predict Booking Probability", type="primary", use_container_width=True):
+            result = predict_booking_probability({
+                "age": age,
+                "estimated_annual_income_aed": income,
+                "site_visit_taken": site_visit,
+                "expat_status": expat,
+                "golden_visa_intent": golden_visa,
+                "off_plan_preference": off_plan,
+                "mortgage_preferred": mortgage,
+                "buyer_type": buyer_type,
+                "property_category": prop_cat,
+                "marketing_channel": channel,
+                "city": city,
+                "discount_pct": 2.0,
+                "area_sqft": 1000.0,
+                "lead_to_close_days": 30.0,
+                "loyalty_score": float(loyalty),
+            })
+
+            prob = result["booking_probability"]
+            explanations = result.get("explanations", [])
+
+            p1, p2 = st.columns([1, 2])
+            with p1:
+                color = colors["success"] if prob > 0.65 else (colors["warning"] if prob > 0.40 else colors["danger"])
+                label = "High Intent" if prob > 0.65 else ("Moderate Intent" if prob > 0.40 else "Low Intent")
+                st.markdown(f"""
+                <div class="kpi-card" style="text-align:center; border-top-color:{color}">
+                    <div class="kpi-title">Booking Probability</div>
+                    <div class="kpi-value" style="color:{color}; font-size:42px">{prob:.0%}</div>
+                    <div class="kpi-delta" style="justify-content:center; color:{color}">{label}</div>
+                </div>""", unsafe_allow_html=True)
+
+            with p2:
+                section_header("Key Conversion Drivers (SHAP)", icon="🔍")
+                if explanations:
+                    for exp in explanations[:5]:
+                        bar_color = colors["success"] if exp["direction"] == "positive" else colors["danger"]
+                        pct = min(abs(exp["score"]) * 200, 100)
+                        st.markdown(f"""
+                        <div style="margin-bottom:10px">
+                            <div style="font-size:12px; color:#94a3b8; margin-bottom:3px">{exp['description']}</div>
+                            <div style="background:rgba(255,255,255,0.05); border-radius:4px; height:8px; overflow:hidden">
+                                <div style="background:{bar_color}; width:{pct:.0f}%; height:100%; border-radius:4px; opacity:0.8"></div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)

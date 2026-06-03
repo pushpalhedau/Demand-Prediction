@@ -4,189 +4,183 @@ import sys
 from datetime import date
 from streamlit_option_menu import option_menu
 
-# Add current path to python path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from database.connection import get_db_session
 from database.queries import get_unique_filter_options
 from utils.helpers import inject_custom_css
+
 from dashboard.overview import render_overview
 from dashboard.forecasting import render_forecasting
+from dashboard.price_intelligence import render_price_intelligence
 from dashboard.comparison import render_comparison
 from dashboard.regional import render_regional
 from dashboard.customers import render_customers
 from dashboard.inventory import render_inventory
 from dashboard.ai_insights import render_ai_insights
 from dashboard.sentiment_analysis import render_sentiment_analysis
-# from dashboard.upload_data import render_upload_data
-# from dashboard.metrics import render_metrics
 
-# 1. Page Configuration
+# ── Page Config ──────────────────────────────────────────
 st.set_page_config(
-    page_title="Automobile Demand Intelligence Platform",
-    page_icon=None,
+    page_title="RE Demand Intelligence",
+    page_icon="🏢",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
-# 2. Styling Injection
 inject_custom_css()
 
-# 3. Fetch unique sidebar filter choices dynamically from DB
+# ── Load filter options ───────────────────────────────────
 session = get_db_session()
 try:
     options = get_unique_filter_options(session)
 except Exception:
-    # Fail-safe fallbacks if DB is not seeded or active
     options = {
-        "regions": ["Abu Dhabi", "Ajman", "Dubai", "Fujairah", "Ras Al Khaimah", "Sharjah", "Umm Al Quwain"],
-        "cities": ["Abu Dhabi City", "Al Quoz", "Business Bay", "Deira", "Downtown Dubai", "Dubai Marina", "Jumeirah", "Khalifa City", "Musaffah", "Sharjah City"],
-        "categories": ["SUV", "Sedan", "Luxury", "EV", "Sports Car", "Pickup Truck", "Van/Commercial"],
-        "fuel_types": ["Petrol", "Diesel", "Electric", "Hybrid"],
-        "brands": ["Toyota", "Nissan", "Hyundai", "Kia", "Honda", "Mercedes-Benz", "BMW", "Audi", "Lexus", "Land Rover", "Tesla", "BYD"],
-        "years": [2021, 2022, 2023, 2024, 2025, 2026]
+        "cities": ["Dubai", "Abu Dhabi", "Sharjah", "Ras Al Khaimah", "Ajman", "Fujairah", "Umm Al Quwain"],
+        "regions": ["South UAE", "North UAE", "Central UAE"],
+        "emirates": ["Dubai", "Abu Dhabi", "Sharjah", "Ras Al Khaimah", "Ajman", "Fujairah", "Umm Al Quwain"],
+        "property_types": ["Apartment", "Villa", "Townhouse", "Penthouse", "Plot", "Commercial", "Studio"],
+        "property_categories": ["Affordable", "Mid-Market", "Premium", "Luxury", "Ultra-Luxury"],
+        "bedrooms": ["Studio", "1BR", "2BR", "3BR", "4BR", "5BR+"],
+        "years": [2021, 2022, 2023, 2024, 2025, 2026],
     }
 finally:
     session.close()
 
-# 4. HEADER BRANDING
+# ── Header ────────────────────────────────────────────────
 st.markdown("""
-    <div style="text-align: center; margin-top: -30px; margin-bottom: 20px;">
-        <h1 class="main-title"><span class="gradient-text">Automobile Demand Intelligence Platform</span></h1>
-        <p style="color: #9ca3af; font-size: 15px; margin-top: -10px;">Enterprise Decision Support Suite — Demand Forecasting & Customer Analytics</p>
+    <div style="text-align:center; margin-top:-28px; margin-bottom:18px;">
+        <h1 class="main-title" style="font-size:32px; margin-bottom:4px;">
+            <span class="gradient-text">Real Estate Demand Intelligence Platform</span>
+        </h1>
+        <p class="subtitle-text">
+            Enterprise AI Suite — Demand Forecasting · Price Intelligence · Buyer Analytics · Market Simulation
+        </p>
     </div>
 """, unsafe_allow_html=True)
 
-# 5. SIDEBAR NAVIGATION & GLOBAL FILTERS
+# ── Sidebar Navigation ────────────────────────────────────
 with st.sidebar:
     st.markdown("""
-        <div style="text-align: center; padding: 10px 0;">
-            <h3 style="color: #f3f4f6; font-size: 18px; margin-bottom: 5px;">Navigation</h3>
+        <div style="text-align:center; padding:8px 0 12px 0;">
+            <div style="font-size:28px; margin-bottom:4px;">🏢</div>
+            <div style="color:#10b981; font-weight:700; font-size:13px; letter-spacing:0.05em;">
+                RE INTELLIGENCE
+            </div>
+            <div style="color:#4b5563; font-size:10px; letter-spacing:0.08em; margin-top:2px;">
+                POWERED BY AI & PROPHET
+            </div>
         </div>
     """, unsafe_allow_html=True)
-    
-    # Sleek sidebar menu with option_menu
+
     selected_page = option_menu(
         menu_title=None,
         options=[
             "Executive Overview",
             "Demand Forecasting",
+            "Price Intelligence",
             "Comparative Analytics",
             "Regional Intelligence",
-            "Customer Intelligence",
             "Inventory Intelligence",
-            "Insights & Simulator",
-            "Sentimental  analysis",
-            # "Data Ingestion Engine",
-            # "Model Performance Metrics"
+            "Customer Intelligence",
+            "Market Insights",
+            "Sentiment Analysis",
         ],
         icons=[
             "speedometer2",
             "graph-up-arrow",
+            "currency-rupee",
             "columns-gap",
             "geo-alt",
+            "building",
             "people",
-            "box-seam",
             "cpu",
             "chat-left-quote",
-            # "cloud-arrow-up",
-            # "bar-chart-steps"
         ],
         menu_icon="cast",
         default_index=0,
         styles={
-            "container": {"padding": "0!important", "background-color": "transparent", "font-family": "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"},
-            "icon": {"color": "#06b6d4", "font-size": "15px"}, 
+            "container": {
+                "padding": "0!important",
+                "background-color": "transparent",
+                "font-family": "'Plus Jakarta Sans', sans-serif",
+            },
+            "icon": {"color": "#10b981", "font-size": "14px"},
             "nav-link": {
-                "font-size": "13px", 
-                "text-align": "left", 
-                "margin": "0px", 
-                "color": "#9ca3af",
-                "font-family": "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                "font-size": "13px",
+                "text-align": "left",
+                "margin": "0px",
+                "color": "#6b7280",
+                "padding": "8px 12px",
+                "border-radius": "8px",
+                "font-family": "'Plus Jakarta Sans', sans-serif",
             },
             "nav-link-selected": {
-                "background-color": "rgba(99, 102, 241, 0.18)", 
-                "color": "#f3f4f6", 
-                "font-weight": "600", 
-                "border-left": "4px solid #6366f1",
-                "font-family": "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-            }
-        }
+                "background": "rgba(16, 185, 129, 0.12)",
+                "color": "#f0f4f8",
+                "font-weight": "600",
+                "border-left": "3px solid #10b981",
+                "font-family": "'Plus Jakarta Sans', sans-serif",
+            },
+        },
     )
-    
-    st.markdown("<hr style='border-color: rgba(255,255,255,0.08); margin: 15px 0;'>", unsafe_allow_html=True)
-    
-    # Inject custom CSS for global filter fonts
-    st.markdown("""
-        <style>
-            /* Apply Plus Jakarta Sans to all Streamlit widget labels */
-            div[data-testid="stWidgetLabel"] p,
-            .stDateInput label,
-            .stSelectbox label,
-            .stDateInput input,
-            .stSelectbox div[data-baseweb="select"] div[role="button"]
-            {
-                font-family: "Plus Jakarta Sans", sans-serif !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-    st.markdown("<h3 style='color: #f3f4f6; font-size: 15px; margin-bottom: 10px;'>Global Filters</h3>", unsafe_allow_html=True)
-    
-    # Global Filters Inputs
-    start_date = st.date_input("Start Date", value=date(2021, 1, 1))
-    end_date = st.date_input("End Date", value=date(2026, 5, 31))
-    
-    region = st.selectbox("Emirate", options=["All"] + options["regions"])
 
-    # Filter areas dynamically based on emirate
-    if region != "All":
-        # Simply load cities belonging to chosen region
-        session = get_db_session()
-        try:
-            from database.models import Sale
-            region_cities = [c[0] for c in session.query(Sale.area).filter(Sale.emirate == region).distinct().all() if c[0]]
-            city_options = sorted(region_cities)
-        except Exception:
-            city_options = options["cities"]
-        finally:
-            session.close()
-    else:
-        city_options = options["cities"]
-        
-    city = st.selectbox("Area", options=["All"] + city_options)
-    brand = st.selectbox("Brand", options=["All"] + options["brands"])
-    category = st.selectbox("Vehicle Category", options=["All"] + options["categories"])
-    fuel_type = st.selectbox("Fuel Type", options=["All"] + options["fuel_types"])
-    
-    # Compile global filter dictionary
+    st.markdown(
+        "<hr style='border-color:rgba(255,255,255,0.06);margin:14px 0;'>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<p style='font-size:11px;color:#374151;font-weight:700;text-transform:uppercase;"
+        "letter-spacing:0.10em;margin-bottom:10px;'>Global Filters</p>",
+        unsafe_allow_html=True,
+    )
+
+    start_date = st.date_input("Start Date", value=date(2021, 1, 1))
+    end_date = st.date_input("End Date", value=date(2025, 3, 31))
+
+    city = st.selectbox("City", ["All"] + options["cities"])
+    region = st.selectbox("Region", ["All"] + options["regions"])
+    prop_type = st.selectbox("Property Type", ["All"] + options["property_types"])
+    prop_cat = st.selectbox("Category", ["All"] + options["property_categories"])
+    bedrooms = st.selectbox("Bedrooms", ["All"] + options["bedrooms"])
+
     filters = {
         "start_date": start_date,
         "end_date": end_date,
-        "emirate": None if region == "All" else region,
-        "area": None if city == "All" else city,
-        "brand": None if brand == "All" else brand,
-        "vehicle_category": None if category == "All" else category,
-        "fuel_type": None if fuel_type == "All" else fuel_type
+        "city": None if city == "All" else city,
+        "region": None if region == "All" else region,
+        "property_type": None if prop_type == "All" else prop_type,
+        "property_category": None if prop_cat == "All" else prop_cat,
+        "bedrooms": None if bedrooms == "All" else bedrooms,
     }
 
-# 6. ROUTING MAIN VIEWS
+    st.markdown(
+        "<hr style='border-color:rgba(255,255,255,0.06);margin:14px 0;'>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("""
+        <div style="font-size:10px;color:#374151;text-align:center;line-height:1.6">
+            UAE Real Estate · 7 Emirates<br>
+            Jan 2021 – 2026 · 100K+ Transactions
+        </div>
+    """, unsafe_allow_html=True)
+
+# ── Page Routing ──────────────────────────────────────────
 if selected_page == "Executive Overview":
     render_overview(filters)
 elif selected_page == "Demand Forecasting":
     render_forecasting(filters)
+elif selected_page == "Price Intelligence":
+    render_price_intelligence(filters)
 elif selected_page == "Comparative Analytics":
     render_comparison(filters)
 elif selected_page == "Regional Intelligence":
     render_regional(filters)
-elif selected_page == "Customer Intelligence":
-    render_customers(filters)
 elif selected_page == "Inventory Intelligence":
     render_inventory(filters)
-elif selected_page == "Insights & Simulator":
+elif selected_page == "Customer Intelligence":
+    render_customers(filters)
+elif selected_page == "Market Insights":
     render_ai_insights(filters)
-elif selected_page == "Sentimental  analysis":
+elif selected_page == "Sentiment Analysis":
     render_sentiment_analysis(filters)
-# elif selected_page == "Data Ingestion Engine":
-#     render_upload_data()
-# elif selected_page == "Model Performance Metrics":
-#     render_metrics()

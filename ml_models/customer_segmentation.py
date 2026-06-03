@@ -6,155 +6,159 @@ import pickle
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-# Add the project root to python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from database.connection import get_db_session
-from database.models import Customer
+from database.models import Buyer
 
-# Setup folder for saving model files
 MODEL_DIR = "models/clustering"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
-def train_customer_segmentation(n_clusters: int = 5):
+# UAE buyer segment labels (6 segments)
+SEGMENT_LABELS = [
+    "Portfolio Investor",
+    "Upgrader",
+    "Golden Visa Seeker",
+    "First-Home Buyer",
+    "End User",
+    "Rental Investor",
+]
+
+
+def train_buyer_segmentation(n_clusters: int = 6):
     """
-    Query customer data, scale features, train KMeans, assign logical segment labels,
-    and save model files.
+    Cluster buyers into 6 UAE real estate segments using KMeans.
+    Features: income, past_purchases, budget_max, loyalty_score, golden_visa_intent, off_plan_preference.
     """
     session = get_db_session()
     try:
-        # 1. Fetch relevant numerical features for customer segmentation
         query = session.query(
-            Customer.customer_id,
-            Customer.age,
-            Customer.estimated_monthly_income_aed,
-            Customer.credit_score,
-            Customer.number_of_past_purchases,
-            Customer.loyalty_score,
-            Customer.churn_risk_score,
-            Customer.preferred_vehicle_category,
-            Customer.preferred_fuel_type
+            Buyer.buyer_id,
+            Buyer.age,
+            Buyer.estimated_annual_income_aed,
+            Buyer.number_of_past_purchases,
+            Buyer.budget_max_aed,
+            Buyer.loyalty_score,
+            Buyer.churn_risk_score,
+            Buyer.golden_visa_intent,
+            Buyer.expat_status,
+            Buyer.off_plan_preference,
+            Buyer.site_visit_taken,
         )
         df = pd.read_sql(query.statement, session.bind)
         if df.empty:
-            return None, "No customer data available in database."
-            
-        # Select numeric features for clustering
+            return None, "No buyer data available."
+
         features = [
-            'age', 
-            'estimated_monthly_income_aed', 
-            'credit_score', 
-            'number_of_past_purchases', 
-            'loyalty_score', 
-            'churn_risk_score'
+            "age",
+            "estimated_annual_income_aed",
+            "number_of_past_purchases",
+            "budget_max_aed",
+            "loyalty_score",
+            "churn_risk_score",
         ]
-        
-        # Fill missing values just in case
+
         X = df[features].copy()
-        X['age'] = X['age'].fillna(X['age'].median())
-        X['estimated_monthly_income_aed'] = X['estimated_monthly_income_aed'].fillna(X['estimated_monthly_income_aed'].median())
-        X['credit_score'] = X['credit_score'].fillna(X['credit_score'].median())
-        X['number_of_past_purchases'] = X['number_of_past_purchases'].fillna(0)
-        X['loyalty_score'] = X['loyalty_score'].fillna(50.0)
-        X['churn_risk_score'] = X['churn_risk_score'].fillna(0.5)
-        
-        # Standardize the data
+        for col in features:
+            X[col] = X[col].fillna(X[col].median())
+
+        # Boolean flags as float features
+        df["golden_visa_intent"] = df["golden_visa_intent"].fillna(False).astype(float)
+        df["expat_status"] = df["expat_status"].fillna(True).astype(float)
+        df["off_plan_preference"] = df["off_plan_preference"].fillna(False).astype(float)
+        X["golden_visa_flag"] = df["golden_visa_intent"]
+        X["expat_flag"] = df["expat_status"]
+        X["off_plan_flag"] = df["off_plan_preference"]
+
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
-        
-        # Fit KMeans
+
         kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-        df['cluster'] = kmeans.fit_predict(X_scaled)
-        
-        # logical mapping of clusters to segments based on centroids
-        centroids = kmeans.cluster_centers_
-        
-        # Calculate cluster means in original space to assign titles
-        cluster_means = df.groupby('cluster')[features].mean()
-        
-        # Standard mapping
-        # Budget Buyer: low income
-        # Premium Buyer: high income
-        # EV Enthusiast: high loyalty/score and preferred EV category
-        # Fleet Buyer: high past purchases, lower loyalty or specific demographics
-        # High Repeat: high past purchases, high loyalty
-        
-        # Let's write an algorithm to dynamically assign segment names to each cluster
+        df["cluster"] = kmeans.fit_predict(X_scaled)
+
+        cluster_means = df.groupby("cluster")[
+            features + ["golden_visa_intent", "expat_status", "off_plan_preference"]
+        ].mean()
+
+        # Assign semantic labels based on cluster characteristics
         cluster_mapping = {}
-        unassigned_labels = ["Budget Buyer", "Premium Buyer", "EV Enthusiast", "Fleet Buyer", "High Repeat"]
-        
-        # Identify "Premium Buyer" as the cluster with the highest average monthly income
-        premium_cluster = cluster_means['estimated_monthly_income_aed'].idxmax()
-        cluster_mapping[premium_cluster] = "Premium Buyer"
-        if "Premium Buyer" in unassigned_labels: unassigned_labels.remove("Premium Buyer")
-        
-        # Identify "Budget Buyer" as the cluster with the lowest average monthly income
-        remaining = [c for c in range(n_clusters) if c not in cluster_mapping]
-        budget_cluster = cluster_means.loc[remaining, 'estimated_monthly_income_aed'].idxmin()
-        cluster_mapping[budget_cluster] = "Budget Buyer"
-        if "Budget Buyer" in unassigned_labels: unassigned_labels.remove("Budget Buyer")
-        
-        # Identify "High Repeat" as the cluster with highest past purchases (excluding already mapped)
-        remaining = [c for c in range(n_clusters) if c not in cluster_mapping]
-        repeat_cluster = cluster_means.loc[remaining, 'number_of_past_purchases'].idxmax()
-        cluster_mapping[repeat_cluster] = "High Repeat"
-        if "High Repeat" in unassigned_labels: unassigned_labels.remove("High Repeat")
-        
-        # Identify "EV Enthusiast" as the one with high loyalty or younger age/modern segment
-        remaining = [c for c in range(n_clusters) if c not in cluster_mapping]
+        remaining = list(range(n_clusters))
+
+        # Portfolio Investor: highest income AND highest budget AND most past purchases
+        income_rank = cluster_means["estimated_annual_income_aed"].rank(ascending=False)
+        budget_rank = cluster_means["budget_max_aed"].rank(ascending=False)
+        purchase_rank = cluster_means["number_of_past_purchases"].rank(ascending=False)
+        pi_score = income_rank + budget_rank + purchase_rank
+        pi_c = pi_score.idxmin()
+        cluster_mapping[pi_c] = "Portfolio Investor"
+        remaining.remove(pi_c)
+
+        # Golden Visa Seeker: highest golden_visa_intent proportion AND high budget
+        remaining_df = cluster_means.loc[remaining]
+        gv_score = remaining_df["golden_visa_intent"].rank(ascending=False) + remaining_df["budget_max_aed"].rank(ascending=False)
+        gv_c = gv_score.idxmin()
+        cluster_mapping[gv_c] = "Golden Visa Seeker"
+        remaining.remove(gv_c)
+
+        # First-Home Buyer: lowest number_of_past_purchases AND lowest budget
+        remaining_df = cluster_means.loc[remaining]
+        ftb_score = remaining_df["number_of_past_purchases"].rank(ascending=True) + remaining_df["budget_max_aed"].rank(ascending=True)
+        ftb_c = ftb_score.idxmin()
+        cluster_mapping[ftb_c] = "First-Home Buyer"
+        remaining.remove(ftb_c)
+
+        if len(remaining) >= 3:
+            remaining_df = cluster_means.loc[remaining]
+            # Upgrader: higher past purchases, mid-range budget
+            upg_c = remaining_df["number_of_past_purchases"].idxmax()
+            cluster_mapping[upg_c] = "Upgrader"
+            remaining.remove(upg_c)
+
+        if len(remaining) >= 2:
+            remaining_df = cluster_means.loc[remaining]
+            # Rental Investor: highest off_plan_preference
+            ri_c = remaining_df["off_plan_preference"].idxmax()
+            cluster_mapping[ri_c] = "Rental Investor"
+            remaining.remove(ri_c)
+
         if remaining:
-            ev_cluster = cluster_means.loc[remaining, 'loyalty_score'].idxmax()
-            cluster_mapping[ev_cluster] = "EV Enthusiast"
-            if "EV Enthusiast" in unassigned_labels: unassigned_labels.remove("EV Enthusiast")
-            
-        # Assign remaining cluster to Fleet Buyer
-        remaining = [c for c in range(n_clusters) if c not in cluster_mapping]
-        for c in remaining:
-            if unassigned_labels:
-                cluster_mapping[c] = unassigned_labels.pop(0)
-            else:
-                cluster_mapping[c] = "Regular Buyer"
-                
-        # Apply labels to DataFrame
-        df['assigned_segment'] = df['cluster'].map(cluster_mapping)
-        
-        # Update database with assigned segments so the analytics reflect it
-        # This will write the segment labels back to the customers table
-        print("Writing segmentations back to database customers table...")
+            cluster_mapping[remaining[0]] = "End User"
+
+        df["assigned_segment"] = df["cluster"].map(cluster_mapping)
+
+        # Write segments back to database
         update_mappings = [
-            {"customer_id": cid, "customer_segment": seg}
-            for cid, seg in zip(df['customer_id'], df['assigned_segment'])
+            {"buyer_id": bid, "customer_segment": seg}
+            for bid, seg in zip(df["buyer_id"], df["assigned_segment"])
         ]
-        session.bulk_update_mappings(Customer, update_mappings)
+        session.bulk_update_mappings(Buyer, update_mappings)
         session.commit()
-        
-        # Save scaler and model files
+
         with open(os.path.join(MODEL_DIR, "scaler.pkl"), "wb") as f:
             pickle.dump(scaler, f)
         with open(os.path.join(MODEL_DIR, "kmeans.pkl"), "wb") as f:
             pickle.dump(kmeans, f)
         with open(os.path.join(MODEL_DIR, "cluster_mapping.pkl"), "wb") as f:
             pickle.dump(cluster_mapping, f)
-            
-        print("Customer clustering completed and models saved.")
+
+        print(f"Buyer segmentation complete. Segment distribution:\n{df['assigned_segment'].value_counts()}")
         return {
-            "customers_df": df,
+            "buyers_df": df,
             "cluster_means": cluster_means,
-            "cluster_mapping": cluster_mapping
+            "cluster_mapping": cluster_mapping,
         }, None
-        
+
     except Exception as e:
         session.rollback()
         import traceback
         traceback.print_exc()
-        return None, f"Customer clustering pipeline error: {str(e)}"
+        return None, f"Segmentation pipeline error: {str(e)}"
     finally:
         session.close()
 
-def predict_customer_segment(customer_data: dict) -> str:
-    """
-    Predict the segment for a new customer based on their input attributes.
-    """
+
+def predict_buyer_segment(buyer_data: dict) -> str:
+    """Predict segment for a new buyer profile."""
     try:
         with open(os.path.join(MODEL_DIR, "scaler.pkl"), "rb") as f:
             scaler = pickle.load(f)
@@ -162,19 +166,21 @@ def predict_customer_segment(customer_data: dict) -> str:
             kmeans = pickle.load(f)
         with open(os.path.join(MODEL_DIR, "cluster_mapping.pkl"), "rb") as f:
             cluster_mapping = pickle.load(f)
-            
+
         features = [
-            customer_data.get('age', 40),
-            customer_data.get('estimated_monthly_income_aed', 25000.0),
-            customer_data.get('credit_score', 700),
-            customer_data.get('number_of_past_purchases', 1),
-            customer_data.get('loyalty_score', 50.0),
-            customer_data.get('churn_risk_score', 0.5)
+            buyer_data.get("age", 35),
+            buyer_data.get("estimated_annual_income_aed", 300000.0),
+            buyer_data.get("number_of_past_purchases", 0),
+            buyer_data.get("budget_max_aed", 2000000),
+            buyer_data.get("loyalty_score", 50.0),
+            buyer_data.get("churn_risk_score", 0.4),
+            float(buyer_data.get("golden_visa_intent", False)),
+            float(buyer_data.get("expat_status", True)),
+            float(buyer_data.get("off_plan_preference", False)),
         ]
-        
-        scaled_features = scaler.transform([features])
-        cluster_idx = kmeans.predict(scaled_features)[0]
-        return cluster_mapping.get(cluster_idx, "Regular Buyer")
-    except Exception as e:
-        print(f"Prediction error: {e}")
-        return "Regular Buyer"
+
+        scaled = scaler.transform([features])
+        cluster_idx = kmeans.predict(scaled)[0]
+        return cluster_mapping.get(cluster_idx, "End User")
+    except Exception:
+        return "End User"

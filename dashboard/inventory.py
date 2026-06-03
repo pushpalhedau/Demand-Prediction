@@ -1,167 +1,224 @@
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+import numpy as np
+
 from database.connection import get_db_session
-from database.queries import get_inventory_status
-from utils.helpers import render_kpi_card, get_color_palette
+from database.queries import get_inventory_status, get_inventory_summary_by_city
+from utils.helpers import get_re_colors, plotly_dark_layout, section_header, fmt_aed
+
 
 def render_inventory(filters: dict):
-    """
-    Renders the Inventory Intelligence tab.
-    """
+    colors = get_re_colors()
+
+    st.markdown("""<p class="subtitle-text">
+        Inventory intelligence — track unsold units, slow-moving projects, absorption rates,
+        holding costs and construction pipeline across emirates and property segments.
+    </p>""", unsafe_allow_html=True)
+
     session = get_db_session()
-    colors = get_color_palette()
-    
     try:
-        st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Inventory & Stock Intelligence</h2>", unsafe_allow_html=True)
-        
-        # 1. Fetch Inventory Status
         df_inv = get_inventory_status(session, filters)
-        
-        if df_inv.empty:
-            st.warning("No inventory status records available in database.")
-            return
-            
-        # 2. Headline KPIs
-        total_stock = df_inv['current_stock'].sum()
-        total_transit = df_inv['transit_stock'].sum()
-        total_holding = df_inv['estimated_holding_cost_aed'].sum()
-        stockouts_cnt = df_inv[df_inv['current_stock'] == 0].shape[0]
-        reorders_cnt = df_inv[df_inv['reorder_needed'] == True].shape[0]
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            render_kpi_card("Current Stock", f"{total_stock:,} Units", delta=f"{total_transit:,} in transit", is_positive=True)
-        with col2:
-            render_kpi_card("Active Stockouts", f"{stockouts_cnt} Models", delta="Needs restocking", is_positive=False)
-        with col3:
-            render_kpi_card("Reorder Triggers", f"{reorders_cnt} Alerts", delta="Below threshold", is_positive=False)
-        with col4:
-            render_kpi_card("Est. Holding Cost", f"AED {total_holding:,.0f}", delta="Holding cost/month", is_positive=False)
-            
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # 3. Critical Restock Alerts Leaderboard
-        st.markdown("### Urgent Restock & Reorder Requirements")
-        reorder_df = df_inv[df_inv['reorder_needed'] == True].copy()
-        
-        if not reorder_df.empty:
-            reorder_df['Deficit'] = reorder_df['reorder_point'] - reorder_df['current_stock']
-            reorder_df['Urgency Score'] = (reorder_df['stockout_risk_score'] * 100).apply(lambda x: f"{x:.1f}%")
-            reorder_df.rename(columns={
-                'brand': 'Brand',
-                'model': 'Model',
-                'emirate': 'Emirate',
-                'current_stock': 'Current Stock',
-                'reorder_point': 'Reorder Point',
-                'days_in_stock': 'Days in Stock'
-            }, inplace=True)
-            
-            st.dataframe(
-                reorder_df[['Brand', 'Model', 'Emirate', 'Current Stock', 'Reorder Point', 'Deficit', 'Urgency Score', 'Days in Stock']]
-                .sort_values(by='Urgency Score', ascending=False)
-                .head(10),
-                use_container_width=True,
-                hide_index=True
-            )
-        else:
-            st.success("All stock levels are currently healthy! No active reorder alerts.")
-            
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # 4. Charts: Demand vs Stock Level by Category
-        st.markdown("### Stock Level vs 30-Day Predicted Demand by Category")
-        
-        # Group by category
-        cat_group = df_inv.groupby('vehicle_category')[['current_stock', 'demand_forecast_30d']].sum().reset_index()
-        
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=cat_group['vehicle_category'],
-            y=cat_group['current_stock'],
-            name='Current Stock Level',
-            marker_color=colors['primary']
-        ))
-        fig.add_trace(go.Bar(
-            x=cat_group['vehicle_category'],
-            y=cat_group['demand_forecast_30d'],
-            name='Predicted 30D Demand',
-            marker_color='rgba(6, 182, 212, 0.4)',
-            marker_line_color=colors['secondary'],
-            marker_line_width=1.5
-        ))
-        
-        fig.update_layout(
-            barmode='group',
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-            xaxis=dict(showgrid=False, title=""),
-            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', title="Units"),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            margin=dict(l=0, r=0, t=10, b=0),
-            height=300
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # 5. Slow-moving and Warehouse Distribution Subplots
-        sub_col1, sub_col2 = st.columns(2)
-        
-        with sub_col1:
-            st.markdown("### Slow-Moving Inventory (Longest in Lot)")
-            slow_df = df_inv[df_inv['current_stock'] > 0].sort_values(by='days_in_stock', ascending=False).head(8)
-            if not slow_df.empty:
-                slow_df['Model Label'] = slow_df['brand'] + " " + slow_df['model'] + " (" + slow_df['emirate'] + ")"
-                fig_slow = px.bar(
-                    slow_df,
-                    y='Model Label',
-                    x='days_in_stock',
-                    orientation='h',
-                    color='days_in_stock',
-                    color_continuous_scale='Oranges',
-                    labels={'days_in_stock': 'Avg Days in Lot', 'Model Label': ''}
-                )
-                fig_slow.update_layout(
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-                    xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                    yaxis=dict(showgrid=False),
-                    coloraxis_showscale=False,
-                    margin=dict(l=0, r=0, t=10, b=0),
-                    height=280
-                )
-                st.plotly_chart(fig_slow, use_container_width=True)
-            else:
-                st.info("No slow-moving inventory data.")
-                
-        with sub_col2:
-            st.markdown("### Warehouse Stock Allocation")
-            wh_df = df_inv.groupby('warehouse_zone')['current_stock'].sum().reset_index()
-            if not wh_df.empty:
-                fig_wh = px.pie(
-                    wh_df,
-                    values='current_stock',
-                    names='warehouse_zone',
-                    hole=0.4,
-                    color_discrete_sequence=colors['colors_seq']
-                )
-                fig_wh.update_layout(
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-                    margin=dict(l=0, r=0, t=10, b=0),
-                    height=280
-                )
-                st.plotly_chart(fig_wh, use_container_width=True)
-            else:
-                st.info("No warehouse data.")
-                
-    except Exception as e:
-        st.error(f"Error rendering Inventory Intelligence: {e}")
-        import traceback
-        st.code(traceback.format_exc())
+        df_city_inv = get_inventory_summary_by_city(session)
     finally:
         session.close()
+
+    if df_inv.empty:
+        st.info("No inventory data available for the selected filters.")
+        return
+
+    # ── KPI strip ──────────────────────────────────────────
+    total_available = df_inv["available_units"].sum()
+    total_booked = df_inv["booked_units"].sum()
+    unsold_projects = df_inv["unsold_flag"].sum()
+    slow_movers = df_inv["slow_moving_flag"].sum()
+    total_holding_cost = df_inv["estimated_holding_cost_aed"].sum()
+    avg_days_market = df_inv["days_on_market"].mean()
+    absorption_rate = (df_inv["units_sold_last_30d"].sum() /
+                       max(df_inv["available_units"].sum(), 1)) * 100
+
+    k1, k2, k3, k4, k5 = st.columns(5)
+    k1.metric("Available Units", f"{total_available:,}")
+    k2.metric("Booked Units", f"{total_booked:,}")
+    k3.metric("Absorption Rate", f"{absorption_rate:.1f}%")
+    k4.metric("Unsold Projects", f"{unsold_projects:,}")
+    k5.metric("Total Holding Cost", fmt_aed(total_holding_cost))
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Row 1: City inventory + Absorption ────────────────
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+        section_header("Inventory by City (Available vs Booked)", icon="🏙")
+        if not df_city_inv.empty:
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                name="Available", x=df_city_inv["city"], y=df_city_inv["available"],
+                marker_color=colors["primary"], opacity=0.85,
+            ))
+            fig.add_trace(go.Bar(
+                name="Booked", x=df_city_inv["city"], y=df_city_inv["booked"],
+                marker_color=colors["gold"], opacity=0.85,
+            ))
+            fig.add_trace(go.Bar(
+                name="Registered", x=df_city_inv["city"], y=df_city_inv["registered"],
+                marker_color=colors["indigo"], opacity=0.85,
+            ))
+            layout = plotly_dark_layout("", 360)
+            layout["barmode"] = "group"
+            layout["xaxis"]["tickangle"] = -20
+            layout["legend"] = dict(orientation="h", y=-0.2, x=0, bgcolor="rgba(0,0,0,0)")
+            fig.update_layout(**layout)
+            st.plotly_chart(fig, use_container_width=True)
+
+    with col_b:
+        section_header("Avg Days on Market by City", icon="📅")
+        if not df_city_inv.empty:
+            df_sort = df_city_inv.sort_values("avg_days_on_market", ascending=True)
+            bar_colors = [
+                colors["danger"] if d > 180 else (colors["warning"] if d > 90 else colors["primary"])
+                for d in df_sort["avg_days_on_market"]
+            ]
+            fig = go.Figure(go.Bar(
+                x=df_sort["avg_days_on_market"],
+                y=df_sort["city"],
+                orientation="h",
+                marker=dict(color=bar_colors, line=dict(width=0)),
+                text=[f"{d:.0f} days" for d in df_sort["avg_days_on_market"]],
+                textposition="outside",
+                textfont=dict(size=11, color="#94a3b8"),
+            ))
+            layout = plotly_dark_layout("", 360)
+            layout["xaxis"]["title"] = "Avg Days on Market"
+            layout["margin"]["l"] = 90
+            layout["yaxis"]["autorange"] = "reversed"
+            fig.update_layout(**layout)
+            st.plotly_chart(fig, use_container_width=True)
+
+    # ── Row 2: Holding cost + Construction pipeline ────────
+    col_c, col_d = st.columns(2)
+
+    with col_c:
+        section_header("Holding Cost by City (AED M)", icon="💸")
+        if not df_city_inv.empty:
+            df_hc = df_city_inv.sort_values("total_holding_cost", ascending=False).head(10)
+            fig = go.Figure(go.Bar(
+                x=df_hc["total_holding_cost"] / 1e6,
+                y=df_hc["city"],
+                orientation="h",
+                marker=dict(
+                    color=df_hc["total_holding_cost"],
+                    colorscale=[[0, "#1a2540"], [0.5, colors["warning"]], [1, colors["danger"]]],
+                    line=dict(width=0),
+                ),
+                text=[f"AED {v:.1f}M" for v in df_hc["total_holding_cost"] / 1e6],
+                textposition="outside",
+                textfont=dict(size=10, color="#94a3b8"),
+            ))
+            layout = plotly_dark_layout("", 340)
+            layout["xaxis"]["title"] = "Holding Cost (AED Millions)"
+            layout["yaxis"]["autorange"] = "reversed"
+            layout["margin"]["l"] = 90
+            fig.update_layout(**layout)
+            st.plotly_chart(fig, use_container_width=True)
+
+    with col_d:
+        section_header("Construction Progress Distribution", icon="🏗")
+        if "construction_progress_pct" in df_inv.columns:
+            uc_only = df_inv[df_inv["completion_status"] == "Off-Plan"]
+            if not uc_only.empty:
+                bins = [0, 25, 50, 75, 100]
+                labels = ["0-25%", "26-50%", "51-75%", "76-100%"]
+                uc_only = uc_only.copy()
+                uc_only["progress_band"] = pd.cut(
+                    uc_only["construction_progress_pct"], bins=bins, labels=labels, right=True
+                )
+                band_counts = uc_only["progress_band"].value_counts().sort_index()
+                fig = go.Figure(go.Bar(
+                    x=band_counts.index.tolist(),
+                    y=band_counts.values,
+                    marker=dict(
+                        color=[colors["danger"], colors["warning"], colors["indigo"], colors["primary"]],
+                        line=dict(width=0),
+                    ),
+                    text=band_counts.values,
+                    textposition="outside",
+                    textfont=dict(size=12, color="#94a3b8"),
+                ))
+                layout = plotly_dark_layout("Off-Plan Projects by Completion %", 340)
+                layout["xaxis"]["title"] = "Construction Progress"
+                layout["yaxis"]["title"] = "Projects"
+                layout["showlegend"] = False
+                fig.update_layout(**layout)
+                st.plotly_chart(fig, use_container_width=True)
+
+    # ── Slow-moving inventory table ────────────────────────
+    section_header("Slow-Moving Inventory Alert", icon="🐢")
+    slow_df = df_inv[df_inv["slow_moving_flag"] == True].copy()
+    if not slow_df.empty:
+        slow_display = slow_df.sort_values("days_on_market", ascending=False).head(20)
+        slow_display = slow_display[[
+            "project_name", "city", "locality", "property_category",
+            "bedrooms", "available_units", "days_on_market",
+            "holding_cost_per_day_aed", "estimated_holding_cost_aed",
+        ]].copy()
+        slow_display["holding_cost_per_day_aed"] = slow_display["holding_cost_per_day_aed"].apply(
+            lambda v: f"AED {v:,.0f}/day"
+        )
+        slow_display["estimated_holding_cost_aed"] = slow_display["estimated_holding_cost_aed"].apply(
+            lambda v: fmt_aed(v)
+        )
+        st.dataframe(
+            slow_display.rename(columns={
+                "project_name": "Project",
+                "city": "City",
+                "locality": "Locality",
+                "property_category": "Category",
+                "bedrooms": "Config",
+                "available_units": "Avail. Units",
+                "days_on_market": "Days Listed",
+                "holding_cost_per_day_aed": "Daily Cost",
+                "estimated_holding_cost_aed": "Total Holding Cost",
+            }),
+            use_container_width=True,
+            hide_index=True,
+        )
+    else:
+        st.markdown("""<div class="insight-box">
+            No slow-moving inventory flags detected for current filters.
+        </div>""", unsafe_allow_html=True)
+
+    # ── Absorption rate vs demand forecast scatter ─────────
+    section_header("Absorption Rate vs 30-Day Demand Forecast", icon="🎯")
+    if "units_sold_last_30d" in df_inv.columns and "demand_forecast_30d" in df_inv.columns:
+        scatter_df = df_inv.dropna(subset=["units_sold_last_30d", "demand_forecast_30d"]).copy()
+        scatter_df["absorption_rate"] = (
+            scatter_df["units_sold_last_30d"] /
+            scatter_df["available_units"].clip(lower=1)
+        ) * 100
+        if not scatter_df.empty:
+            sample = scatter_df.sample(min(2000, len(scatter_df)), random_state=42)
+            city_color_map = {
+                c: colors["city"].get(c, colors["primary"])
+                for c in sample["city"].unique()
+            }
+            fig = go.Figure()
+            for city, grp in sample.groupby("city"):
+                fig.add_trace(go.Scatter(
+                    x=grp["demand_forecast_30d"],
+                    y=grp["absorption_rate"],
+                    mode="markers",
+                    name=city,
+                    marker=dict(
+                        size=7, opacity=0.7,
+                        color=city_color_map.get(city, colors["primary"]),
+                        line=dict(width=0),
+                    ),
+                ))
+            layout = plotly_dark_layout("", 380)
+            layout["xaxis"]["title"] = "30-Day Demand Forecast (Units)"
+            layout["yaxis"]["title"] = "Absorption Rate (%)"
+            layout["legend"] = dict(orientation="v", bgcolor="rgba(0,0,0,0)", font=dict(size=10))
+            fig.update_layout(**layout)
+            st.plotly_chart(fig, use_container_width=True)

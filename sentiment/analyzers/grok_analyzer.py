@@ -2,7 +2,7 @@
 Grok AI analyzer for extracting structured demand forecasting signals from news articles.
 
 Uses xAI's Grok API (OpenAI-compatible) to analyze article titles and return:
-    sentiment_score, impact_score, affected_vehicle_category,
+    sentiment_score, impact_score, affected_property_category,
     economic_risk, demand_direction, estimated_demand_change_pct,
     confidence, summary
 
@@ -42,9 +42,9 @@ _BATCH_SIZE: int = 10  # articles per Grok API call
 # Grok system prompt
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You are a financial and automotive market intelligence analyst specializing in the UAE automobile market.
+_SYSTEM_PROMPT = """You are a financial and real estate market intelligence analyst specializing in the India residential property market.
 
-For each news article title provided, extract structured demand forecasting signals relevant to the UAE auto market.
+For each news article title provided, extract structured demand forecasting signals relevant to the India real estate market.
 
 Return a JSON object with this exact schema:
 {
@@ -52,8 +52,8 @@ Return a JSON object with this exact schema:
     {
       "article_index": <integer, 0-based index matching the input list>,
       "sentiment_score": <float -1.0 to 1.0, where -1=very negative, 0=neutral, 1=very positive>,
-      "impact_score": <float 0.0 to 1.0, how much this news could impact UAE auto demand>,
-      "affected_vehicle_category": <one of: "EV", "Luxury", "SUV", "Sedan", "Commercial", "All">,
+      "impact_score": <float 0.0 to 1.0, how much this news could impact UAE real estate demand>,
+      "affected_property_category": <one of: "Affordable", "Mid-Market", "Premium", "Luxury", "Ultra-Luxury", "All">,
       "economic_risk": <one of: "low", "medium", "high">,
       "demand_direction": <one of: "up", "down", "neutral">,
       "estimated_demand_change_pct": <float, estimated % change in demand, e.g. 3.5 or -2.1>,
@@ -64,11 +64,13 @@ Return a JSON object with this exact schema:
 }
 
 Rules:
-- Consider context: UAE is oil-rich, EV adoption is rising, luxury cars are popular, fuel prices affect demand.
-- Geopolitical tension in MENA reduces consumer confidence → negative for all categories.
-- EV policy/incentives → positive for EV category.
-- Oil price drops → positive for petrol vehicles, neutral for EV.
-- Economic growth → positive for luxury and SUV.
+- Consider context: India real estate is driven by RBI repo rates, home loan affordability, NRI investment and festival seasons.
+- RBI rate cuts → cheaper home loans → demand surge across all segments.
+- PMAY scheme availability → strong affordable housing demand.
+- IT sector hiring boom → demand spike in Bengaluru, Hyderabad, Pune, Noida.
+- NRI buying increases with INR depreciation.
+- Infrastructure announcements (metro, expressway) → locality-level demand jump.
+- Economic growth → positive for premium and luxury segments.
 - Return exactly one signal per input article in the same order.
 - Only return valid JSON, nothing else."""
 
@@ -180,7 +182,7 @@ def _mock_signal_for_title(title: str, article_index: int) -> Dict:
         "article_index":            article_index,
         "sentiment_score":          sentiment_score,
         "impact_score":             impact_score,
-        "affected_vehicle_category": affected_category,
+        "affected_property_category": affected_category,
         "economic_risk":            economic_risk,
         "demand_direction":         demand_direction,
         "estimated_demand_change_pct": estimated_demand_change_pct,
@@ -362,7 +364,7 @@ def save_signals_to_db(
                     analyzed_at=now,
                     sentiment_score=_safe_float(sig.get("sentiment_score")),
                     impact_score=_safe_float(sig.get("impact_score")),
-                    affected_vehicle_category=sig.get("affected_vehicle_category"),
+                    affected_property_category=sig.get("affected_property_category"),
                     economic_risk=sig.get("economic_risk"),
                     demand_direction=sig.get("demand_direction"),
                     estimated_demand_change_pct=_safe_float(sig.get("estimated_demand_change_pct")),
@@ -418,8 +420,8 @@ def get_unanalyzed_articles(limit: int = 100) -> List[Dict]:
 # Market Briefing Generator
 # ─────────────────────────────────────────────────────────────────────────────
 
-_BRIEFING_SYSTEM_PROMPT = """You are a senior UAE automobile market intelligence analyst.
-Write a concise, data-driven market briefing for automobile dealership executives.
+_BRIEFING_SYSTEM_PROMPT = """You are a senior India real estate market intelligence analyst.
+Write a concise, data-driven market briefing for real estate developer and investor executives.
 Use the signal data provided. Be specific, actionable, and professional.
 Structure your response with exactly three clearly labeled sections:
 
@@ -470,7 +472,7 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
     if is_live_mode():
         # ── Live: call Grok ──────────────────────────────────────────────
         user_msg = (
-            f"UAE Automobile Market Signal Data (last 30 days):\n"
+            f"India Real Estate Market Signal Data (last 30 days):\n"
             f"- Average sentiment score: {avg_sentiment:+.3f} (scale: -1 to +1)\n"
             f"- Dominant demand direction: {direction}\n"
             f"- Estimated demand change: {demand_change:+.1f}%\n"
@@ -566,7 +568,7 @@ if __name__ == "__main__":
         title_short = art["title"][:60]
         print(f"Title   : {title_short}")
         print(f"  sentiment={sig['sentiment_score']:+.3f}  impact={sig['impact_score']:.3f}  direction={sig['demand_direction']}")
-        print(f"  category={sig['affected_vehicle_category']}  risk={sig['economic_risk']}  change={sig['estimated_demand_change_pct']:+.2f}%")
+        print(f"  category={sig['affected_property_category']}  risk={sig['economic_risk']}  change={sig['estimated_demand_change_pct']:+.2f}%")
         print(f"  summary : {sig['summary']}")
         print(f"  mock    : {sig['_mock']}")
         print()

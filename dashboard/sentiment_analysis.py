@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 from datetime import date, timedelta
 
-from utils.helpers import render_kpi_card, get_color_palette
+from utils.helpers import render_kpi_card, get_re_colors as get_color_palette
 from sentiment.signal_processor import (
     run_full_pipeline,
     get_daily_summaries,
@@ -98,7 +98,7 @@ def render_sentiment_analysis(filters: dict):
     )
     st.markdown(
         "<p style='color:#9ca3af;font-size:14px;margin-bottom:20px;'>"
-        "Real-time geopolitical, economic & social sentiment signals for UAE automobile demand forecasting.</p>",
+        "Real-time geopolitical, economic & social sentiment signals for India real estate demand forecasting.</p>",
         unsafe_allow_html=True,
     )
 
@@ -214,7 +214,7 @@ def _render_sentiment_intelligence(colors: dict):
 
     # Sentiment timeline
     st.markdown("#### Daily Sentiment Score by Vehicle Category")
-    df_all = get_daily_summaries(days_back=90, vehicle_category=None)
+    df_all = get_daily_summaries(days_back=90, property_category=None)
     cat_df  = get_category_sentiment_summary(days_back=90)
 
     if not cat_df.empty:
@@ -352,7 +352,7 @@ def _render_geopolitical_risk(colors: dict):
     st.markdown("### Geopolitical Risk Monitor")
 
     stats  = get_overall_sentiment_stats()
-    df_all = get_daily_summaries(days_back=90, vehicle_category=None)
+    df_all = get_daily_summaries(days_back=90, property_category=None)
 
     geo_risk = stats.get("geopolitical_risk", 0.0)
     risk_label = "HIGH" if geo_risk > 0.4 else ("MEDIUM" if geo_risk > 0.2 else "LOW")
@@ -360,13 +360,13 @@ def _render_geopolitical_risk(colors: dict):
 
     kc1, kc2, kc3 = st.columns(3)
     with kc1:
-        render_kpi_card("Geopolitical Risk Index", f"{geo_risk:.3f}", delta=risk_label, is_positive=geo_risk <= 0.2)
+        render_kpi_card("Geopolitical Risk Index", f"{geo_risk:.3f}", delta=risk_label, is_positive=geo_risk <= 0.2, invert_arrow=True)
     with kc2:
         neg_pct = stats.get("negative_pct", 0.0)
-        render_kpi_card("Negative Signal Rate", f"{neg_pct:.1f}%", delta="Last 30 days", is_positive=neg_pct < 20)
+        render_kpi_card("Negative Signal Rate", f"{neg_pct:.1f}%", delta="Last 30 days", is_positive=neg_pct < 20, invert_arrow=True)
     with kc3:
         avg_impact = stats.get("avg_impact", 0.0)
-        render_kpi_card("Avg News Impact Score", f"{avg_impact:.3f}", delta="0=low  1=high", is_positive=avg_impact < 0.5)
+        render_kpi_card("Avg News Impact Score", f"{avg_impact:.3f}", delta="0=low  1=high", is_positive=avg_impact < 0.5, invert_arrow=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -460,7 +460,7 @@ def _render_economic_signals(colors: dict):
     st.markdown("### Economic Signal Tracker")
 
     cat_df = get_category_sentiment_summary(days_back=90)
-    df_all = get_daily_summaries(days_back=90, vehicle_category=None)
+    df_all = get_daily_summaries(days_back=90, property_category=None)
 
     if cat_df.empty and df_all.empty:
         st.info("No economic signal data available. Click **Refresh Data** to load news.")
@@ -592,8 +592,8 @@ def _render_forecast_comparison(filters: dict, colors: dict):
         with fc2:
             target = st.selectbox(
                 "Forecast Target",
-                ["units_sold", "total_revenue_incl_vat"],
-                format_func=lambda x: "Sales Volume (Units)" if x == "units_sold" else "Revenue (AED)",
+                ["units", "revenue"],
+                format_func=lambda x: "Transaction Volume (Units)" if x == "units" else "Revenue (AED)",
                 key="cmp_target",
             )
         with fc3:
@@ -601,20 +601,19 @@ def _render_forecast_comparison(filters: dict, colors: dict):
             run_cmp = st.button("Run Comparison", type="primary", use_container_width=True, key="run_cmp_btn")
             st.markdown("</div>", unsafe_allow_html=True)
 
-        category_filter = filters.get("vehicle_category")
-        region_filter   = filters.get("emirate")
-        fuel_filter     = filters.get("fuel_type")
+        category_filter = filters.get("property_category")
+        city_filter     = filters.get("city")
 
         if run_cmp:
             with st.spinner("Training baseline model..."):
                 base_result, base_err = train_prophet_model(
-                    category=category_filter, region=region_filter, fuel_type=fuel_filter,
-                    target=target, horizon_days=horizon, use_sentiment=False,
+                    property_category=category_filter, city=city_filter,
+                    target=target, horizon_days=horizon,
                 )
             with st.spinner("Training sentiment-enhanced model..."):
                 sent_result, sent_err = train_prophet_model(
-                    category=category_filter, region=region_filter, fuel_type=fuel_filter,
-                    target=target, horizon_days=horizon, use_sentiment=True,
+                    property_category=category_filter, city=city_filter,
+                    target=target, horizon_days=horizon,
                 )
             st.session_state["fc_cmp_base"] = (base_result, base_err)
             st.session_state["fc_cmp_sent"] = (sent_result, sent_err)
@@ -698,7 +697,7 @@ def _render_forecast_comparison(filters: dict, colors: dict):
 
         # ── Overlay forecast chart ────────────────────────────────────────
         st.markdown("#### Forecast Overlay — Baseline vs Sentiment-Enhanced")
-        unit_label = "Units" if _target == "units_sold" else "AED"
+        unit_label = "Units" if _target == "units" else "AED Revenue"
 
         base_fc = base_result["forecast"]
         base_fc["ds"] = pd.to_datetime(base_fc["ds"])
@@ -873,7 +872,8 @@ def _render_ai_insights(colors: dict):
             with sc3:
                 render_kpi_card("Geo Risk", f"{stats.get('geopolitical_risk', 0):.3f}",
                                 delta="LOW" if stats.get("geopolitical_risk", 0) < 0.2 else "ELEVATED",
-                                is_positive=stats.get("geopolitical_risk", 0) < 0.2)
+                                is_positive=stats.get("geopolitical_risk", 0) < 0.2,
+                                invert_arrow=True)
             with sc4:
                 render_kpi_card("7-Day Trend", f"{stats.get('trend_7d', 0):+.3f}",
                                 delta="Sentiment delta", is_positive=stats.get("trend_7d", 0) >= 0)
@@ -902,7 +902,7 @@ def _render_ai_insights(colors: dict):
               </div>
               <div style="color:#9ca3af;font-size:13px;">
                 Click <b>Generate Briefing</b> above to produce a data-driven
-                UAE automobile market intelligence report from current sentiment signals.
+                India real estate market intelligence report from current sentiment signals.
               </div>
             </div>
         """)

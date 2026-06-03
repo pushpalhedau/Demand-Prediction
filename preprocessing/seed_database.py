@@ -3,96 +3,85 @@ import sys
 import pandas as pd
 from datetime import datetime
 
-# Add the project root to python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from database.connection import Base, engine, get_db_session
-from database.models import Customer, Vehicle, Dealer, Sale, Inventory, ExternalFactor
+from database.models import Transaction, Buyer, Developer, Property, Listing, MarketFactor
 from preprocessing.clean_data import (
-    clean_customers,
-    clean_vehicles,
-    clean_dealers,
-    clean_sales,
-    clean_inventory,
-    clean_external_factors
+    clean_transactions,
+    clean_buyers,
+    clean_developers,
+    clean_properties,
+    clean_listings,
+    clean_market_factors,
 )
 
+
 def seed_table(session, df, model_class, name):
-    """
-    Seeds a table using bulk_insert_mappings for maximum performance.
-    """
     print(f"Seeding {name}...")
     start_time = datetime.now()
-    
-    # Drop columns that are not in the model_class columns
+
     valid_cols = {col.name for col in model_class.__table__.columns}
     df_filtered = df[[col for col in df.columns if col in valid_cols]]
-    
-    # Replace NaN or NaT with None for SQL compatibility
     df_filtered = df_filtered.astype(object).where(pd.notnull(df_filtered), None)
-    
-    # Convert records to dictionary mappings
     records = df_filtered.to_dict(orient="records")
-    
-    # Bulk insert
+
     session.bulk_insert_mappings(model_class, records)
     session.commit()
-    
+
     duration = (datetime.now() - start_time).total_seconds()
-    print(f"Successfully seeded {len(records)} records into {name} in {duration:.2f} seconds.")
+    print(f"  >> {len(records):,} records into {name} in {duration:.2f}s")
+
 
 def main():
-    print("Initializing Database Seeding Pipeline...")
-    
-    # Create all tables in database
-    print("Creating all tables in the database if they don't exist...")
+    print("=" * 60)
+    print("Real Estate Demand Intelligence — Database Seeding Pipeline")
+    print("=" * 60)
+
     Base.metadata.create_all(engine)
-    
-    # Paths to the CSV files
-    dataset_dir = "automobile_datasets"
-    
-    customers_path = os.path.join(dataset_dir, "customers.csv")
-    vehicles_path = os.path.join(dataset_dir, "vehicles.csv")
-    dealers_path = os.path.join(dataset_dir, "dealers.csv")
-    sales_path = os.path.join(dataset_dir, "sales.csv")
-    inventory_path = os.path.join(dataset_dir, "inventory.csv")
-    external_factors_path = os.path.join(dataset_dir, "external_factors.csv")
-    
-    # Start Session
+    print("Database tables created (or verified).")
+
+    dataset_dir = "datasets"
     session = get_db_session()
-    
+
     try:
-        # Check if already seeded (simple count check)
-        if session.query(Sale).count() > 0:
-            print("Database already seeded! Skipping seeding process.")
+        if session.query(Transaction).count() > 0:
+            print("Database already seeded (transactions present). Skipping.")
             return
-        
-        # 1. Vehicles
-        df_vehicles = clean_vehicles(vehicles_path)
-        seed_table(session, df_vehicles, Vehicle, "vehicles")
-        
-        # 2. Dealers
-        df_dealers = clean_dealers(dealers_path)
-        seed_table(session, df_dealers, Dealer, "dealers")
-        
-        # 3. Customers
-        df_customers = clean_customers(customers_path)
-        seed_table(session, df_customers, Customer, "customers")
-        
-        # 4. External Factors
-        df_ext = clean_external_factors(external_factors_path)
-        seed_table(session, df_ext, ExternalFactor, "external_factors")
-        
-        # 5. Sales (transactions)
-        df_sales = clean_sales(sales_path)
-        seed_table(session, df_sales, Sale, "sales")
-        
-        # 6. Inventory
-        df_inv = clean_inventory(inventory_path)
-        seed_table(session, df_inv, Inventory, "inventory")
-        
+
+        # Clear any partial data from prior failed runs
+        from database.models import Listing
+        for model in [Transaction, Listing, Property, Buyer, MarketFactor, Developer]:
+            session.query(model).delete()
+        session.commit()
+        print("Cleared partial data from prior run.")
+
+        # 1. Developers (no FK dependencies)
+        df_developers = clean_developers(os.path.join(dataset_dir, "re_developers.csv"))
+        seed_table(session, df_developers, Developer, "developers")
+
+        # 2. Properties (depends on developers)
+        df_properties = clean_properties(os.path.join(dataset_dir, "re_properties.csv"))
+        seed_table(session, df_properties, Property, "properties")
+
+        # 3. Buyers (no FK dependencies)
+        df_buyers = clean_buyers(os.path.join(dataset_dir, "re_buyers.csv"))
+        seed_table(session, df_buyers, Buyer, "buyers")
+
+        # 4. Market Factors (no FK dependencies)
+        df_market = clean_market_factors(os.path.join(dataset_dir, "re_market_factors.csv"))
+        seed_table(session, df_market, MarketFactor, "market_factors")
+
+        # 5. Transactions (depends on buyers, developers, properties)
+        df_transactions = clean_transactions(os.path.join(dataset_dir, "re_transactions.csv"))
+        seed_table(session, df_transactions, Transaction, "transactions")
+
+        # 6. Listings (depends on developers)
+        df_listings = clean_listings(os.path.join(dataset_dir, "re_listings.csv"))
+        seed_table(session, df_listings, Listing, "listings")
+
         print("\nAll datasets seeded successfully!")
-        
+
     except Exception as e:
         session.rollback()
         print(f"Error seeding database: {e}", file=sys.stderr)
@@ -101,6 +90,7 @@ def main():
         sys.exit(1)
     finally:
         session.close()
+
 
 if __name__ == "__main__":
     main()

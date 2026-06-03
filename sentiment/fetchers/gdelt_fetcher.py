@@ -1,5 +1,5 @@
 """
-GDELT Doc v2 API fetcher for UAE automobile market intelligence.
+GDELT Doc v2 API fetcher for UAE real estate market intelligence.
 
 GDELT (Global Database of Events, Language, and Tone) is a free, real-time
 global news database with no API key required.
@@ -39,52 +39,51 @@ logger = logging.getLogger(__name__)
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UAE automobile market themed search queries
-# Each entry maps to a thematic bucket used later for per-theme aggregation.
+# UAE real estate market themed search queries
+# Each entry maps to a thematic bucket used for per-theme aggregation.
 # ─────────────────────────────────────────────────────────────────────────────
 UAE_AUTO_QUERIES: List[Dict] = [
     {
-        "name": "uae_auto_demand",
-        "label": "UAE Auto Demand",
-        # Keep query short: GDELT works best with 2-3 keywords or one short phrase
-        "query": "UAE automobile car sales Dubai",
-        "theme": "auto_demand",
+        "name": "uae_realestate_demand",
+        "label": "UAE RE Demand",
+        "query": "UAE Dubai Abu Dhabi real estate property sales demand",
+        "theme": "re_demand",
         "affected_category": "All",
     },
     {
-        "name": "ev_market_uae",
-        "label": "EV Market UAE",
-        "query": "electric vehicle UAE Dubai EV",
-        "theme": "ev_market",
-        "affected_category": "EV",
+        "name": "uae_mortgage_rates",
+        "label": "UAE Mortgage & Interest Rates",
+        "query": "UAE Central Bank mortgage rate interest property financing Dubai",
+        "theme": "monetary_policy",
+        "affected_category": "Affordable",
     },
     {
-        "name": "fuel_oil_prices",
-        "label": "Fuel & Oil Prices",
-        "query": "oil price UAE OPEC fuel Dubai",
-        "theme": "fuel_economic",
-        "affected_category": "All",
-    },
-    {
-        "name": "uae_macro_economy",
+        "name": "uae_economy",
         "label": "UAE Economy",
-        "query": "UAE economy inflation GDP Dubai",
+        "query": "UAE GDP inflation oil price consumer confidence economy",
         "theme": "macro_economic",
         "affected_category": "All",
     },
     {
-        "name": "geopolitical_risk",
-        "label": "Geopolitical Risk",
-        "query": "Middle East geopolitical oil supply Gulf",
-        "theme": "geopolitical",
-        "affected_category": "All",
+        "name": "foreign_investment",
+        "label": "Foreign Investment UAE",
+        "query": "foreign investment UAE Dubai real estate property",
+        "theme": "foreign_flows",
+        "affected_category": "Premium",
     },
     {
-        "name": "luxury_suv_uae",
-        "label": "Luxury & SUV UAE",
-        "query": "luxury car SUV UAE Dubai Mercedes BMW",
-        "theme": "luxury_suv",
+        "name": "luxury_realestate",
+        "label": "Luxury Real Estate",
+        "query": "luxury apartment villa penthouse premium property Dubai Abu Dhabi",
+        "theme": "luxury_segment",
         "affected_category": "Luxury",
+    },
+    {
+        "name": "golden_visa_property",
+        "label": "Golden Visa & Off-Plan",
+        "query": "UAE Golden Visa property investment off-plan Dubai residency",
+        "theme": "golden_visa",
+        "affected_category": "Premium",
     },
 ]
 
@@ -417,7 +416,7 @@ def get_stored_articles(
                 "sentiment_score":        sig.sentiment_score if sig else None,
                 "impact_score":           sig.impact_score if sig else None,
                 "demand_direction":       sig.demand_direction if sig else None,
-                "affected_category":      sig.affected_vehicle_category if sig else None,
+                "affected_category":      sig.affected_property_category if sig else None,
                 "economic_risk":          sig.economic_risk if sig else None,
                 "demand_change_pct":      sig.estimated_demand_change_pct if sig else None,
                 "confidence":             sig.confidence if sig else None,

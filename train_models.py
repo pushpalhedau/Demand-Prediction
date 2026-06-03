@@ -2,71 +2,76 @@ import os
 import sys
 import time
 
-# Add the project root to python path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from preprocessing.seed_database import main as seed_db
-from ml_models.customer_segmentation import train_customer_segmentation
+from ml_models.customer_segmentation import train_buyer_segmentation
 from ml_models.xgboost_model import train_xgboost_pipeline
 from forecasting.prophet_forecasting import train_prophet_model
 
+
 def main():
-    print("====================================================")
-    print("      AUTOMOBILE DEMAND PLATFORM PIPELINE RUNNER     ")
-    print("====================================================")
-    
+    print("=" * 60)
+    print("  Real Estate Demand Intelligence — Pipeline Runner")
+    print("=" * 60)
+
     start_time = time.time()
-    
+
     # 1. Seed Database
-    print("\n--- Step 1: Database Setup and Ingestion ---")
+    print("\n[Step 1] Database Setup & Data Ingestion")
     try:
         seed_db()
     except Exception as e:
         print(f"Database seeding failed: {e}")
         sys.exit(1)
-        
-    # 2. Train KMeans Customer Segmentation
-    print("\n--- Step 2: Training Customer Segmentation Model (KMeans) ---")
+
+    # 2. Train KMeans Buyer Segmentation
+    print("\n[Step 2] Training Buyer Segmentation Model (KMeans — 6 segments)")
     try:
-        seg_res, err = train_customer_segmentation(n_clusters=5)
+        seg_res, err = train_buyer_segmentation(n_clusters=6)
         if err:
-            print(f"Customer segmentation failed: {err}")
+            print(f"  Buyer segmentation failed: {err}")
         else:
-            print(f"Customer segmentation trained. Mapped segments: {list(seg_res['cluster_mapping'].values())}")
+            seg_map = seg_res["cluster_mapping"]
+            print(f"  Segments mapped: {list(seg_map.values())}")
     except Exception as e:
-        print(f"Customer segmentation failed: {e}")
-        
-    # 3. Train XGBoost Conversion Model
-    print("\n--- Step 3: Training Lead Close Classifier (XGBoost) ---")
+        print(f"  Buyer segmentation failed: {e}")
+
+    # 3. Train XGBoost Booking Conversion Model
+    print("\n[Step 3] Training Lead Scoring Model (XGBoost — booking_converted)")
     try:
         xgb_res, err = train_xgboost_pipeline()
         if err:
-            print(f"XGBoost training failed: {err}")
+            print(f"  XGBoost training failed: {err}")
         else:
-            print(f"XGBoost model trained. Evaluation Accuracy: {xgb_res['accuracy']*100:.2f}%")
-            print("Top features influencing closes:")
-            print(xgb_res['feature_importance'].head(5))
+            print(f"  Accuracy: {xgb_res['accuracy']*100:.2f}%")
+            print(f"  Top 5 features:\n{xgb_res['feature_importance'].head(5).to_string(index=False)}")
     except Exception as e:
-        print(f"XGBoost training failed: {e}")
-        
-    # 4. Verify Prophet Forecasting Pipeline
-    print("\n--- Step 4: Verifying Prophet Forecasting Pipeline ---")
+        print(f"  XGBoost training failed: {e}")
+
+    # 4. Verify Prophet Forecasting
+    print("\n[Step 4] Verifying Prophet Demand Forecasting Pipeline")
     try:
-        # Run a default category forecast for verification
-        fore_res, err = train_prophet_model(category="SUV", region=None, horizon_days=30)
+        fore_res, err = train_prophet_model(
+            property_category="Mid-Market",
+            target="units",
+            horizon_days=30,
+        )
         if err:
-            print(f"Prophet verification failed: {err}")
+            print(f"  Prophet verification failed: {err}")
         else:
-            metrics = fore_res["metrics"]
-            print(f"Prophet forecasting pipeline verified successfully.")
-            print(f"SUV Forecast Model evaluation - RMSE: {metrics['rmse']:.2f}, Accuracy: {metrics['accuracy']:.2f}%")
+            m = fore_res["metrics"]
+            print(f"  Mid-Market forecast verified — Accuracy: {m['accuracy']:.1f}%, "
+                  f"MAE: {m['mae']:.2f}, RMSE: {m['rmse']:.2f}")
+            print(f"  Active regressors: {fore_res['active_regressors']}")
     except Exception as e:
-        print(f"Prophet verification failed: {e}")
-        
+        print(f"  Prophet verification failed: {e}")
+
     duration = time.time() - start_time
-    print("\n====================================================")
-    print(f" Pipeline run completed successfully in {duration:.1f} seconds! ")
-    print("====================================================")
+    print("\n" + "=" * 60)
+    print(f"  Pipeline complete in {duration:.1f}s")
+    print("=" * 60)
+
 
 if __name__ == "__main__":
     main()
