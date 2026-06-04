@@ -198,7 +198,7 @@ def render_price_intelligence(filters: dict):
             texttemplate="%{text}",
             textfont=dict(size=11, color="white"),
             colorbar=dict(
-                title=dict(text="₹/sq.ft", font=dict(size=11)),
+                title=dict(text="AED/sq.ft", font=dict(size=11)),
                 thickness=14,
                 tickfont=dict(size=10),
             ),

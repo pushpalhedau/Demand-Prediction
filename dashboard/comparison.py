@@ -178,14 +178,14 @@ def render_comparison(filters: dict):
         fig.update_layout(**layout)
         st.plotly_chart(fig, use_container_width=True)
 
-    # ── Festival period impact ─────────────────────────────
-    section_header("Festival vs Non-Festival Transaction Volume", icon="🎉")
+    # ── UAE market event impact ────────────────────────────
+    section_header("UAE Market Events vs Regular Period Transactions", icon="🗓")
     if not df_yoy.empty:
-        # Approximate: Q3 (Jul-Sep) has Navratri/Diwali season beginning, Q4 has Diwali
-        festival_months = [3, 4, 9, 10, 12]  # Ramadan (varies), post-Ramadan, Cityscape, Q4 push
+        # Ramadan (Mar/Apr variable), post-Ramadan surge, Cityscape (Sep/Oct), Q4 National Day & year-end push
+        festival_months = [3, 4, 9, 10, 12]
         df_yoy["is_festival"] = df_yoy["month"].isin(festival_months)
         fest_agg = df_yoy.groupby("is_festival")["units"].mean().reset_index()
-        fest_agg["label"] = fest_agg["is_festival"].map({True: "Festival Months", False: "Regular Months"})
+        fest_agg["label"] = fest_agg["is_festival"].map({True: "UAE Event Months", False: "Regular Months"})
 
         col_f1, col_f2, col_f3 = st.columns([1, 2, 1])
         with col_f2:
@@ -198,7 +198,7 @@ def render_comparison(filters: dict):
                 textfont=dict(size=12, color="#94a3b8"),
                 width=0.5,
             ))
-            layout = plotly_dark_layout("Avg Monthly Transactions: Festival vs Regular", 300)
+            layout = plotly_dark_layout("Avg Monthly Transactions: UAE Event Months vs Regular", 300)
             layout["yaxis"]["title"] = "Avg Units/Month"
             layout["showlegend"] = False
             fig.update_layout(**layout)
@@ -209,6 +209,6 @@ def render_comparison(filters: dict):
             reg_val = fest_agg[~fest_agg["is_festival"]]["units"].values[0]
             uplift = ((fest_val - reg_val) / reg_val) * 100 if reg_val > 0 else 0
             st.markdown(f"""<div class="insight-box" style="text-align:center">
-                Festival months generate <b>{uplift:+.1f}%</b> more transactions than regular months.
-                Key drivers: Diwali, Navratri, Akshaya Tritiya, Gudi Padwa booking surges.
+                UAE market event months generate <b>{uplift:+.1f}%</b> more transactions than regular months.
+                Key drivers: Ramadan post-surge, Cityscape Dubai, UAE National Day, and Q4 year-end push.
             </div>""", unsafe_allow_html=True)

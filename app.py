@@ -79,21 +79,21 @@ with st.sidebar:
             "Executive Overview",
             "Demand Forecasting",
             "Price Intelligence",
-            "Comparative Analytics",
             "Regional Intelligence",
             "Inventory Intelligence",
             "Customer Intelligence",
+            "Comparative Analytics",
             "Market Insights",
             "Sentiment Analysis",
         ],
         icons=[
             "speedometer2",
             "graph-up-arrow",
-            "currency-rupee",
-            "columns-gap",
+            "bar-chart-line",
             "geo-alt",
             "building",
             "people",
+            "columns-gap",
             "cpu",
             "chat-left-quote",
         ],
@@ -172,14 +172,14 @@ elif selected_page == "Demand Forecasting":
     render_forecasting(filters)
 elif selected_page == "Price Intelligence":
     render_price_intelligence(filters)
-elif selected_page == "Comparative Analytics":
-    render_comparison(filters)
 elif selected_page == "Regional Intelligence":
     render_regional(filters)
 elif selected_page == "Inventory Intelligence":
     render_inventory(filters)
 elif selected_page == "Customer Intelligence":
     render_customers(filters)
+elif selected_page == "Comparative Analytics":
+    render_comparison(filters)
 elif selected_page == "Market Insights":
     render_ai_insights(filters)
 elif selected_page == "Sentiment Analysis":

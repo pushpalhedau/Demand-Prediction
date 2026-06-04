@@ -56,10 +56,6 @@ def fmt_aed(value: float) -> str:
     return f"AED {value:,.0f}"
 
 
-# Keep legacy alias so any dashboard code calling fmt_inr_cr still works
-def fmt_inr_cr(value: float) -> str:
-    return fmt_aed(value)
-
 
 def fmt_number(value, suffix=""):
     if value is None:

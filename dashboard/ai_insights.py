@@ -166,32 +166,35 @@ def render_ai_insights(filters: dict):
             col_s1, col_s2 = st.columns(2)
             overrides = {}
 
+            def _safe_slider(label, stat, step, **kwargs):
+                lo, hi, val = float(stat["min"]), float(stat["max"]), float(stat["last"])
+                if lo >= hi:
+                    lo, hi = min(lo, val) - step, max(hi, val) + step
+                val = max(lo, min(hi, val))
+                return st.slider(label, lo, hi, val, step, **kwargs)
+
             with col_s1:
                 section_header("Monetary Policy", icon="🏛")
                 if "uae_central_bank_base_rate_pct" in prophet_stats:
-                    s = prophet_stats["uae_central_bank_base_rate_pct"]
-                    overrides["uae_central_bank_base_rate_pct"] = st.slider(
-                        "UAE CB Base Rate (%)", float(s["min"]), float(s["max"]), float(s["last"]), 0.1,
+                    overrides["uae_central_bank_base_rate_pct"] = _safe_slider(
+                        "UAE CB Base Rate (%)", prophet_stats["uae_central_bank_base_rate_pct"], 0.1,
                         help="Lower rate → cheaper mortgages → demand surge",
                     )
                 if "mortgage_rate_avg_pct" in prophet_stats:
-                    s = prophet_stats["mortgage_rate_avg_pct"]
-                    overrides["mortgage_rate_avg_pct"] = st.slider(
-                        "Avg Mortgage Rate (%)", float(s["min"]), float(s["max"]), float(s["last"]), 0.1,
+                    overrides["mortgage_rate_avg_pct"] = _safe_slider(
+                        "Avg Mortgage Rate (%)", prophet_stats["mortgage_rate_avg_pct"], 0.1,
                     )
                 if "property_registration_fee_pct" in prophet_stats:
-                    s = prophet_stats["property_registration_fee_pct"]
-                    overrides["property_registration_fee_pct"] = st.slider(
-                        "DLD Registration Fee (%)", float(s["min"]), float(s["max"]), float(s["last"]), 0.25,
+                    overrides["property_registration_fee_pct"] = _safe_slider(
+                        "DLD Registration Fee (%)", prophet_stats["property_registration_fee_pct"], 0.25,
                         help="Fee changes affect transaction cost and volume",
                     )
 
             with col_s2:
                 section_header("Market & Demand Signals", icon="📊")
                 if "consumer_confidence_index" in prophet_stats:
-                    s = prophet_stats["consumer_confidence_index"]
-                    overrides["consumer_confidence_index"] = st.slider(
-                        "Consumer Confidence Index", float(s["min"]), float(s["max"]), float(s["last"]), 0.5,
+                    overrides["consumer_confidence_index"] = _safe_slider(
+                        "Consumer Confidence Index", prophet_stats["consumer_confidence_index"], 0.5,
                     )
                 if "expo_effect" in prophet_stats:
                     overrides["expo_effect"] = int(st.checkbox(
@@ -340,7 +343,7 @@ def render_ai_insights(filters: dict):
                     st.plotly_chart(fig, use_container_width=True)
 
         # ── Tourism + Golden Visa ──────────────────────────
-        section_header("Tourism & Golden Visa Demand Drivers", icon="✈️")
+        section_header("Tourism & Off-Plan Demand Signals", icon="✈️")
         col_j1, col_j2 = st.columns(2)
 
         with col_j1:

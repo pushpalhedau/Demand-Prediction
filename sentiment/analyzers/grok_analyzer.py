@@ -19,6 +19,7 @@ import json
 import logging
 import hashlib
 import random
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple
 
@@ -42,9 +43,9 @@ _BATCH_SIZE: int = 10  # articles per Grok API call
 # Grok system prompt
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You are a financial and real estate market intelligence analyst specializing in the India residential property market.
+_SYSTEM_PROMPT = """You are a financial and real estate market intelligence analyst specializing in the UAE property market.
 
-For each news article title provided, extract structured demand forecasting signals relevant to the India real estate market.
+For each news article title provided, extract structured demand forecasting signals relevant to the UAE real estate market.
 
 Return a JSON object with this exact schema:
 {
@@ -64,13 +65,13 @@ Return a JSON object with this exact schema:
 }
 
 Rules:
-- Consider context: India real estate is driven by RBI repo rates, home loan affordability, NRI investment and festival seasons.
-- RBI rate cuts → cheaper home loans → demand surge across all segments.
-- PMAY scheme availability → strong affordable housing demand.
-- IT sector hiring boom → demand spike in Bengaluru, Hyderabad, Pune, Noida.
-- NRI buying increases with INR depreciation.
-- Infrastructure announcements (metro, expressway) → locality-level demand jump.
-- Economic growth → positive for premium and luxury segments.
+- Consider context: UAE real estate is driven by UAE Central Bank rates, mortgage affordability, Golden Visa policy, expatriate demand, and oil-linked fiscal health.
+- UAE CB rate cuts → cheaper mortgages → demand surge across all segments.
+- Golden Visa threshold changes → strong Premium and Luxury demand response.
+- Foreign investment inflows and tourism recovery → demand uplift for off-plan and short-term rental segments.
+- Expo/major event announcements → demand spike in Dubai and Abu Dhabi.
+- Off-plan launch volumes → leading indicator for Mid-Market and Affordable segments.
+- Economic growth and oil price stability → positive for Premium and Luxury segments.
 - Return exactly one signal per input article in the same order.
 - Only return valid JSON, nothing else."""
 
@@ -105,11 +106,11 @@ _MEDIUM_IMPACT_WORDS = {
 }
 
 _CATEGORY_KEYWORDS = {
-    "EV":         {"electric", "ev", "tesla", "byd", "charging", "battery", "hybrid", "zero-emission"},
-    "Luxury":     {"luxury", "mercedes", "bmw", "porsche", "lexus", "rolls", "ferrari", "lamborghini", "premium", "audi"},
-    "SUV":        {"suv", "4x4", "land rover", "range rover", "jeep", "pickup", "off-road", "crossover"},
-    "Sedan":      {"sedan", "compact", "hatchback", "saloon"},
-    "Commercial": {"truck", "van", "commercial", "fleet", "cargo", "logistics"},
+    "Ultra-Luxury": {"ultra-luxury", "penthouse", "mansion", "palace", "ultra luxury", "billionaire"},
+    "Luxury":       {"luxury", "premium villa", "premium apartment", "five-star", "high-end", "exclusive", "signature"},
+    "Premium":      {"premium", "golden visa", "off-plan", "waterfront", "marina", "downtown", "branded residences"},
+    "Mid-Market":   {"mid-market", "apartment", "townhouse", "residential", "community", "affordable luxury"},
+    "Affordable":   {"affordable", "first home", "subsidised", "budget", "low cost", "starter home"},
 }
 
 _HIGH_RISK_WORDS  = {"war", "conflict", "sanction", "crisis", "recession", "crash", "emergency", "attack"}
@@ -146,7 +147,7 @@ def _mock_signal_for_title(title: str, article_index: int) -> Dict:
     else:
         impact_score = round(rng.uniform(0.10, 0.40), 3)
 
-    # Affected vehicle category
+    # Affected property category
     affected_category = "All"
     for cat, kw_set in _CATEGORY_KEYWORDS.items():
         if words & kw_set or any(k in title_lower for k in kw_set):
@@ -265,27 +266,46 @@ def _analyze_batch_live(client, articles: List[Dict]) -> Tuple[List[Dict], Optio
         return _analyze_mock(articles), f"API error: {e}"
 
 
+_GROK_MAX_WORKERS = 4  # parallel Grok calls; stay well within rate limits
+
+
 def _analyze_live(articles: List[Dict]) -> List[Dict]:
     """
-    Analyze all articles in batches via Grok API.
+    Analyze all articles in batches via Grok API using a thread pool.
+    Batches run in parallel (up to _GROK_MAX_WORKERS concurrent requests).
+    Result order is preserved to match input article order.
     Falls back to mock signals for any failed batch.
     """
     client = _build_grok_client()
-    all_signals: List[Dict] = []
 
-    for batch_start in range(0, len(articles), _BATCH_SIZE):
-        batch = articles[batch_start: batch_start + _BATCH_SIZE]
-        signals, err = _analyze_batch_live(client, batch)
-        if err:
-            logger.warning("Batch %d–%d used mock fallback: %s", batch_start, batch_start + len(batch) - 1, err)
-        all_signals.extend(signals)
-        logger.info(
-            "Grok | batch %d–%d analyzed (mode=%s)",
-            batch_start, batch_start + len(batch) - 1,
-            "mock" if (signals and signals[0].get("_mock")) else "live",
-        )
+    batches = [
+        (start, articles[start: start + _BATCH_SIZE])
+        for start in range(0, len(articles), _BATCH_SIZE)
+    ]
 
-    return all_signals
+    # pre-allocate result slots so order is preserved regardless of completion order
+    results: List[Optional[List[Dict]]] = [None] * len(batches)
+
+    with ThreadPoolExecutor(max_workers=_GROK_MAX_WORKERS) as pool:
+        future_to_idx = {
+            pool.submit(_analyze_batch_live, client, batch): idx
+            for idx, (_, batch) in enumerate(batches)
+        }
+        for future in as_completed(future_to_idx):
+            idx = future_to_idx[future]
+            start = batches[idx][0]
+            batch = batches[idx][1]
+            signals, err = future.result()
+            if err:
+                logger.warning("Batch %d–%d used mock fallback: %s", start, start + len(batch) - 1, err)
+            logger.info(
+                "Grok | batch %d–%d analyzed (mode=%s)",
+                start, start + len(batch) - 1,
+                "mock" if (signals and signals[0].get("_mock")) else "live",
+            )
+            results[idx] = signals
+
+    return [sig for batch_signals in results for sig in (batch_signals or [])]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -420,7 +440,7 @@ def get_unanalyzed_articles(limit: int = 100) -> List[Dict]:
 # Market Briefing Generator
 # ─────────────────────────────────────────────────────────────────────────────
 
-_BRIEFING_SYSTEM_PROMPT = """You are a senior India real estate market intelligence analyst.
+_BRIEFING_SYSTEM_PROMPT = """You are a senior UAE real estate market intelligence analyst.
 Write a concise, data-driven market briefing for real estate developer and investor executives.
 Use the signal data provided. Be specific, actionable, and professional.
 Structure your response with exactly three clearly labeled sections:
@@ -431,7 +451,7 @@ MARKET SENTIMENT OVERVIEW
 KEY RISK FACTORS & OPPORTUNITIES
 [4–6 bullet points covering the most important risks and opportunities]
 
-RECOMMENDED DEALER ACTIONS
+RECOMMENDED DEVELOPER & AGENT ACTIONS
 [3 specific, numbered, actionable recommendations]
 
 Use plain text. Do not use markdown formatting."""
@@ -472,7 +492,7 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
     if is_live_mode():
         # ── Live: call Grok ──────────────────────────────────────────────
         user_msg = (
-            f"India Real Estate Market Signal Data (last 30 days):\n"
+            f"UAE Real Estate Market Signal Data (last 30 days):\n"
             f"- Average sentiment score: {avg_sentiment:+.3f} (scale: -1 to +1)\n"
             f"- Dominant demand direction: {direction}\n"
             f"- Estimated demand change: {demand_change:+.1f}%\n"
@@ -482,7 +502,7 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
             f"- 7-day sentiment trend: {trend_7d:+.3f}\n"
         )
         if cat_summary:
-            user_msg += f"\nVehicle category breakdown:\n{cat_summary}\n"
+            user_msg += f"\nProperty category breakdown:\n{cat_summary}\n"
 
         try:
             client = _build_grok_client()
@@ -505,26 +525,26 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
     risk_level = "elevated" if geo_risk > 0.4 else ("moderate" if geo_risk > 0.2 else "low")
     trend_word = "improving" if trend_7d > 0.05 else ("softening" if trend_7d < -0.05 else "stable")
 
-    top_cat = "EV"
+    top_cat = "Mid-Market"
     if category_rows:
         sorted_cats = sorted(category_rows, key=lambda x: abs(x.get("avg_sentiment") or 0), reverse=True)
-        top_cat = sorted_cats[0].get("category", "EV") if sorted_cats else "EV"
+        top_cat = sorted_cats[0].get("category", "Mid-Market") if sorted_cats else "Mid-Market"
 
     briefing = f"""MARKET SENTIMENT OVERVIEW
-The UAE automobile market is displaying {mood} sentiment over the past 30 days, with an average signal score of {avg_sentiment:+.2f} across {total_articles} analysed news sources. Demand signals are {trend_word} week-over-week (7-day trend: {trend_7d:+.3f}), with {positive_pct:.0f}% of coverage carrying constructive signals and {negative_pct:.0f}% flagging headwinds. The dominant demand direction across categories is {direction.upper()}, with an estimated aggregate demand shift of {demand_change:+.1f}%.
+The UAE real estate market is displaying {mood} sentiment over the past 30 days, with an average signal score of {avg_sentiment:+.2f} across {total_articles} analysed news sources. Demand signals are {trend_word} week-over-week (7-day trend: {trend_7d:+.3f}), with {positive_pct:.0f}% of coverage carrying constructive signals and {negative_pct:.0f}% flagging headwinds. The dominant demand direction across property categories is {direction.upper()}, with an estimated aggregate demand shift of {demand_change:+.1f}%.
 
 KEY RISK FACTORS & OPPORTUNITIES
-- Geopolitical Risk: {risk_level.upper()} ({geo_risk:.2f}/1.0) — Regional developments continue to be monitored as a demand moderator for high-value vehicle segments.
-- Oil & Fuel Prices: Crude oil volatility directly affects consumer spending capacity in petrol-dependent vehicle categories (SUV, Pickup).
-- EV Adoption Tailwind: Government EV incentive programmes and expanding charging infrastructure are supporting a structural shift, particularly in Dubai.
-- Luxury Segment: Strong expatriate spending and tourism recovery continue to support Luxury and premium segment performance.
+- Geopolitical Risk: {risk_level.upper()} ({geo_risk:.2f}/1.0) — Regional developments continue to be monitored as a demand moderator, particularly for off-plan and foreign-buyer-driven segments.
+- Interest Rate Sensitivity: UAE Central Bank rate movements directly affect mortgage affordability, with outsized impact on the Affordable and Mid-Market segments.
+- Golden Visa Tailwind: Continued Golden Visa policy demand and foreign investment inflows are supporting the Premium and Luxury segments in Dubai and Abu Dhabi.
+- Luxury Segment: Strong expatriate spending, tourism recovery, and branded-residence launches continue to drive Luxury and Ultra-Luxury performance.
 - {top_cat} Category Signal: The {top_cat} segment is showing the strongest news-driven demand signal in the current period.
-- Interest Rate Sensitivity: Elevated UAE benchmark rates increase EMI burden, which may dampen financing-led demand in mid-range segments.
+- Off-Plan Supply Risk: Elevated new project launch volumes may create oversupply pressure in select localities if absorption rates soften.
 
-RECOMMENDED DEALER ACTIONS
-1. Prioritise {top_cat} inventory replenishment at Tier-1 showrooms in Dubai and Abu Dhabi to capture positive demand momentum before it peaks.
-2. {'Offer targeted EV test-drive incentives and highlight green plate benefits in marketing campaigns to accelerate conversion in the EV segment.' if direction == 'up' else 'Review current discount strategy in underperforming segments and redirect marketing spend to higher-signal categories.'}
-3. Hedge against geopolitical risk by maintaining a 15–20 day safety stock buffer at high-throughput dealerships in Northern Emirates, where supply chain lead times are longest.
+RECOMMENDED DEVELOPER & AGENT ACTIONS
+1. Prioritise marketing spend toward the {top_cat} segment in Dubai and Abu Dhabi to capture current positive demand momentum before it peaks.
+2. {'Accelerate payment plan launches and highlight Golden Visa eligibility thresholds to convert high-intent buyers before interest rates rise further.' if direction == 'up' else 'Review pricing strategy in slower-moving inventory and redirect marketing spend toward higher-signal categories and localities.'}
+3. Monitor geopolitical risk indicators closely and maintain a diversified buyer pipeline across GCC, European, and Asian investor segments to hedge against single-market concentration.
 
 [NOTE: This briefing is generated using keyword-based mock analysis. Configure XAI_API_KEY in .env to enable Grok AI-powered insights.]"""
 
@@ -554,11 +574,11 @@ if __name__ == "__main__":
     print(f"Model: {_GROK_MODEL}\n")
 
     test_articles = [
-        {"article_id": 1, "title": "UAE Car Sales Surge 15% in April Driven by EV Adoption"},
-        {"article_id": 2, "title": "OPEC Oil Cuts Raise Fuel Price Concerns Across Gulf States"},
-        {"article_id": 3, "title": "Dubai Luxury Vehicle Registrations Hit Record High in Q1 2025"},
-        {"article_id": 4, "title": "Middle East Geopolitical Tensions Weigh on Consumer Confidence"},
-        {"article_id": 5, "title": "Tesla Opens Third Service Center in Abu Dhabi Amid Growing Demand"},
+        {"article_id": 1, "title": "Dubai Property Sales Surge 18% in Q1 2025 Driven by Off-Plan Demand"},
+        {"article_id": 2, "title": "UAE Central Bank Holds Base Rate Steady Amid Global Uncertainty"},
+        {"article_id": 3, "title": "Abu Dhabi Luxury Villa Prices Hit Record High as Golden Visa Demand Rises"},
+        {"article_id": 4, "title": "Middle East Geopolitical Tensions Weigh on Foreign Real Estate Investment"},
+        {"article_id": 5, "title": "Emaar Launches New Downtown Dubai Project with 2,000 Off-Plan Units"},
     ]
 
     print(f"Analyzing {len(test_articles)} articles...\n")

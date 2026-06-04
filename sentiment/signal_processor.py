@@ -19,11 +19,16 @@ Entry points:
 
 import os
 import sys
+import time
 import logging
 from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional
 
 import pandas as pd
+
+# Skip the GDELT fetch if it ran less than 15 minutes ago (saves ~45 s per click)
+_FETCH_COOLDOWN_SECONDS: float = 900.0
+_last_gdelt_fetch_time: float = 0.0
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -65,6 +70,8 @@ def run_full_pipeline(
     Returns:
         Status report dict with keys: fetch, analyze, summarize, mode, errors.
     """
+    global _last_gdelt_fetch_time
+
     init_all_tables()
     status: Dict = {
         "mode":      "live" if is_live_mode() else "mock",
@@ -74,24 +81,34 @@ def run_full_pipeline(
         "errors":    [],
     }
 
-    # ── Step 1: Fetch from GDELT ──────────────────────────────────────────
-    logger.info("Pipeline | Step 1: Fetching articles from GDELT (timespan=%s)", timespan)
-    try:
-        raw_articles = fetch_all_themes(
-            timespan=timespan,
-            max_records_per_query=max_articles_per_query,
-        )
-        fetch_result = save_articles_to_db(raw_articles)
+    # ── Step 1: Fetch from GDELT (skipped if fetched recently) ───────────
+    seconds_since_last = time.monotonic() - _last_gdelt_fetch_time
+    if seconds_since_last < _FETCH_COOLDOWN_SECONDS:
+        wait_left = int(_FETCH_COOLDOWN_SECONDS - seconds_since_last)
+        logger.info("Pipeline | Step 1: GDELT fetch skipped — cooldown active (%ds remaining)", wait_left)
         status["fetch"] = {
-            "fetched_from_gdelt": len(raw_articles),
-            **fetch_result,
+            "fetched_from_gdelt": 0, "inserted": 0, "skipped": 0, "errors": 0,
+            "cooldown_remaining_s": wait_left,
         }
-        logger.info("Pipeline | fetch done: %s", fetch_result)
-    except Exception as e:
-        msg = f"GDELT fetch failed: {e}"
-        logger.error(msg)
-        status["errors"].append(msg)
-        status["fetch"] = {"fetched_from_gdelt": 0, "inserted": 0, "skipped": 0, "errors": 1}
+    else:
+        logger.info("Pipeline | Step 1: Fetching articles from GDELT (timespan=%s)", timespan)
+        try:
+            raw_articles = fetch_all_themes(
+                timespan=timespan,
+                max_records_per_query=max_articles_per_query,
+            )
+            fetch_result = save_articles_to_db(raw_articles)
+            _last_gdelt_fetch_time = time.monotonic()
+            status["fetch"] = {
+                "fetched_from_gdelt": len(raw_articles),
+                **fetch_result,
+            }
+            logger.info("Pipeline | fetch done: %s", fetch_result)
+        except Exception as e:
+            msg = f"GDELT fetch failed: {e}"
+            logger.error(msg)
+            status["errors"].append(msg)
+            status["fetch"] = {"fetched_from_gdelt": 0, "inserted": 0, "skipped": 0, "errors": 1}
 
     # ── Step 2: Analyze unanalyzed articles ──────────────────────────────
     logger.info("Pipeline | Step 2: Analyzing unanalyzed articles")

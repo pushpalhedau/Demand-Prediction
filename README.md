@@ -1,16 +1,16 @@
-# 🚗 AI-Powered Automobile Demand Intelligence Platform
+# 🏢 UAE Real Estate Demand Intelligence Platform
 
-Welcome to the **AI-Powered Automobile Demand Intelligence Platform**, an enterprise-grade decision support suite that integrates advanced machine learning forecasting models, behavioral customer segmentation matrices, and interactive simulation capabilities into a cohesive, high-performance web dashboard.
+Welcome to the **UAE Real Estate Demand Intelligence Platform**, an enterprise-grade decision support suite that integrates advanced machine learning forecasting models, behavioral buyer segmentation matrices, and interactive simulation capabilities into a cohesive, high-performance web dashboard.
 
 ---
 
 ## 🌟 Core Features
 
-- **Executive Analytics:** High-impact KPI indicators (Total Revenue, Sales Volume, average discounts, and lead closing velocity) backed by rich Plotly charts.
-- **AI-Powered Forecasting:** Dynamic time-series projections leveraging **Facebook Prophet** integrated with monthly regional macroeconomic indicators (petrol prices, GDP shifts, CPI inflation) upsampled daily as external regressors.
-- **Customer Segmentation:** Automated customer profiling using **KMeans clustering** to partition the customer base into actionable cohorts (Budget Buyers, Premium Buyers, EV Enthusiasts, Fleet Buyers, High Repeat Customers) and seeding those segments back into the primary database.
-- **Lead Close Predictive Modeling:** A production-grade **XGBoost Classifier** that calculates the exact conversion probability of a sales lead, backed by a **SHAP explainability** layer mapping the explicit positive and negative feature contributions in real-time.
-- **Business Scenario Simulator:** A interactive simulator allowing executives to alter external market conditions (macroeconomic inflation, petrol pricing, EV subsidies, semiconductor constraints) and view simulated forecast shifts live.
+- **Executive Analytics:** High-impact KPI indicators (Total Sales Value AED, Units Transacted, Avg Price/Sq.Ft, Golden Visa transactions, absorption rate) backed by rich Plotly charts.
+- **AI-Powered Forecasting:** Dynamic time-series projections leveraging **Facebook Prophet** integrated with 14 UAE macroeconomic regressors (mortgage rates, oil price, Golden Visa applications, Expo effect, CPI) upsampled daily.
+- **Buyer Segmentation:** Automated buyer profiling using **KMeans clustering** to partition the buyer base into 6 actionable segments (Portfolio Investor, Golden Visa Seeker, Upgrader, First-Home Buyer, Rental Investor, End User) written back to the database.
+- **Lead Scoring:** A production-grade **XGBoost Classifier** that calculates booking conversion probability for each lead, backed by a **SHAP explainability** layer mapping feature contributions in real-time.
+- **Market Scenario Simulator:** An interactive simulator allowing executives to alter external market conditions (UAE CB rate, mortgage rate, DLD fee, Expo effect, Ramadan) and view simulated forecast shifts live.
 - **Dynamic Ingestion Engine:** Live dataset uploading with automatic column detection, data validation, and real-time model retraining triggers.
 
 ---
@@ -20,7 +20,7 @@ Welcome to the **AI-Powered Automobile Demand Intelligence Platform**, an enterp
 The platform is designed with a strictly modular, clean separation of concerns:
 
 ```
-automobile-demand-intelligence/
+uae-real-estate-intelligence/
 │
 ├── app.py                      # Main entrypoint and navigation framework
 ├── requirements.txt            # Package dependencies
@@ -52,7 +52,7 @@ automobile-demand-intelligence/
     ├── overview.py             # Landing metrics and volume graphs
     ├── forecasting.py          # Prophet uncertainty and decomposition views
     ├── comparison.py           # Overlapping YoY comparison charts
-    ├── regional.py             # GPS Map and dealer leaderboards
+    ├── regional.py             # UAE geo map and developer leaderboards
     ├── customers.py            # KMeans 2D/3D profiles and lead scorers
     ├── ai_insights.py          # Automated growth recommendations & Simulator
     ├── upload_data.py          # Ingestion engine and uploader
@@ -84,7 +84,7 @@ uv pip install -r requirements.txt
 ```
 
 ### 3. Ingest Datasets & Train Machine Learning Models
-Run the pipeline runner script to ingest all raw CSV datasets into the local SQLite database (`automobile_demand.db`) and train all KMeans clustering and XGBoost classifier assets:
+Run the pipeline runner script to ingest all raw CSV datasets into the local SQLite database (`real_estate_demand.db`) and train all KMeans clustering and XGBoost classifier assets:
 
 ```bash
 python train_models.py

@@ -98,7 +98,7 @@ def render_sentiment_analysis(filters: dict):
     )
     st.markdown(
         "<p style='color:#9ca3af;font-size:14px;margin-bottom:20px;'>"
-        "Real-time geopolitical, economic & social sentiment signals for India real estate demand forecasting.</p>",
+        "Real-time geopolitical, economic & social sentiment signals for UAE real estate demand forecasting.</p>",
         unsafe_allow_html=True,
     )
 
@@ -121,12 +121,16 @@ def render_sentiment_analysis(filters: dict):
         st.markdown("</div>", unsafe_allow_html=True)
 
     if refresh:
-        with st.spinner("Fetching news from GDELT and analysing signals..."):
+        with st.spinner("Analysing signals… (GDELT fetch skipped if run in last 15 min)"):
             status = run_full_pipeline(
                 timespan=timespan,
-                max_articles_per_query=50,
-                analyze_limit=200,
+                max_articles_per_query=20,
+                analyze_limit=80,
             )
+        cooldown = status.get("fetch", {}).get("cooldown_remaining_s")
+        if cooldown:
+            st.info(f"GDELT fetch skipped — next fetch available in {cooldown // 60}m {cooldown % 60}s. "
+                    f"Analysing any previously unprocessed articles only.")
         st.session_state["sentiment_pipeline_status"] = status
         _show_pipeline_status(status)
         st.rerun()
@@ -213,7 +217,7 @@ def _render_sentiment_intelligence(colors: dict):
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Sentiment timeline
-    st.markdown("#### Daily Sentiment Score by Vehicle Category")
+    st.markdown("#### Daily Sentiment Score by Property Category")
     df_all = get_daily_summaries(days_back=90, property_category=None)
     cat_df  = get_category_sentiment_summary(days_back=90)
 
@@ -486,7 +490,7 @@ def _render_economic_signals(colors: dict):
 
     # Demand change per category (bar chart)
     if not cat_df.empty:
-        st.markdown("#### Estimated Demand Change (%) by Vehicle Category")
+        st.markdown("#### Estimated Demand Change (%) by Property Category")
         cat_df["date"] = pd.to_datetime(cat_df["date"])
         cat_agg = (
             cat_df.groupby("category")[["demand_change", "sentiment", "impact"]]
@@ -853,7 +857,7 @@ def _render_ai_insights(colors: dict):
         if briefing:
             _glass_card(f"""
                 <div style="color:#a5b4fc;font-size:11px;font-weight:600;letter-spacing:1px;margin-bottom:10px;">
-                  UAE AUTOMOBILE MARKET INTELLIGENCE BRIEFING
+                  UAE REAL ESTATE MARKET INTELLIGENCE BRIEFING
                 </div>
                 <div style="color:#f3f4f6;font-size:14px;line-height:1.8;white-space:pre-wrap;">{briefing}</div>
             """)
@@ -902,7 +906,7 @@ def _render_ai_insights(colors: dict):
               </div>
               <div style="color:#9ca3af;font-size:13px;">
                 Click <b>Generate Briefing</b> above to produce a data-driven
-                India real estate market intelligence report from current sentiment signals.
+                UAE real estate market intelligence report from current sentiment signals.
               </div>
             </div>
         """)

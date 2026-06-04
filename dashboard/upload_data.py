@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from database.connection import get_db_session
-from ml_models.customer_segmentation import train_customer_segmentation
+from ml_models.customer_segmentation import train_buyer_segmentation
 from ml_models.xgboost_model import train_xgboost_pipeline
 
 def render_upload_data():
@@ -12,7 +12,7 @@ def render_upload_data():
     st.markdown("<h2 class='gradient-text' style='margin-bottom: 20px;'>Dynamic Dataset Ingestion Engine</h2>", unsafe_allow_html=True)
     st.write("Upload custom CSV sales or customer records, and the platform will automatically map schemas, validate formats, and retrain ML pipelines.")
     
-    uploaded_file = st.file_uploader("Upload Automobile Dataset (CSV Format)", type=["csv"])
+    uploaded_file = st.file_uploader("Upload Real Estate Dataset (CSV Format)", type=["csv"])
     
     if uploaded_file is not None:
         try:
@@ -67,7 +67,7 @@ def render_upload_data():
                 with st.spinner("Executing dynamic preprocessing, loading database, and retraining full ML pipeline suite..."):
                     # Simulate training steps or call them
                     # To keep it safe and functional, we can call KMeans and XGBoost training
-                    train_customer_segmentation()
+                    train_buyer_segmentation()
                     train_xgboost_pipeline()
                     
                     st.balloons()
@@ -80,4 +80,4 @@ def render_upload_data():
             
     else:
         # If no file uploaded, show default instruction guide
-        st.info("**Standard Schema Expectations:** The platform automatically maps CSV tables matching the relational tables (`sales`, `customers`, `inventory`, `dealers`, `vehicles`). Standard templates can be exported from settings.")
+        st.info("**Standard Schema Expectations:** The platform automatically maps CSV tables matching the relational tables (`transactions`, `buyers`, `properties`, `listings`, `developers`). Standard templates can be exported from settings.")

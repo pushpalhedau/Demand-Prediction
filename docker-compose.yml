@@ -10,6 +10,6 @@ services:
       - /app/.venv
       - /app/models
     environment:
-      - DATABASE_URL=sqlite:////app/automobile_demand.db
+      - DATABASE_URL=sqlite:////app/real_estate_demand.db
       - DEBUG=False
     restart: always

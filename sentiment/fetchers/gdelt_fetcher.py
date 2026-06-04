@@ -10,7 +10,7 @@ Two data products used here:
 
 Flow:
   fetch_all_themes()
-      └─→ fetch_articles_for_query()  [for each UAE_AUTO_QUERIES entry]
+      └─→ fetch_articles_for_query()  [for each UAE_RE_QUERIES entry]
   save_articles_to_db()               [deduplicates by URL, persists to SQLite]
   fetch_tone_timeline()               [used by the dashboard for trend charts]
   get_stored_articles()               [loads persisted articles + signals for rendering]
@@ -42,7 +42,7 @@ GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 # UAE real estate market themed search queries
 # Each entry maps to a thematic bucket used for per-theme aggregation.
 # ─────────────────────────────────────────────────────────────────────────────
-UAE_AUTO_QUERIES: List[Dict] = [
+UAE_RE_QUERIES: List[Dict] = [
     {
         "name": "uae_realestate_demand",
         "label": "UAE RE Demand",
@@ -226,7 +226,7 @@ def fetch_all_themes(
     seen_urls: set = set()
     all_articles: List[Dict] = []
 
-    for q in UAE_AUTO_QUERIES:
+    for q in UAE_RE_QUERIES:
         raw = fetch_articles_for_query(
             query=q["query"],
             timespan=timespan,
@@ -359,7 +359,7 @@ def fetch_all_tone_timelines(timespan: str = "90d") -> Dict[str, List[Dict]]:
     Returns dict: {theme_name: [{"date": date, "tone": float}, ...]}
     """
     timelines: Dict[str, List[Dict]] = {}
-    for q in UAE_AUTO_QUERIES:
+    for q in UAE_RE_QUERIES:
         tl = fetch_tone_timeline(q["query"], timespan=timespan)
         timelines[q["name"]] = tl
         logger.info("Tone timeline | theme='%s' | points=%d", q["label"], len(tl))
