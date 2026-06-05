@@ -30,7 +30,7 @@ def render_regional(filters: dict):
         session.close()
 
     # ── City bubble chart ─────────────────────────────────
-    section_header("City-Level Demand Heatmap", icon="🗺")
+    section_header("City-Level Demand Heatmap")
 
     # City coordinates (approximate centroids)
     city_coords = {
@@ -103,7 +103,7 @@ def render_regional(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
         with col_rank:
-            section_header("City Rankings", icon="🏆")
+            section_header("City Rankings")
             st.dataframe(
                 df_cities[["city", "units", "avg_price_sqft"]].rename(columns={
                     "city": "City",
@@ -121,7 +121,7 @@ def render_regional(filters: dict):
     col_a, col_b = st.columns(2)
 
     with col_a:
-        section_header("Demand by Region", icon="🧭")
+        section_header("Demand by Region")
         if not df_regions.empty:
             fig = go.Figure(go.Pie(
                 labels=df_regions["region"],
@@ -140,7 +140,7 @@ def render_regional(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     with col_b:
-        section_header("Top Locality Hotspots", icon="📍")
+        section_header("Top Locality Hotspots")
         if not df_localities.empty:
             top15 = df_localities.head(15)
             fig = go.Figure(go.Bar(
@@ -165,13 +165,13 @@ def render_regional(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     # ── Developer leaderboard ──────────────────────────────
-    section_header("Developer Performance Leaderboard", icon="🏗")
+    section_header("Developer Performance Leaderboard")
     if not df_devs.empty:
         col_c, col_d = st.columns([2, 3])
 
         with col_c:
             top10_devs = df_devs.head(10)
-            rera_icon = lambda x: "✅" if x else "❌"
+            rera_icon = lambda x: "Yes" if x else "No"
             display_df = top10_devs[[
                 "developer_name", "primary_city", "tier", "units_sold",
                 "rating", "rera_registered"
@@ -180,9 +180,9 @@ def render_regional(filters: dict):
                 lambda v: f"AED {v:.1f}M"
             )
             display_df["rera_registered"] = display_df["rera_registered"].apply(
-                lambda x: "✅" if x else "❌"
+                lambda x: "Yes" if x else "No"
             )
-            display_df["rating"] = display_df["rating"].apply(lambda v: f"{v:.1f} ⭐")
+            display_df["rating"] = display_df["rating"].apply(lambda v: f"{v:.1f}")
             display_df = display_df.rename(columns={
                 "developer_name": "Developer",
                 "primary_city": "City",
@@ -225,7 +225,7 @@ def render_regional(filters: dict):
 
     # ── Developer geo scatter ──────────────────────────────
     if not df_devs.empty and "latitude" in df_devs.columns:
-        section_header("Developer Network Distribution", icon="🌐")
+        section_header("Developer Network Distribution")
         valid_devs = df_devs[(df_devs["latitude"].notna()) & (df_devs["latitude"] != 0)]
         if not valid_devs.empty:
             tier_colors = {"Tier 1": colors["gold"], "Tier 2": colors["primary"], "Tier 3": colors["indigo"]}

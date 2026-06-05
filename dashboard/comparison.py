@@ -25,7 +25,7 @@ def render_comparison(filters: dict):
         session.close()
 
     # ── YoY Monthly Volume ────────────────────────────────
-    section_header("Year-on-Year Monthly Transaction Volume", icon="📅")
+    section_header("Year-on-Year Monthly Transaction Volume")
     if not df_yoy.empty:
         years = sorted(df_yoy["year"].unique())
         month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -90,7 +90,7 @@ def render_comparison(filters: dict):
     col_a, col_b = st.columns(2)
 
     with col_a:
-        section_header("City Performance Comparison", icon="🏙")
+        section_header("City Performance Comparison")
         if not df_cities.empty:
             top_cities = df_cities.head(10)
             fig = go.Figure()
@@ -126,7 +126,7 @@ def render_comparison(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     with col_b:
-        section_header("Category Revenue Share", icon="🏷")
+        section_header("Category Revenue Share")
         if not df_cats.empty:
             # Waterfall chart
             df_cats_sorted = df_cats.sort_values("revenue", ascending=False)
@@ -149,7 +149,7 @@ def render_comparison(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     # ── Quarter seasonality heatmap ───────────────────────
-    section_header("Quarterly Demand Pattern (Units)", icon="🌡")
+    section_header("Quarterly Demand Pattern (Units)")
     if not df_yoy.empty and "quarter" not in df_yoy.columns:
         df_yoy["quarter"] = df_yoy["month"].apply(
             lambda m: f"Q{(m - 1) // 3 + 1}"
@@ -179,7 +179,7 @@ def render_comparison(filters: dict):
         st.plotly_chart(fig, use_container_width=True)
 
     # ── UAE market event impact ────────────────────────────
-    section_header("UAE Market Events vs Regular Period Transactions", icon="🗓")
+    section_header("UAE Market Events vs Regular Period Transactions")
     if not df_yoy.empty:
         # Ramadan (Mar/Apr variable), post-Ramadan surge, Cityscape (Sep/Oct), Q4 National Day & year-end push
         festival_months = [3, 4, 9, 10, 12]

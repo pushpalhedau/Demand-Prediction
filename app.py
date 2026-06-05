@@ -23,7 +23,7 @@ from dashboard.sentiment_analysis import render_sentiment_analysis
 # ── Page Config ──────────────────────────────────────────
 st.set_page_config(
     page_title="RE Demand Intelligence",
-    page_icon="🏢",
+    page_icon="RE",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -63,7 +63,6 @@ st.markdown("""
 with st.sidebar:
     st.markdown("""
         <div style="text-align:center; padding:8px 0 12px 0;">
-            <div style="font-size:28px; margin-bottom:4px;">🏢</div>
             <div style="color:#10b981; font-weight:700; font-size:13px; letter-spacing:0.05em;">
                 RE INTELLIGENCE
             </div>

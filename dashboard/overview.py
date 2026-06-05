@@ -37,32 +37,32 @@ def render_overview(filters: dict):
         d = kpis.get("total_value_delta")
         render_kpi_card("Total Sales Value", fmt_aed(kpis["total_value"]),
                         delta=f"{d:.1f}% YoY" if d is not None else None,
-                        is_positive=(d or 0) >= 0, icon="🏢")
+                        is_positive=(d or 0) >= 0)
     with c2:
         d = kpis.get("units_delta")
         render_kpi_card("Units Transacted", f"{kpis['units_sold']:,}",
                         delta=f"{d:.1f}% YoY" if d is not None else None,
-                        is_positive=(d or 0) >= 0, icon="🔑")
+                        is_positive=(d or 0) >= 0)
     with c3:
         d = kpis.get("avg_sqft_delta")
         render_kpi_card("Avg Price / Sq.Ft", f"AED {kpis['avg_price_sqft']:,.0f}",
                         delta=f"{d:.1f}% YoY" if d is not None else None,
-                        is_positive=(d or 0) >= 0, icon="📐")
+                        is_positive=(d or 0) >= 0)
     with c4:
-        render_kpi_card("Booking Conversion", f"{kpis['conversion_rate']:.1f}%", icon="✅")
+        render_kpi_card("Booking Conversion", f"{kpis['conversion_rate']:.1f}%")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
     c5, c6, c7, c8 = st.columns(4)
     with c5:
-        render_kpi_card("Absorption Rate", f"{kpis['absorption_rate']:.1f}%", icon="📊")
+        render_kpi_card("Absorption Rate", f"{kpis['absorption_rate']:.1f}%")
     with c6:
-        render_kpi_card("Avg Lead-to-Close", f"{kpis['avg_lead_close']:.0f} days", icon="⏱")
+        render_kpi_card("Avg Lead-to-Close", f"{kpis['avg_lead_close']:.0f} days")
     with c7:
-        render_kpi_card("Golden Visa Txns", f"{kpis['golden_visa_count']:,}", icon="🏅")
+        render_kpi_card("Golden Visa Txns", f"{kpis['golden_visa_count']:,}")
     with c8:
         render_kpi_card("Unsold Flags", f"{kpis['unsold_listings']:,}",
-                        is_positive=False, icon="⚠️")
+                        is_positive=False)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -70,7 +70,7 @@ def render_overview(filters: dict):
     col_a, col_b = st.columns([3, 2])
 
     with col_a:
-        section_header("Monthly Transaction Trend", icon="📈")
+        section_header("Monthly Transaction Trend")
         if not df_monthly.empty:
             fig = go.Figure()
             fig.add_trace(go.Bar(
@@ -100,7 +100,7 @@ def render_overview(filters: dict):
             st.info("No transaction data for the selected filters.")
 
     with col_b:
-        section_header("Property Category Mix", icon="🏷")
+        section_header("Property Category Mix")
         if not df_cats.empty:
             cat_colors = [
                 colors["property_category"].get(c, colors["primary"])
@@ -126,7 +126,7 @@ def render_overview(filters: dict):
     col_c, col_d = st.columns([3, 2])
 
     with col_c:
-        section_header("Top Cities by Transaction Value", icon="🏙")
+        section_header("Top Cities by Transaction Value")
         if not df_cities.empty:
             top10 = df_cities.head(10).copy()
             top10["revenue_m"] = top10["revenue"] / 1e6
@@ -145,7 +145,7 @@ def render_overview(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     with col_d:
-        section_header("Payment Plan Distribution", icon="💳")
+        section_header("Payment Plan Distribution")
         if not df_payment.empty:
             fig = go.Figure(go.Pie(
                 labels=df_payment["payment_plan"], values=df_payment["units"],
@@ -165,7 +165,7 @@ def render_overview(filters: dict):
     col_e, col_f = st.columns(2)
 
     with col_e:
-        section_header("Units by Property Type", icon="🏘")
+        section_header("Units by Property Type")
         if not df_types.empty:
             fig = go.Figure(go.Bar(
                 x=df_types["property_type"], y=df_types["units"],
@@ -179,7 +179,7 @@ def render_overview(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     with col_f:
-        section_header("Marketing Channel Efficiency", icon="📢")
+        section_header("Marketing Channel Efficiency")
         if not df_channel.empty:
             fig = go.Figure(go.Bar(
                 x=df_channel["avg_lead_days"], y=df_channel["marketing_channel"],
@@ -202,7 +202,7 @@ def render_overview(filters: dict):
 
     # ── Insight strip ──────────────────────────────────────
     st.markdown("<br>", unsafe_allow_html=True)
-    section_header("Key Insights", icon="💡")
+    section_header("Key Insights")
     ia, ib, ic = st.columns(3)
     top_city = kpis.get("top_city", "N/A")
     top_cat = kpis.get("top_category", "N/A")

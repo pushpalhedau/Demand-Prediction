@@ -70,7 +70,7 @@ def render_forecasting(filters: dict):
     target_label = "Units" if "Units" in target else "Revenue (AED)"
 
     # ── Metrics strip ─────────────────────────────────────
-    section_header("Model Performance", icon="🎯")
+    section_header("Model Performance")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Forecast Accuracy", f"{metrics['accuracy']:.1f}%")
     m2.metric("MAE", f"{metrics['mae']:.1f}")
@@ -80,7 +80,7 @@ def render_forecasting(filters: dict):
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ── Main forecast chart ───────────────────────────────
-    section_header(f"{target_label} Forecast — Next {horizon} Days", icon="🔮")
+    section_header(f"{target_label} Forecast — Next {horizon} Days")
 
     hist = forecast[forecast["actual"].notna()].copy()
     fut = forecast[forecast["actual"].isna()].copy()
@@ -143,7 +143,7 @@ def render_forecasting(filters: dict):
     st.plotly_chart(fig, use_container_width=True)
 
     # ── 30/60/90-day summary ──────────────────────────────
-    section_header("Forecast Summary", icon="📋")
+    section_header("Forecast Summary")
     future_only = forecast[forecast["ds"] > last_hist_date].copy()
 
     if not future_only.empty:
@@ -164,7 +164,7 @@ def render_forecasting(filters: dict):
     # ── Seasonal decomposition ────────────────────────────
     if "trend" in forecast.columns and "yearly" in forecast.columns:
         st.markdown("<br>", unsafe_allow_html=True)
-        section_header("Trend & Seasonality Decomposition", icon="📊")
+        section_header("Trend & Seasonality Decomposition")
         col_t, col_s = st.columns(2)
 
         with col_t:

@@ -76,7 +76,7 @@ def render_customers(filters: dict):
             col_scatter, col_profile = st.columns([3, 2])
 
             with col_scatter:
-                section_header("Buyer Segment Scatter (Income vs Loyalty)", icon="🎯")
+                section_header("Buyer Segment Scatter (Income vs Loyalty)")
                 plot_df = df_buyers.dropna(subset=["estimated_annual_income_aed", "loyalty_score"]).copy()
                 if not plot_df.empty:
                     sample = plot_df.sample(min(3000, len(plot_df)), random_state=42)
@@ -102,7 +102,7 @@ def render_customers(filters: dict):
                     st.plotly_chart(fig, use_container_width=True)
 
             with col_profile:
-                section_header("Segment Distribution", icon="🥧")
+                section_header("Segment Distribution")
                 if not df_seg_summary.empty:
                     fig = go.Figure(go.Pie(
                         labels=df_seg_summary["customer_segment"],
@@ -125,7 +125,7 @@ def render_customers(filters: dict):
                     st.plotly_chart(fig, use_container_width=True)
 
             # ── Segment profile table ────────────────────
-            section_header("Segment Profile Benchmarks", icon="📊")
+            section_header("Segment Profile Benchmarks")
             if not df_seg_summary.empty:
                 profile = df_seg_summary.copy()
                 profile["avg_income"] = profile["avg_income"].apply(
@@ -153,7 +153,7 @@ def render_customers(filters: dict):
 
             # ── Budget distribution by segment ───────────
             st.markdown("<br>", unsafe_allow_html=True)
-            section_header("Budget Range by Segment (AED)", icon="💰")
+            section_header("Budget Range by Segment (AED)")
             plot_df2 = df_buyers.dropna(subset=["budget_max_aed", "customer_segment"])
             if not plot_df2.empty:
                 fig = go.Figure()
@@ -186,7 +186,7 @@ def render_customers(filters: dict):
                 else:
                     st.success(f"Model trained! Accuracy: {result['accuracy']:.1%}")
                     feat_df = result["feature_importance"].head(10)
-                    section_header("Feature Importance", icon="📋")
+                    section_header("Feature Importance")
                     fig = go.Figure(go.Bar(
                         x=feat_df["Importance"],
                         y=feat_df["Feature"],
@@ -216,7 +216,7 @@ def render_customers(filters: dict):
             </div>""", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        section_header("Lead Conversion Probability Predictor", icon="🎲")
+        section_header("Lead Conversion Probability Predictor")
 
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -269,7 +269,7 @@ def render_customers(filters: dict):
                 </div>""", unsafe_allow_html=True)
 
             with p2:
-                section_header("Key Conversion Drivers (SHAP)", icon="🔍")
+                section_header("Key Conversion Drivers (SHAP)")
                 if explanations:
                     for exp in explanations[:5]:
                         bar_color = colors["success"] if exp["direction"] == "positive" else colors["danger"]

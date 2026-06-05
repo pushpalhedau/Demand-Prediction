@@ -58,7 +58,7 @@ def render_price_intelligence(filters: dict):
     col_a, col_b = st.columns([3, 2])
 
     with col_a:
-        section_header("Price/Sq.Ft Trend by City", icon="📈")
+        section_header("Price/Sq.Ft Trend by City")
         if not df_price_city.empty:
             cities_list = df_price_city["city"].unique().tolist()
             sel_cities = st.multiselect(
@@ -87,7 +87,7 @@ def render_price_intelligence(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     with col_b:
-        section_header("Avg Price by Property Category", icon="🏷")
+        section_header("Avg Price by Property Category")
         if not df_cat_type.empty:
             cat_agg = df_cat_type.groupby("property_category")["avg_price_sqft"].mean().reset_index()
             cat_agg = cat_agg.sort_values("avg_price_sqft", ascending=True)
@@ -114,7 +114,7 @@ def render_price_intelligence(filters: dict):
     col_c, col_d = st.columns([3, 2])
 
     with col_c:
-        section_header("Top Localities by Price/Sq.Ft", icon="📍")
+        section_header("Top Localities by Price/Sq.Ft")
         if not df_locality.empty:
             df_loc = df_locality.sort_values("avg_price_sqft", ascending=True).head(20)
             fig = go.Figure(go.Bar(
@@ -144,7 +144,7 @@ def render_price_intelligence(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     with col_d:
-        section_header("Mortgage Rate vs Price Index", icon="🏦")
+        section_header("Mortgage Rate vs Price Index")
         if not df_market.empty and "mortgage_rate_avg_pct" in df_market.columns:
             mf = df_market.dropna(subset=["mortgage_rate_avg_pct", "real_estate_price_index"])
             if not mf.empty:
@@ -178,7 +178,7 @@ def render_price_intelligence(filters: dict):
             st.info("Market factor data not available.")
 
     # ── Row 3: Category × Type price matrix ───────────────
-    section_header("Price Intelligence Matrix: Category × Property Type", icon="🔢")
+    section_header("Price Intelligence Matrix: Category × Property Type")
     if not df_cat_type.empty:
         pivot = df_cat_type.pivot_table(
             index="property_category",
@@ -213,7 +213,7 @@ def render_price_intelligence(filters: dict):
     # ── Investment metrics ─────────────────────────────────
     if not df_market.empty:
         st.markdown("<br>", unsafe_allow_html=True)
-        section_header("Investment & Economic Signals", icon="💹")
+        section_header("Investment & Economic Signals")
         col_e, col_f, col_g = st.columns(3)
 
         with col_e:

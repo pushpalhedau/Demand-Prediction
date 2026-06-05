@@ -39,7 +39,7 @@ def render_ai_insights(filters: dict):
                 mf = mf.groupby("date").mean(numeric_only=True).reset_index()
 
             # ── UAE CB Rate + Mortgage Rate ────────────────
-            section_header("Interest Rate Environment", icon="🏦")
+            section_header("Interest Rate Environment")
             col_a, col_b = st.columns(2)
 
             with col_a:
@@ -174,7 +174,7 @@ def render_ai_insights(filters: dict):
                 return st.slider(label, lo, hi, val, step, **kwargs)
 
             with col_s1:
-                section_header("Monetary Policy", icon="🏛")
+                section_header("Monetary Policy")
                 if "uae_central_bank_base_rate_pct" in prophet_stats:
                     overrides["uae_central_bank_base_rate_pct"] = _safe_slider(
                         "UAE CB Base Rate (%)", prophet_stats["uae_central_bank_base_rate_pct"], 0.1,
@@ -191,7 +191,7 @@ def render_ai_insights(filters: dict):
                     )
 
             with col_s2:
-                section_header("Market & Demand Signals", icon="📊")
+                section_header("Market & Demand Signals")
                 if "consumer_confidence_index" in prophet_stats:
                     overrides["consumer_confidence_index"] = _safe_slider(
                         "Consumer Confidence Index", prophet_stats["consumer_confidence_index"], 0.5,
@@ -290,7 +290,7 @@ def render_ai_insights(filters: dict):
         if not city_filter:
             mf_inv = mf_inv.groupby("date").mean(numeric_only=True).reset_index()
 
-        section_header("Foreign & Institutional Investment Flows", icon="💹")
+        section_header("Foreign & Institutional Investment Flows")
         col_i1, col_i2 = st.columns(2)
 
         with col_i1:
@@ -343,7 +343,7 @@ def render_ai_insights(filters: dict):
                     st.plotly_chart(fig, use_container_width=True)
 
         # ── Tourism + Golden Visa ──────────────────────────
-        section_header("Tourism & Off-Plan Demand Signals", icon="✈️")
+        section_header("Tourism & Off-Plan Demand Signals")
         col_j1, col_j2 = st.columns(2)
 
         with col_j1:
@@ -377,7 +377,7 @@ def render_ai_insights(filters: dict):
                     st.plotly_chart(fig, use_container_width=True)
 
         # ── Key signals summary ────────────────────────────
-        section_header("Current Market Signal Scorecard", icon="📋")
+        section_header("Current Market Signal Scorecard")
         if factor_stats:
             signals = []
             def get_signal(key, label, good_low=True, unit=""):
@@ -390,7 +390,7 @@ def render_ai_insights(filters: dict):
                 signals.append({
                     "Signal": label,
                     "Current": f"{val:.2f}{unit}",
-                    "Status": "🟢 Positive" if is_good else "🔴 Caution",
+                    "Status": "Positive" if is_good else "Caution",
                 })
 
             get_signal("uae_central_bank_base_rate_pct", "UAE CB Base Rate", good_low=True, unit="%")

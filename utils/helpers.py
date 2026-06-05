@@ -26,9 +26,9 @@ def render_kpi_card(title: str, value: str, delta: str = None, is_positive: bool
     if delta:
         cls = "positive" if is_positive else "negative"
         if invert_arrow:
-            arrow = "▼" if is_positive else "▲"
+            arrow = "-" if is_positive else "+"
         else:
-            arrow = "▲" if is_positive else "▼"
+            arrow = "+" if is_positive else "-"
         delta_html = f'<div class="kpi-delta {cls}">{arrow} {delta}</div>'
 
     icon_html = f'<div class="kpi-icon">{icon}</div>' if icon else ""

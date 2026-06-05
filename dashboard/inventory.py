@@ -50,7 +50,7 @@ def render_inventory(filters: dict):
     col_a, col_b = st.columns(2)
 
     with col_a:
-        section_header("Inventory by City (Available vs Booked)", icon="🏙")
+        section_header("Inventory by City (Available vs Booked)")
         if not df_city_inv.empty:
             fig = go.Figure()
             fig.add_trace(go.Bar(
@@ -73,7 +73,7 @@ def render_inventory(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     with col_b:
-        section_header("Avg Days on Market by City", icon="📅")
+        section_header("Avg Days on Market by City")
         if not df_city_inv.empty:
             df_sort = df_city_inv.sort_values("avg_days_on_market", ascending=True)
             bar_colors = [
@@ -100,7 +100,7 @@ def render_inventory(filters: dict):
     col_c, col_d = st.columns(2)
 
     with col_c:
-        section_header("Holding Cost by City (AED M)", icon="💸")
+        section_header("Holding Cost by City (AED M)")
         if not df_city_inv.empty:
             df_hc = df_city_inv.sort_values("total_holding_cost", ascending=False).head(10)
             fig = go.Figure(go.Bar(
@@ -124,7 +124,7 @@ def render_inventory(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     with col_d:
-        section_header("Construction Progress Distribution", icon="🏗")
+        section_header("Construction Progress Distribution")
         if "construction_progress_pct" in df_inv.columns:
             uc_only = df_inv[df_inv["completion_status"] == "Off-Plan"]
             if not uc_only.empty:
@@ -154,7 +154,7 @@ def render_inventory(filters: dict):
                 st.plotly_chart(fig, use_container_width=True)
 
     # ── Slow-moving inventory table ────────────────────────
-    section_header("Slow-Moving Inventory Alert", icon="🐢")
+    section_header("Slow-Moving Inventory Alert")
     slow_df = df_inv[df_inv["slow_moving_flag"] == True].copy()
     if not slow_df.empty:
         slow_display = slow_df.sort_values("days_on_market", ascending=False).head(20)
@@ -190,7 +190,7 @@ def render_inventory(filters: dict):
         </div>""", unsafe_allow_html=True)
 
     # ── Absorption rate vs demand forecast scatter ─────────
-    section_header("Absorption Rate vs 30-Day Demand Forecast", icon="🎯")
+    section_header("Absorption Rate vs 30-Day Demand Forecast")
     if "units_sold_last_30d" in df_inv.columns and "demand_forecast_30d" in df_inv.columns:
         scatter_df = df_inv.dropna(subset=["units_sold_last_30d", "demand_forecast_30d"]).copy()
         scatter_df["absorption_rate"] = (
