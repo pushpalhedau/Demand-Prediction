@@ -12,7 +12,7 @@ from frontend.components.kpi_cards import (
 from frontend.components.charts import (
     line_chart, bar_chart, pie_chart, area_chart, gauge_chart
 )
-from frontend.components.theme import C_INDIGO, C_EMERALD, C_AMBER, C_RED, themed
+from frontend.components.theme import C_INDIGO, C_EMERALD, C_AMBER, C_RED, C_CYAN, themed
 
 
 def render():
@@ -35,19 +35,25 @@ def render():
         k = kpis.get("kpis", {})
         render_kpi_row([
             kpi_card("Transaction Volume", f"{k.get('total_transactions',{}).get('value',0):,}",
-                     k.get("total_transactions",{}).get("change_pct"), "📊", gradient="indigo"),
+                     k.get("total_transactions",{}).get("change_pct"), gradient="indigo",
+                     help_text="Total DLD-registered transactions across all property types. Covers apartments, villas, off-plan, and secondary market sales. Reflects the selected year vs. previous year."),
             kpi_card("Market Value", f"{k.get('total_value_aed_bn',{}).get('value',0):.1f}B",
-                     k.get("total_value_aed_bn",{}).get("change_pct"), "💰", prefix="AED ", gradient="emerald"),
+                     k.get("total_value_aed_bn",{}).get("change_pct"), prefix="AED ", gradient="emerald",
+                     help_text="Aggregate AED value of all DLD-registered transactions for the selected year. Includes both off-plan and secondary market sales with YoY comparison."),
             kpi_card("Avg Price / Sqft", f"{k.get('avg_price_sqft',{}).get('value',0):,.0f}",
-                     k.get("avg_price_sqft",{}).get("change_pct"), "📐", prefix="AED ", gradient="violet"),
+                     k.get("avg_price_sqft",{}).get("change_pct"), prefix="AED ", gradient="violet",
+                     help_text="Mean price per square foot across all registered transactions in the selected year. Calculated as total transaction value divided by total transacted area in sqft."),
             kpi_card("Rental Yield", f"{k.get('avg_rental_yield',{}).get('value',0):.1f}",
-                     None, "🏠", suffix="%", gradient="amber"),
+                     None, suffix="%", gradient="amber",
+                     help_text="Gross rental yield derived from DLD rental contracts and transaction prices. Calculated as annual rent ÷ property value. Based on the latest available rental and sales data."),
         ], cols=4)
         render_kpi_row([
             kpi_card("Off-Plan Share", f"{k.get('off_plan_pct',{}).get('value',0):.1f}",
-                     None, "🏗️", suffix="%", gradient="cyan"),
+                     None, suffix="%", gradient="cyan",
+                     help_text="Percentage of total transactions classified as off-plan (pre-construction) vs. ready/secondary market. Higher values indicate a developer-driven market cycle. Covers the selected year."),
             kpi_card("Active Market Areas", str(k.get("active_areas",{}).get("value",0)),
-                     None, "📍", gradient="indigo"),
+                     None, gradient="indigo",
+                     help_text="Number of distinct geographic areas in Dubai recording at least one DLD transaction in the selected year. Reflects the breadth of market activity across the emirate."),
         ], cols=2)
     except api.APIError as e:
         st.error(f"Failed to load KPIs: {e}")
@@ -56,35 +62,49 @@ def render():
     # ── Revenue Trend + Market Mix ────────────────────────────────
     col1, col2 = st.columns([2, 1])
     with col1:
-        st.markdown(section_header("Revenue & Transaction Trend", "Last 24 months"), unsafe_allow_html=True)
+        st.markdown(section_header("Revenue & Transaction Trend", "Last 24 months",
+            help_text="Monthly DLD revenue (AED, left axis) and units sold (right axis) over the last 24 months. Revenue = sum of all transaction values per month. Units = count of registered transactions."),
+            unsafe_allow_html=True)
         trend = kpis.get("monthly_trend", [])
         if trend:
             df_trend = pd.DataFrame(trend)
             fig = go.Figure()
             fig.add_trace(go.Bar(
-                x=df_trend["month"], y=df_trend["value"] / 1e9,
-                name="Value (AED B)", marker_color=C_INDIGO, opacity=0.7,
+                x=df_trend["month"], y=df_trend["transactions"],
+                name="Sales (Units)", marker_color=C_CYAN, opacity=0.78,
                 yaxis="y2",
             ))
             fig.add_trace(go.Scatter(
-                x=df_trend["month"], y=df_trend["transactions"],
-                name="Transactions", line=dict(color=C_EMERALD, width=2.5), yaxis="y1",
+                x=df_trend["month"], y=df_trend["value"] / 1e6,
+                name="Revenue (AED)",
+                mode="lines+markers",
+                line=dict(color=C_INDIGO, width=2.5),
+                marker=dict(size=5, color=C_INDIGO, symbol="circle"),
+                yaxis="y1",
             ))
             fig.update_layout(**themed())
             fig.update_layout(
                 height=360,
-                yaxis=dict(title="Transactions", color="#64748b", side="left",
-                           gridcolor="#1e1e3f", tickfont=dict(color="#64748b", size=11)),
-                yaxis2=dict(title="Value (AED B)", color="#6366f1", side="right",
-                            overlaying="y", showgrid=False,
-                            tickfont=dict(color="#6366f1", size=11)),
+                yaxis=dict(
+                    title="Monthly Revenue (AED)",
+                    color="#64748b", side="left",
+                    gridcolor="#1e1e3f",
+                    tickfont=dict(color="#64748b", size=11),
+                    ticksuffix="M",
+                ),
+                yaxis2=dict(
+                    title="Units Sold",
+                    color="#64748b", side="right",
+                    overlaying="y", showgrid=False,
+                    tickfont=dict(color="#64748b", size=11),
+                ),
                 hovermode="x unified",
                 legend=dict(orientation="h", y=1.08),
             )
             st.plotly_chart(fig, use_container_width=True)
 
     with col2:
-        st.markdown(section_header("Property Mix"), unsafe_allow_html=True)
+        st.markdown(section_header("Property Mix", help_text="Distribution of total DLD transactions by property type (apartments, villas, townhouses, etc.) for the selected year. Shows which property types dominate buyer demand."), unsafe_allow_html=True)
         mix = kpis.get("property_mix", [])
         if mix:
             df_mix = pd.DataFrame(mix)
@@ -95,7 +115,9 @@ def render():
     # ── Top Opportunities + Risks ────────────────────────────────
     col1, col2 = st.columns([1, 1])
     with col1:
-        st.markdown(section_header("Top Investment Opportunities"), unsafe_allow_html=True)
+        st.markdown(section_header("Top Investment Opportunities",
+            help_text="Areas scored 0–100 by a composite index combining demand growth, price appreciation, rental yield, and infrastructure access. Based on the last 12 months of DLD transaction and project data."),
+            unsafe_allow_html=True)
         try:
             opps = api.get_top_opportunities(8)
             if opps:
@@ -110,7 +132,9 @@ def render():
             st.warning(str(e))
 
     with col2:
-        st.markdown(section_header("Risk Alerts & Early Warnings"), unsafe_allow_html=True)
+        st.markdown(section_header("Risk Alerts & Early Warnings",
+            help_text="Market risk score (0–100) derived from price volatility, supply-demand imbalance, macroeconomic indicators, and GDELT news sentiment. Alerts are updated monthly."),
+            unsafe_allow_html=True)
         try:
             risks = api.get_risk_summary()
             overall = risks.get("overall_risk_score", 0)
@@ -134,7 +158,9 @@ def render():
     # ── Nationality Demand + Developer Rankings ──────────────────
     col1, col2 = st.columns([1, 1])
     with col1:
-        st.markdown(section_header("Buyer Nationality Mix"), unsafe_allow_html=True)
+        st.markdown(section_header("Buyer Nationality Mix",
+            help_text="Share of total DLD transactions by buyer nationality for the selected year. Identifies dominant international buyer groups and tracks shifts in cross-border demand."),
+            unsafe_allow_html=True)
         nat_mix = kpis.get("nationality_mix", [])
         if nat_mix:
             df_nat = pd.DataFrame(nat_mix)
@@ -143,7 +169,9 @@ def render():
             st.plotly_chart(fig, use_container_width=True)
 
     with col2:
-        st.markdown(section_header("Market Overview"), unsafe_allow_html=True)
+        st.markdown(section_header("Market Overview",
+            help_text="Supply-side snapshot from DLD project and unit records. Shows active project count, total unit pipeline, average absorption rate, and total rental contract volume across Dubai."),
+            unsafe_allow_html=True)
         try:
             overview = api.get_market_overview()
             st.metric("Active Projects",     overview.get("active_projects", 0))
@@ -164,7 +192,9 @@ def render():
             st.warning(str(e))
 
     # ── Sentiment Gauge ──────────────────────────────────────────
-    st.markdown(section_header("Market Sentiment Intelligence"), unsafe_allow_html=True)
+    st.markdown(section_header("Market Sentiment Intelligence",
+        help_text="Composite sentiment index (0–100) derived from GDELT news events, media tone, and transaction momentum. Score >60 = positive market mood. 24-month trend shown."),
+        unsafe_allow_html=True)
     try:
         sent = api.get_sentiment_summary()
         c1, c2, c3, c4 = st.columns(4)

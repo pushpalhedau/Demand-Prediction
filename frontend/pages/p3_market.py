@@ -21,7 +21,8 @@ def render():
     # ── Tab 1: Opportunity Heatmap ────────────────────────────────
     with tab1:
         st.markdown(section_header("Investment Opportunity Map",
-                                    "Area-level scoring: demand, price growth, yield, infrastructure"),
+                                    "Area-level scoring: demand, price growth, yield, infrastructure",
+                                    help_text="Bubble chart: X = price YoY growth %, Y = rental yield %. Bubble size = transaction volume. Colour: green ≥75, amber ≥50, red <50 opportunity score. Based on the last 12 months of DLD data."),
                     unsafe_allow_html=True)
         try:
             opps = api.get_market_opportunities(top_n=20)
@@ -65,7 +66,9 @@ def render():
                 st.plotly_chart(fig, use_container_width=True)
 
                 # Top opportunities table
-                st.markdown(section_header("Top Opportunity Areas"), unsafe_allow_html=True)
+                st.markdown(section_header("Top Opportunity Areas",
+                    help_text="Areas ranked by composite opportunity score (0–100) combining demand momentum, price growth, rental yield, and supply levels. Based on the last 12 months of DLD transaction and project data."),
+                    unsafe_allow_html=True)
                 display_cols = ["area_name", "opportunity_score", "success_probability",
                                  "expected_roi_pct", "avg_price_sqft", "transaction_count",
                                  "price_yoy_change_pct", "rental_yield_pct"]
@@ -91,7 +94,8 @@ def render():
     # ── Tab 2: Competitor Intelligence ────────────────────────────
     with tab2:
         st.markdown(section_header("Competitive Intelligence",
-                                    "Developer rankings, platform data, area competition"),
+                                    "Developer rankings, platform data, area competition",
+                                    help_text="Developer market share from DLD project registrations and platform listing analysis from property portals. Identifies dominant players and over-listed vs. under-supplied areas. Data: 2024."),
                     unsafe_allow_html=True)
         try:
             comp = api.get_competitor_analysis()
@@ -121,7 +125,9 @@ def render():
                         use_container_width=True, height=180,
                     )
 
-            st.markdown(section_header("Area Competition Intensity"), unsafe_allow_html=True)
+            st.markdown(section_header("Area Competition Intensity",
+                help_text="Scatter of active listings vs. average asking price per area from property portal data. Large dot = high listing volume. Identifies over-supplied (competitive) vs. under-supplied (opportunity) markets."),
+                unsafe_allow_html=True)
             area_comp = comp.get("area_competition", [])
             if area_comp:
                 df_ac = pd.DataFrame(area_comp)
@@ -137,7 +143,8 @@ def render():
     # ── Tab 3: Infrastructure Impact ──────────────────────────────
     with tab3:
         st.markdown(section_header("Infrastructure Impact Analysis",
-                                    "Active projects driving real estate demand"),
+                                    "Active projects driving real estate demand",
+                                    help_text="UAE infrastructure projects scored by expected real estate impact based on budget size, proximity to residential areas, and project type (metro, road, free zone, etc.). Data as of 2024."),
                     unsafe_allow_html=True)
         try:
             infra = api.get_infrastructure_impact()
@@ -174,7 +181,8 @@ def render():
     # ── Tab 4: Migration & Demographics ───────────────────────────
     with tab4:
         st.markdown(section_header("Migration & Demographic Analysis",
-                                    "Population growth, expat demand, nationality trends"),
+                                    "Population growth, expat demand, nationality trends",
+                                    help_text="UAE and Dubai population trends from World Bank data. Buyer nationality distribution from DLD transaction records (2019–2024). Covers annual population figures and international demand segments."),
                     unsafe_allow_html=True)
         try:
             mig = api.get_migration_analysis()
@@ -210,7 +218,8 @@ def render():
     # ── Tab 5: White Space Analysis ───────────────────────────────
     with tab5:
         st.markdown(section_header("White Space Analysis",
-                                    "High-demand, low-supply areas = untapped opportunity"),
+                                    "High-demand, low-supply areas = untapped opportunity",
+                                    help_text="Areas where transaction demand significantly exceeds available listing supply. White Space Score = demand–supply gap index. High score = strong launch opportunity. Based on 2024 DLD and portal data."),
                     unsafe_allow_html=True)
         try:
             ws = api.get_white_space()

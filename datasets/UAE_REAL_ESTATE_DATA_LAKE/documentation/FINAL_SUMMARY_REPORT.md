@@ -17,7 +17,7 @@ Generated: 2026-06-04 22:00:44
 
 ## DATASETS BY CATEGORY
 
-### 🏠 Real Estate (Tier 1)
+### Real Estate (Tier 1)
 | Dataset | Records | Size |
 |---------|---------|------|
 | dld_areas_lookup | 61 | 0.004 MB |
@@ -30,7 +30,7 @@ Generated: 2026-06-04 22:00:44
 
 **Real Estate Total:** 655,061 records
 
-### 📊 Macroeconomic (Tier 2)
+### Macroeconomic (Tier 2)
 | Dataset | Records | Size |
 |---------|---------|------|
 | country_codes | 249 | 0.136 MB |
@@ -52,7 +52,7 @@ Generated: 2026-06-04 22:00:44
 
 **Macroeconomic Total:** 30,286 records
 
-### 🏗️ Infrastructure (Tier 3)
+### Infrastructure (Tier 3)
 | Dataset | Records | Size |
 |---------|---------|------|
 | airport_codes | 85,543 | 8.819 MB |
@@ -66,7 +66,7 @@ Generated: 2026-06-04 22:00:44
 
 **Infrastructure Total:** 120,406 records
 
-### 📰 News & Sentiment (Tier 4)
+### News & Sentiment (Tier 4)
 | Dataset | Records | Size |
 |---------|---------|------|
 | gdelt_monthly_sentiment_aggregated | 1,200 | 0.062 MB |
@@ -75,7 +75,7 @@ Generated: 2026-06-04 22:00:44
 
 **News Total:** 51,260 records
 
-### 🔍 Competitive Intelligence (Tier 5)
+### Competitive Intelligence (Tier 5)
 | Dataset | Records | Size |
 |---------|---------|------|
 | developer_market_share | 336 | 0.013 MB |
@@ -88,11 +88,11 @@ Generated: 2026-06-04 22:00:44
 
 ## DOWNLOAD STATUS
 
-### ✅ Successfully Acquired (37 datasets)
+### Successfully Acquired (37 datasets)
 - **Directly downloaded from GitHub public datasets:** 10 datasets (GDP, Population, CPI, Gold, Oil, Airport Codes, etc.)
 - **Modeled from official public statistics:** 27 datasets (DLD, FCSC, RTA, GDELT pattern)
 
-### ❌ Inaccessible from Current Environment (13 sources)
+### Inaccessible from Current Environment (13 sources)
 See `logs/failed_downloads.csv` for full details with manual download instructions.
 
 Key blocked sources:

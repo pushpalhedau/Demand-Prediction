@@ -22,7 +22,8 @@ def render():
     # ── Tab 1: Project Launch Advisor ────────────────────────────
     with tab1:
         st.markdown(section_header("AI Project Launch Advisor",
-                                    "Enter your project details to receive an AI-powered launch assessment"),
+                                    "Enter your project details to receive an AI-powered launch assessment",
+                                    help_text="AI viability assessment using DLD project and transaction data. Scores your project on demand alignment, pricing vs. market, absorption velocity, and inventory risk for the selected area."),
                     unsafe_allow_html=True)
         with st.form("launch_form"):
             c1, c2, c3 = st.columns(3)
@@ -56,18 +57,22 @@ def render():
                     render_kpi_row([
                         kpi_card("Success Probability",
                                   f"{success*100:.1f}",
-                                  None, "🎯", suffix="%",
-                                  gradient="emerald" if success > 0.65 else "amber" if success > 0.4 else "rose"),
+                                  None, suffix="%",
+                                  gradient="emerald" if success > 0.65 else "amber" if success > 0.4 else "rose",
+                                  help_text="Model-estimated probability of achieving ≥80% sell-out within 18 months. Based on area demand trends, your pricing vs. market average, and comparable DLD project performance."),
                         kpi_card("Expected Revenue",
                                   f"{result.get('expected_revenue_aed',0)/1e6:.1f}M",
-                                  None, "💰", prefix="AED ", gradient="indigo"),
+                                  None, prefix="AED ", gradient="indigo",
+                                  help_text="Projected total revenue = units × price per sqft × avg unit size. Benchmarked against current DLD market pricing for the selected area and property type."),
                         kpi_card("Months to Sell-Out",
                                   f"{result.get('months_to_sellout',0):.0f}",
-                                  None, "⏱️", gradient="violet"),
+                                  None, gradient="violet",
+                                  help_text="Estimated time to sell all units based on the area's current absorption rate (units sold per month) adjusted for your pricing premium or discount vs. the market."),
                         kpi_card("Inventory Risk",
-                                  inv_risk, None, "⚠️",
+                                  inv_risk, None,
                                   gradient="emerald" if inv_risk == "Low" else
-                                           "amber" if inv_risk == "Medium" else "rose"),
+                                           "amber" if inv_risk == "Medium" else "rose",
+                                  help_text="Risk classification (Low / Medium / High) based on projected months-to-sellout and area supply competition intensity. Derived from DLD project and listing data."),
                     ], cols=4)
 
                     col1, col2 = st.columns([1, 1])
@@ -98,7 +103,9 @@ def render():
                                             color=C_EMERALD)
                             st.plotly_chart(fig, use_container_width=True)
 
-                    st.markdown(section_header("AI Strategic Recommendation"), unsafe_allow_html=True)
+                    st.markdown(section_header("AI Strategic Recommendation",
+                        help_text="GROQ AI-generated launch guidance synthesising your project inputs, the area's DLD market data, comparable project outcomes, and current macro conditions."),
+                        unsafe_allow_html=True)
                     ai_rec = result.get("ai_recommendation", "")
                     if ai_rec:
                         sev = "success" if success > 0.65 else "info" if success > 0.4 else "warning"
@@ -129,15 +136,21 @@ def render():
 
     # ── Tab 2: Portfolio Overview ────────────────────────────────
     with tab2:
-        st.markdown(section_header("Project Portfolio Overview"), unsafe_allow_html=True)
+        st.markdown(section_header("Project Portfolio Overview",
+            help_text="Aggregate view of all projects in the DLD projects database. Covers active, completed, and off-plan developments with sell-through rates and absorption metrics as of 2024."),
+            unsafe_allow_html=True)
         try:
             proj = api.get_project_status()
             summary = proj.get("summary", {})
             render_kpi_row([
-                kpi_card("Total Projects",    str(summary.get("total_projects", 0)),      None, "🏗️", gradient="indigo"),
-                kpi_card("Active Projects",   str(summary.get("active_projects", 0)),     None, "⚡", gradient="emerald"),
-                kpi_card("Total Units",       f"{summary.get('total_units', 0):,}",       None, "🏠", gradient="violet"),
-                kpi_card("Avg Absorption",    f"{summary.get('avg_absorption_rate', 0):.1f}", None, "📊", suffix="%", gradient="amber"),
+                kpi_card("Total Projects", str(summary.get("total_projects", 0)), None, gradient="indigo",
+                         help_text="Total number of real estate projects registered in the DLD projects database across all developers, areas, and project types."),
+                kpi_card("Active Projects", str(summary.get("active_projects", 0)), None, gradient="emerald",
+                         help_text="Projects currently in active construction or sales phase based on DLD project status classification. Excludes completed and cancelled projects."),
+                kpi_card("Total Units", f"{summary.get('total_units', 0):,}", None, gradient="violet",
+                         help_text="Sum of all residential and commercial units across all DLD-tracked projects regardless of current status (active, completed, or off-plan)."),
+                kpi_card("Avg Absorption", f"{summary.get('avg_absorption_rate', 0):.1f}", None, suffix="%", gradient="amber",
+                         help_text="Average sell-through rate across all active projects: (units sold ÷ total units) × 100. Derived from DLD unit sales and project records up to 2024."),
             ], cols=4)
 
             col1, col2 = st.columns([1, 1])
@@ -158,7 +171,9 @@ def render():
 
             top_proj = proj.get("top_projects", [])
             if top_proj:
-                st.markdown(section_header("Top Projects by Unit Count"), unsafe_allow_html=True)
+                st.markdown(section_header("Top Projects by Unit Count",
+                    help_text="Largest projects by total unit count from the DLD projects database. Includes developer, area, current status, units sold percentage, and average price per sqft."),
+                    unsafe_allow_html=True)
                 df_tp = pd.DataFrame(top_proj)
                 disp_cols = ["project_name", "developer", "area", "status",
                               "total_units", "sold_percentage", "avg_price_per_sqft_aed"]
@@ -172,7 +187,8 @@ def render():
     # ── Tab 3: Absorption Analysis ───────────────────────────────
     with tab3:
         st.markdown(section_header("Inventory Absorption Analysis",
-                                    "How quickly is inventory being absorbed by the market?"),
+                                    "How quickly is inventory being absorbed by the market?",
+                                    help_text="Rate at which units are being sold relative to total supply, broken down by developer, area, and project type. Based on DLD unit sales and project records up to 2024."),
                     unsafe_allow_html=True)
         try:
             abs_data = api.get_absorption_analysis()

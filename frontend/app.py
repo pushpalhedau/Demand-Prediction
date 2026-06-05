@@ -19,7 +19,6 @@ import streamlit as st
 # Page config MUST be first Streamlit call
 st.set_page_config(
     page_title="UAE Real Estate Intelligence Platform",
-    page_icon="🏙️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -40,7 +39,6 @@ def main():
         """
         <div style="padding:20px 0 4px;border-bottom:1px solid #1e1e3f;margin-bottom:20px">
           <div style="display:flex;align-items:center;gap:14px">
-            <div style="font-size:28px">🏙️</div>
             <div>
               <div style="font-size:22px;font-weight:800;color:#f1f5f9;letter-spacing:-0.03em">
                 UAE Real Estate Intelligence Platform
@@ -66,7 +64,7 @@ def main():
     health = api.health_check()
     if health.get("status") != "healthy":
         st.error(
-            "⚠️ Backend is not running. Please start FastAPI first:\n\n"
+            "Backend is not running. Please start FastAPI first:\n\n"
             "`uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload`\n\n"
             "Or run `start.bat` to launch both services."
         )
@@ -111,18 +109,18 @@ def main():
     tx_count = record_counts.get("transactions", 0)
     if tx_count:
         st.sidebar.markdown(
-            f'<div style="font-size:11px;color:#94a3b8">📊 {tx_count:,} transactions</div>',
+            f'<div style="font-size:11px;color:#94a3b8">{tx_count:,} transactions</div>',
             unsafe_allow_html=True,
         )
 
     # ── Main Navigation Tabs ────────────────────────────────────
     tab_labels = [
-        "🎯 Executive Command Center",
-        "📈 Forecast & Demand",
-        "🗺️ Market & Opportunity",
-        "👥 Customer & Pricing",
-        "🏗️ Project & Inventory",
-        "🤖 AI Strategy Studio",
+        "Executive Command Center",
+        "Forecast & Demand",
+        "Market & Opportunity",
+        "Customer & Pricing",
+        "Project & Inventory",
+        "AI Strategy Studio",
     ]
     tabs = st.tabs(tab_labels)
 

@@ -126,6 +126,30 @@ def forecast_by_area(
     return results
 
 
+@router.post("/retrain")
+def retrain_models(target: str = Query("units")):
+    """Force retrain — deletes cached files and refits all models from scratch."""
+    from backend.ml.forecasting.ensemble import MODELS_DIR
+    import pathlib
+    removed = []
+    for suffix in ["_meta.json", f"_data.parquet",
+                   "_prophet.pkl", "_lgbm.pkl", "_xgb.pkl", "_catboost.pkl"]:
+        p = pathlib.Path(MODELS_DIR) / f"forecast_{target}{suffix}"
+        if p.exists():
+            p.unlink()
+            removed.append(p.name)
+    if target in _ensembles:
+        del _ensembles[target]
+    fe = _get_ensemble(target)
+    return {
+        "status": "retrained",
+        "target": target,
+        "best_model": fe.best_model,
+        "metrics": fe.metrics,
+        "cache_cleared": removed,
+    }
+
+
 @router.get("/early-warnings")
 def get_early_warnings():
     """Detect early demand warning signals from historical data."""

@@ -1,10 +1,10 @@
-# 🏢 UAE Real Estate Demand Intelligence Platform
+# UAE Real Estate Demand Intelligence Platform
 
 Welcome to the **UAE Real Estate Demand Intelligence Platform**, an enterprise-grade decision support suite that integrates advanced machine learning forecasting models, behavioral buyer segmentation matrices, and interactive simulation capabilities into a cohesive, high-performance web dashboard.
 
 ---
 
-## 🌟 Core Features
+## Core Features
 
 - **Executive Analytics:** High-impact KPI indicators (Total Sales Value AED, Units Transacted, Avg Price/Sq.Ft, Golden Visa transactions, absorption rate) backed by rich Plotly charts.
 - **AI-Powered Forecasting:** Dynamic time-series projections leveraging **Facebook Prophet** integrated with 14 UAE macroeconomic regressors (mortgage rates, oil price, Golden Visa applications, Expo effect, CPI) upsampled daily.
@@ -15,7 +15,7 @@ Welcome to the **UAE Real Estate Demand Intelligence Platform**, an enterprise-g
 
 ---
 
-## 🏗️ Repository Architecture
+## Repository Architecture
 
 The platform is designed with a strictly modular, clean separation of concerns:
 
@@ -61,7 +61,7 @@ uae-real-estate-intelligence/
 
 ---
 
-## ⚡ Quickstart Guide
+## Quickstart Guide
 
 ### 1. Prerequisites
 Ensure you have **Python 3.10 to 3.13** installed on your machine. This platform uses the high-performance **`uv`** package manager for super-fast dependency installations.
@@ -101,7 +101,7 @@ Open `http://localhost:8501` in your browser to explore the fully functional das
 
 ---
 
-## 💾 Database Schema (Star Schema)
+## Database Schema (Star Schema)
 
 The database utilizes standard relational mappings built via SQLAlchemy ORM:
 - **`sales` (Fact Table):** Tracks all individual sale transactions, fully denormalized with region, vehicle categories, and fuel types for high-performance analytical aggregates.

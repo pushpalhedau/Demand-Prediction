@@ -17,107 +17,108 @@ import plotly.graph_objects as go
 
 def render():
     st.markdown(KPI_CSS, unsafe_allow_html=True)
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Natural Language Advisor", "What-If Scenario Engine",
+    tab2, tab3, tab4 = st.tabs([
+        "What-If Scenario Engine",
         "Monte Carlo Simulation", "Investment Calculator"
     ])
 
-    # ── Tab 1: NL Advisor ─────────────────────────────────────────
-    with tab1:
-        st.markdown(section_header("AI Strategy Advisor",
-                                    "Ask any strategic question about the UAE real estate market"),
-                    unsafe_allow_html=True)
-
-        # Example prompts
-        st.markdown("**Example Queries:**")
-        example_prompts = [
-            "Where should I launch a luxury residential project in 2025?",
-            "What happens if interest rates increase by 2%?",
-            "Which area has the highest ROI potential for villa development?",
-            "What segment should we target next quarter for maximum conversion?",
-            "Compare Dubai South vs Business Bay for a mid-market apartment project.",
-        ]
-        cols = st.columns(len(example_prompts))
-        selected_prompt = None
-        for i, (col, prompt) in enumerate(zip(cols, example_prompts)):
-            with col:
-                if st.button(f'"{prompt[:40]}…"', key=f"ex_{i}",
-                              help=prompt,
-                              use_container_width=True):
-                    selected_prompt = prompt
-
-        # Query input
-        default_q = selected_prompt or ""
-        question  = st.text_area(
-            "Your strategic question",
-            value=default_q,
-            height=100,
-            placeholder="e.g. Which areas in Dubai offer the best risk-adjusted returns in 2025?",
-            key="ai_q",
-        )
-
-        if st.button("Ask AI Advisor", key="ask_btn", type="primary"):
-            if question.strip():
-                with st.spinner("AI is analysing market data …"):
-                    try:
-                        result = api.ai_query(question)
-                        st.markdown(
-                            f"""<div class="ai-panel">
-                              <div class="ai-panel-header">
-                                <span class="ai-badge">AI</span>
-                                <span class="ai-panel-title">Strategic Analysis</span>
-                              </div>
-                              <div class="ai-panel-body">{result.get('answer', '')}</div>
-                            </div>""",
-                            unsafe_allow_html=True,
-                        )
-                        meta_c1, meta_c2 = st.columns(2)
-                        meta_c1.caption(f"Context tokens used: {result.get('context_used', 0)}")
-                        meta_c2.caption(f"RAG active: {result.get('rag_available', False)} | AI: {result.get('ai_available', False)}")
-                    except api.APIError as e:
-                        st.error(str(e))
-            else:
-                st.warning("Please enter a question.")
-
-        # Market Comparison
-        st.markdown(section_header("Market Comparison"), unsafe_allow_html=True)
-        comp_areas = st.text_input(
-            "Areas to compare (comma-separated)",
-            value="Dubai South,Downtown Dubai,Business Bay,JVC",
-            key="comp_areas",
-        )
-        if st.button("Compare Markets", key="comp_btn"):
-            with st.spinner("Comparing markets …"):
-                try:
-                    comp = api.compare_markets(comp_areas)
-                    comparisons = comp.get("comparisons", [])
-                    if comparisons:
-                        df_comp = pd.DataFrame(comparisons)
-                        c1, c2 = st.columns([1, 1])
-                        with c1:
-                            fig = bar_chart(df_comp["area"].tolist(), df_comp["avg_psf"].tolist(),
-                                            title="Avg Price / Sqft", horizontal=True,
-                                            height=280, color=C_INDIGO)
-                            st.plotly_chart(fig, use_container_width=True)
-                        with c2:
-                            fig = bar_chart(df_comp["area"].tolist(), df_comp["rental_yield_pct"].tolist(),
-                                            title="Rental Yield %", horizontal=True,
-                                            height=280, color=C_EMERALD)
-                            st.plotly_chart(fig, use_container_width=True)
-                        st.markdown(
-                            f"""<div class="ai-panel"><div class="ai-panel-header">
-                            <span class="ai-badge">AI</span>
-                            <span class="ai-panel-title">Comparative Analysis</span></div>
-                            <div class="ai-panel-body">{comp.get('ai_analysis','')}</div></div>""",
-                            unsafe_allow_html=True,
-                        )
-                except api.APIError as e:
-                    st.error(str(e))
+    # ── Tab 1: NL Advisor (temporarily hidden) ────────────────────
+    # with tab1:
+    #     st.markdown(section_header("AI Strategy Advisor",
+    #                                 "Ask any strategic question about the UAE real estate market"),
+    #                 unsafe_allow_html=True)
+    #
+    #     # Example prompts
+    #     st.markdown("**Example Queries:**")
+    #     example_prompts = [
+    #         "Where should I launch a luxury residential project in 2025?",
+    #         "What happens if interest rates increase by 2%?",
+    #         "Which area has the highest ROI potential for villa development?",
+    #         "What segment should we target next quarter for maximum conversion?",
+    #         "Compare Dubai South vs Business Bay for a mid-market apartment project.",
+    #     ]
+    #     cols = st.columns(len(example_prompts))
+    #     selected_prompt = None
+    #     for i, (col, prompt) in enumerate(zip(cols, example_prompts)):
+    #         with col:
+    #             if st.button(f'"{prompt[:40]}…"', key=f"ex_{i}",
+    #                           help=prompt,
+    #                           use_container_width=True):
+    #                 selected_prompt = prompt
+    #
+    #     # Query input
+    #     default_q = selected_prompt or ""
+    #     question  = st.text_area(
+    #         "Your strategic question",
+    #         value=default_q,
+    #         height=100,
+    #         placeholder="e.g. Which areas in Dubai offer the best risk-adjusted returns in 2025?",
+    #         key="ai_q",
+    #     )
+    #
+    #     if st.button("Ask AI Advisor", key="ask_btn", type="primary"):
+    #         if question.strip():
+    #             with st.spinner("AI is analysing market data …"):
+    #                 try:
+    #                     result = api.ai_query(question)
+    #                     st.markdown(
+    #                         f"""<div class="ai-panel">
+    #                           <div class="ai-panel-header">
+    #                             <span class="ai-badge">AI</span>
+    #                             <span class="ai-panel-title">Strategic Analysis</span>
+    #                           </div>
+    #                           <div class="ai-panel-body">{result.get('answer', '')}</div>
+    #                         </div>""",
+    #                         unsafe_allow_html=True,
+    #                     )
+    #                     meta_c1, meta_c2 = st.columns(2)
+    #                     meta_c1.caption(f"Context tokens used: {result.get('context_used', 0)}")
+    #                     meta_c2.caption(f"RAG active: {result.get('rag_available', False)} | AI: {result.get('ai_available', False)}")
+    #                 except api.APIError as e:
+    #                     st.error(str(e))
+    #         else:
+    #             st.warning("Please enter a question.")
+    #
+    #     # Market Comparison
+    #     st.markdown(section_header("Market Comparison"), unsafe_allow_html=True)
+    #     comp_areas = st.text_input(
+    #         "Areas to compare (comma-separated)",
+    #         value="Dubai South,Downtown Dubai,Business Bay,JVC",
+    #         key="comp_areas",
+    #     )
+    #     if st.button("Compare Markets", key="comp_btn"):
+    #         with st.spinner("Comparing markets …"):
+    #             try:
+    #                 comp = api.compare_markets(comp_areas)
+    #                 comparisons = comp.get("comparisons", [])
+    #                 if comparisons:
+    #                     df_comp = pd.DataFrame(comparisons)
+    #                     c1, c2 = st.columns([1, 1])
+    #                     with c1:
+    #                         fig = bar_chart(df_comp["area"].tolist(), df_comp["avg_psf"].tolist(),
+    #                                         title="Avg Price / Sqft", horizontal=True,
+    #                                         height=280, color=C_INDIGO)
+    #                         st.plotly_chart(fig, use_container_width=True)
+    #                     with c2:
+    #                         fig = bar_chart(df_comp["area"].tolist(), df_comp["rental_yield_pct"].tolist(),
+    #                                         title="Rental Yield %", horizontal=True,
+    #                                         height=280, color=C_EMERALD)
+    #                         st.plotly_chart(fig, use_container_width=True)
+    #                     st.markdown(
+    #                         f"""<div class="ai-panel"><div class="ai-panel-header">
+    #                         <span class="ai-badge">AI</span>
+    #                         <span class="ai-panel-title">Comparative Analysis</span></div>
+    #                         <div class="ai-panel-body">{comp.get('ai_analysis','')}</div></div>""",
+    #                         unsafe_allow_html=True,
+    #                     )
+    #             except api.APIError as e:
+    #                 st.error(str(e))
 
     # ── Tab 2: What-If Scenario Engine ────────────────────────────
     with tab2:
         st.markdown(section_header("What-If Scenario Engine",
-                                    "Adjust market levers to simulate alternative futures"),
+                                    "Adjust market levers to simulate alternative futures",
+                                    help_text="Adjust market levers (interest rates, population growth, new supply, sentiment index) to simulate their combined effect on UAE demand and pricing. Horizon up to 24 months forward."),
                     unsafe_allow_html=True)
 
         # Templates
@@ -232,7 +233,8 @@ def render():
     # ── Tab 3: Monte Carlo ─────────────────────────────────────────
     with tab3:
         st.markdown(section_header("Monte Carlo Simulation",
-                                    "Probabilistic demand and price forecast with uncertainty bands"),
+                                    "Probabilistic demand and price forecast with uncertainty bands",
+                                    help_text="Runs N randomised demand and price trajectories based on historical volatility. Outputs P10 (bear case), P50 (base case), and P90 (bull case) scenario bounds over the selected horizon."),
                     unsafe_allow_html=True)
         c1, c2, c3, c4 = st.columns(4)
         with c1:
@@ -270,7 +272,8 @@ def render():
     # ── Tab 4: Investment Calculator ──────────────────────────────
     with tab4:
         st.markdown(section_header("Investment ROI Calculator",
-                                    "Full financial analysis with AI verdict"),
+                                    "Full financial analysis with AI verdict",
+                                    help_text="Full return-on-investment analysis for a given property. Calculates gross yield, capital gain, annual cash flow, total net return, and payback period based on your input assumptions."),
                     unsafe_allow_html=True)
         with st.form("inv_form"):
             c1, c2 = st.columns(2)
@@ -294,15 +297,19 @@ def render():
                         i_apprc, float(i_finance), i_mort,
                     )
                     render_kpi_row([
-                        kpi_card("Total ROI",           f"{res.get('total_roi_pct',0):.1f}",
-                                  None, "📈", suffix="%",
-                                  gradient="emerald" if res.get("total_roi_pct",0)>20 else "amber"),
-                        kpi_card("Annualised ROI",      f"{res.get('annualised_roi_pct',0):.1f}",
-                                  None, "📊", suffix="%", gradient="indigo"),
-                        kpi_card("Total Return",        f"{res.get('total_return_aed',0)/1e6:.1f}M",
-                                  None, "💰", prefix="AED ", gradient="emerald"),
-                        kpi_card("Payback Period",      f"{res.get('payback_years',0):.1f}",
-                                  None, "⏱️", suffix=" yrs", gradient="violet"),
+                        kpi_card("Total ROI", f"{res.get('total_roi_pct',0):.1f}",
+                                  None, suffix="%",
+                                  gradient="emerald" if res.get("total_roi_pct",0)>20 else "amber",
+                                  help_text="Total return on invested equity over the full holding period: (rental income + capital gain − costs) ÷ equity invested × 100. Covers your selected holding period."),
+                        kpi_card("Annualised ROI", f"{res.get('annualised_roi_pct',0):.1f}",
+                                  None, suffix="%", gradient="indigo",
+                                  help_text="Compound annual growth rate of your total return over the holding period. Useful for comparing this investment to other asset classes on an apples-to-apples basis."),
+                        kpi_card("Total Return", f"{res.get('total_return_aed',0)/1e6:.1f}M",
+                                  None, prefix="AED ", gradient="emerald",
+                                  help_text="Absolute AED return over the holding period = cumulative rental income + capital gain on exit. Does not account for financing costs unless a mortgage rate is entered."),
+                        kpi_card("Payback Period", f"{res.get('payback_years',0):.1f}",
+                                  None, suffix=" yrs", gradient="violet",
+                                  help_text="Years required for cumulative rental income to recover the initial equity outlay. Shorter payback indicates a higher-yielding or lower-leverage investment."),
                     ], cols=4)
 
                     c1, c2 = st.columns(2)
@@ -327,7 +334,9 @@ def render():
                         fig = pc(labels, vals, title="Return Composition", height=280)
                         st.plotly_chart(fig, use_container_width=True)
 
-                    st.markdown(section_header("AI Investment Verdict"), unsafe_allow_html=True)
+                    st.markdown(section_header("AI Investment Verdict",
+                        help_text="GROQ AI verdict synthesising your financial inputs, area market benchmarks from DLD data, and current macro conditions into a buy / hold / caution recommendation."),
+                        unsafe_allow_html=True)
                     verdict = res.get("ai_verdict", "")
                     if verdict:
                         st.markdown(

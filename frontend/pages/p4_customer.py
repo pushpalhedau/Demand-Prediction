@@ -24,7 +24,8 @@ def render():
     # ── Tab 1: Buyer Segmentation ────────────────────────────────
     with tab1:
         st.markdown(section_header("AI Buyer Segmentation",
-                                    "KMeans clustering on DLD transaction profiles"),
+                                    "KMeans clustering on DLD transaction profiles",
+                                    help_text="KMeans clustering on DLD transaction profiles (value, area, property type, nationality, bedroom count). 6 buyer segments derived from 456,000 transactions spanning 2019–2024."),
                     unsafe_allow_html=True)
         try:
             seg_data = api.get_buyer_segments()
@@ -49,7 +50,9 @@ def render():
                 st.plotly_chart(fig, use_container_width=True)
 
             # 2D Projection
-            st.markdown(section_header("Segment 2D Map (PCA)", "Visual cluster separation"), unsafe_allow_html=True)
+            st.markdown(section_header("Segment 2D Map (PCA)", "Visual cluster separation",
+                help_text="PCA projection of buyer transaction feature vectors into 2D space. Each dot = one buyer transaction; colours = assigned segment. A sample of 2,000 records is shown for visual clarity."),
+                unsafe_allow_html=True)
             try:
                 map_data = api.get_segment_map(sample=2000)
                 if map_data.get("x"):
@@ -79,7 +82,8 @@ def render():
     # ── Tab 2: Price Intelligence ────────────────────────────────
     with tab2:
         st.markdown(section_header("Dynamic Price Intelligence",
-                                    "AI-powered price prediction and elasticity analysis"),
+                                    "AI-powered price prediction and elasticity analysis",
+                                    help_text="Price predictor trained on DLD transaction data (2019–2024). Enter property specs to get a market-calibrated price per sqft and total price recommendation with confidence score."),
                     unsafe_allow_html=True)
 
         # Price predictor
@@ -116,7 +120,9 @@ def render():
                 st.error(str(e))
 
         # Price trends by area
-        st.markdown(section_header("Price Trends by Area"), unsafe_allow_html=True)
+        st.markdown(section_header("Price Trends by Area",
+            help_text="Average AED per sqft per quarter for the top 8 areas by transaction volume. Derived from DLD transaction records from 2019 through 2024. Useful for spotting area-level price cycles."),
+            unsafe_allow_html=True)
         try:
             pt = api.get_price_trends_by_area(top_areas=8)
             trends = pt.get("trends", [])
@@ -141,7 +147,8 @@ def render():
 
         # Price elasticity
         st.markdown(section_header("Price Elasticity by Area",
-                                    "Negative elasticity = price-sensitive demand"),
+                                    "Negative elasticity = price-sensitive demand",
+                                    help_text="Demand elasticity per area: how much demand changes (%) for a 1% price change. Negative = price-sensitive buyers. Estimated via log-log regression on DLD transaction data (2019–2024)."),
                     unsafe_allow_html=True)
         try:
             elast = api.get_price_elasticity()
@@ -164,18 +171,24 @@ def render():
 
     # ── Tab 3: Rental Analysis ───────────────────────────────────
     with tab3:
-        st.markdown(section_header("Rental Market Intelligence"), unsafe_allow_html=True)
+        st.markdown(section_header("Rental Market Intelligence",
+            help_text="Summary metrics from the DLD rental contract database covering all registered residential leases across Dubai from 2019 to 2024."),
+            unsafe_allow_html=True)
         try:
             rent = api.get_rental_analysis()
             summary = rent.get("summary", {})
             render_kpi_row([
-                kpi_card("Total Contracts",   f"{summary.get('total_contracts',0):,}", None, "📄", gradient="indigo"),
-                kpi_card("Avg Annual Rent",   f"{summary.get('avg_annual_rent',0)/1000:.0f}K",
-                          None, "💰", prefix="AED ", gradient="emerald"),
+                kpi_card("Total Contracts", f"{summary.get('total_contracts',0):,}", None, gradient="indigo",
+                         help_text="Total DLD-registered rental contracts for the selected year. Covers all residential and commercial leases across Dubai areas."),
+                kpi_card("Avg Annual Rent", f"{summary.get('avg_annual_rent',0)/1000:.0f}K",
+                          None, prefix="AED ", gradient="emerald",
+                          help_text="Mean annual rent (AED) from DLD rental contracts for the selected year. Can be skewed by high-value properties — compare with the median below."),
                 kpi_card("Median Annual Rent", f"{summary.get('median_annual_rent',0)/1000:.0f}K",
-                          None, "📊", prefix="AED ", gradient="violet"),
-                kpi_card("Renewal Rate",      f"{summary.get('renewal_rate_pct',0):.1f}",
-                          None, "🔄", suffix="%", gradient="amber"),
+                          None, prefix="AED ", gradient="violet",
+                          help_text="Median annual rent from DLD contracts for the selected year. More robust than the mean as it is unaffected by extreme high or low values."),
+                kpi_card("Renewal Rate", f"{summary.get('renewal_rate_pct',0):.1f}",
+                          None, suffix="%", gradient="amber",
+                          help_text="Percentage of DLD contracts classified as renewals vs. new leases for the selected year. Higher values indicate tenant stability and a mature rental market."),
             ], cols=4)
 
             col1, col2 = st.columns(2)
@@ -200,7 +213,9 @@ def render():
 
     # ── Tab 4: Nationality Demand ────────────────────────────────
     with tab4:
-        st.markdown(section_header("Buyer Nationality Intelligence"), unsafe_allow_html=True)
+        st.markdown(section_header("Buyer Nationality Intelligence",
+            help_text="Top 15 nationalities by DLD transaction count. Source: buyer nationality field in DLD transaction records. Current year shown with YoY change vs. prior year."),
+            unsafe_allow_html=True)
         try:
             nat = api.get_nationality_demand(top_n=15)
             data = nat.get("data", [])
@@ -229,7 +244,9 @@ def render():
 
                 # Preferences
                 prefs = api.get_property_preferences()
-                st.markdown(section_header("Market-Wide Preferences"), unsafe_allow_html=True)
+                st.markdown(section_header("Market-Wide Preferences",
+                    help_text="Aggregated buyer preferences across all nationalities: off-plan vs. ready, property type split, and bedroom size demand. Derived from DLD transaction records for the selected year."),
+                    unsafe_allow_html=True)
                 c1, c2, c3 = st.columns(3)
                 c1.metric("Off-Plan Share", f"{prefs.get('off_plan_share', 0):.1f}%")
                 c2.metric("Avg Transaction", f"AED {prefs.get('avg_transaction_value', 0):,.0f}")

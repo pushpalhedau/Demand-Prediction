@@ -177,7 +177,7 @@ PLOTLY_DARK_TEMPLATE = {
         "paper_bgcolor": "rgba(0,0,0,0)",
         "plot_bgcolor":  "rgba(0,0,0,0)",
         "font":          {"family": "Inter, sans-serif", "color": "#94a3b8", "size": 12},
-        "title":         {"font": {"color": "#f1f5f9", "size": 16, "family": "Inter"}, "x": 0.02},
+        "title":         {"text": "", "font": {"color": "#f1f5f9", "size": 16, "family": "Inter"}, "x": 0.02},
         "xaxis": {
             "gridcolor": "#1e1e3f", "gridwidth": 1,
             "linecolor": "#1e1e3f", "tickcolor": "#1e1e3f",

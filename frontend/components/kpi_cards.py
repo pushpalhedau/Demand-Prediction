@@ -9,7 +9,7 @@ from typing import Optional
 
 def kpi_card(label: str, value: str, change_pct: Optional[float] = None,
              icon: str = "", suffix: str = "", prefix: str = "",
-             gradient: str = "indigo") -> str:
+             gradient: str = "indigo", help_text: str = "") -> str:
     gradients = {
         "indigo":  "linear-gradient(135deg, #312e81, #4338ca)",
         "emerald": "linear-gradient(135deg, #064e3b, #065f46)",
@@ -34,9 +34,17 @@ def kpi_card(label: str, value: str, change_pct: Optional[float] = None,
         else:
             change_html = f'<div class="kpi-change kpi-neutral">→ Unchanged</div>'
 
+    info_html = (
+        f'<div class="kpi-info-wrap">'
+        f'<span class="kpi-info-icon">i</span>'
+        f'<div class="kpi-info-tip">{help_text}</div>'
+        f'</div>'
+    ) if help_text else ""
+
     return f"""
 <div class="kpi-card" style="background:{bg}">
   <div class="kpi-bar" style="background:{bar}"></div>
+  {info_html}
   <div class="kpi-icon">{icon}</div>
   <div class="kpi-label">{label}</div>
   <div class="kpi-value">{prefix}{value}{suffix}</div>
@@ -63,11 +71,11 @@ def alert_card(title: str, description: str, severity: str = "warning",
         "success":  ("#10b981", "rgba(16,185,129,0.1)"),
     }
     icons = {
-        "critical": "🔴", "high": "🔴", "warning": "🟡",
-        "medium": "🟡", "info": "🔵", "low": "🟢", "success": "🟢",
+        "critical": "!!", "high": "!!", "warning": "!",
+        "medium": "!", "info": "i", "low": "", "success": "",
     }
     border_color, bg = colors.get(severity, colors["info"])
-    icon = icons.get(severity, "ℹ️")
+    icon = icons.get(severity, "i")
     action_html = f'<div class="alert-action">→ {action}</div>' if action else ""
     return f"""
 <div class="alert-card" style="border-left-color:{border_color};background:{bg}">
@@ -93,9 +101,19 @@ def ai_insight_panel(text: str, title: str = "AI Strategic Insight") -> str:
 """
 
 
-def section_header(title: str, subtitle: str = "") -> str:
+def section_header(title: str, subtitle: str = "", help_text: str = "") -> str:
     sub = f'<div class="sh-subtitle">{subtitle}</div>' if subtitle else ""
-    return f'<div class="section-header"><div class="sh-title">{title}</div>{sub}</div>'
+    info_html = (
+        f'<div class="sh-info-wrap">'
+        f'<span class="sh-info-icon">i</span>'
+        f'<div class="sh-info-tip">{help_text}</div>'
+        f'</div>'
+    ) if help_text else ""
+    return (
+        f'<div class="section-header">'
+        f'<div class="sh-title-row"><div class="sh-title">{title}</div>{info_html}</div>'
+        f'{sub}</div>'
+    )
 
 
 def score_badge(score: float, label: str = "", size: str = "md") -> str:
@@ -120,7 +138,7 @@ def score_badge(score: float, label: str = "", size: str = "md") -> str:
 
 KPI_CSS = """
 <style>
-.kpi-grid { display: grid; gap: 14px; margin: 16px 0; }
+.kpi-grid { display: grid; gap: 14px; margin: 16px 0; overflow: visible; }
 .kpi-grid-4 { grid-template-columns: repeat(4, 1fr); }
 .kpi-grid-3 { grid-template-columns: repeat(3, 1fr); }
 .kpi-grid-2 { grid-template-columns: repeat(2, 1fr); }
@@ -129,7 +147,7 @@ KPI_CSS = """
   border-radius: 14px;
   padding: 20px 20px 16px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   transition: transform .2s, box-shadow .2s;
   border: 1px solid rgba(255,255,255,0.06);
 }
@@ -175,7 +193,66 @@ KPI_CSS = """
 .ai-panel-body  { font-size: 14px; color: #a5b4fc; line-height: 1.75; }
 
 .section-header { margin: 24px 0 14px; }
+.sh-title-row { display: flex; align-items: center; }
 .sh-title   { font-size: 17px; font-weight: 700; color: #f1f5f9; }
 .sh-subtitle{ font-size: 12px; color: #64748b; margin-top: 3px; }
+
+/* ── Info icon — KPI card ───────────────────────────────────── */
+.kpi-info-wrap {
+  position: absolute; top: 10px; right: 10px; z-index: 20;
+}
+.kpi-info-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.4);
+  font-size: 9px; font-weight: 700; font-style: italic;
+  cursor: help; border: 1px solid rgba(255,255,255,0.13);
+  font-family: Georgia, serif; transition: all 0.15s; line-height: 1;
+}
+.kpi-info-wrap:hover .kpi-info-icon {
+  background: rgba(99,102,241,0.35); color: #c7d2fe;
+  border-color: rgba(99,102,241,0.55);
+}
+.kpi-info-tip {
+  visibility: hidden; opacity: 0;
+  position: absolute; right: 0; top: calc(100% + 6px);
+  width: 215px; background: #111128;
+  border: 1px solid #3730a3; border-radius: 8px;
+  padding: 9px 11px; font-size: 11px; color: #a5b4fc;
+  line-height: 1.55; box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+  z-index: 99999; transition: opacity 0.15s; pointer-events: none;
+  font-style: normal; font-weight: 400;
+}
+.kpi-info-wrap:hover .kpi-info-tip { visibility: visible; opacity: 1; }
+
+/* ── Info icon — section header ─────────────────────────────── */
+.sh-info-wrap {
+  position: relative; display: inline-flex;
+  align-items: center; margin-left: 8px;
+}
+.sh-info-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: rgba(99,102,241,0.12); color: #818cf8;
+  font-size: 9px; font-weight: 700; font-style: italic;
+  cursor: help; border: 1px solid rgba(99,102,241,0.22);
+  font-family: Georgia, serif; transition: all 0.15s; line-height: 1;
+}
+.sh-info-wrap:hover .sh-info-icon {
+  background: rgba(99,102,241,0.28); color: #c7d2fe;
+  border-color: rgba(99,102,241,0.5);
+}
+.sh-info-tip {
+  visibility: hidden; opacity: 0;
+  position: absolute; left: 0; top: calc(100% + 6px);
+  width: 255px; background: #111128;
+  border: 1px solid #3730a3; border-radius: 8px;
+  padding: 9px 12px; font-size: 11px; color: #a5b4fc;
+  line-height: 1.55; box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+  z-index: 99999; transition: opacity 0.15s; pointer-events: none;
+  font-style: normal; font-weight: 400;
+}
+.sh-info-wrap:hover .sh-info-tip { visibility: visible; opacity: 1; }
 </style>
 """
