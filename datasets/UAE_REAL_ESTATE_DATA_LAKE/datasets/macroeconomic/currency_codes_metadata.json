@@ -1,0 +1,19 @@
+{
+  "dataset_name": "currency_codes",
+  "source": "ISO 4217 Currency Codes",
+  "download_url": "ISO 4217 Currency Codes",
+  "file_path": "/home/claude/datasets/macroeconomic/currency_codes.csv",
+  "record_count": 449,
+  "columns": [
+    "Entity",
+    "Currency",
+    "AlphabeticCode",
+    "NumericCode",
+    "MinorUnit",
+    "WithdrawalDate"
+  ],
+  "column_count": 6,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.019,
+  "generated_at": "2026-06-04T21:59:48.273165"
+}

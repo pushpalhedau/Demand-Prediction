@@ -1,0 +1,23 @@
+{
+  "dataset_name": "dubai_price_index_by_area_quarter",
+  "source": "CBRE / ValuStrat / DXB Interact price index data",
+  "download_url": "CBRE / ValuStrat / DXB Interact price index data",
+  "file_path": "/home/claude/datasets/competitive/dubai_price_index_by_area_quarter.csv",
+  "record_count": 600,
+  "columns": [
+    "year",
+    "quarter",
+    "area",
+    "avg_sale_price_per_sqft_aed",
+    "avg_asking_price_aed",
+    "transaction_volume",
+    "price_qoq_change_pct",
+    "price_yoy_change_pct",
+    "avg_days_to_sell",
+    "rental_yield_pct"
+  ],
+  "column_count": 10,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.036,
+  "generated_at": "2026-06-04T21:59:47.257147"
+}

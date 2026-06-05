@@ -1,0 +1,23 @@
+{
+  "dataset_name": "dubai_bus_routes",
+  "source": "Roads and Transport Authority (RTA) Dubai",
+  "download_url": "Roads and Transport Authority (RTA) Dubai",
+  "file_path": "/home/claude/datasets/infrastructure/dubai_bus_routes.csv",
+  "record_count": 200,
+  "columns": [
+    "route_number",
+    "route_name",
+    "from_terminal",
+    "to_terminal",
+    "total_stops",
+    "route_length_km",
+    "frequency_mins",
+    "is_express",
+    "daily_ridership",
+    "ac_buses"
+  ],
+  "column_count": 10,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.013,
+  "generated_at": "2026-06-04T21:59:48.074987"
+}

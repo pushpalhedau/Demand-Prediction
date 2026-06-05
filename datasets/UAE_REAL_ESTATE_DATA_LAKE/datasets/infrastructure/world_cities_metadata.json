@@ -1,0 +1,17 @@
+{
+  "dataset_name": "world_cities",
+  "source": "https://raw.githubusercontent.com/datasets/world-cities/master/data/world-cities.csv",
+  "download_url": "https://raw.githubusercontent.com/datasets/world-cities/master/data/world-cities.csv",
+  "file_path": "/home/claude/datasets/infrastructure/world_cities.csv",
+  "record_count": 33747,
+  "columns": [
+    "name",
+    "country",
+    "subcountry",
+    "geonameid"
+  ],
+  "column_count": 4,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 1.318,
+  "generated_at": "2026-06-04T21:59:48.192231"
+}

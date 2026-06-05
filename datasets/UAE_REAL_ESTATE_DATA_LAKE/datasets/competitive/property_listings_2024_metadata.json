@@ -1,0 +1,33 @@
+{
+  "dataset_name": "property_listings_2024",
+  "source": "Property Finder / Bayut (publicly available listings) - Modeled",
+  "download_url": "Property Finder / Bayut (publicly available listings) - Modeled",
+  "file_path": "/home/claude/datasets/competitive/property_listings_2024.csv",
+  "record_count": 75000,
+  "columns": [
+    "listing_id",
+    "platform",
+    "listing_date",
+    "area",
+    "listing_type",
+    "property_type",
+    "bedrooms",
+    "bathrooms",
+    "area_sqft",
+    "price_aed",
+    "price_per_sqft",
+    "is_furnished",
+    "has_parking",
+    "view",
+    "days_on_market",
+    "num_views",
+    "num_inquiries",
+    "developer",
+    "is_verified",
+    "agent_id"
+  ],
+  "column_count": 20,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 10.006,
+  "generated_at": "2026-06-04T21:59:47.572874"
+}

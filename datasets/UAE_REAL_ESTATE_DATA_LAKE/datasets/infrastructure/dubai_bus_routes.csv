@@ -1,0 +1,201 @@
+route_number,route_name,from_terminal,to_terminal,total_stops,route_length_km,frequency_mins,is_express,daily_ridership,ac_buses
+444,Route 1,Al Satwa,International City,33,75.9,10,False,6190,True
+510,Route 2,Al Ghubaiba,Silicon Oasis,8,68.8,20,False,3925,True
+458,Route 3,Ibn Battuta,International City,21,41.1,15,False,21305,True
+403,Route 4,Mall of Emirates,International City,12,17.9,30,False,6324,True
+408,Route 5,JBR,Dubai Airport,29,45.9,30,True,4916,True
+271,Route 6,Al Satwa,Silicon Oasis,38,84.6,20,True,5388,True
+874,Route 7,Al Ghubaiba,International City,45,40.9,20,False,17289,True
+734,Route 8,JBR,Jebel Ali,23,17.0,60,False,3712,True
+756,Route 9,Al Satwa,Motor City,14,53.8,30,False,4268,True
+062,Route 10,Mall of Emirates,Silicon Oasis,19,48.5,20,True,16107,True
+317,Route 11,Al Ghubaiba,International City,37,51.0,15,False,21502,True
+529,Route 12,Deira,International City,45,64.1,10,True,4269,True
+003,Route 13,Al Ghubaiba,Silicon Oasis,33,54.4,30,False,24488,True
+243,Route 14,Al Satwa,Jebel Ali,20,30.6,10,False,14794,True
+601,Route 15,Al Satwa,Jebel Ali,27,9.8,10,True,18336,True
+354,Route 16,Ibn Battuta,Jebel Ali,34,61.5,20,False,9735,True
+578,Route 17,Deira,Silicon Oasis,9,47.4,15,False,20355,True
+849,Route 18,Al Satwa,Silicon Oasis,43,83.7,30,True,17855,True
+593,Route 19,Ibn Battuta,Motor City,26,80.9,15,False,1720,True
+998,Route 20,Mall of Emirates,Motor City,11,35.4,15,False,13102,True
+994,Route 21,Al Satwa,Silicon Oasis,44,53.9,20,False,11692,True
+213,Route 22,Deira,Silicon Oasis,35,19.0,20,False,5143,True
+787,Route 23,Al Satwa,International City,19,64.8,20,False,8652,True
+874,Route 24,Al Satwa,Dubai Airport,26,78.1,60,False,19032,True
+772,Route 25,Al Satwa,Silicon Oasis,9,55.0,10,False,22844,True
+326,Route 26,Mall of Emirates,Dubai Airport,11,33.0,15,True,23356,True
+847,Route 27,JBR,Motor City,25,64.6,60,False,8219,True
+406,Route 28,Ibn Battuta,Motor City,17,72.3,10,True,5746,True
+479,Route 29,Al Satwa,Motor City,35,11.1,15,True,20135,True
+882,Route 30,Deira,Jebel Ali,31,41.4,20,True,20419,True
+483,Route 31,Deira,Silicon Oasis,20,14.2,20,False,17384,True
+142,Route 32,JBR,Jebel Ali,14,54.2,15,False,2193,True
+168,Route 33,Al Ghubaiba,International City,17,16.8,20,False,19038,True
+300,Route 34,Al Ghubaiba,Silicon Oasis,16,55.3,15,False,15429,True
+591,Route 35,Ibn Battuta,Jebel Ali,21,39.5,20,True,14028,True
+195,Route 36,Al Satwa,International City,25,76.2,30,False,24913,True
+014,Route 37,Al Satwa,International City,18,8.8,15,False,22846,True
+921,Route 38,JBR,Jebel Ali,28,33.2,20,False,20531,True
+741,Route 39,Al Satwa,Silicon Oasis,33,71.6,10,False,15849,True
+002,Route 40,Ibn Battuta,Silicon Oasis,14,21.1,60,True,22304,True
+269,Route 41,Mall of Emirates,Silicon Oasis,35,44.3,15,False,1975,True
+482,Route 42,Al Ghubaiba,Jebel Ali,13,25.5,15,False,18122,True
+456,Route 43,JBR,Silicon Oasis,43,74.2,10,False,7601,True
+549,Route 44,Al Ghubaiba,Motor City,25,14.9,15,False,2929,True
+500,Route 45,Deira,Silicon Oasis,28,60.5,20,False,7962,True
+263,Route 46,Al Satwa,Dubai Airport,27,34.4,20,True,3286,True
+184,Route 47,Al Satwa,Motor City,36,26.5,60,False,15039,True
+255,Route 48,Al Ghubaiba,Jebel Ali,27,46.3,60,False,18945,True
+851,Route 49,Deira,Dubai Airport,25,36.0,15,False,17685,True
+531,Route 50,Al Ghubaiba,Motor City,37,63.7,15,False,5955,True
+010,Route 51,Mall of Emirates,Jebel Ali,33,26.6,20,False,8208,True
+157,Route 52,Al Satwa,Jebel Ali,44,79.1,15,False,7657,True
+896,Route 53,JBR,Dubai Airport,45,35.6,20,False,9560,True
+370,Route 54,JBR,Dubai Airport,9,84.9,10,False,9915,True
+137,Route 55,Deira,Jebel Ali,18,20.6,20,False,19741,True
+333,Route 56,Al Ghubaiba,Jebel Ali,26,19.2,15,False,8310,True
+968,Route 57,Deira,Silicon Oasis,24,9.5,20,False,10567,True
+948,Route 58,Al Ghubaiba,Dubai Airport,40,72.4,15,False,12305,True
+505,Route 59,Mall of Emirates,Motor City,22,19.5,10,True,15712,True
+473,Route 60,Deira,International City,8,46.6,10,True,17127,True
+790,Route 61,Al Ghubaiba,International City,43,75.5,20,False,6180,True
+078,Route 62,Al Ghubaiba,Jebel Ali,37,34.9,20,False,12401,True
+061,Route 63,Mall of Emirates,Motor City,21,32.1,10,True,19767,True
+830,Route 64,Deira,Silicon Oasis,18,55.4,15,True,18719,True
+903,Route 65,Al Ghubaiba,Motor City,26,60.7,20,False,7058,True
+286,Route 66,Al Satwa,Silicon Oasis,35,25.8,20,False,4002,True
+294,Route 67,JBR,Jebel Ali,40,8.1,15,False,5029,True
+335,Route 68,JBR,Jebel Ali,32,50.9,20,False,9052,True
+009,Route 69,Al Ghubaiba,Silicon Oasis,40,55.7,60,False,17882,True
+217,Route 70,Al Ghubaiba,International City,40,40.2,20,False,11504,True
+072,Route 71,Al Satwa,Silicon Oasis,20,63.3,15,False,15267,True
+580,Route 72,Al Satwa,International City,16,72.8,15,False,16449,True
+745,Route 73,Mall of Emirates,Motor City,44,79.0,15,False,2893,True
+781,Route 74,JBR,Motor City,29,71.7,15,False,2994,True
+274,Route 75,Mall of Emirates,Jebel Ali,22,47.5,10,False,5446,True
+165,Route 76,JBR,Dubai Airport,24,62.3,30,False,12015,True
+340,Route 77,Al Satwa,Silicon Oasis,35,53.2,10,False,14121,True
+727,Route 78,Mall of Emirates,International City,11,51.2,20,True,10182,True
+660,Route 79,Al Satwa,Jebel Ali,26,13.4,20,False,12373,True
+517,Route 80,Mall of Emirates,Jebel Ali,26,69.3,20,False,16729,True
+572,Route 81,JBR,International City,29,47.7,15,False,20541,True
+443,Route 82,Al Ghubaiba,Jebel Ali,12,50.3,15,False,14892,True
+809,Route 83,JBR,Jebel Ali,24,57.9,15,False,23281,True
+540,Route 84,JBR,Jebel Ali,35,52.4,20,False,11972,True
+158,Route 85,JBR,International City,28,20.3,60,False,8842,True
+468,Route 86,JBR,Dubai Airport,40,61.0,10,False,8609,True
+421,Route 87,JBR,Jebel Ali,35,37.3,30,False,7925,True
+336,Route 88,Ibn Battuta,Motor City,10,8.7,20,False,22384,True
+037,Route 89,Deira,Dubai Airport,23,55.4,15,True,11997,True
+079,Route 90,Mall of Emirates,International City,27,61.1,15,False,5469,True
+863,Route 91,Deira,Jebel Ali,38,37.1,10,False,14560,True
+682,Route 92,Al Ghubaiba,International City,15,35.8,15,False,18982,True
+915,Route 93,Deira,Motor City,8,76.3,20,True,8425,True
+009,Route 94,Deira,Jebel Ali,9,31.2,60,False,11855,True
+875,Route 95,Al Satwa,Dubai Airport,26,18.3,60,False,2629,True
+733,Route 96,JBR,Silicon Oasis,36,29.4,15,False,12122,True
+240,Route 97,Al Satwa,Jebel Ali,18,59.5,15,False,17065,True
+987,Route 98,Al Satwa,Motor City,34,58.5,15,False,511,True
+510,Route 99,Al Satwa,Dubai Airport,30,13.1,30,False,19161,True
+276,Route 100,Deira,Motor City,21,20.7,15,False,12420,True
+883,Route 101,Al Ghubaiba,Dubai Airport,27,17.6,30,False,24371,True
+518,Route 102,Al Satwa,International City,13,55.8,60,False,3405,True
+183,Route 103,Al Ghubaiba,Motor City,38,47.0,20,False,3273,True
+600,Route 104,Mall of Emirates,Silicon Oasis,19,50.6,10,False,20694,True
+369,Route 105,Mall of Emirates,Dubai Airport,33,47.8,30,False,23377,True
+657,Route 106,Deira,Dubai Airport,39,53.4,15,True,13119,True
+676,Route 107,Deira,Dubai Airport,28,38.3,10,False,6851,True
+717,Route 108,Al Ghubaiba,Jebel Ali,20,72.1,15,False,1751,True
+130,Route 109,Al Ghubaiba,Silicon Oasis,37,66.8,20,False,14529,True
+485,Route 110,Al Satwa,International City,8,21.2,15,False,548,True
+401,Route 111,Mall of Emirates,Jebel Ali,15,66.6,30,False,7542,True
+256,Route 112,Mall of Emirates,Silicon Oasis,44,29.2,20,False,20366,True
+029,Route 113,Al Ghubaiba,Motor City,17,16.0,10,False,7271,True
+730,Route 114,Al Ghubaiba,International City,40,72.5,15,True,13886,True
+655,Route 115,Mall of Emirates,International City,32,9.8,15,True,13046,True
+238,Route 116,Ibn Battuta,Dubai Airport,32,15.9,10,False,13246,True
+157,Route 117,Mall of Emirates,Jebel Ali,11,8.2,20,False,19025,True
+209,Route 118,Al Ghubaiba,Motor City,43,85.0,20,True,1808,True
+580,Route 119,Ibn Battuta,Jebel Ali,12,42.1,15,False,18717,True
+938,Route 120,Ibn Battuta,Dubai Airport,22,27.8,20,False,23946,True
+301,Route 121,Deira,Dubai Airport,20,63.5,15,False,20012,True
+468,Route 122,JBR,Jebel Ali,39,15.1,15,False,14937,True
+136,Route 123,Al Satwa,Dubai Airport,45,31.3,20,False,2545,True
+490,Route 124,JBR,Dubai Airport,38,22.0,15,False,8404,True
+020,Route 125,JBR,Jebel Ali,12,40.5,20,True,3360,True
+450,Route 126,Mall of Emirates,Motor City,39,30.5,20,False,23430,True
+969,Route 127,Ibn Battuta,International City,39,34.7,15,True,1005,True
+190,Route 128,Mall of Emirates,Jebel Ali,32,79.0,30,False,16244,True
+606,Route 129,Al Satwa,Motor City,22,70.0,15,False,20771,True
+129,Route 130,Mall of Emirates,Jebel Ali,40,44.9,10,False,17957,True
+213,Route 131,Deira,Jebel Ali,39,32.8,30,False,20449,True
+447,Route 132,Deira,Dubai Airport,30,53.4,20,False,19089,True
+028,Route 133,Ibn Battuta,Motor City,28,59.2,60,False,11524,True
+851,Route 134,Al Ghubaiba,International City,34,53.7,10,False,13024,True
+899,Route 135,Mall of Emirates,Silicon Oasis,44,36.8,20,False,12346,True
+331,Route 136,JBR,Silicon Oasis,31,51.3,20,False,6221,True
+141,Route 137,Al Satwa,International City,18,9.6,15,False,13739,True
+512,Route 138,Deira,Silicon Oasis,16,47.1,10,False,8846,True
+255,Route 139,Al Ghubaiba,Silicon Oasis,24,66.7,15,False,14351,True
+296,Route 140,Mall of Emirates,International City,28,8.9,15,False,949,True
+124,Route 141,Deira,International City,36,71.4,20,True,10221,True
+698,Route 142,Al Ghubaiba,Motor City,45,77.0,20,False,20087,True
+265,Route 143,Al Satwa,Jebel Ali,24,34.1,10,True,7223,True
+414,Route 144,Mall of Emirates,International City,12,21.5,15,False,776,True
+395,Route 145,Ibn Battuta,Silicon Oasis,31,44.0,30,True,20684,True
+112,Route 146,Mall of Emirates,Silicon Oasis,17,73.0,20,False,16378,True
+747,Route 147,Al Satwa,Jebel Ali,34,78.7,15,True,8320,True
+141,Route 148,Mall of Emirates,Jebel Ali,23,34.8,15,False,20068,True
+060,Route 149,Al Satwa,International City,45,65.3,30,False,22858,True
+190,Route 150,Deira,Silicon Oasis,40,65.4,15,False,19619,True
+497,Route 151,Al Satwa,Motor City,41,29.3,20,True,19284,True
+451,Route 152,Mall of Emirates,Jebel Ali,29,21.6,10,False,3179,True
+123,Route 153,JBR,Jebel Ali,28,37.9,30,True,19472,True
+313,Route 154,Ibn Battuta,Motor City,40,32.7,20,False,10965,True
+756,Route 155,Ibn Battuta,International City,19,52.9,60,True,12975,True
+583,Route 156,Al Ghubaiba,International City,28,76.3,15,False,5522,True
+336,Route 157,Ibn Battuta,Dubai Airport,24,33.7,10,False,23063,True
+058,Route 158,Mall of Emirates,Jebel Ali,41,24.1,15,False,7292,True
+895,Route 159,Deira,Jebel Ali,36,35.0,15,False,6872,True
+721,Route 160,Ibn Battuta,Motor City,38,71.8,10,False,9560,True
+912,Route 161,Mall of Emirates,Dubai Airport,18,78.6,15,False,22853,True
+709,Route 162,JBR,Silicon Oasis,26,18.1,10,False,16326,True
+972,Route 163,Al Satwa,Silicon Oasis,10,17.9,15,False,7345,True
+197,Route 164,JBR,Dubai Airport,18,70.6,15,True,1097,True
+322,Route 165,JBR,Silicon Oasis,14,54.9,20,False,5294,True
+689,Route 166,Deira,International City,30,55.8,30,False,9827,True
+564,Route 167,JBR,Dubai Airport,39,44.3,20,True,2259,True
+912,Route 168,Mall of Emirates,Silicon Oasis,10,19.2,30,False,15387,True
+248,Route 169,Mall of Emirates,Motor City,40,82.1,10,True,21845,True
+037,Route 170,Deira,International City,17,35.5,15,False,11571,True
+670,Route 171,Al Ghubaiba,Jebel Ali,16,37.4,30,False,2049,True
+054,Route 172,Mall of Emirates,Jebel Ali,29,18.8,60,True,5792,True
+284,Route 173,JBR,Jebel Ali,10,65.7,15,False,18757,True
+369,Route 174,Al Ghubaiba,International City,22,63.7,10,True,9375,True
+246,Route 175,Deira,Jebel Ali,39,67.1,15,False,18798,True
+266,Route 176,Deira,Motor City,13,79.6,60,False,24964,True
+015,Route 177,Al Ghubaiba,International City,39,34.3,15,False,11525,True
+931,Route 178,Ibn Battuta,Jebel Ali,20,76.6,20,False,13042,True
+490,Route 179,Mall of Emirates,Dubai Airport,11,9.5,60,False,24196,True
+369,Route 180,Mall of Emirates,Silicon Oasis,22,9.7,20,False,8630,True
+102,Route 181,Deira,Motor City,33,21.4,30,False,10692,True
+713,Route 182,Al Satwa,Jebel Ali,26,79.2,20,False,4413,True
+125,Route 183,Ibn Battuta,Motor City,11,67.3,15,False,12732,True
+057,Route 184,Al Satwa,Jebel Ali,18,31.6,15,False,7163,True
+471,Route 185,Deira,International City,43,80.3,30,False,22644,True
+054,Route 186,Ibn Battuta,Motor City,39,26.5,30,False,4308,True
+035,Route 187,Mall of Emirates,Jebel Ali,16,60.0,15,False,18818,True
+524,Route 188,Al Ghubaiba,Jebel Ali,14,58.5,20,True,20150,True
+198,Route 189,Deira,Jebel Ali,37,79.0,15,True,21749,True
+529,Route 190,Deira,Motor City,39,54.3,60,False,14742,True
+070,Route 191,JBR,Motor City,29,33.3,20,False,24486,True
+777,Route 192,Ibn Battuta,International City,37,46.6,30,False,2145,True
+465,Route 193,Deira,Jebel Ali,28,35.6,15,False,23436,True
+051,Route 194,Mall of Emirates,Silicon Oasis,16,67.2,30,False,5853,True
+113,Route 195,Al Ghubaiba,International City,22,58.6,15,True,12225,True
+893,Route 196,Ibn Battuta,Jebel Ali,20,64.2,30,True,10693,True
+148,Route 197,Deira,International City,33,46.7,15,False,17091,True
+790,Route 198,Ibn Battuta,Jebel Ali,25,32.6,30,True,6856,True
+717,Route 199,Al Satwa,Dubai Airport,25,9.3,10,True,9767,True
+597,Route 200,Mall of Emirates,Motor City,45,44.6,15,False,23142,True

@@ -1,0 +1,23 @@
+{
+  "dataset_name": "uae_employment_statistics",
+  "source": "FCSC Labor Force Statistics",
+  "download_url": "FCSC Labor Force Statistics",
+  "file_path": "/home/claude/datasets/macroeconomic/uae_employment_statistics.csv",
+  "record_count": 60,
+  "columns": [
+    "year",
+    "quarter",
+    "date",
+    "labor_force_thousands",
+    "employed_thousands",
+    "unemployment_rate_pct",
+    "private_sector_pct",
+    "construction_employment_thousands",
+    "real_estate_employment_thousands",
+    "avg_monthly_salary_aed"
+  ],
+  "column_count": 10,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.003,
+  "generated_at": "2026-06-04T21:59:48.333593"
+}

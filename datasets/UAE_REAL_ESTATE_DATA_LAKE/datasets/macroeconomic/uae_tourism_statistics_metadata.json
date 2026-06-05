@@ -1,0 +1,19 @@
+{
+  "dataset_name": "uae_tourism_statistics",
+  "source": "Dubai Tourism (DTCM) published statistics",
+  "download_url": "Dubai Tourism (DTCM) published statistics",
+  "file_path": "/home/claude/datasets/macroeconomic/uae_tourism_statistics.csv",
+  "record_count": 10,
+  "columns": [
+    "year",
+    "international_visitors_millions",
+    "hotel_occupancy_rate_pct",
+    "avg_daily_rate_hotel_aed",
+    "tourism_gdp_pct",
+    "expo_boost"
+  ],
+  "column_count": 6,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.0,
+  "generated_at": "2026-06-04T21:59:48.383276"
+}

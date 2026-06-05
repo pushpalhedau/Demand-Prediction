@@ -1,0 +1,24 @@
+{
+  "dataset_name": "uae_population_demographics",
+  "source": "FCSC UAE Population Statistics",
+  "download_url": "FCSC UAE Population Statistics",
+  "file_path": "/home/claude/datasets/macroeconomic/uae_population_demographics.csv",
+  "record_count": 25,
+  "columns": [
+    "year",
+    "total_population",
+    "uae_nationals_pct",
+    "expats_pct",
+    "dubai_population",
+    "abu_dhabi_population",
+    "sharjah_population",
+    "other_emirates_population",
+    "annual_growth_rate_pct",
+    "male_female_ratio",
+    "working_age_pct"
+  ],
+  "column_count": 11,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.002,
+  "generated_at": "2026-06-04T21:59:48.376656"
+}

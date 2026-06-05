@@ -1,0 +1,15 @@
+{
+  "dataset_name": "oil_prices_brent",
+  "source": "https://raw.githubusercontent.com/datasets/oil-prices/master/data/brent-monthly.csv",
+  "download_url": "https://raw.githubusercontent.com/datasets/oil-prices/master/data/brent-monthly.csv",
+  "file_path": "/home/claude/datasets/macroeconomic/oil_prices_brent.csv",
+  "record_count": 469,
+  "columns": [
+    "Date",
+    "Price"
+  ],
+  "column_count": 2,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.008,
+  "generated_at": "2026-06-04T21:59:48.310286"
+}

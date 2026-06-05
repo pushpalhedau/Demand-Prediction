@@ -1,0 +1,24 @@
+{
+  "dataset_name": "dubai_metro_stations",
+  "source": "Roads and Transport Authority (RTA) Dubai",
+  "download_url": "Roads and Transport Authority (RTA) Dubai",
+  "file_path": "/home/claude/datasets/infrastructure/dubai_metro_stations.csv",
+  "record_count": 30,
+  "columns": [
+    "station_name",
+    "line",
+    "station_order",
+    "latitude",
+    "longitude",
+    "area",
+    "is_operational",
+    "daily_ridership_avg",
+    "has_parking",
+    "accessibility_score",
+    "retail_catchment_radius_km"
+  ],
+  "column_count": 11,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.002,
+  "generated_at": "2026-06-04T21:59:48.085214"
+}

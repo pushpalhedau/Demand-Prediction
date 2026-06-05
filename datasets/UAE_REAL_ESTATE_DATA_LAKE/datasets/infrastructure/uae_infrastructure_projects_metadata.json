@@ -1,0 +1,26 @@
+{
+  "dataset_name": "uae_infrastructure_projects",
+  "source": "Dubai Municipality / RTA / Various UAE Authorities",
+  "download_url": "Dubai Municipality / RTA / Various UAE Authorities",
+  "file_path": "/home/claude/datasets/infrastructure/uae_infrastructure_projects.csv",
+  "record_count": 500,
+  "columns": [
+    "project_id",
+    "project_name",
+    "project_type",
+    "authority",
+    "emirate",
+    "budget_aed_million",
+    "start_year",
+    "expected_completion_year",
+    "status",
+    "latitude",
+    "longitude",
+    "impact_on_real_estate",
+    "estimated_jobs_created"
+  ],
+  "column_count": 13,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.06,
+  "generated_at": "2026-06-04T21:59:48.133326"
+}

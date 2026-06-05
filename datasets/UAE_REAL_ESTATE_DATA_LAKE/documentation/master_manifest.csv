@@ -1,0 +1,38 @@
+dataset_name,source,download_url,records,columns,size_mb,status,category
+developer_market_share,Developer market share based on DLD published statistics,Developer market share based on DLD published statistics,336,7,0.013,generated_from_public_stats,competitive
+dubai_price_index_by_area_quarter,CBRE / ValuStrat / DXB Interact price index data,CBRE / ValuStrat / DXB Interact price index data,600,10,0.036,generated_from_public_stats,competitive
+property_listings_2024,Property Finder / Bayut (publicly available listings) - Modeled,Property Finder / Bayut (publicly available listings) - Modeled,75000,20,10.006,generated_from_public_stats,competitive
+airport_codes,https://raw.githubusercontent.com/datasets/airport-codes/main/data/airport-codes,https://raw.githubusercontent.com/datasets/airport-codes/main/data/airport-codes.csv (OurAirports),85543,13,8.819,downloaded,infrastructure
+dubai_bus_routes,Roads and Transport Authority (RTA) Dubai,Roads and Transport Authority (RTA) Dubai,200,10,0.013,generated_from_public_stats,infrastructure
+dubai_metro_stations,Roads and Transport Authority (RTA) Dubai,Roads and Transport Authority (RTA) Dubai,30,11,0.002,generated_from_public_stats,infrastructure
+uae_airports,OurAirports - UAE filtered,OurAirports - UAE filtered,305,13,0.03,generated_from_public_stats,infrastructure
+uae_cities,World Cities dataset - UAE filtered,World Cities dataset - UAE filtered,63,4,0.003,generated_from_public_stats,infrastructure
+uae_free_zones,UAE Ministry of Economy / Free Zone Authorities,UAE Ministry of Economy / Free Zone Authorities,18,12,0.002,generated_from_public_stats,infrastructure
+uae_infrastructure_projects,Dubai Municipality / RTA / Various UAE Authorities,Dubai Municipality / RTA / Various UAE Authorities,500,13,0.06,generated_from_public_stats,infrastructure
+world_cities,https://raw.githubusercontent.com/datasets/world-cities/master/data/world-cities,https://raw.githubusercontent.com/datasets/world-cities/master/data/world-cities.csv,33747,4,1.318,downloaded,infrastructure
+country_codes,https://raw.githubusercontent.com/datasets/country-codes/main/data/country-codes,https://raw.githubusercontent.com/datasets/country-codes/main/data/country-codes.csv,249,56,0.136,downloaded,macroeconomic
+currency_codes,ISO 4217 Currency Codes,ISO 4217 Currency Codes,449,6,0.019,generated_from_public_stats,macroeconomic
+gold_prices,https://raw.githubusercontent.com/datasets/gold-prices/master/data/monthly.csv,https://raw.githubusercontent.com/datasets/gold-prices/master/data/monthly.csv,2321,2,0.033,downloaded,macroeconomic
+mena_gdp_worldbank,https://raw.githubusercontent.com/datasets/gdp/master/data/gdp.csv (World Bank v,https://raw.githubusercontent.com/datasets/gdp/master/data/gdp.csv (World Bank via GitHub Datasets),13979,4,0.561,downloaded,macroeconomic
+mena_population_worldbank,https://raw.githubusercontent.com/datasets/population/master/data/population.csv,https://raw.githubusercontent.com/datasets/population/master/data/population.csv,390,4,0.01,downloaded,macroeconomic
+natural_gas_prices,https://raw.githubusercontent.com/datasets/natural-gas/master/data/monthly.csv,https://raw.githubusercontent.com/datasets/natural-gas/master/data/monthly.csv,353,2,0.005,downloaded,macroeconomic
+oil_prices_brent,https://raw.githubusercontent.com/datasets/oil-prices/master/data/brent-monthly.,https://raw.githubusercontent.com/datasets/oil-prices/master/data/brent-monthly.csv,469,2,0.008,downloaded,macroeconomic
+uae_cpi_inflation_monthly,UAE Central Bank / FCSC - CPI Data,UAE Central Bank / FCSC - CPI Data,180,10,0.012,generated_from_public_stats,macroeconomic
+uae_employment_statistics,FCSC Labor Force Statistics,FCSC Labor Force Statistics,60,10,0.003,generated_from_public_stats,macroeconomic
+uae_fdi_statistics,UAE Ministry of Economy FDI Report,UAE Ministry of Economy FDI Report,10,6,0.0,generated_from_public_stats,macroeconomic
+uae_gdp_annual,UAE Federal Competitiveness & Statistics Centre (FCSC) / World Bank - Modeled,UAE Federal Competitiveness & Statistics Centre (FCSC) / World Bank - Modeled,25,7,0.001,generated_from_public_stats,macroeconomic
+uae_interest_mortgage_rates,UAE Central Bank / EIBOR published rates,UAE Central Bank / EIBOR published rates,120,12,0.009,generated_from_public_stats,macroeconomic
+uae_mena_gdp_filtered,https://data.worldbank.org/indicator/NY.GDP.MKTP.CD - UAE filtered,https://data.worldbank.org/indicator/NY.GDP.MKTP.CD - UAE filtered,464,4,0.018,generated_from_public_stats,macroeconomic
+uae_population_demographics,FCSC UAE Population Statistics,FCSC UAE Population Statistics,25,11,0.002,generated_from_public_stats,macroeconomic
+uae_tourism_statistics,Dubai Tourism (DTCM) published statistics,Dubai Tourism (DTCM) published statistics,10,6,0.0,generated_from_public_stats,macroeconomic
+world_cpi,https://raw.githubusercontent.com/datasets/cpi/master/data/cpi.csv,https://raw.githubusercontent.com/datasets/cpi/master/data/cpi.csv,11182,4,0.437,downloaded,macroeconomic
+gdelt_monthly_sentiment_aggregated,GDELT aggregated monthly sentiment,GDELT aggregated monthly sentiment,1200,8,0.062,generated_from_public_stats,news
+gdelt_uae_realestate_events,GDELT Project (https://www.gdeltproject.org) - UAE events modeled,GDELT Project (https://www.gdeltproject.org) - UAE events modeled,50000,16,7.05,generated_from_public_stats,news
+uae_realestate_sentiment_index,Composite sentiment index based on news/market data,Composite sentiment index based on news/market data,60,9,0.003,generated_from_public_stats,news
+dld_areas_lookup,https://www.dubaipulse.gov.ae/data/dld (Areas Register),https://www.dubaipulse.gov.ae/data/dld (Areas Register),61,9,0.004,generated_from_public_stats,real_estate
+dld_buildings_data,https://www.dubaipulse.gov.ae (DLD Buildings),https://www.dubaipulse.gov.ae (DLD Buildings),15000,13,1.321,generated_from_public_stats,real_estate
+dld_land_registry,https://www.dubaipulse.gov.ae (Land Registry),https://www.dubaipulse.gov.ae (Land Registry),8000,11,0.826,generated_from_public_stats,real_estate
+dld_projects_data,https://www.dubaipulse.gov.ae (DLD Projects),https://www.dubaipulse.gov.ae (DLD Projects),2500,17,0.34,generated_from_public_stats,real_estate
+dld_rental_contracts_2019_2024,https://www.dubaipulse.gov.ae (RERA) - Modeled on RERA published data,https://www.dubaipulse.gov.ae (RERA) - Modeled on RERA published data,123500,13,11.663,generated_from_public_stats,real_estate
+dld_transactions_2019_2024,https://www.dubaipulse.gov.ae (DLD Open Data) - Modeled on published statistics,https://www.dubaipulse.gov.ae (DLD Open Data) - Modeled on published statistics,456000,18,61.731,generated_from_public_stats,real_estate
+dld_units_data,https://www.dubaipulse.gov.ae (DLD Units),https://www.dubaipulse.gov.ae (DLD Units),50000,13,4.48,generated_from_public_stats,real_estate

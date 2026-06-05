@@ -1,0 +1,15 @@
+{
+  "dataset_name": "gold_prices",
+  "source": "https://raw.githubusercontent.com/datasets/gold-prices/master/data/monthly.csv",
+  "download_url": "https://raw.githubusercontent.com/datasets/gold-prices/master/data/monthly.csv",
+  "file_path": "/home/claude/datasets/macroeconomic/gold_prices.csv",
+  "record_count": 2321,
+  "columns": [
+    "Date",
+    "Price"
+  ],
+  "column_count": 2,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.033,
+  "generated_at": "2026-06-04T21:59:48.278607"
+}

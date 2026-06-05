@@ -1,0 +1,19 @@
+{
+  "dataset_name": "uae_fdi_statistics",
+  "source": "UAE Ministry of Economy FDI Report",
+  "download_url": "UAE Ministry of Economy FDI Report",
+  "file_path": "/home/claude/datasets/macroeconomic/uae_fdi_statistics.csv",
+  "record_count": 10,
+  "columns": [
+    "year",
+    "fdi_inflows_usd_billion",
+    "fdi_real_estate_pct",
+    "fdi_financial_services_pct",
+    "fdi_manufacturing_pct",
+    "top_source_country"
+  ],
+  "column_count": 6,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.0,
+  "generated_at": "2026-06-04T21:59:48.341201"
+}

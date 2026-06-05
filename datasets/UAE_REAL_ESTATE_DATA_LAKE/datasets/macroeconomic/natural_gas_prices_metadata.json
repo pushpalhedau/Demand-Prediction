@@ -1,0 +1,15 @@
+{
+  "dataset_name": "natural_gas_prices",
+  "source": "https://raw.githubusercontent.com/datasets/natural-gas/master/data/monthly.csv",
+  "download_url": "https://raw.githubusercontent.com/datasets/natural-gas/master/data/monthly.csv",
+  "file_path": "/home/claude/datasets/macroeconomic/natural_gas_prices.csv",
+  "record_count": 353,
+  "columns": [
+    "Month",
+    "Price"
+  ],
+  "column_count": 2,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.005,
+  "generated_at": "2026-06-04T21:59:48.306456"
+}

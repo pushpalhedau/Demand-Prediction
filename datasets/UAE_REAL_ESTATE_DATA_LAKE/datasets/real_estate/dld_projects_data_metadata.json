@@ -1,0 +1,30 @@
+{
+  "dataset_name": "dld_projects_data",
+  "source": "https://www.dubaipulse.gov.ae (DLD Projects)",
+  "download_url": "https://www.dubaipulse.gov.ae (DLD Projects)",
+  "file_path": "/home/claude/datasets/real_estate/dld_projects_data.csv",
+  "record_count": 2500,
+  "columns": [
+    "project_id",
+    "project_name",
+    "developer",
+    "area",
+    "project_type",
+    "total_units",
+    "sold_units",
+    "sold_percentage",
+    "launch_year",
+    "completion_year",
+    "status",
+    "avg_price_per_sqft_aed",
+    "min_price_aed",
+    "max_price_aed",
+    "floors",
+    "has_amenities",
+    "is_freehold"
+  ],
+  "column_count": 17,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.34,
+  "generated_at": "2026-06-04T21:59:48.756625"
+}

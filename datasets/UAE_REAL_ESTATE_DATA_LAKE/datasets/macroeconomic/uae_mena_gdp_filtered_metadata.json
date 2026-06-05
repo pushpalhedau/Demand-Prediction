@@ -1,0 +1,17 @@
+{
+  "dataset_name": "uae_mena_gdp_filtered",
+  "source": "https://data.worldbank.org/indicator/NY.GDP.MKTP.CD - UAE filtered",
+  "download_url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.CD - UAE filtered",
+  "file_path": "/home/claude/datasets/macroeconomic/uae_mena_gdp_filtered.csv",
+  "record_count": 464,
+  "columns": [
+    "Country Name",
+    "Country Code",
+    "Year",
+    "Value"
+  ],
+  "column_count": 4,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.018,
+  "generated_at": "2026-06-04T21:59:48.366140"
+}

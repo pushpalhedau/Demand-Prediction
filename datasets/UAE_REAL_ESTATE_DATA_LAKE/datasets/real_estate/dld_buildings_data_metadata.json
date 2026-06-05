@@ -1,0 +1,26 @@
+{
+  "dataset_name": "dld_buildings_data",
+  "source": "https://www.dubaipulse.gov.ae (DLD Buildings)",
+  "download_url": "https://www.dubaipulse.gov.ae (DLD Buildings)",
+  "file_path": "/home/claude/datasets/real_estate/dld_buildings_data.csv",
+  "record_count": 15000,
+  "columns": [
+    "building_id",
+    "building_name",
+    "area",
+    "building_type",
+    "floors",
+    "units_count",
+    "built_year",
+    "parking_spaces",
+    "has_gym",
+    "has_pool",
+    "has_concierge",
+    "service_charge_per_sqft",
+    "grade"
+  ],
+  "column_count": 13,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 1.321,
+  "generated_at": "2026-06-04T21:59:48.690073"
+}

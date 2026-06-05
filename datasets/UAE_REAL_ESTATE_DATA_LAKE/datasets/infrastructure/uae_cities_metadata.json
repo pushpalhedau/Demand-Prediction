@@ -1,0 +1,17 @@
+{
+  "dataset_name": "uae_cities",
+  "source": "World Cities dataset - UAE filtered",
+  "download_url": "World Cities dataset - UAE filtered",
+  "file_path": "/home/claude/datasets/infrastructure/uae_cities.csv",
+  "record_count": 63,
+  "columns": [
+    "name",
+    "country",
+    "subcountry",
+    "geonameid"
+  ],
+  "column_count": 4,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.003,
+  "generated_at": "2026-06-04T21:59:48.105539"
+}

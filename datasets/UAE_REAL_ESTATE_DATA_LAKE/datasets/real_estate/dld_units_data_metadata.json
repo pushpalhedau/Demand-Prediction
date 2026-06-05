@@ -1,0 +1,26 @@
+{
+  "dataset_name": "dld_units_data",
+  "source": "https://www.dubaipulse.gov.ae (DLD Units)",
+  "download_url": "https://www.dubaipulse.gov.ae (DLD Units)",
+  "file_path": "/home/claude/datasets/real_estate/dld_units_data.csv",
+  "record_count": 50000,
+  "columns": [
+    "unit_id",
+    "building_id",
+    "unit_number",
+    "floor",
+    "bedrooms",
+    "bathrooms",
+    "area_sqft",
+    "property_type",
+    "view",
+    "is_furnished",
+    "current_status",
+    "last_transaction_year",
+    "last_sale_price_aed"
+  ],
+  "column_count": 13,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 4.48,
+  "generated_at": "2026-06-04T21:59:51.121924"
+}

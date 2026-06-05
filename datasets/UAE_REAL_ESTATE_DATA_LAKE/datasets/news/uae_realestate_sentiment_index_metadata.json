@@ -1,0 +1,22 @@
+{
+  "dataset_name": "uae_realestate_sentiment_index",
+  "source": "Composite sentiment index based on news/market data",
+  "download_url": "Composite sentiment index based on news/market data",
+  "file_path": "/home/claude/datasets/news/uae_realestate_sentiment_index.csv",
+  "record_count": 60,
+  "columns": [
+    "date",
+    "year",
+    "month",
+    "real_estate_sentiment_index",
+    "buyer_confidence_index",
+    "seller_confidence_index",
+    "media_sentiment_score",
+    "search_volume_index",
+    "social_media_buzz_index"
+  ],
+  "column_count": 9,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.003,
+  "generated_at": "2026-06-04T21:59:48.629518"
+}

@@ -1,0 +1,22 @@
+{
+  "dataset_name": "dld_areas_lookup",
+  "source": "https://www.dubaipulse.gov.ae/data/dld (Areas Register)",
+  "download_url": "https://www.dubaipulse.gov.ae/data/dld (Areas Register)",
+  "file_path": "/home/claude/datasets/real_estate/dld_areas_lookup.csv",
+  "record_count": 61,
+  "columns": [
+    "area_code",
+    "area_name",
+    "emirate",
+    "zone_type",
+    "primary_use",
+    "municipality",
+    "avg_price_per_sqft_2024",
+    "num_projects",
+    "established_year"
+  ],
+  "column_count": 9,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.004,
+  "generated_at": "2026-06-04T21:59:48.638598"
+}

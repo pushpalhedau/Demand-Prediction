@@ -1,0 +1,501 @@
+project_id,project_name,project_type,authority,emirate,budget_aed_million,start_year,expected_completion_year,status,latitude,longitude,impact_on_real_estate,estimated_jobs_created
+INFRA-0001,Smart City - Zone 18,Smart City,Smart Dubai,Dubai,342,2021,2026,Completed,25.1131,55.3851,Medium,5966
+INFRA-0002,Cycling Track - Zone 9,Cycling Track,ADJP,Sharjah,2565,2020,2024,In Progress,25.0755,55.0674,Medium,2948
+INFRA-0003,Free Zone - Zone 17,Free Zone,ADNOC,Dubai,3490,2018,2022,Planned,25.0614,55.6299,High,5785
+INFRA-0004,Port Development - Zone 17,Port Development,RTA,Dubai,878,2021,2024,Planned,24.8468,54.9342,Low,5196
+INFRA-0005,Road Widening - Zone 16,Road Widening,DEWA,Other,3104,2022,2025,Completed,25.3234,55.024,Medium,9139
+INFRA-0006,Metro Expansion - Zone 17,Metro Expansion,DMRC,Abu Dhabi,3268,2023,2025,Completed,25.099,55.4535,Medium,9753
+INFRA-0007,District Cooling - Zone 17,District Cooling,Dubai South,Sharjah,3387,2024,2028,Completed,25.3403,55.575,High,6775
+INFRA-0008,Mixed Use Development Zone - Zone 10,Mixed Use Development Zone,ADJP,Dubai,3638,2024,2025,Completed,25.2887,55.5213,High,2133
+INFRA-0009,Smart City - Zone 2,Smart City,RTA,Dubai,1255,2019,2020,Tendered,25.1497,55.6797,Medium,4623
+INFRA-0010,Road Widening - Zone 9,Road Widening,ADNOC,Dubai,3271,2022,2024,Completed,25.3655,55.1236,Low,2996
+INFRA-0011,Smart Road - Zone 16,Smart Road,ADJP,Dubai,2612,2018,2021,Completed,25.1045,54.9813,Low,4267
+INFRA-0012,District Cooling - Zone 13,District Cooling,DEWA,Dubai,2301,2019,2021,In Progress,24.9051,55.3783,High,4115
+INFRA-0013,Water Infrastructure - Zone 11,Water Infrastructure,RTA,Other,1204,2018,2019,In Progress,25.1052,55.6231,High,7325
+INFRA-0014,Mixed Use Development Zone - Zone 7,Mixed Use Development Zone,Dubai South,Dubai,3826,2022,2025,Planned,25.064,55.2682,Medium,4951
+INFRA-0015,District Cooling - Zone 1,District Cooling,Dubai South,Dubai,3023,2023,2027,Completed,25.0223,55.5104,Medium,8193
+INFRA-0016,Metro Expansion - Zone 17,Metro Expansion,Expo Authority,Dubai,1086,2019,2024,Planned,25.2115,54.9895,Medium,3421
+INFRA-0017,Smart City - Zone 1,Smart City,RTA,Dubai,499,2022,2024,Tendered,25.2013,55.0204,Medium,1005
+INFRA-0018,Port Development - Zone 15,Port Development,Smart Dubai,Abu Dhabi,1982,2019,2024,In Progress,25.3769,54.9625,Low,6480
+INFRA-0019,Free Zone - Zone 14,Free Zone,ADNOC,Abu Dhabi,3267,2023,2025,Planned,25.2421,55.5757,Medium,9656
+INFRA-0020,Cycling Track - Zone 2,Cycling Track,DMRC,Dubai,3258,2024,2027,Completed,25.0756,55.3354,Medium,9318
+INFRA-0021,Smart City - Zone 8,Smart City,RTA,Abu Dhabi,2293,2018,2020,Planned,25.2617,55.6488,Low,4342
+INFRA-0022,Free Zone - Zone 1,Free Zone,RTA,Dubai,4312,2024,2029,In Progress,25.3609,55.0223,Medium,1370
+INFRA-0023,Water Infrastructure - Zone 19,Water Infrastructure,ADNOC,Dubai,173,2021,2025,Completed,24.8427,55.3647,Medium,9676
+INFRA-0024,Metro Expansion - Zone 17,Metro Expansion,RTA,Dubai,1561,2022,2023,Completed,25.3334,55.5557,Medium,502
+INFRA-0025,Mixed Use Development Zone - Zone 9,Mixed Use Development Zone,DMRC,Dubai,3690,2021,2026,Completed,25.2202,55.3644,Medium,5639
+INFRA-0026,Metro Expansion - Zone 13,Metro Expansion,RTA,Dubai,4794,2019,2020,In Progress,25.0157,55.3762,Low,5725
+INFRA-0027,District Cooling - Zone 18,District Cooling,ADNOC,Dubai,2867,2021,2023,Completed,25.007,54.9386,Medium,6465
+INFRA-0028,District Cooling - Zone 16,District Cooling,RTA,Abu Dhabi,2619,2019,2020,In Progress,25.0988,55.3209,Low,8591
+INFRA-0029,Cycling Track - Zone 12,Cycling Track,Smart Dubai,Dubai,2121,2024,2029,In Progress,25.2226,55.3598,Medium,3201
+INFRA-0030,Smart Road - Zone 11,Smart Road,DEWA,Sharjah,3713,2021,2022,In Progress,24.919,55.0237,Low,1607
+INFRA-0031,Cycling Track - Zone 18,Cycling Track,Dubai Municipality,Sharjah,3256,2022,2023,In Progress,24.9353,55.402,High,4955
+INFRA-0032,Smart City - Zone 4,Smart City,RTA,Sharjah,1359,2024,2029,In Progress,25.2645,55.5601,Medium,8151
+INFRA-0033,Airport Expansion - Zone 1,Airport Expansion,ADNOC,Dubai,2163,2020,2023,Completed,25.0694,55.1858,Low,8719
+INFRA-0034,Metro Expansion - Zone 5,Metro Expansion,Expo Authority,Abu Dhabi,4440,2022,2023,Planned,25.0378,55.5153,High,6715
+INFRA-0035,Free Zone - Zone 9,Free Zone,ADNOC,Dubai,2338,2018,2023,In Progress,25.0861,55.1162,Medium,8601
+INFRA-0036,Mixed Use Development Zone - Zone 17,Mixed Use Development Zone,Smart Dubai,Sharjah,1397,2020,2021,In Progress,25.0074,54.9584,High,5168
+INFRA-0037,Airport Expansion - Zone 8,Airport Expansion,DEWA,Dubai,3817,2024,2025,In Progress,25.3641,55.1257,High,7647
+INFRA-0038,Airport Expansion - Zone 10,Airport Expansion,Dubai Municipality,Abu Dhabi,3701,2021,2024,Completed,24.9137,55.1845,Low,7745
+INFRA-0039,Port Development - Zone 2,Port Development,DEWA,Sharjah,3389,2018,2021,Completed,24.9854,55.5116,Medium,2764
+INFRA-0040,Metro Expansion - Zone 6,Metro Expansion,DEWA,Sharjah,225,2023,2027,Tendered,25.004,55.0248,High,8746
+INFRA-0041,Road Widening - Zone 17,Road Widening,Smart Dubai,Dubai,1716,2022,2025,Planned,24.8075,55.1146,Low,5993
+INFRA-0042,Free Zone - Zone 16,Free Zone,DEWA,Abu Dhabi,171,2019,2020,Completed,25.183,55.1427,Medium,6690
+INFRA-0043,Smart City - Zone 11,Smart City,Expo Authority,Abu Dhabi,2033,2024,2029,Completed,24.8673,55.0653,Medium,5631
+INFRA-0044,Port Development - Zone 16,Port Development,Smart Dubai,Sharjah,2328,2024,2025,In Progress,25.0316,55.4043,High,6580
+INFRA-0045,Metro Expansion - Zone 1,Metro Expansion,RTA,Dubai,330,2021,2022,In Progress,25.0383,55.2631,High,3099
+INFRA-0046,Cycling Track - Zone 12,Cycling Track,ADNOC,Abu Dhabi,813,2022,2024,Completed,24.9676,55.4791,Low,3640
+INFRA-0047,Road Widening - Zone 9,Road Widening,DMRC,Dubai,3063,2022,2023,Completed,24.9005,55.0843,High,7311
+INFRA-0048,Free Zone - Zone 11,Free Zone,Expo Authority,Abu Dhabi,538,2023,2027,Completed,25.1343,55.2785,Medium,6429
+INFRA-0049,Cycling Track - Zone 8,Cycling Track,ADNOC,Other,3192,2022,2025,In Progress,25.0513,55.5149,Medium,8893
+INFRA-0050,Port Development - Zone 3,Port Development,Expo Authority,Dubai,4742,2018,2019,In Progress,25.2323,54.961,Low,7681
+INFRA-0051,Smart City - Zone 4,Smart City,ADNOC,Abu Dhabi,838,2019,2020,In Progress,25.0115,54.9529,Medium,8345
+INFRA-0052,Cycling Track - Zone 17,Cycling Track,RTA,Sharjah,3516,2019,2023,In Progress,24.8846,54.9427,Low,1737
+INFRA-0053,Road Widening - Zone 8,Road Widening,DMRC,Dubai,4584,2019,2020,Completed,25.0108,55.4801,High,8771
+INFRA-0054,Airport Expansion - Zone 14,Airport Expansion,RTA,Dubai,4230,2023,2024,In Progress,25.3247,55.1041,Low,9185
+INFRA-0055,Mixed Use Development Zone - Zone 16,Mixed Use Development Zone,ADNOC,Dubai,4225,2023,2028,Completed,25.23,55.1201,Medium,4354
+INFRA-0056,Metro Expansion - Zone 20,Metro Expansion,Dubai South,Abu Dhabi,4557,2022,2024,In Progress,24.8983,55.1408,Medium,6562
+INFRA-0057,Water Infrastructure - Zone 17,Water Infrastructure,Dubai South,Dubai,389,2018,2020,Completed,25.3352,55.1029,Medium,1936
+INFRA-0058,Smart Road - Zone 9,Smart Road,Dubai South,Dubai,1702,2024,2028,Tendered,25.2317,55.4942,Medium,5537
+INFRA-0059,Free Zone - Zone 7,Free Zone,DMRC,Other,2476,2022,2024,Planned,25.1882,55.3901,Medium,4863
+INFRA-0060,Free Zone - Zone 4,Free Zone,Dubai South,Dubai,3618,2023,2026,In Progress,25.0215,55.698,Low,697
+INFRA-0061,Airport Expansion - Zone 18,Airport Expansion,DEWA,Dubai,173,2018,2022,In Progress,24.894,55.3375,High,4439
+INFRA-0062,Port Development - Zone 6,Port Development,Dubai Municipality,Other,2000,2020,2023,Completed,25.1019,55.4119,Medium,9386
+INFRA-0063,Water Infrastructure - Zone 6,Water Infrastructure,DMRC,Sharjah,449,2023,2025,In Progress,25.3867,55.3032,Medium,4091
+INFRA-0064,Road Widening - Zone 6,Road Widening,Expo Authority,Dubai,565,2018,2020,In Progress,25.1169,55.2819,Low,3484
+INFRA-0065,Cycling Track - Zone 17,Cycling Track,RTA,Abu Dhabi,1008,2019,2023,In Progress,25.0836,55.2133,High,9337
+INFRA-0066,Port Development - Zone 5,Port Development,Dubai Municipality,Dubai,2668,2020,2023,Completed,25.1204,55.1606,High,6559
+INFRA-0067,Airport Expansion - Zone 7,Airport Expansion,Expo Authority,Dubai,121,2019,2024,In Progress,24.8479,55.025,Medium,898
+INFRA-0068,Cycling Track - Zone 11,Cycling Track,DMRC,Dubai,261,2021,2022,Completed,25.0585,55.4854,High,5362
+INFRA-0069,Port Development - Zone 14,Port Development,ADNOC,Sharjah,1499,2021,2022,Completed,25.0004,55.4357,Low,5664
+INFRA-0070,Bridge/Overpass - Zone 4,Bridge/Overpass,DMRC,Abu Dhabi,1708,2018,2020,In Progress,24.9731,54.9662,Medium,7180
+INFRA-0071,Airport Expansion - Zone 12,Airport Expansion,Smart Dubai,Dubai,274,2024,2029,Completed,25.363,55.2508,High,5963
+INFRA-0072,Smart Road - Zone 15,Smart Road,RTA,Abu Dhabi,2786,2022,2023,Planned,25.1079,55.594,High,8979
+INFRA-0073,Mixed Use Development Zone - Zone 3,Mixed Use Development Zone,DMRC,Abu Dhabi,810,2024,2026,Planned,25.0193,55.0088,High,9123
+INFRA-0074,Bridge/Overpass - Zone 1,Bridge/Overpass,ADNOC,Dubai,2942,2023,2025,Planned,24.9591,54.99,Low,2556
+INFRA-0075,Water Infrastructure - Zone 3,Water Infrastructure,Dubai Municipality,Sharjah,4520,2024,2026,In Progress,24.8931,55.2236,Medium,4048
+INFRA-0076,Smart Road - Zone 4,Smart Road,DEWA,Dubai,2938,2023,2028,Tendered,25.0364,55.308,Medium,4769
+INFRA-0077,Smart City - Zone 15,Smart City,Smart Dubai,Dubai,4560,2023,2024,Completed,25.0865,55.6359,Low,1451
+INFRA-0078,Water Infrastructure - Zone 12,Water Infrastructure,ADNOC,Dubai,3276,2019,2021,Planned,25.1515,55.2319,Low,8061
+INFRA-0079,Mixed Use Development Zone - Zone 12,Mixed Use Development Zone,Dubai South,Dubai,1437,2021,2026,In Progress,25.2124,55.4743,Medium,3392
+INFRA-0080,District Cooling - Zone 10,District Cooling,ADJP,Dubai,307,2020,2025,Completed,25.3332,55.1211,High,7105
+INFRA-0081,Road Widening - Zone 16,Road Widening,ADNOC,Sharjah,2688,2024,2026,In Progress,25.0257,55.4105,Medium,257
+INFRA-0082,Free Zone - Zone 20,Free Zone,DEWA,Dubai,4143,2021,2024,Completed,24.8489,55.3685,Medium,5772
+INFRA-0083,District Cooling - Zone 1,District Cooling,Dubai Municipality,Dubai,2560,2019,2021,Completed,25.1242,54.9253,High,5278
+INFRA-0084,District Cooling - Zone 11,District Cooling,Smart Dubai,Dubai,2224,2024,2025,Completed,25.0372,55.5863,High,9210
+INFRA-0085,Airport Expansion - Zone 2,Airport Expansion,DMRC,Sharjah,4407,2018,2023,Completed,25.2971,55.452,Medium,3342
+INFRA-0086,Smart Road - Zone 2,Smart Road,ADJP,Abu Dhabi,3620,2020,2021,Completed,25.306,55.3276,High,6078
+INFRA-0087,Port Development - Zone 3,Port Development,Smart Dubai,Dubai,1933,2020,2023,Planned,25.1971,55.3653,Medium,7264
+INFRA-0088,Metro Expansion - Zone 6,Metro Expansion,DMRC,Abu Dhabi,1120,2018,2022,Completed,24.8255,55.6465,High,9760
+INFRA-0089,Water Infrastructure - Zone 14,Water Infrastructure,RTA,Dubai,2349,2020,2025,In Progress,25.2025,55.3712,Low,1225
+INFRA-0090,Bridge/Overpass - Zone 10,Bridge/Overpass,RTA,Dubai,1496,2023,2024,Tendered,24.8271,55.1833,Medium,9884
+INFRA-0091,District Cooling - Zone 3,District Cooling,Expo Authority,Dubai,4458,2020,2024,Completed,25.084,55.173,Low,9882
+INFRA-0092,Road Widening - Zone 19,Road Widening,DMRC,Dubai,4101,2019,2023,Planned,24.8317,54.9137,Medium,6160
+INFRA-0093,Port Development - Zone 8,Port Development,Expo Authority,Dubai,1277,2022,2023,Completed,25.274,55.3781,High,5495
+INFRA-0094,Free Zone - Zone 13,Free Zone,Dubai Municipality,Sharjah,4482,2020,2025,Planned,25.2758,55.3358,Low,7492
+INFRA-0095,Smart Road - Zone 6,Smart Road,RTA,Other,2895,2022,2027,Completed,24.9361,55.496,Low,4682
+INFRA-0096,District Cooling - Zone 15,District Cooling,ADNOC,Dubai,2711,2023,2025,In Progress,24.8696,55.2688,Low,8248
+INFRA-0097,Water Infrastructure - Zone 18,Water Infrastructure,DMRC,Dubai,4056,2023,2025,In Progress,25.0759,55.0074,High,7694
+INFRA-0098,Smart Road - Zone 16,Smart Road,ADNOC,Sharjah,2225,2018,2022,Completed,25.1012,55.3769,High,9210
+INFRA-0099,Cycling Track - Zone 17,Cycling Track,DMRC,Other,107,2018,2019,In Progress,25.2908,55.5224,Medium,1422
+INFRA-0100,Cycling Track - Zone 2,Cycling Track,Dubai South,Dubai,2562,2022,2027,In Progress,25.3429,55.0415,High,6339
+INFRA-0101,Free Zone - Zone 17,Free Zone,DMRC,Sharjah,1080,2023,2028,Completed,24.8732,55.102,Low,4302
+INFRA-0102,Mixed Use Development Zone - Zone 4,Mixed Use Development Zone,ADNOC,Dubai,4608,2018,2021,In Progress,24.9295,54.933,Low,5199
+INFRA-0103,Free Zone - Zone 14,Free Zone,ADNOC,Sharjah,4571,2018,2019,In Progress,25.2432,55.4055,Low,4568
+INFRA-0104,Free Zone - Zone 7,Free Zone,ADJP,Dubai,4251,2019,2022,Planned,25.1599,55.5236,Low,1859
+INFRA-0105,Port Development - Zone 19,Port Development,Dubai Municipality,Dubai,4405,2019,2021,Planned,25.27,55.3849,Low,5384
+INFRA-0106,Smart Road - Zone 11,Smart Road,Dubai South,Dubai,3991,2021,2024,Tendered,25.2547,55.4651,Medium,2064
+INFRA-0107,Smart Road - Zone 4,Smart Road,RTA,Dubai,2103,2024,2028,Tendered,25.2251,54.9044,Medium,951
+INFRA-0108,Free Zone - Zone 18,Free Zone,RTA,Dubai,4181,2024,2025,In Progress,25.1557,54.9636,High,6332
+INFRA-0109,Cycling Track - Zone 6,Cycling Track,RTA,Other,2228,2023,2025,Tendered,25.17,55.1748,High,4984
+INFRA-0110,Metro Expansion - Zone 18,Metro Expansion,Smart Dubai,Dubai,1436,2020,2022,Completed,25.3606,55.3703,High,2865
+INFRA-0111,Road Widening - Zone 11,Road Widening,Expo Authority,Abu Dhabi,1829,2019,2022,Planned,24.8113,55.2848,Low,9192
+INFRA-0112,Bridge/Overpass - Zone 10,Bridge/Overpass,Smart Dubai,Dubai,1838,2024,2029,Completed,25.042,54.9694,Medium,9568
+INFRA-0113,Smart Road - Zone 5,Smart Road,ADNOC,Abu Dhabi,1651,2022,2024,Completed,24.8717,54.9425,High,1232
+INFRA-0114,Bridge/Overpass - Zone 16,Bridge/Overpass,Dubai South,Dubai,565,2019,2024,In Progress,25.0107,55.3956,Medium,8967
+INFRA-0115,Road Widening - Zone 15,Road Widening,Dubai Municipality,Abu Dhabi,3816,2021,2023,Completed,25.2076,55.1324,Low,9018
+INFRA-0116,Cycling Track - Zone 17,Cycling Track,Smart Dubai,Dubai,683,2022,2027,In Progress,25.1498,55.0383,Medium,204
+INFRA-0117,District Cooling - Zone 15,District Cooling,Dubai Municipality,Other,1993,2023,2025,Planned,25.3211,55.0184,Medium,9352
+INFRA-0118,Smart Road - Zone 8,Smart Road,RTA,Dubai,2445,2022,2026,Completed,24.9057,55.3403,Medium,372
+INFRA-0119,Bridge/Overpass - Zone 11,Bridge/Overpass,Expo Authority,Dubai,4795,2023,2028,Completed,25.0432,55.6366,Low,4761
+INFRA-0120,Port Development - Zone 19,Port Development,ADNOC,Dubai,2614,2021,2026,Planned,25.0558,55.3927,Low,2328
+INFRA-0121,Port Development - Zone 14,Port Development,ADNOC,Sharjah,1595,2019,2020,Completed,25.3031,55.2216,Low,8504
+INFRA-0122,Smart City - Zone 16,Smart City,DEWA,Dubai,4765,2021,2023,Tendered,24.9196,55.6068,Medium,3251
+INFRA-0123,Water Infrastructure - Zone 4,Water Infrastructure,ADNOC,Dubai,4094,2021,2025,Completed,25.3044,55.1777,Low,7506
+INFRA-0124,Cycling Track - Zone 8,Cycling Track,DMRC,Other,382,2022,2027,In Progress,25.006,54.9831,High,2226
+INFRA-0125,Airport Expansion - Zone 3,Airport Expansion,Dubai South,Sharjah,2763,2020,2025,Completed,24.8108,55.5173,High,7731
+INFRA-0126,Smart Road - Zone 6,Smart Road,DMRC,Abu Dhabi,3975,2020,2021,In Progress,24.9541,55.3895,Medium,3549
+INFRA-0127,Smart City - Zone 19,Smart City,ADJP,Dubai,1880,2018,2022,In Progress,24.9013,54.9576,Medium,3626
+INFRA-0128,District Cooling - Zone 6,District Cooling,Smart Dubai,Dubai,3980,2018,2020,Planned,25.2445,55.1992,Medium,7471
+INFRA-0129,Airport Expansion - Zone 19,Airport Expansion,ADNOC,Abu Dhabi,2380,2024,2025,Completed,25.1556,55.2534,Medium,3205
+INFRA-0130,Smart City - Zone 2,Smart City,Expo Authority,Abu Dhabi,3685,2024,2029,Completed,25.1072,55.6068,Low,5568
+INFRA-0131,Free Zone - Zone 12,Free Zone,ADJP,Dubai,1907,2021,2025,In Progress,25.0648,55.584,High,6884
+INFRA-0132,Mixed Use Development Zone - Zone 17,Mixed Use Development Zone,Dubai Municipality,Abu Dhabi,3131,2021,2022,In Progress,25.2481,55.0182,Low,1602
+INFRA-0133,Smart Road - Zone 6,Smart Road,Expo Authority,Dubai,4170,2023,2027,Planned,25.3166,55.2937,Medium,5575
+INFRA-0134,District Cooling - Zone 15,District Cooling,Expo Authority,Abu Dhabi,2313,2024,2028,Planned,24.8695,55.6457,Low,6064
+INFRA-0135,Metro Expansion - Zone 14,Metro Expansion,ADJP,Dubai,4803,2020,2022,Planned,24.9097,54.9956,Low,3876
+INFRA-0136,Smart Road - Zone 14,Smart Road,Smart Dubai,Sharjah,4150,2023,2025,In Progress,24.9142,55.4002,Low,5241
+INFRA-0137,Bridge/Overpass - Zone 9,Bridge/Overpass,RTA,Dubai,4868,2022,2024,In Progress,25.2701,55.2529,Low,7917
+INFRA-0138,Airport Expansion - Zone 10,Airport Expansion,Dubai South,Dubai,3715,2018,2020,Completed,24.9043,55.6098,Medium,8687
+INFRA-0139,Cycling Track - Zone 7,Cycling Track,Smart Dubai,Dubai,230,2018,2022,In Progress,25.1382,54.973,Medium,8355
+INFRA-0140,Airport Expansion - Zone 20,Airport Expansion,Dubai South,Dubai,4036,2020,2021,In Progress,25.1365,55.1575,Low,4283
+INFRA-0141,Road Widening - Zone 19,Road Widening,RTA,Abu Dhabi,2386,2024,2027,Completed,25.3992,55.3567,Medium,6250
+INFRA-0142,Metro Expansion - Zone 11,Metro Expansion,Dubai South,Abu Dhabi,4815,2019,2021,Completed,25.0871,55.6042,Low,1103
+INFRA-0143,Water Infrastructure - Zone 20,Water Infrastructure,RTA,Sharjah,1064,2019,2020,In Progress,24.9184,55.6334,Low,7923
+INFRA-0144,Smart City - Zone 5,Smart City,Smart Dubai,Abu Dhabi,3045,2019,2023,Completed,25.0303,55.3049,High,7328
+INFRA-0145,Smart City - Zone 7,Smart City,Dubai South,Dubai,490,2023,2027,Completed,25.2136,55.3835,Medium,6350
+INFRA-0146,Port Development - Zone 8,Port Development,Dubai South,Abu Dhabi,3165,2018,2019,Planned,24.9644,55.4526,Medium,4747
+INFRA-0147,Water Infrastructure - Zone 11,Water Infrastructure,RTA,Other,1286,2018,2019,Completed,25.3787,55.1368,Medium,8560
+INFRA-0148,Free Zone - Zone 1,Free Zone,RTA,Abu Dhabi,3917,2021,2024,In Progress,25.1569,55.4162,Low,772
+INFRA-0149,Airport Expansion - Zone 18,Airport Expansion,DMRC,Dubai,3642,2020,2025,In Progress,25.2844,55.274,High,5929
+INFRA-0150,Metro Expansion - Zone 15,Metro Expansion,Smart Dubai,Dubai,243,2018,2020,In Progress,25.3813,54.9333,Medium,6475
+INFRA-0151,Metro Expansion - Zone 8,Metro Expansion,Smart Dubai,Dubai,2495,2019,2022,Planned,25.0377,54.9861,High,2317
+INFRA-0152,District Cooling - Zone 1,District Cooling,ADNOC,Sharjah,4654,2018,2023,Completed,24.8838,55.6866,Low,4088
+INFRA-0153,Free Zone - Zone 6,Free Zone,Smart Dubai,Dubai,4705,2020,2023,Completed,24.8439,55.1498,High,563
+INFRA-0154,Water Infrastructure - Zone 11,Water Infrastructure,DEWA,Sharjah,275,2021,2022,Tendered,25.2016,55.4536,Medium,2649
+INFRA-0155,Cycling Track - Zone 5,Cycling Track,DEWA,Sharjah,2627,2019,2023,Completed,25.0223,55.434,Medium,6118
+INFRA-0156,Smart Road - Zone 8,Smart Road,ADNOC,Dubai,2672,2022,2024,Completed,24.8299,55.5057,High,3989
+INFRA-0157,Bridge/Overpass - Zone 10,Bridge/Overpass,Expo Authority,Abu Dhabi,2099,2018,2021,Planned,24.9415,55.0356,Low,3774
+INFRA-0158,Port Development - Zone 6,Port Development,Dubai South,Other,2527,2020,2024,Planned,25.2709,55.5855,High,6211
+INFRA-0159,Cycling Track - Zone 5,Cycling Track,Dubai South,Dubai,2416,2018,2020,In Progress,25.0357,55.1388,Low,7152
+INFRA-0160,Port Development - Zone 7,Port Development,Dubai South,Dubai,2741,2024,2025,In Progress,25.3713,55.3893,Medium,8185
+INFRA-0161,Free Zone - Zone 20,Free Zone,DMRC,Dubai,1256,2018,2020,In Progress,24.8746,55.2557,Medium,133
+INFRA-0162,Smart City - Zone 1,Smart City,DMRC,Dubai,607,2024,2026,In Progress,25.2181,55.5874,Medium,8666
+INFRA-0163,Bridge/Overpass - Zone 3,Bridge/Overpass,Smart Dubai,Dubai,944,2022,2027,Completed,25.0886,54.9743,Medium,7644
+INFRA-0164,District Cooling - Zone 15,District Cooling,ADNOC,Dubai,848,2022,2024,In Progress,25.0912,54.9564,High,6550
+INFRA-0165,Free Zone - Zone 16,Free Zone,DEWA,Abu Dhabi,3820,2021,2024,Planned,25.1768,54.9751,Low,4879
+INFRA-0166,Metro Expansion - Zone 1,Metro Expansion,DEWA,Dubai,3472,2022,2027,Completed,25.194,55.577,High,9508
+INFRA-0167,Airport Expansion - Zone 14,Airport Expansion,DMRC,Other,4042,2019,2022,In Progress,25.2886,54.967,Low,163
+INFRA-0168,Airport Expansion - Zone 12,Airport Expansion,Smart Dubai,Dubai,3286,2018,2020,Completed,24.9116,54.9148,Medium,7482
+INFRA-0169,Smart Road - Zone 9,Smart Road,ADNOC,Dubai,4614,2023,2026,In Progress,25.1037,55.2828,High,7778
+INFRA-0170,Bridge/Overpass - Zone 8,Bridge/Overpass,Dubai Municipality,Sharjah,1809,2023,2028,Completed,24.8591,55.1499,Medium,8275
+INFRA-0171,Airport Expansion - Zone 17,Airport Expansion,Smart Dubai,Dubai,231,2020,2024,In Progress,24.8045,55.0667,Low,3848
+INFRA-0172,Metro Expansion - Zone 19,Metro Expansion,ADNOC,Dubai,287,2021,2025,In Progress,25.0874,55.5645,High,726
+INFRA-0173,Free Zone - Zone 3,Free Zone,Dubai Municipality,Dubai,3776,2019,2023,In Progress,24.9662,55.3196,Low,7140
+INFRA-0174,Mixed Use Development Zone - Zone 19,Mixed Use Development Zone,RTA,Abu Dhabi,884,2023,2027,In Progress,25.0486,55.3854,High,1875
+INFRA-0175,Smart Road - Zone 8,Smart Road,ADNOC,Dubai,364,2020,2022,In Progress,25.0287,55.5155,High,5358
+INFRA-0176,Smart Road - Zone 2,Smart Road,Dubai South,Dubai,1685,2021,2024,In Progress,25.0189,55.5291,Medium,2371
+INFRA-0177,Cycling Track - Zone 8,Cycling Track,DMRC,Other,719,2019,2023,Completed,25.2472,55.112,Low,8373
+INFRA-0178,Metro Expansion - Zone 19,Metro Expansion,ADJP,Sharjah,2267,2018,2023,Completed,25.0168,55.3636,High,732
+INFRA-0179,Smart Road - Zone 7,Smart Road,Smart Dubai,Abu Dhabi,990,2023,2027,Planned,25.3828,55.0982,Medium,4839
+INFRA-0180,Metro Expansion - Zone 19,Metro Expansion,Dubai Municipality,Dubai,2806,2020,2022,In Progress,25.0027,55.3425,High,4149
+INFRA-0181,Airport Expansion - Zone 19,Airport Expansion,DMRC,Dubai,2991,2023,2027,In Progress,25.0156,55.0685,Medium,7072
+INFRA-0182,Metro Expansion - Zone 18,Metro Expansion,DMRC,Abu Dhabi,1398,2020,2021,Tendered,25.1526,55.4046,Medium,5453
+INFRA-0183,Free Zone - Zone 9,Free Zone,Dubai Municipality,Dubai,1379,2021,2026,In Progress,25.0754,55.5741,Low,4266
+INFRA-0184,Bridge/Overpass - Zone 19,Bridge/Overpass,ADNOC,Dubai,3415,2023,2025,Completed,25.3351,55.0068,High,3854
+INFRA-0185,Smart Road - Zone 14,Smart Road,DEWA,Dubai,1715,2022,2023,Planned,25.3774,55.4156,Medium,9489
+INFRA-0186,Smart City - Zone 6,Smart City,ADJP,Sharjah,3434,2023,2026,Completed,25.0413,55.2882,Medium,3848
+INFRA-0187,Mixed Use Development Zone - Zone 2,Mixed Use Development Zone,Dubai South,Sharjah,760,2019,2024,Completed,25.2596,55.3613,High,3389
+INFRA-0188,Smart Road - Zone 11,Smart Road,ADNOC,Dubai,4696,2023,2025,In Progress,24.8735,55.4789,Low,3490
+INFRA-0189,Metro Expansion - Zone 2,Metro Expansion,DMRC,Dubai,4126,2022,2023,Completed,25.038,55.6281,High,5336
+INFRA-0190,Mixed Use Development Zone - Zone 13,Mixed Use Development Zone,DMRC,Dubai,4054,2018,2021,Completed,25.1778,55.0903,High,3146
+INFRA-0191,Water Infrastructure - Zone 16,Water Infrastructure,DEWA,Other,3623,2020,2024,In Progress,25.104,55.5584,Medium,3878
+INFRA-0192,Free Zone - Zone 3,Free Zone,DMRC,Dubai,3704,2018,2023,Completed,24.9445,55.3142,Medium,5425
+INFRA-0193,District Cooling - Zone 13,District Cooling,Smart Dubai,Dubai,934,2024,2029,In Progress,25.2575,55.6564,Medium,7811
+INFRA-0194,Bridge/Overpass - Zone 4,Bridge/Overpass,Dubai Municipality,Dubai,2249,2021,2025,Completed,25.0714,55.6844,High,5541
+INFRA-0195,Mixed Use Development Zone - Zone 3,Mixed Use Development Zone,Expo Authority,Sharjah,1035,2018,2019,Tendered,25.2501,54.9066,Medium,5960
+INFRA-0196,Airport Expansion - Zone 2,Airport Expansion,Expo Authority,Other,301,2018,2019,Completed,25.12,55.5295,High,6267
+INFRA-0197,District Cooling - Zone 20,District Cooling,DEWA,Dubai,966,2024,2025,In Progress,25.1724,55.6041,Medium,5870
+INFRA-0198,Water Infrastructure - Zone 17,Water Infrastructure,ADNOC,Sharjah,2189,2018,2021,Planned,25.2013,54.9687,Medium,2403
+INFRA-0199,Bridge/Overpass - Zone 19,Bridge/Overpass,DEWA,Sharjah,4385,2018,2022,Completed,25.0335,55.4501,Medium,4114
+INFRA-0200,Smart Road - Zone 18,Smart Road,ADJP,Abu Dhabi,588,2023,2025,Completed,25.0952,55.1959,Medium,8746
+INFRA-0201,Road Widening - Zone 6,Road Widening,ADNOC,Abu Dhabi,3158,2021,2024,Completed,25.082,55.2076,Low,3239
+INFRA-0202,Port Development - Zone 14,Port Development,DMRC,Dubai,4645,2021,2026,Planned,25.3957,55.5767,Low,5983
+INFRA-0203,Road Widening - Zone 19,Road Widening,Dubai Municipality,Dubai,2069,2022,2024,Planned,25.2344,55.0804,Low,2028
+INFRA-0204,Free Zone - Zone 18,Free Zone,DMRC,Dubai,3432,2018,2019,In Progress,24.9802,55.4627,Medium,9094
+INFRA-0205,Airport Expansion - Zone 18,Airport Expansion,Dubai South,Dubai,123,2022,2025,In Progress,25.0814,55.6779,High,8099
+INFRA-0206,Bridge/Overpass - Zone 12,Bridge/Overpass,Dubai South,Dubai,1649,2018,2023,Completed,25.0545,54.9936,High,1913
+INFRA-0207,Road Widening - Zone 17,Road Widening,Expo Authority,Dubai,4227,2019,2023,Planned,25.0649,55.5291,Medium,9925
+INFRA-0208,Bridge/Overpass - Zone 8,Bridge/Overpass,Expo Authority,Abu Dhabi,1313,2022,2027,In Progress,25.2501,55.5315,Low,9688
+INFRA-0209,Water Infrastructure - Zone 4,Water Infrastructure,ADJP,Dubai,3935,2022,2024,Completed,25.3454,54.9955,Medium,4697
+INFRA-0210,Free Zone - Zone 19,Free Zone,Smart Dubai,Abu Dhabi,1953,2019,2023,In Progress,25.0313,55.4086,High,8294
+INFRA-0211,Smart Road - Zone 11,Smart Road,ADJP,Dubai,564,2022,2023,Completed,24.8299,54.9958,High,5548
+INFRA-0212,Smart City - Zone 13,Smart City,ADJP,Dubai,2668,2018,2020,In Progress,25.252,55.6267,High,6448
+INFRA-0213,Smart City - Zone 11,Smart City,ADNOC,Dubai,3520,2021,2026,In Progress,25.2206,55.6566,Low,6798
+INFRA-0214,Port Development - Zone 3,Port Development,RTA,Abu Dhabi,2167,2019,2022,Completed,24.9281,55.3004,Medium,2747
+INFRA-0215,Metro Expansion - Zone 11,Metro Expansion,DEWA,Dubai,4484,2019,2024,Completed,25.2354,55.3617,Low,3969
+INFRA-0216,Water Infrastructure - Zone 20,Water Infrastructure,DMRC,Abu Dhabi,1390,2020,2022,Completed,25.0755,55.5179,Medium,9560
+INFRA-0217,Port Development - Zone 6,Port Development,ADNOC,Abu Dhabi,2167,2022,2026,Planned,25.268,55.2725,Low,610
+INFRA-0218,Cycling Track - Zone 13,Cycling Track,Expo Authority,Abu Dhabi,998,2024,2029,Completed,25.2363,55.2167,High,5897
+INFRA-0219,Metro Expansion - Zone 10,Metro Expansion,Dubai South,Dubai,3026,2024,2026,In Progress,25.2384,55.1633,High,2535
+INFRA-0220,Smart Road - Zone 8,Smart Road,Smart Dubai,Abu Dhabi,3948,2020,2021,Completed,24.8598,55.2904,Low,9433
+INFRA-0221,Port Development - Zone 19,Port Development,Dubai South,Abu Dhabi,405,2020,2023,Tendered,24.9785,54.9133,Medium,3390
+INFRA-0222,Airport Expansion - Zone 18,Airport Expansion,DEWA,Other,4285,2021,2024,Planned,25.3827,55.6643,High,199
+INFRA-0223,Smart City - Zone 13,Smart City,DEWA,Abu Dhabi,2976,2024,2025,In Progress,24.9856,55.5959,Low,8209
+INFRA-0224,Smart City - Zone 7,Smart City,RTA,Abu Dhabi,1892,2023,2026,In Progress,25.0806,55.5702,Low,5052
+INFRA-0225,District Cooling - Zone 1,District Cooling,DMRC,Abu Dhabi,412,2018,2021,In Progress,24.9786,55.2254,Low,6655
+INFRA-0226,Road Widening - Zone 5,Road Widening,DMRC,Abu Dhabi,4554,2022,2023,Completed,25.3598,55.2905,High,5791
+INFRA-0227,Free Zone - Zone 7,Free Zone,Smart Dubai,Dubai,996,2021,2025,Tendered,25.0003,55.3897,Medium,512
+INFRA-0228,Cycling Track - Zone 20,Cycling Track,ADJP,Dubai,956,2024,2025,In Progress,24.9741,55.397,Medium,2691
+INFRA-0229,Smart Road - Zone 18,Smart Road,Dubai Municipality,Dubai,3557,2019,2022,Completed,24.9723,55.2863,Medium,7154
+INFRA-0230,Water Infrastructure - Zone 6,Water Infrastructure,RTA,Abu Dhabi,390,2023,2026,Completed,25.2854,55.5573,Low,722
+INFRA-0231,Smart Road - Zone 14,Smart Road,DMRC,Sharjah,4902,2023,2028,Completed,25.1834,55.0031,Medium,6688
+INFRA-0232,Cycling Track - Zone 9,Cycling Track,DMRC,Dubai,943,2021,2026,Completed,25.2817,55.4781,High,9501
+INFRA-0233,Free Zone - Zone 13,Free Zone,ADJP,Sharjah,1046,2019,2020,Tendered,25.3267,54.9627,Low,3387
+INFRA-0234,Metro Expansion - Zone 13,Metro Expansion,ADJP,Abu Dhabi,3845,2022,2026,Tendered,24.9985,55.4995,Medium,3718
+INFRA-0235,Port Development - Zone 7,Port Development,ADJP,Sharjah,4183,2023,2028,In Progress,25.2003,55.6477,Low,1326
+INFRA-0236,Mixed Use Development Zone - Zone 4,Mixed Use Development Zone,DEWA,Abu Dhabi,4378,2022,2026,Completed,25.3689,55.0841,Medium,575
+INFRA-0237,Airport Expansion - Zone 1,Airport Expansion,ADNOC,Sharjah,3192,2018,2020,Completed,25.1697,55.1879,Low,5401
+INFRA-0238,Smart Road - Zone 20,Smart Road,Dubai Municipality,Dubai,1924,2022,2027,Completed,24.8321,55.3069,High,7132
+INFRA-0239,Road Widening - Zone 1,Road Widening,ADJP,Dubai,449,2024,2027,In Progress,25.0076,55.1736,High,8235
+INFRA-0240,Cycling Track - Zone 11,Cycling Track,ADJP,Other,3741,2022,2024,In Progress,25.3922,55.1861,Low,5082
+INFRA-0241,Smart City - Zone 10,Smart City,Dubai Municipality,Abu Dhabi,4995,2022,2023,Planned,25.3542,55.4381,Medium,8761
+INFRA-0242,Cycling Track - Zone 4,Cycling Track,DEWA,Dubai,4136,2018,2023,In Progress,24.8144,55.5718,High,2300
+INFRA-0243,Airport Expansion - Zone 1,Airport Expansion,DEWA,Dubai,1261,2019,2024,Completed,25.3386,55.3069,Medium,3243
+INFRA-0244,Water Infrastructure - Zone 16,Water Infrastructure,ADNOC,Dubai,4497,2021,2026,In Progress,25.3101,55.5027,High,2722
+INFRA-0245,Mixed Use Development Zone - Zone 15,Mixed Use Development Zone,ADJP,Other,1753,2021,2023,In Progress,25.2533,55.3337,Medium,7723
+INFRA-0246,Mixed Use Development Zone - Zone 5,Mixed Use Development Zone,RTA,Abu Dhabi,1737,2020,2023,Completed,24.8804,55.1689,Medium,9319
+INFRA-0247,Road Widening - Zone 16,Road Widening,Dubai South,Dubai,1077,2022,2024,Planned,25.2215,55.24,Medium,6795
+INFRA-0248,Bridge/Overpass - Zone 16,Bridge/Overpass,DMRC,Sharjah,4832,2019,2020,Completed,25.0822,55.6343,Low,8072
+INFRA-0249,Mixed Use Development Zone - Zone 11,Mixed Use Development Zone,RTA,Dubai,3380,2020,2021,In Progress,25.1573,54.9721,Low,9111
+INFRA-0250,Smart City - Zone 10,Smart City,ADNOC,Abu Dhabi,2524,2018,2020,Completed,24.8476,55.1599,Low,6472
+INFRA-0251,Cycling Track - Zone 2,Cycling Track,RTA,Dubai,2228,2019,2020,Planned,25.1524,55.607,High,4763
+INFRA-0252,Free Zone - Zone 15,Free Zone,DMRC,Dubai,953,2019,2023,In Progress,24.834,55.2415,Low,7730
+INFRA-0253,Water Infrastructure - Zone 11,Water Infrastructure,RTA,Abu Dhabi,4302,2024,2029,Tendered,24.9025,54.9434,High,4125
+INFRA-0254,Road Widening - Zone 19,Road Widening,ADNOC,Dubai,138,2023,2027,In Progress,25.1825,55.5693,Low,5660
+INFRA-0255,Bridge/Overpass - Zone 5,Bridge/Overpass,DEWA,Dubai,831,2021,2025,Completed,24.8993,55.0062,High,9706
+INFRA-0256,Free Zone - Zone 1,Free Zone,ADNOC,Dubai,4021,2022,2026,Completed,25.2333,55.626,Medium,8933
+INFRA-0257,Airport Expansion - Zone 7,Airport Expansion,Expo Authority,Other,1701,2018,2020,Completed,25.2981,54.9416,Low,4385
+INFRA-0258,Metro Expansion - Zone 10,Metro Expansion,DMRC,Abu Dhabi,1022,2021,2025,Planned,24.8677,55.2826,Medium,5138
+INFRA-0259,Smart City - Zone 4,Smart City,RTA,Dubai,4107,2024,2028,Planned,25.1504,54.9532,High,4948
+INFRA-0260,Free Zone - Zone 15,Free Zone,Smart Dubai,Dubai,3815,2020,2022,In Progress,25.3272,55.3844,Low,8405
+INFRA-0261,Cycling Track - Zone 2,Cycling Track,Expo Authority,Dubai,1345,2019,2020,Completed,24.9471,55.166,High,3645
+INFRA-0262,Cycling Track - Zone 11,Cycling Track,RTA,Abu Dhabi,2008,2021,2022,Completed,24.874,55.4586,Low,3694
+INFRA-0263,Mixed Use Development Zone - Zone 7,Mixed Use Development Zone,Dubai Municipality,Abu Dhabi,3878,2020,2024,Planned,25.0882,55.332,High,7249
+INFRA-0264,District Cooling - Zone 10,District Cooling,DEWA,Abu Dhabi,3442,2022,2024,Tendered,24.9574,55.0298,High,7457
+INFRA-0265,Cycling Track - Zone 20,Cycling Track,Dubai Municipality,Other,3410,2022,2024,Completed,25.3429,55.4052,Medium,7562
+INFRA-0266,Bridge/Overpass - Zone 3,Bridge/Overpass,RTA,Other,4243,2023,2024,Completed,25.3567,55.6446,Medium,3204
+INFRA-0267,District Cooling - Zone 6,District Cooling,DMRC,Dubai,707,2018,2023,Planned,24.9086,55.677,Medium,4316
+INFRA-0268,Mixed Use Development Zone - Zone 17,Mixed Use Development Zone,Smart Dubai,Dubai,1671,2024,2026,Completed,25.1842,54.9961,Low,5369
+INFRA-0269,Mixed Use Development Zone - Zone 12,Mixed Use Development Zone,ADNOC,Dubai,2563,2023,2027,Completed,25.1556,55.1372,High,1211
+INFRA-0270,Mixed Use Development Zone - Zone 2,Mixed Use Development Zone,ADJP,Sharjah,2760,2024,2028,Completed,25.3462,55.343,Medium,6160
+INFRA-0271,Road Widening - Zone 18,Road Widening,DEWA,Sharjah,4567,2019,2023,In Progress,24.8472,55.5165,High,6555
+INFRA-0272,Free Zone - Zone 15,Free Zone,Dubai Municipality,Sharjah,2586,2024,2029,Planned,25.3252,55.6184,High,9349
+INFRA-0273,Port Development - Zone 5,Port Development,Dubai South,Dubai,2737,2020,2022,Planned,24.8496,55.3872,Medium,4381
+INFRA-0274,Free Zone - Zone 1,Free Zone,Smart Dubai,Dubai,3946,2020,2024,In Progress,25.0296,55.4229,Medium,6627
+INFRA-0275,Airport Expansion - Zone 13,Airport Expansion,Smart Dubai,Dubai,4433,2022,2023,Completed,25.0743,55.4189,Low,3972
+INFRA-0276,Water Infrastructure - Zone 13,Water Infrastructure,ADJP,Abu Dhabi,4956,2021,2026,Completed,24.9656,55.6542,Medium,3886
+INFRA-0277,Metro Expansion - Zone 14,Metro Expansion,Smart Dubai,Dubai,262,2023,2024,Completed,24.8481,55.5953,Medium,1273
+INFRA-0278,Airport Expansion - Zone 9,Airport Expansion,Expo Authority,Abu Dhabi,3872,2020,2023,Planned,25.3376,55.1845,Low,8160
+INFRA-0279,Smart Road - Zone 7,Smart Road,Dubai South,Dubai,4032,2019,2020,Tendered,24.9333,55.5438,High,8425
+INFRA-0280,Airport Expansion - Zone 5,Airport Expansion,ADJP,Dubai,3779,2020,2021,In Progress,25.2165,55.5964,Medium,3178
+INFRA-0281,Smart Road - Zone 1,Smart Road,Dubai South,Dubai,4652,2020,2022,In Progress,25.0247,55.4801,High,8676
+INFRA-0282,Free Zone - Zone 15,Free Zone,DEWA,Abu Dhabi,4385,2022,2026,In Progress,24.9614,55.3093,High,8987
+INFRA-0283,Metro Expansion - Zone 6,Metro Expansion,Dubai Municipality,Dubai,1043,2023,2025,Tendered,24.975,55.6891,Medium,8131
+INFRA-0284,Free Zone - Zone 5,Free Zone,ADJP,Abu Dhabi,4153,2018,2019,In Progress,24.8591,55.6006,Medium,8679
+INFRA-0285,Water Infrastructure - Zone 7,Water Infrastructure,DEWA,Dubai,2843,2023,2025,Planned,25.3928,54.9334,High,5242
+INFRA-0286,Smart Road - Zone 10,Smart Road,ADJP,Sharjah,3507,2021,2024,Tendered,25.297,55.1713,High,2635
+INFRA-0287,Bridge/Overpass - Zone 19,Bridge/Overpass,DEWA,Dubai,4173,2018,2023,In Progress,25.2272,55.0793,Medium,391
+INFRA-0288,Smart Road - Zone 5,Smart Road,RTA,Dubai,183,2024,2026,Tendered,24.812,55.2215,Low,4337
+INFRA-0289,Free Zone - Zone 2,Free Zone,Dubai South,Abu Dhabi,3043,2024,2027,In Progress,24.8229,55.2082,Low,1873
+INFRA-0290,Bridge/Overpass - Zone 17,Bridge/Overpass,DEWA,Dubai,2710,2021,2026,Completed,25.2324,54.9301,Medium,566
+INFRA-0291,Water Infrastructure - Zone 12,Water Infrastructure,DEWA,Dubai,4281,2021,2023,In Progress,25.199,55.0437,High,3283
+INFRA-0292,Cycling Track - Zone 14,Cycling Track,Expo Authority,Dubai,2320,2019,2024,Completed,24.9234,55.1351,Medium,5756
+INFRA-0293,Smart City - Zone 14,Smart City,Dubai South,Dubai,4975,2022,2023,Planned,25.1131,55.4468,Medium,5721
+INFRA-0294,Mixed Use Development Zone - Zone 7,Mixed Use Development Zone,DEWA,Dubai,455,2024,2025,Completed,24.9092,54.953,Medium,9707
+INFRA-0295,Smart City - Zone 8,Smart City,RTA,Dubai,922,2019,2021,In Progress,24.8043,55.6937,Medium,1068
+INFRA-0296,Mixed Use Development Zone - Zone 18,Mixed Use Development Zone,Dubai South,Dubai,4017,2022,2025,In Progress,25.2244,55.4861,High,3557
+INFRA-0297,District Cooling - Zone 5,District Cooling,ADNOC,Sharjah,3503,2024,2025,In Progress,24.975,55.314,High,3461
+INFRA-0298,Bridge/Overpass - Zone 17,Bridge/Overpass,Dubai South,Abu Dhabi,1525,2023,2027,In Progress,24.9534,55.5604,High,4862
+INFRA-0299,Airport Expansion - Zone 2,Airport Expansion,Expo Authority,Abu Dhabi,4966,2018,2023,Completed,25.3198,55.0511,Medium,8526
+INFRA-0300,Airport Expansion - Zone 20,Airport Expansion,Dubai South,Abu Dhabi,2367,2020,2025,In Progress,25.1339,55.1485,Low,3621
+INFRA-0301,District Cooling - Zone 10,District Cooling,Dubai South,Dubai,3734,2024,2027,In Progress,25.2143,55.033,High,8421
+INFRA-0302,Water Infrastructure - Zone 9,Water Infrastructure,Smart Dubai,Dubai,3315,2021,2023,In Progress,24.854,55.3793,Medium,4580
+INFRA-0303,District Cooling - Zone 6,District Cooling,Dubai South,Dubai,2113,2019,2023,Tendered,25.2793,54.9858,Medium,9274
+INFRA-0304,Mixed Use Development Zone - Zone 5,Mixed Use Development Zone,RTA,Abu Dhabi,1217,2020,2024,In Progress,25.3754,55.2015,High,8740
+INFRA-0305,Bridge/Overpass - Zone 8,Bridge/Overpass,RTA,Dubai,4773,2023,2024,Completed,25.2984,55.0937,High,9616
+INFRA-0306,Metro Expansion - Zone 19,Metro Expansion,DEWA,Sharjah,1123,2022,2023,Completed,25.0332,55.411,High,2241
+INFRA-0307,Port Development - Zone 4,Port Development,Expo Authority,Dubai,1229,2024,2029,In Progress,25.3789,55.0243,Low,954
+INFRA-0308,Mixed Use Development Zone - Zone 7,Mixed Use Development Zone,DMRC,Dubai,2880,2019,2023,In Progress,24.8261,55.4619,Low,1777
+INFRA-0309,Airport Expansion - Zone 16,Airport Expansion,Dubai Municipality,Dubai,2380,2024,2028,Planned,25.0163,54.9831,High,172
+INFRA-0310,Mixed Use Development Zone - Zone 11,Mixed Use Development Zone,ADNOC,Sharjah,500,2018,2020,Completed,25.0578,55.2975,Medium,4653
+INFRA-0311,Mixed Use Development Zone - Zone 18,Mixed Use Development Zone,DMRC,Abu Dhabi,3089,2022,2027,In Progress,25.3446,55.4578,High,9415
+INFRA-0312,Water Infrastructure - Zone 3,Water Infrastructure,ADJP,Abu Dhabi,3575,2024,2029,In Progress,24.8748,55.3819,High,3582
+INFRA-0313,Smart City - Zone 14,Smart City,Dubai Municipality,Dubai,4643,2022,2026,Completed,25.2955,55.618,High,3822
+INFRA-0314,Port Development - Zone 11,Port Development,Dubai Municipality,Dubai,1180,2021,2024,Completed,25.0592,55.4183,Medium,5372
+INFRA-0315,Water Infrastructure - Zone 1,Water Infrastructure,RTA,Sharjah,610,2018,2020,Completed,24.8362,55.6336,Low,9382
+INFRA-0316,Road Widening - Zone 4,Road Widening,Dubai Municipality,Dubai,2266,2020,2025,In Progress,25.2002,55.2329,High,9748
+INFRA-0317,Airport Expansion - Zone 9,Airport Expansion,Dubai Municipality,Dubai,2736,2023,2028,Completed,25.3514,55.1939,Low,1953
+INFRA-0318,Water Infrastructure - Zone 15,Water Infrastructure,Smart Dubai,Dubai,2897,2019,2021,Completed,25.0238,55.0374,Medium,7773
+INFRA-0319,District Cooling - Zone 14,District Cooling,Dubai Municipality,Dubai,4329,2018,2019,Planned,25.2639,54.9691,High,5454
+INFRA-0320,Airport Expansion - Zone 4,Airport Expansion,Dubai South,Dubai,3483,2024,2026,Planned,25.2743,54.9453,High,412
+INFRA-0321,District Cooling - Zone 16,District Cooling,ADNOC,Sharjah,144,2022,2027,Planned,25.0589,54.9519,Medium,3213
+INFRA-0322,Cycling Track - Zone 9,Cycling Track,Smart Dubai,Abu Dhabi,1211,2019,2024,In Progress,25.1217,55.3697,Medium,7152
+INFRA-0323,Metro Expansion - Zone 6,Metro Expansion,RTA,Abu Dhabi,4425,2020,2025,Tendered,25.0795,55.3218,Medium,3858
+INFRA-0324,Free Zone - Zone 2,Free Zone,Expo Authority,Dubai,2914,2018,2023,Completed,24.9309,54.9471,Medium,7953
+INFRA-0325,Bridge/Overpass - Zone 14,Bridge/Overpass,DEWA,Other,4590,2022,2024,Tendered,25.286,55.3124,Medium,6609
+INFRA-0326,Cycling Track - Zone 4,Cycling Track,Expo Authority,Dubai,3550,2021,2023,Completed,24.9013,55.212,Low,3834
+INFRA-0327,Water Infrastructure - Zone 4,Water Infrastructure,Smart Dubai,Sharjah,3830,2024,2029,Planned,25.2033,55.2254,Low,248
+INFRA-0328,Port Development - Zone 16,Port Development,ADJP,Dubai,4239,2022,2026,In Progress,25.0708,55.155,Low,4888
+INFRA-0329,Port Development - Zone 15,Port Development,ADNOC,Dubai,429,2018,2023,Completed,25.3388,55.3601,Low,399
+INFRA-0330,District Cooling - Zone 18,District Cooling,Expo Authority,Dubai,4608,2018,2020,Completed,25.1294,55.6466,High,5511
+INFRA-0331,Smart City - Zone 1,Smart City,Expo Authority,Dubai,3585,2023,2024,Completed,25.0342,55.1463,Low,2736
+INFRA-0332,Smart City - Zone 7,Smart City,Dubai South,Abu Dhabi,1259,2021,2024,In Progress,25.1586,55.6736,Medium,9653
+INFRA-0333,Port Development - Zone 11,Port Development,Expo Authority,Abu Dhabi,1550,2024,2028,Completed,25.0136,55.0325,High,2803
+INFRA-0334,Mixed Use Development Zone - Zone 9,Mixed Use Development Zone,Smart Dubai,Dubai,1100,2020,2024,In Progress,24.9304,55.1053,Medium,2999
+INFRA-0335,Smart City - Zone 16,Smart City,RTA,Abu Dhabi,1850,2018,2020,Completed,25.2977,55.293,Medium,461
+INFRA-0336,Mixed Use Development Zone - Zone 7,Mixed Use Development Zone,Expo Authority,Dubai,159,2022,2027,Completed,24.9099,55.3792,Medium,5317
+INFRA-0337,Bridge/Overpass - Zone 11,Bridge/Overpass,RTA,Dubai,4654,2020,2022,Completed,25.1678,55.4884,High,6447
+INFRA-0338,Road Widening - Zone 3,Road Widening,Dubai Municipality,Abu Dhabi,2127,2022,2027,Completed,25.2546,55.4933,Medium,1141
+INFRA-0339,Smart Road - Zone 11,Smart Road,Dubai Municipality,Dubai,1751,2018,2021,Tendered,25.2476,55.2163,Medium,2798
+INFRA-0340,Smart City - Zone 19,Smart City,Smart Dubai,Abu Dhabi,4764,2023,2027,Completed,24.9264,55.0659,Medium,6298
+INFRA-0341,Port Development - Zone 20,Port Development,ADNOC,Sharjah,3681,2020,2025,Completed,25.1001,55.4326,Medium,8590
+INFRA-0342,Road Widening - Zone 9,Road Widening,RTA,Sharjah,2246,2022,2024,Completed,25.2187,54.9999,Medium,5898
+INFRA-0343,Mixed Use Development Zone - Zone 18,Mixed Use Development Zone,Dubai Municipality,Other,2933,2023,2024,Completed,25.0785,55.0974,Low,191
+INFRA-0344,Airport Expansion - Zone 12,Airport Expansion,ADNOC,Dubai,4558,2024,2029,Tendered,25.3615,55.178,High,3339
+INFRA-0345,Bridge/Overpass - Zone 12,Bridge/Overpass,Dubai Municipality,Dubai,234,2024,2029,Completed,24.9033,55.668,Low,4757
+INFRA-0346,Water Infrastructure - Zone 13,Water Infrastructure,Dubai South,Dubai,1870,2019,2021,In Progress,25.0861,54.9658,High,5289
+INFRA-0347,Mixed Use Development Zone - Zone 8,Mixed Use Development Zone,ADJP,Sharjah,563,2021,2025,In Progress,25.3445,55.5102,Medium,8882
+INFRA-0348,Free Zone - Zone 10,Free Zone,ADJP,Abu Dhabi,2369,2022,2027,In Progress,25.2643,55.081,Medium,1735
+INFRA-0349,Water Infrastructure - Zone 6,Water Infrastructure,Expo Authority,Other,2328,2019,2020,In Progress,24.9737,55.3131,High,7449
+INFRA-0350,Free Zone - Zone 17,Free Zone,ADJP,Dubai,4444,2022,2024,Tendered,25.1024,55.3344,Medium,9705
+INFRA-0351,Mixed Use Development Zone - Zone 18,Mixed Use Development Zone,RTA,Dubai,1845,2022,2024,In Progress,24.8522,55.5088,Medium,4621
+INFRA-0352,Free Zone - Zone 6,Free Zone,ADNOC,Abu Dhabi,3284,2020,2025,Planned,25.0258,55.0681,Medium,6440
+INFRA-0353,Cycling Track - Zone 7,Cycling Track,Dubai South,Abu Dhabi,3929,2021,2026,Completed,25.0994,55.4765,Medium,7984
+INFRA-0354,Smart Road - Zone 8,Smart Road,Smart Dubai,Dubai,4621,2022,2025,In Progress,25.3144,55.3361,High,4730
+INFRA-0355,Port Development - Zone 5,Port Development,DMRC,Other,2060,2023,2026,In Progress,25.2952,54.9027,High,9965
+INFRA-0356,Mixed Use Development Zone - Zone 5,Mixed Use Development Zone,RTA,Dubai,2397,2023,2024,In Progress,25.1805,55.2675,Medium,9502
+INFRA-0357,Cycling Track - Zone 14,Cycling Track,RTA,Other,923,2024,2028,Tendered,25.1324,55.5733,Medium,1684
+INFRA-0358,Airport Expansion - Zone 11,Airport Expansion,Dubai South,Dubai,4447,2020,2022,In Progress,24.9447,55.1106,Medium,5531
+INFRA-0359,Free Zone - Zone 16,Free Zone,DMRC,Abu Dhabi,3288,2019,2022,Planned,25.2029,55.1944,Low,9996
+INFRA-0360,Water Infrastructure - Zone 4,Water Infrastructure,DMRC,Dubai,3404,2019,2024,Tendered,25.1383,54.9333,Medium,2997
+INFRA-0361,Free Zone - Zone 2,Free Zone,Expo Authority,Dubai,2352,2022,2027,Planned,25.3529,55.3677,Medium,5098
+INFRA-0362,Bridge/Overpass - Zone 5,Bridge/Overpass,Smart Dubai,Dubai,4281,2018,2020,In Progress,25.3529,55.3365,High,7687
+INFRA-0363,Mixed Use Development Zone - Zone 6,Mixed Use Development Zone,DEWA,Dubai,4971,2020,2022,Planned,25.1318,54.9226,Medium,4937
+INFRA-0364,Metro Expansion - Zone 5,Metro Expansion,RTA,Sharjah,652,2018,2020,In Progress,25.1293,55.4888,Low,5078
+INFRA-0365,Port Development - Zone 16,Port Development,Smart Dubai,Sharjah,2763,2018,2022,Completed,25.3525,55.2607,High,6197
+INFRA-0366,District Cooling - Zone 8,District Cooling,ADNOC,Dubai,249,2022,2024,In Progress,25.1052,55.6997,Medium,8544
+INFRA-0367,Port Development - Zone 6,Port Development,ADJP,Dubai,1889,2021,2023,In Progress,25.3087,55.5828,Medium,5387
+INFRA-0368,Cycling Track - Zone 5,Cycling Track,Dubai Municipality,Sharjah,3635,2021,2026,Completed,24.9329,55.1238,High,4265
+INFRA-0369,Free Zone - Zone 3,Free Zone,ADJP,Abu Dhabi,843,2024,2025,In Progress,25.3393,55.635,Low,6274
+INFRA-0370,Free Zone - Zone 10,Free Zone,DEWA,Dubai,1844,2020,2025,In Progress,25.2888,55.6099,Medium,1200
+INFRA-0371,Cycling Track - Zone 8,Cycling Track,ADJP,Dubai,1556,2024,2027,Completed,25.0944,55.4367,Medium,5405
+INFRA-0372,Mixed Use Development Zone - Zone 7,Mixed Use Development Zone,ADNOC,Abu Dhabi,4722,2018,2020,Planned,24.8827,55.2805,High,8552
+INFRA-0373,Airport Expansion - Zone 1,Airport Expansion,DEWA,Sharjah,4356,2021,2023,In Progress,25.3837,55.435,Low,3546
+INFRA-0374,Smart Road - Zone 11,Smart Road,Smart Dubai,Abu Dhabi,2615,2020,2021,In Progress,25.2441,55.14,Low,9763
+INFRA-0375,District Cooling - Zone 18,District Cooling,Dubai Municipality,Abu Dhabi,4093,2021,2024,Planned,25.1748,55.5213,Medium,4729
+INFRA-0376,Smart Road - Zone 18,Smart Road,Expo Authority,Sharjah,4364,2019,2020,In Progress,25.0597,55.3208,High,1989
+INFRA-0377,Bridge/Overpass - Zone 7,Bridge/Overpass,Dubai South,Dubai,1665,2021,2023,In Progress,25.3722,55.5369,Medium,7933
+INFRA-0378,Airport Expansion - Zone 2,Airport Expansion,ADJP,Dubai,4687,2021,2023,In Progress,25.3657,54.9529,High,2113
+INFRA-0379,Smart Road - Zone 10,Smart Road,Dubai South,Sharjah,1340,2018,2019,Completed,25.3151,55.4583,High,2589
+INFRA-0380,District Cooling - Zone 20,District Cooling,DEWA,Dubai,971,2022,2024,Completed,25.2648,55.3376,High,3433
+INFRA-0381,District Cooling - Zone 7,District Cooling,DEWA,Abu Dhabi,742,2021,2025,In Progress,24.8622,55.5196,Medium,1406
+INFRA-0382,Airport Expansion - Zone 18,Airport Expansion,Dubai South,Sharjah,700,2020,2022,Completed,25.0747,55.1787,Low,1124
+INFRA-0383,Road Widening - Zone 3,Road Widening,DEWA,Dubai,2566,2024,2029,Planned,24.9707,55.3776,Low,9111
+INFRA-0384,Road Widening - Zone 20,Road Widening,RTA,Dubai,4802,2018,2019,In Progress,24.8621,55.599,Medium,7113
+INFRA-0385,Mixed Use Development Zone - Zone 6,Mixed Use Development Zone,Expo Authority,Dubai,4271,2022,2027,In Progress,24.8655,55.324,Medium,1676
+INFRA-0386,Smart Road - Zone 16,Smart Road,ADJP,Sharjah,1369,2021,2025,Completed,25.0899,55.4598,Low,1604
+INFRA-0387,Free Zone - Zone 10,Free Zone,Dubai Municipality,Sharjah,517,2024,2027,Completed,25.2021,55.2394,Medium,7303
+INFRA-0388,Bridge/Overpass - Zone 15,Bridge/Overpass,ADJP,Abu Dhabi,4588,2018,2020,Completed,24.8997,55.3062,Medium,5833
+INFRA-0389,Free Zone - Zone 15,Free Zone,Dubai South,Dubai,4842,2020,2023,In Progress,25.1931,55.4265,High,8346
+INFRA-0390,Metro Expansion - Zone 3,Metro Expansion,RTA,Dubai,4415,2024,2027,In Progress,25.0854,55.3918,Low,6856
+INFRA-0391,District Cooling - Zone 6,District Cooling,Expo Authority,Dubai,3775,2024,2025,In Progress,25.2308,55.2823,Low,3275
+INFRA-0392,Bridge/Overpass - Zone 7,Bridge/Overpass,Dubai Municipality,Dubai,1277,2023,2028,Completed,24.9411,55.1344,High,9523
+INFRA-0393,Metro Expansion - Zone 13,Metro Expansion,DEWA,Dubai,1815,2022,2025,Planned,24.9238,55.109,Medium,7570
+INFRA-0394,Free Zone - Zone 15,Free Zone,ADNOC,Dubai,1477,2024,2025,Tendered,24.8521,55.6607,Medium,6082
+INFRA-0395,Water Infrastructure - Zone 7,Water Infrastructure,RTA,Other,3203,2018,2023,In Progress,25.2179,55.2901,Medium,4131
+INFRA-0396,Airport Expansion - Zone 4,Airport Expansion,DEWA,Abu Dhabi,2586,2020,2022,In Progress,25.302,55.1446,Medium,8118
+INFRA-0397,Metro Expansion - Zone 13,Metro Expansion,ADNOC,Dubai,4948,2019,2022,In Progress,25.0622,54.9186,Low,1160
+INFRA-0398,Port Development - Zone 2,Port Development,RTA,Dubai,3901,2024,2026,Planned,25.1789,55.6924,High,2114
+INFRA-0399,Free Zone - Zone 1,Free Zone,Expo Authority,Dubai,4392,2022,2023,In Progress,24.996,55.5635,High,7514
+INFRA-0400,Smart Road - Zone 9,Smart Road,ADNOC,Sharjah,2294,2018,2022,Completed,25.3415,55.5185,Medium,2617
+INFRA-0401,Road Widening - Zone 16,Road Widening,ADJP,Abu Dhabi,2990,2019,2023,Completed,25.0119,55.5502,Medium,4054
+INFRA-0402,Road Widening - Zone 12,Road Widening,Expo Authority,Abu Dhabi,2880,2021,2025,In Progress,25.2228,55.6177,High,2515
+INFRA-0403,Mixed Use Development Zone - Zone 1,Mixed Use Development Zone,DMRC,Dubai,2033,2022,2023,Planned,24.8405,55.5717,Medium,8126
+INFRA-0404,Smart City - Zone 16,Smart City,Dubai South,Dubai,4283,2024,2028,In Progress,25.0664,54.9058,Medium,5258
+INFRA-0405,Port Development - Zone 9,Port Development,ADJP,Other,1559,2022,2023,In Progress,24.8492,55.3768,Medium,5661
+INFRA-0406,Mixed Use Development Zone - Zone 13,Mixed Use Development Zone,DMRC,Other,4650,2022,2026,Completed,25.0214,55.148,High,5182
+INFRA-0407,Free Zone - Zone 16,Free Zone,Expo Authority,Dubai,2645,2020,2025,Planned,24.965,55.4346,Medium,9869
+INFRA-0408,Road Widening - Zone 4,Road Widening,Dubai South,Abu Dhabi,3487,2023,2026,In Progress,24.8664,55.1506,Medium,5769
+INFRA-0409,Airport Expansion - Zone 6,Airport Expansion,DMRC,Sharjah,2319,2018,2022,Completed,25.3072,54.9001,Low,137
+INFRA-0410,Mixed Use Development Zone - Zone 10,Mixed Use Development Zone,RTA,Dubai,3098,2019,2021,In Progress,25.1711,54.9974,High,346
+INFRA-0411,Water Infrastructure - Zone 9,Water Infrastructure,DEWA,Dubai,4732,2018,2021,In Progress,25.2032,55.4213,Medium,4165
+INFRA-0412,District Cooling - Zone 5,District Cooling,Smart Dubai,Dubai,3378,2019,2023,Completed,24.9631,55.2125,High,7273
+INFRA-0413,Water Infrastructure - Zone 12,Water Infrastructure,Expo Authority,Dubai,2575,2018,2023,In Progress,25.101,55.364,Medium,8278
+INFRA-0414,Smart City - Zone 11,Smart City,RTA,Other,3294,2021,2023,In Progress,25.3787,54.9525,High,2811
+INFRA-0415,Mixed Use Development Zone - Zone 12,Mixed Use Development Zone,DEWA,Dubai,261,2021,2025,Completed,24.806,55.5991,Low,6112
+INFRA-0416,Port Development - Zone 8,Port Development,DMRC,Dubai,2492,2024,2029,Planned,24.8648,55.6012,Medium,4836
+INFRA-0417,Metro Expansion - Zone 11,Metro Expansion,DEWA,Dubai,3640,2018,2023,Completed,25.3421,54.9843,Medium,3056
+INFRA-0418,Airport Expansion - Zone 11,Airport Expansion,RTA,Abu Dhabi,2838,2019,2021,Planned,24.9828,55.226,Low,2790
+INFRA-0419,Smart Road - Zone 4,Smart Road,Dubai South,Dubai,1708,2020,2025,Planned,25.2927,55.2564,Medium,4070
+INFRA-0420,Water Infrastructure - Zone 6,Water Infrastructure,Expo Authority,Dubai,1234,2024,2029,Completed,25.3548,55.61,High,3415
+INFRA-0421,Cycling Track - Zone 5,Cycling Track,Dubai Municipality,Dubai,1615,2020,2025,In Progress,25.1576,55.5398,High,8273
+INFRA-0422,Port Development - Zone 3,Port Development,DMRC,Dubai,1158,2020,2025,Completed,25.0824,55.3677,Low,5823
+INFRA-0423,Road Widening - Zone 13,Road Widening,ADNOC,Abu Dhabi,684,2019,2022,In Progress,25.2921,54.9646,Medium,6595
+INFRA-0424,Mixed Use Development Zone - Zone 6,Mixed Use Development Zone,ADJP,Dubai,3075,2019,2024,Tendered,24.8468,55.002,Medium,9003
+INFRA-0425,District Cooling - Zone 1,District Cooling,DMRC,Dubai,3842,2022,2023,In Progress,24.985,55.0241,Low,2372
+INFRA-0426,Airport Expansion - Zone 9,Airport Expansion,ADNOC,Dubai,930,2023,2025,In Progress,25.3702,55.0621,Medium,4751
+INFRA-0427,Airport Expansion - Zone 19,Airport Expansion,ADJP,Abu Dhabi,4030,2024,2025,Planned,25.0047,55.5274,Low,2357
+INFRA-0428,Smart Road - Zone 9,Smart Road,Smart Dubai,Abu Dhabi,2508,2019,2023,Completed,24.8627,55.4714,High,6623
+INFRA-0429,Mixed Use Development Zone - Zone 12,Mixed Use Development Zone,Smart Dubai,Dubai,2872,2018,2019,Tendered,24.9578,55.472,Low,4711
+INFRA-0430,Water Infrastructure - Zone 3,Water Infrastructure,DEWA,Dubai,4194,2020,2022,In Progress,25.2242,55.5577,Low,9724
+INFRA-0431,District Cooling - Zone 16,District Cooling,Smart Dubai,Dubai,3194,2022,2027,Tendered,25.0084,55.2002,High,8243
+INFRA-0432,Metro Expansion - Zone 14,Metro Expansion,Dubai South,Dubai,4893,2019,2022,Tendered,25.0688,55.6102,Medium,9681
+INFRA-0433,Water Infrastructure - Zone 6,Water Infrastructure,Dubai Municipality,Sharjah,3157,2018,2020,Completed,25.3293,55.1323,Low,5999
+INFRA-0434,Smart Road - Zone 11,Smart Road,Dubai Municipality,Sharjah,537,2023,2024,Completed,24.9242,55.3014,High,9632
+INFRA-0435,Smart City - Zone 19,Smart City,Expo Authority,Dubai,205,2019,2021,Completed,25.0482,55.6871,High,1422
+INFRA-0436,Mixed Use Development Zone - Zone 2,Mixed Use Development Zone,ADNOC,Dubai,4276,2019,2021,Planned,24.8547,55.2561,Low,6416
+INFRA-0437,Port Development - Zone 10,Port Development,Dubai South,Other,1291,2019,2023,In Progress,24.9901,55.5808,Low,6648
+INFRA-0438,Smart City - Zone 17,Smart City,Dubai South,Dubai,4689,2020,2025,Planned,25.2718,55.1981,Medium,8914
+INFRA-0439,Cycling Track - Zone 2,Cycling Track,DEWA,Dubai,281,2021,2024,Planned,24.8564,55.4736,Medium,8078
+INFRA-0440,Water Infrastructure - Zone 14,Water Infrastructure,Dubai Municipality,Dubai,444,2023,2025,Completed,25.2921,55.6075,Medium,670
+INFRA-0441,Bridge/Overpass - Zone 1,Bridge/Overpass,Expo Authority,Dubai,3076,2020,2024,In Progress,24.8398,55.5403,High,9523
+INFRA-0442,District Cooling - Zone 12,District Cooling,ADJP,Dubai,1223,2022,2026,Completed,25.3146,55.0005,High,2572
+INFRA-0443,Smart City - Zone 17,Smart City,Smart Dubai,Dubai,2355,2018,2021,Completed,25.3664,55.2603,Medium,5809
+INFRA-0444,Road Widening - Zone 8,Road Widening,Expo Authority,Other,1132,2018,2021,Planned,25.0875,55.5762,Low,9479
+INFRA-0445,Free Zone - Zone 6,Free Zone,DMRC,Sharjah,4035,2019,2021,Planned,25.3353,55.6806,Medium,1605
+INFRA-0446,Bridge/Overpass - Zone 6,Bridge/Overpass,ADNOC,Dubai,4109,2019,2024,Completed,25.0365,55.233,Medium,4299
+INFRA-0447,Metro Expansion - Zone 8,Metro Expansion,ADNOC,Dubai,4854,2021,2023,Planned,24.8564,55.5457,Low,5885
+INFRA-0448,Smart City - Zone 4,Smart City,RTA,Sharjah,58,2021,2022,In Progress,25.2084,55.5802,High,6762
+INFRA-0449,Mixed Use Development Zone - Zone 18,Mixed Use Development Zone,Dubai South,Other,522,2021,2026,Planned,25.1523,55.5448,Medium,2562
+INFRA-0450,District Cooling - Zone 3,District Cooling,ADNOC,Sharjah,839,2023,2024,In Progress,24.9737,55.5962,Medium,2124
+INFRA-0451,Airport Expansion - Zone 19,Airport Expansion,Dubai Municipality,Dubai,4275,2023,2027,Completed,24.8525,55.6806,Medium,5248
+INFRA-0452,Water Infrastructure - Zone 7,Water Infrastructure,DEWA,Abu Dhabi,4008,2020,2022,In Progress,25.3674,55.0362,Medium,5288
+INFRA-0453,Metro Expansion - Zone 15,Metro Expansion,RTA,Dubai,1272,2021,2024,Planned,24.9377,55.267,High,9113
+INFRA-0454,Water Infrastructure - Zone 5,Water Infrastructure,Smart Dubai,Sharjah,1113,2022,2025,Planned,24.9552,55.1779,Medium,762
+INFRA-0455,Free Zone - Zone 1,Free Zone,DMRC,Dubai,4969,2021,2026,In Progress,25.1085,55.4525,Medium,3037
+INFRA-0456,Smart Road - Zone 8,Smart Road,Dubai Municipality,Sharjah,4880,2019,2024,In Progress,25.1368,55.3249,High,3703
+INFRA-0457,Road Widening - Zone 1,Road Widening,Dubai South,Dubai,287,2024,2026,Planned,25.3666,54.9347,Low,4884
+INFRA-0458,Mixed Use Development Zone - Zone 7,Mixed Use Development Zone,Dubai South,Abu Dhabi,611,2019,2022,Planned,24.9084,55.4233,Low,9016
+INFRA-0459,Smart Road - Zone 7,Smart Road,DEWA,Dubai,670,2019,2020,Planned,24.9791,55.332,Medium,5849
+INFRA-0460,Mixed Use Development Zone - Zone 7,Mixed Use Development Zone,ADNOC,Dubai,3415,2019,2020,Planned,25.1771,55.2727,High,4839
+INFRA-0461,Airport Expansion - Zone 16,Airport Expansion,DMRC,Dubai,3883,2023,2028,In Progress,25.2232,55.0104,Medium,8067
+INFRA-0462,Smart City - Zone 18,Smart City,ADNOC,Dubai,4962,2022,2023,Completed,25.215,55.1865,High,7558
+INFRA-0463,District Cooling - Zone 13,District Cooling,Expo Authority,Abu Dhabi,273,2022,2026,Planned,24.8255,55.0278,Low,8016
+INFRA-0464,Metro Expansion - Zone 11,Metro Expansion,Smart Dubai,Dubai,3598,2022,2023,Completed,24.9811,55.3762,High,9243
+INFRA-0465,District Cooling - Zone 12,District Cooling,ADNOC,Dubai,1335,2022,2025,Tendered,25.1328,55.3547,High,5637
+INFRA-0466,Mixed Use Development Zone - Zone 10,Mixed Use Development Zone,Dubai Municipality,Abu Dhabi,4191,2024,2025,Completed,25.1792,55.0284,Low,2771
+INFRA-0467,Mixed Use Development Zone - Zone 18,Mixed Use Development Zone,DMRC,Dubai,4793,2022,2023,In Progress,24.9238,55.4052,Medium,5132
+INFRA-0468,Airport Expansion - Zone 2,Airport Expansion,DMRC,Abu Dhabi,4909,2021,2026,Planned,25.1034,55.6693,Low,7928
+INFRA-0469,Smart City - Zone 11,Smart City,Dubai Municipality,Dubai,2277,2023,2027,Completed,24.9709,55.0474,Medium,2725
+INFRA-0470,Water Infrastructure - Zone 7,Water Infrastructure,ADJP,Dubai,1498,2020,2024,Completed,25.2727,55.6732,Low,7428
+INFRA-0471,District Cooling - Zone 8,District Cooling,DMRC,Sharjah,1107,2024,2026,In Progress,24.9088,55.354,Low,594
+INFRA-0472,Smart Road - Zone 1,Smart Road,DMRC,Dubai,2026,2020,2021,In Progress,24.8227,54.996,High,1545
+INFRA-0473,Smart Road - Zone 17,Smart Road,DMRC,Dubai,4941,2020,2023,In Progress,24.8002,55.3717,Low,9676
+INFRA-0474,Mixed Use Development Zone - Zone 18,Mixed Use Development Zone,DMRC,Dubai,2710,2019,2022,Completed,25.273,55.5683,Medium,1457
+INFRA-0475,Port Development - Zone 2,Port Development,ADNOC,Dubai,3591,2022,2027,Tendered,25.1425,54.9356,Medium,9649
+INFRA-0476,Road Widening - Zone 5,Road Widening,ADJP,Dubai,2934,2019,2022,Completed,25.3422,55.6945,High,6099
+INFRA-0477,Cycling Track - Zone 2,Cycling Track,Smart Dubai,Dubai,3693,2023,2026,Tendered,24.863,55.2134,High,7721
+INFRA-0478,Port Development - Zone 17,Port Development,Dubai South,Dubai,2479,2023,2028,Completed,24.8275,55.0381,Medium,280
+INFRA-0479,Mixed Use Development Zone - Zone 7,Mixed Use Development Zone,RTA,Other,3852,2023,2024,In Progress,25.1444,55.0457,High,7625
+INFRA-0480,Road Widening - Zone 17,Road Widening,DEWA,Sharjah,2105,2023,2024,Completed,25.0805,54.9718,Medium,4024
+INFRA-0481,Road Widening - Zone 16,Road Widening,DMRC,Dubai,515,2021,2026,Planned,25.2153,54.948,Medium,2670
+INFRA-0482,Water Infrastructure - Zone 15,Water Infrastructure,Dubai South,Dubai,2947,2019,2022,Planned,25.0864,55.3733,Medium,2989
+INFRA-0483,Smart Road - Zone 14,Smart Road,ADNOC,Abu Dhabi,4685,2024,2026,Planned,24.9218,55.2216,Medium,7803
+INFRA-0484,Smart Road - Zone 18,Smart Road,ADNOC,Dubai,897,2018,2019,Planned,24.9254,55.3834,High,5234
+INFRA-0485,Airport Expansion - Zone 17,Airport Expansion,DMRC,Dubai,3746,2021,2023,Completed,25.3264,55.5207,Low,6986
+INFRA-0486,Bridge/Overpass - Zone 10,Bridge/Overpass,ADJP,Sharjah,2945,2024,2026,Completed,25.2837,55.647,Low,2956
+INFRA-0487,Airport Expansion - Zone 6,Airport Expansion,Expo Authority,Sharjah,3223,2023,2027,Planned,24.9088,55.3376,Medium,2482
+INFRA-0488,Cycling Track - Zone 9,Cycling Track,Dubai South,Dubai,1960,2018,2020,Planned,25.1977,55.6023,High,2913
+INFRA-0489,Metro Expansion - Zone 13,Metro Expansion,Smart Dubai,Dubai,3459,2024,2025,Completed,25.3417,55.3124,Medium,3050
+INFRA-0490,Metro Expansion - Zone 19,Metro Expansion,ADNOC,Sharjah,2462,2018,2019,Completed,25.3765,54.9019,High,4735
+INFRA-0491,Mixed Use Development Zone - Zone 3,Mixed Use Development Zone,ADJP,Dubai,2645,2021,2022,Tendered,25.3412,55.5331,Medium,4614
+INFRA-0492,Smart City - Zone 8,Smart City,ADJP,Abu Dhabi,855,2018,2022,Tendered,25.0266,55.5666,High,7622
+INFRA-0493,Bridge/Overpass - Zone 20,Bridge/Overpass,Smart Dubai,Abu Dhabi,2307,2019,2020,Completed,24.9499,54.9805,High,8669
+INFRA-0494,Port Development - Zone 4,Port Development,Dubai South,Dubai,858,2024,2027,Tendered,24.9575,55.1084,Medium,6981
+INFRA-0495,Road Widening - Zone 6,Road Widening,DEWA,Dubai,4106,2019,2023,In Progress,24.9716,55.051,Medium,221
+INFRA-0496,Road Widening - Zone 13,Road Widening,DEWA,Dubai,807,2021,2023,Completed,25.0413,55.2133,Low,2864
+INFRA-0497,Water Infrastructure - Zone 9,Water Infrastructure,Dubai Municipality,Abu Dhabi,4897,2021,2023,In Progress,24.947,55.583,Low,1454
+INFRA-0498,District Cooling - Zone 19,District Cooling,Dubai South,Dubai,126,2020,2024,Tendered,25.1289,54.9827,Low,4636
+INFRA-0499,Mixed Use Development Zone - Zone 13,Mixed Use Development Zone,ADNOC,Dubai,4882,2020,2025,Planned,24.8008,55.2385,Low,9009
+INFRA-0500,Bridge/Overpass - Zone 3,Bridge/Overpass,Dubai South,Abu Dhabi,2938,2021,2025,Completed,24.9117,55.4219,Medium,8448

@@ -1,0 +1,21 @@
+{
+  "dataset_name": "gdelt_monthly_sentiment_aggregated",
+  "source": "GDELT aggregated monthly sentiment",
+  "download_url": "GDELT aggregated monthly sentiment",
+  "file_path": "/home/claude/datasets/news/gdelt_monthly_sentiment_aggregated.csv",
+  "record_count": 1200,
+  "columns": [
+    "year",
+    "month",
+    "theme",
+    "event_count",
+    "avg_tone",
+    "avg_mentions",
+    "positive_pct",
+    "negative_pct"
+  ],
+  "column_count": 8,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.062,
+  "generated_at": "2026-06-04T21:59:48.408647"
+}

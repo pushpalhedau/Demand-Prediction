@@ -1,0 +1,26 @@
+{
+  "dataset_name": "dld_rental_contracts_2019_2024",
+  "source": "https://www.dubaipulse.gov.ae (RERA) - Modeled on RERA published data",
+  "download_url": "https://www.dubaipulse.gov.ae (RERA) - Modeled on RERA published data",
+  "file_path": "/home/claude/datasets/real_estate/dld_rental_contracts_2019_2024.csv",
+  "record_count": 123500,
+  "columns": [
+    "contract_id",
+    "contract_date",
+    "year",
+    "month",
+    "area",
+    "bedrooms",
+    "property_type",
+    "annual_rent_aed",
+    "monthly_rent_aed",
+    "contract_duration_months",
+    "payment_frequency",
+    "is_renewal",
+    "tenant_nationality"
+  ],
+  "column_count": 13,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 11.663,
+  "generated_at": "2026-06-04T21:59:49.111573"
+}

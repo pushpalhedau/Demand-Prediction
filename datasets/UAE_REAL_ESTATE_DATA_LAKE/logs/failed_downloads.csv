@@ -1,0 +1,17 @@
+dataset_name,source_url,failure_reason,suggested_manual_action
+DLD Transactions (Live API),https://www.dubaipulse.gov.ae/api/3/action/datastore_search?resource_id=dld-transactions,Network sandbox restricts access to external UAE government portals (403 / host_not_allowed),"1. Visit https://www.dubaipulse.gov.ae
+2. Search ""DLD Transactions""
+3. Create account if required
+4. Download CSV directly or use API key"
+DLD Rental Contracts (Live),https://www.dubaipulse.gov.ae/data/dld-rental,Host not accessible from this environment,"Visit https://www.dubaipulse.gov.ae and search for ""rental contracts"" dataset"
+GDELT Project - Live News Feed,http://data.gdeltproject.org/gdeltv2/lastupdate.txt,gdeltproject.org not in allowed domain list,Download from http://data.gdeltproject.org/gdeltv2/ - GKG files contain UAE news data. Filter by theme=UAE or country code ARE
+World Bank UAE Indicators API,https://api.worldbank.org/v2/country/ARE/indicator/NY.GDP.MKTP.CD?format=json,worldbank.org not in allowed domain list,Use World Bank API: https://api.worldbank.org/v2/country/ARE/indicator/{INDICATOR}?format=json&per_page=100
+UAE Central Bank EIBOR Data,https://www.centralbank.ae/en/forex-eibor/eibor,centralbank.ae blocked by network sandbox,Visit https://www.centralbank.ae/en/forex-eibor/eibor and download EIBOR historical rates
+FCSC UAE Statistics,https://fcsc.gov.ae/en-us/Pages/Statistics/Statistics-by-Domain.aspx,fcsc.gov.ae not accessible from environment,"Visit FCSC portal at https://fcsc.gov.ae - Download Population, GDP, Employment datasets"
+RTA Open Data - Metro Ridership,https://www.rta.ae/wps/portal/rta/ae/home/rta-data,rta.ae not in allowed domain whitelist,Visit https://www.rta.ae and download Public Transport ridership statistics
+Property Finder Live Listings,https://www.propertyfinder.ae/en/search?c=1&t=1&page=1,propertyfinder.ae not accessible; requires pagination and authentication,Use Property Finder API (partner access required) or web scraping with rate limiting. Contact api@propertyfinder.ae
+Bayut Live Listings,https://www.bayut.com/to-rent/property/dubai/,bayut.com not accessible; scraping requires compliance with ToS,Contact Bayut data team at data@bayut.com for bulk data partnerships
+DXB Interact Price Monitor,https://www.dxbinteract.com/,dxbinteract.com not accessible from this environment,Subscribe to DXB Interact at https://www.dxbinteract.com/ for property price analytics data
+IMF UAE Economic Data,https://www.imf.org/external/datamapper/api/v1/NGDP_RPCH/ARE,imf.org blocked by network sandbox,Use IMF DataMapper API: https://www.imf.org/external/datamapper/api/v1/{indicator}/ARE
+Dubai Statistics Centre Open Data,https://www.dsc.gov.ae/en-us/DSC-Services/Pages/Open-Data.aspx,dsc.gov.ae not in allowed domain list,"Visit Dubai Statistics Centre: https://www.dsc.gov.ae to download building permits, demographics data"
+Kaggle Dubai Real Estate Dataset,https://www.kaggle.com/datasets/azharsaleem/dubai-real-estate-market-transactions-dld,kaggle.com requires authentication; not in allowed domains,Login to Kaggle and download: https://www.kaggle.com/datasets/azharsaleem/dubai-real-estate-market-transactions-dld (DLD transactions 2000-2024)

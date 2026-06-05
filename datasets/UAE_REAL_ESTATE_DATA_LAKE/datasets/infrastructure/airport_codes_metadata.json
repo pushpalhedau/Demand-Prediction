@@ -1,0 +1,26 @@
+{
+  "dataset_name": "airport_codes",
+  "source": "https://raw.githubusercontent.com/datasets/airport-codes/main/data/airport-codes.csv (OurAirports)",
+  "download_url": "https://raw.githubusercontent.com/datasets/airport-codes/main/data/airport-codes.csv (OurAirports)",
+  "file_path": "/home/claude/datasets/infrastructure/airport_codes.csv",
+  "record_count": 85543,
+  "columns": [
+    "ident",
+    "type",
+    "name",
+    "elevation_ft",
+    "continent",
+    "iso_country",
+    "iso_region",
+    "municipality",
+    "icao_code",
+    "iata_code",
+    "gps_code",
+    "local_code",
+    "coordinates"
+  ],
+  "column_count": 13,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 8.819,
+  "generated_at": "2026-06-04T21:59:48.063664"
+}

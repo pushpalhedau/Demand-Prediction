@@ -1,0 +1,25 @@
+{
+  "dataset_name": "uae_interest_mortgage_rates",
+  "source": "UAE Central Bank / EIBOR published rates",
+  "download_url": "UAE Central Bank / EIBOR published rates",
+  "file_path": "/home/claude/datasets/macroeconomic/uae_interest_mortgage_rates.csv",
+  "record_count": 120,
+  "columns": [
+    "year",
+    "month",
+    "date",
+    "uae_base_rate_pct",
+    "eibor_1m_pct",
+    "eibor_3m_pct",
+    "eibor_6m_pct",
+    "eibor_12m_pct",
+    "avg_mortgage_rate_pct",
+    "fixed_mortgage_rate_pct",
+    "variable_mortgage_rate_pct",
+    "fed_funds_rate_pct"
+  ],
+  "column_count": 12,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.009,
+  "generated_at": "2026-06-04T21:59:48.360602"
+}

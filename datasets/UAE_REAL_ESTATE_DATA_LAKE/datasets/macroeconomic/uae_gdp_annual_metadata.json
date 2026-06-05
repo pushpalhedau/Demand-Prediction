@@ -1,0 +1,20 @@
+{
+  "dataset_name": "uae_gdp_annual",
+  "source": "UAE Federal Competitiveness & Statistics Centre (FCSC) / World Bank - Modeled",
+  "download_url": "UAE Federal Competitiveness & Statistics Centre (FCSC) / World Bank - Modeled",
+  "file_path": "/home/claude/datasets/macroeconomic/uae_gdp_annual.csv",
+  "record_count": 25,
+  "columns": [
+    "year",
+    "gdp_usd_billion",
+    "gdp_growth_rate_pct",
+    "oil_gdp_usd_billion",
+    "non_oil_gdp_usd_billion",
+    "gdp_aed_billion",
+    "per_capita_gdp_usd"
+  ],
+  "column_count": 7,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.001,
+  "generated_at": "2026-06-04T21:59:48.349005"
+}

@@ -1,0 +1,25 @@
+{
+  "dataset_name": "uae_free_zones",
+  "source": "UAE Ministry of Economy / Free Zone Authorities",
+  "download_url": "UAE Ministry of Economy / Free Zone Authorities",
+  "file_path": "/home/claude/datasets/infrastructure/uae_free_zones.csv",
+  "record_count": 18,
+  "columns": [
+    "zone_code",
+    "zone_name",
+    "primary_sector",
+    "latitude",
+    "longitude",
+    "status",
+    "established_year",
+    "num_companies",
+    "area_sqkm",
+    "employment_thousands",
+    "foreign_ownership_pct",
+    "corporate_tax"
+  ],
+  "column_count": 12,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.002,
+  "generated_at": "2026-06-04T21:59:48.118960"
+}

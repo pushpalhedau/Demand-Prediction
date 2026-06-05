@@ -1,0 +1,31 @@
+{
+  "dataset_name": "dld_transactions_2019_2024",
+  "source": "https://www.dubaipulse.gov.ae (DLD Open Data) - Modeled on published statistics",
+  "download_url": "https://www.dubaipulse.gov.ae (DLD Open Data) - Modeled on published statistics",
+  "file_path": "/home/claude/datasets/real_estate/dld_transactions_2019_2024.csv",
+  "record_count": 456000,
+  "columns": [
+    "transaction_id",
+    "transaction_date",
+    "year",
+    "month",
+    "quarter",
+    "area_name",
+    "zone",
+    "property_type",
+    "bedrooms",
+    "transaction_type",
+    "transaction_value_aed",
+    "transaction_value_usd",
+    "area_sqft",
+    "price_per_sqft_aed",
+    "developer",
+    "buyer_nationality",
+    "is_off_plan",
+    "registration_type"
+  ],
+  "column_count": 18,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 61.731,
+  "generated_at": "2026-06-04T21:59:50.947754"
+}

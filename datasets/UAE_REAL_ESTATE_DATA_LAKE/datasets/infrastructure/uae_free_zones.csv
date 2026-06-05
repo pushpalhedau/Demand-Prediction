@@ -1,0 +1,19 @@
+zone_code,zone_name,primary_sector,latitude,longitude,status,established_year,num_companies,area_sqkm,employment_thousands,foreign_ownership_pct,corporate_tax
+DIFC,Dubai International Financial Centre,Financial Services,25.2115,55.2836,Operational,2004,7516,68.24,94.5,100.0,0
+DAFZA,Dubai Airport Free Zone,Aviation & Logistics,25.2485,55.3612,Operational,1996,5920,32.41,38.4,100.0,0
+JAFZA,Jebel Ali Free Zone,Trade & Logistics,24.9838,55.0614,Operational,1985,841,65.96,67.2,100.0,0
+Dubai Internet City,Dubai Internet City,Technology,25.0954,55.1571,Operational,1999,7961,6.6,57.7,100.0,0
+Dubai Media City,Dubai Media City,Media,25.0984,55.1608,Operational,2000,4235,32.12,89.2,100.0,0
+Dubai Silicon Oasis,Dubai Silicon Oasis,Technology,25.1198,55.3783,Operational,2004,4612,30.29,12.7,100.0,0
+Dubai Healthcare City,Dubai Healthcare City,Healthcare,25.2296,55.3234,Operational,2002,6141,74.82,82.4,100.0,0
+Dubai Design District,Dubai Design District (d3),Design & Fashion,25.188,55.2921,Operational,2013,5301,95.35,55.2,100.0,0
+Dubai South,Dubai South,Aviation & Logistics,24.8896,55.0236,Operational,2006,2760,76.52,71.6,100.0,0
+Dubai Production City,Dubai Production City,Media & Production,25.0318,55.1937,Operational,2009,6383,57.13,9.3,100.0,0
+Dubai World Trade Centre,DWTC Free Zone,Business Hub,25.2285,55.2891,Operational,2015,4814,42.93,37.0,100.0,0
+Masdar City,Masdar City Free Zone,Clean Energy,24.4285,54.6197,Operational,2008,3831,94.64,20.9,100.0,0
+Abu Dhabi Global Market,ADGM,Financial Services,24.4659,54.323,Operational,2013,7594,71.44,53.4,100.0,0
+Sharjah Airport FZ,Sharjah Airport International Free Zone,Trade,25.329,55.5187,Operational,1995,1538,7.39,29.9,100.0,0
+KIZAD,Khalifa Industrial Zone Abu Dhabi,Industrial,24.4286,54.7834,Operational,2010,5602,87.33,84.4,100.0,0
+twofour54,twofour54,Media & Entertainment,24.4672,54.3456,Operational,2008,5958,22.23,37.9,100.0,0
+Dubai Commercity,Dubai CommerCity,E-commerce,25.2543,55.3677,Operational,2020,6034,30.14,87.1,100.0,0
+ADCP,Abu Dhabi Creative Port,Creative Industries,24.4823,54.3512,Planned,2024,3925,54.73,14.5,100.0,0

@@ -1,0 +1,24 @@
+{
+  "dataset_name": "dld_land_registry",
+  "source": "https://www.dubaipulse.gov.ae (Land Registry)",
+  "download_url": "https://www.dubaipulse.gov.ae (Land Registry)",
+  "file_path": "/home/claude/datasets/real_estate/dld_land_registry.csv",
+  "record_count": 8000,
+  "columns": [
+    "plot_id",
+    "plot_number",
+    "area_name",
+    "plot_area_sqft",
+    "zoning",
+    "ownership_type",
+    "registration_date",
+    "last_transfer_date",
+    "market_value_aed",
+    "is_mortgaged",
+    "developer_id"
+  ],
+  "column_count": 11,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.826,
+  "generated_at": "2026-06-04T21:59:48.729949"
+}

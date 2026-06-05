@@ -1,0 +1,23 @@
+{
+  "dataset_name": "uae_cpi_inflation_monthly",
+  "source": "UAE Central Bank / FCSC - CPI Data",
+  "download_url": "UAE Central Bank / FCSC - CPI Data",
+  "file_path": "/home/claude/datasets/macroeconomic/uae_cpi_inflation_monthly.csv",
+  "record_count": 180,
+  "columns": [
+    "year",
+    "month",
+    "date",
+    "overall_cpi",
+    "housing_cpi",
+    "food_cpi",
+    "transport_cpi",
+    "education_cpi",
+    "healthcare_cpi",
+    "yoy_inflation_pct"
+  ],
+  "column_count": 10,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.012,
+  "generated_at": "2026-06-04T21:59:48.322442"
+}

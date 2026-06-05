@@ -1,0 +1,31 @@
+station_name,line,station_order,latitude,longitude,area,is_operational,daily_ridership_avg,has_parking,accessibility_score,retail_catchment_radius_km
+UAE Exchange,Red,1,24.9486,55.0098,Jebel Ali,True,9659,False,0.83,1.5
+Energy,Red,2,24.9518,55.0283,Jebel Ali,True,50266,False,0.88,1.5
+Discovery Gardens,Red,3,24.9561,55.0553,Discovery Gardens,True,76553,True,0.89,1.5
+Al Furjan,Red,4,24.9598,55.0711,Al Furjan,True,37788,True,0.81,1.5
+Jumeirah Golf Estates,Red,5,25.0015,55.1234,JGE,False,27683,False,0.78,1.5
+Dubai Marina,Red,6,25.0796,55.1395,Dubai Marina,True,58172,True,0.87,1.5
+DAMAC Properties,Red,7,25.0903,55.1467,JLT,True,46544,False,0.95,1.5
+Sobha Realty,Red,8,25.0961,55.1532,JLT,True,38168,True,0.91,1.5
+NAKHEEL Harbour and Tower,Red,9,25.1018,55.1589,JLT,True,76265,True,0.85,1.5
+Mall of the Emirates,Red,10,25.118,55.2003,Al Barsha,True,78278,True,0.96,1.5
+First Abu Dhabi Bank,Red,11,25.124,55.2167,Al Barsha,True,50887,False,0.61,1.5
+Sharaf DG,Red,12,25.1289,55.228,Al Barsha,True,15305,False,0.7,1.5
+BurJuman,Red,13,25.2635,55.3024,Bur Dubai,True,76576,False,0.8,1.5
+ADCB,Red,14,25.2675,55.3089,Bur Dubai,True,49729,True,0.86,1.5
+Union,Red,15,25.2695,55.3098,Deira,True,31756,False,0.86,1.5
+Burj Khalifa/Dubai Mall,Red,16,25.1975,55.2796,Downtown Dubai,True,13609,False,0.94,1.5
+Financial Centre,Red,17,25.2108,55.2832,DIFC,True,35788,False,0.74,1.5
+Emirates,Red,18,25.2248,55.2967,Al Wasl,True,39385,False,0.64,1.5
+Al Jafiliya,Red,19,25.2389,55.3045,Al Jafiliya,True,69067,False,0.83,1.5
+Etisalat,Green,1,25.2695,55.3145,Deira,True,52745,False,0.7,1.5
+Al Rigga,Green,2,25.2722,55.32,Deira,True,63777,True,0.93,1.5
+Union,Green,3,25.2695,55.3098,Deira,True,9573,False,0.61,1.5
+BurJuman,Green,4,25.2635,55.3024,Bur Dubai,True,52982,False,0.77,1.5
+Al Fahidi,Green,5,25.2619,55.2982,Bur Dubai,True,55565,False,0.97,1.5
+Al Ghubaiba,Green,6,25.2578,55.2915,Bur Dubai,True,40743,True,0.8,1.5
+Oud Metha,Green,7,25.2403,55.3156,Oud Metha,True,35148,True,0.93,1.5
+Healthcare City,Green,8,25.2296,55.3234,Healthcare City,True,61793,True,0.9,1.5
+Al Jadaf,Green,9,25.2245,55.3312,Al Jadaf,True,76995,False,0.87,1.5
+Creek,Green,10,25.2312,55.3456,Deira,True,42807,False,0.97,1.5
+Al Qiyadah,Green,11,25.2783,55.3345,Al Qiyadah,True,67070,False,0.69,1.5

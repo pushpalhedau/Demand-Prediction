@@ -1,0 +1,17 @@
+{
+  "dataset_name": "world_cpi",
+  "source": "https://raw.githubusercontent.com/datasets/cpi/master/data/cpi.csv",
+  "download_url": "https://raw.githubusercontent.com/datasets/cpi/master/data/cpi.csv",
+  "file_path": "/home/claude/datasets/macroeconomic/world_cpi.csv",
+  "record_count": 11182,
+  "columns": [
+    "Country",
+    "Country Code",
+    "Year",
+    "CPI"
+  ],
+  "column_count": 4,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.437,
+  "generated_at": "2026-06-04T21:59:48.398918"
+}

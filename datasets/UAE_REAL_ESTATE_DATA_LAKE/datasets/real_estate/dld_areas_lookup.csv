@@ -1,0 +1,62 @@
+area_code,area_name,emirate,zone_type,primary_use,municipality,avg_price_per_sqft_2024,num_projects,established_year
+A0001,Dubai Marina,Dubai,Freehold,Commercial,Dubai Municipality,1531,99,2020
+A0002,Downtown Dubai,Dubai,Leasehold,Commercial,DAFZA,1012,99,2019
+A0003,Business Bay,Dubai,Mixed,Residential,DAFZA,2649,136,2007
+A0004,JVC,Dubai,Leasehold,Industrial,Dubai South,1405,54,2014
+A0005,Palm Jumeirah,Dubai,Freehold,Mixed,DAFZA,4390,80,1996
+A0006,Arabian Ranches,Dubai,Mixed,Industrial,Dubai Municipality,4096,195,2003
+A0007,DIFC,Dubai,Freehold,Residential,Dubai Municipality,1841,171,2017
+A0008,JLT,Dubai,Leasehold,Industrial,Dubai Municipality,2441,151,2019
+A0009,Al Barsha,Dubai,Freehold,Industrial,Dubai Municipality,982,11,2003
+A0010,Mirdif,Dubai,Leasehold,Commercial,Dubai South,4963,215,1999
+A0011,Dubai Hills Estate,Dubai,Leasehold,Residential,Dubai South,2217,169,2019
+A0012,Emaar Beachfront,Dubai,Freehold,Residential,Dubai South,4687,211,2018
+A0013,Town Square,Dubai,Mixed,Commercial,Dubai South,4042,246,2020
+A0014,Dubai Creek Harbour,Dubai,Freehold,Mixed,DAFZA,2190,91,2008
+A0015,Motor City,Dubai,Freehold,Residential,DAFZA,4172,73,1996
+A0016,Sports City,Dubai,Mixed,Mixed,DAFZA,1265,114,2012
+A0017,International City,Dubai,Mixed,Industrial,Dubai Municipality,2403,153,2000
+A0018,Discovery Gardens,Dubai,Mixed,Commercial,Dubai Municipality,3957,146,2017
+A0019,Deira,Dubai,Mixed,Residential,DAFZA,4834,109,2018
+A0020,Bur Dubai,Dubai,Mixed,Mixed,Dubai South,1906,39,2008
+A0021,Al Quoz,Dubai,Mixed,Residential,DAFZA,4015,93,1995
+A0022,Al Karama,Dubai,Mixed,Mixed,Dubai Municipality,2549,198,2011
+A0023,Al Satwa,Dubai,Mixed,Commercial,DAFZA,2550,37,2003
+A0024,Jumeirah,Dubai,Mixed,Commercial,Dubai South,2157,155,2009
+A0025,Umm Suqeim,Dubai,Mixed,Commercial,Dubai Municipality,3860,155,2015
+A0026,Al Wasl,Dubai,Leasehold,Residential,DAFZA,1509,104,2013
+A0027,Al Safa,Dubai,Freehold,Mixed,Dubai South,1573,189,2005
+A0028,Nad Al Sheba,Dubai,Leasehold,Mixed,Dubai Municipality,3516,48,2004
+A0029,Ras Al Khor,Dubai,Freehold,Industrial,Dubai Municipality,4512,241,2002
+A0030,Al Qusais,Dubai,Mixed,Residential,DAFZA,4126,169,2009
+A0031,Al Twar,Dubai,Leasehold,Mixed,Dubai South,1724,184,2008
+A0032,Muhaisnah,Dubai,Freehold,Residential,DAFZA,1939,202,2002
+A0033,Al Mizhar,Dubai,Leasehold,Industrial,DAFZA,1762,13,2013
+A0034,Warqa,Dubai,Leasehold,Residential,Dubai South,4950,112,2011
+A0035,Dubai Land,Dubai,Freehold,Mixed,Dubai South,1405,48,2003
+A0036,Dubailand,Dubai,Mixed,Mixed,DAFZA,2203,29,2002
+A0037,Al Furjan,Dubai,Mixed,Residential,DAFZA,2991,43,2003
+A0038,Jebel Ali,Dubai,Mixed,Industrial,Dubai Municipality,937,41,2003
+A0039,Dubai Investment Park,Dubai,Mixed,Residential,Dubai South,4674,135,2016
+A0040,Dubai South,Dubai,Freehold,Commercial,DAFZA,1632,224,2016
+A0041,Al Maktoum Airport Area,Dubai,Leasehold,Industrial,Dubai Municipality,4803,227,2014
+A0042,Dubai Healthcare City,Dubai,Mixed,Industrial,Dubai Municipality,4166,202,2014
+A0043,Dubai Design District,Dubai,Leasehold,Residential,Dubai South,4346,17,2014
+A0044,Bluewaters Island,Dubai,Leasehold,Commercial,DAFZA,1016,156,2006
+A0045,La Mer,Dubai,Freehold,Mixed,Dubai South,4934,54,2018
+A0046,Madinat Jumeirah Living,Dubai,Freehold,Residential,Dubai Municipality,3873,124,1998
+A0047,City Walk,Dubai,Freehold,Mixed,Dubai Municipality,3442,49,1995
+A0048,Dubai Frame Area,Dubai,Mixed,Residential,Dubai Municipality,2430,16,2000
+A0049,Al Khawaneej,Dubai,Mixed,Industrial,Dubai South,2084,220,2015
+A0050,Meydan,Dubai,Mixed,Mixed,DAFZA,1336,69,2007
+A0051,Sobha Hartland,Dubai,Freehold,Residential,Dubai Municipality,879,195,2013
+A0052,MBR City,Dubai,Freehold,Commercial,Dubai Municipality,4939,72,1996
+A0053,District One,Dubai,Mixed,Industrial,Dubai South,3625,51,2003
+A0054,Dubai Silicon Oasis,Dubai,Leasehold,Mixed,DAFZA,2427,93,2015
+A0055,Academic City,Dubai,Leasehold,Industrial,Dubai Municipality,2548,119,2003
+A0056,Al Warsan,Dubai,Freehold,Residential,DAFZA,1412,101,1999
+A0057,International Media Production Zone,Dubai,Freehold,Commercial,Dubai South,1836,96,2017
+A0058,Tecom,Dubai,Leasehold,Industrial,Dubai South,1523,186,1995
+A0059,Al Barsha South,Dubai,Freehold,Mixed,Dubai Municipality,4767,142,2002
+A0060,Arjan,Dubai,Leasehold,Mixed,Dubai South,2751,124,2018
+A0061,Dubai Production City,Dubai,Mixed,Mixed,DAFZA,3408,164,1997

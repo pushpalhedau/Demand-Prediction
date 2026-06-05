@@ -1,0 +1,26 @@
+{
+  "dataset_name": "uae_airports",
+  "source": "OurAirports - UAE filtered",
+  "download_url": "OurAirports - UAE filtered",
+  "file_path": "/home/claude/datasets/infrastructure/uae_airports.csv",
+  "record_count": 305,
+  "columns": [
+    "ident",
+    "type",
+    "name",
+    "elevation_ft",
+    "continent",
+    "iso_country",
+    "iso_region",
+    "municipality",
+    "icao_code",
+    "iata_code",
+    "gps_code",
+    "local_code",
+    "coordinates"
+  ],
+  "column_count": 13,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 0.03,
+  "generated_at": "2026-06-04T21:59:48.100448"
+}

@@ -1,0 +1,29 @@
+{
+  "dataset_name": "gdelt_uae_realestate_events",
+  "source": "GDELT Project (https://www.gdeltproject.org) - UAE events modeled",
+  "download_url": "GDELT Project (https://www.gdeltproject.org) - UAE events modeled",
+  "file_path": "/home/claude/datasets/news/gdelt_uae_realestate_events.csv",
+  "record_count": 50000,
+  "columns": [
+    "event_id",
+    "datetime",
+    "date",
+    "year",
+    "month",
+    "theme",
+    "source_domain",
+    "source_country",
+    "headline_sentiment",
+    "tone_score",
+    "goldstein_scale",
+    "num_mentions",
+    "num_sources",
+    "avg_tone",
+    "quad_class",
+    "is_real_estate_specific"
+  ],
+  "column_count": 16,
+  "last_updated": "2026-06-04",
+  "file_size_mb": 7.05,
+  "generated_at": "2026-06-04T21:59:48.620074"
+}
