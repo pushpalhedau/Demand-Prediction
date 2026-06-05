@@ -64,9 +64,27 @@ def render(filters: dict):
     unit_label = "Transactions / Month" if target == "units" else "AED / Month"
     fig = forecast_chart(
         fc_data.get("historical", {}), fc_data.get("forecast", {}),
-        title="", unit=unit_label, height=430,
+        title="", unit=unit_label, height=460,
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    # Forecast summary stats strip
+    fc_vals = fc_data.get("forecast", {}).get("values", [])
+    if fc_vals:
+        peak      = max(fc_vals)
+        trough    = min(fc_vals)
+        trend_pct = ((fc_vals[-1] - fc_vals[0]) / fc_vals[0] * 100) if fc_vals[0] else 0
+        trend_dir = "↑" if trend_pct >= 0 else "↓"
+        trend_col = "#10b981" if trend_pct >= 0 else "#ef4444"
+        hist_last = (fc_data.get("historical", {}).get("values") or [None])[-1]
+        vs_now    = f" vs now: <b style='color:{trend_col}'>{trend_dir} {abs((fc_vals[-1]-hist_last)/hist_last*100):.1f}%</b>" if hist_last else ""
+        st.markdown(f"""
+<div style="display:flex;gap:24px;padding:10px 4px 2px;border-top:1px solid #1e1e3f;margin-top:-4px;flex-wrap:wrap">
+  <span style="color:#64748b;font-size:12px;font-family:Inter,sans-serif">Peak: <b style="color:#f1f5f9">{peak:,.0f}</b></span>
+  <span style="color:#64748b;font-size:12px;font-family:Inter,sans-serif">Low: <b style="color:#f1f5f9">{trough:,.0f}</b></span>
+  <span style="color:#64748b;font-size:12px;font-family:Inter,sans-serif">Trend over horizon: <b style="color:{trend_col}">{trend_dir} {abs(trend_pct):.1f}%</b></span>{vs_now}
+  <span style="color:#64748b;font-size:12px;font-family:Inter,sans-serif">Horizon: <b style="color:#f1f5f9">{horizon} days</b></span>
+</div>""", unsafe_allow_html=True)
 
     # ── Model Comparison ─────────────────────────────────────────
     if show_all:

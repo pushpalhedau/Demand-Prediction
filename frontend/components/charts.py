@@ -14,39 +14,87 @@ from frontend.components.theme import themed, C_INDIGO, C_EMERALD, C_AMBER, C_RE
 def forecast_chart(historical: Dict, forecast: Dict, title: str = "Demand Forecast",
                     unit: str = "Units", height: int = 420) -> go.Figure:
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=historical.get("dates", []),
-        y=historical.get("values", []),
-        name="Historical",
-        line=dict(color=C_INDIGO, width=2),
-        mode="lines",
-    ))
-    fc_dates  = forecast.get("dates", [])
-    fc_values = forecast.get("values", [])
-    fc_lower  = forecast.get("lower", fc_values)
-    fc_upper  = forecast.get("upper", fc_values)
 
+    hist_dates  = historical.get("dates", [])
+    hist_values = historical.get("values", [])
+    fc_dates    = forecast.get("dates", [])
+    fc_values   = forecast.get("values", [])
+    fc_lower    = forecast.get("lower", fc_values)
+    fc_upper    = forecast.get("upper", fc_values)
+
+    # Subtle gradient fill under historical
+    if hist_dates and hist_values:
+        fig.add_trace(go.Scatter(
+            x=hist_dates, y=hist_values,
+            fill="tozeroy",
+            fillcolor="rgba(99,102,241,0.08)",
+            line=dict(color="rgba(0,0,0,0)"),
+            showlegend=False,
+            hoverinfo="skip",
+        ))
+
+    # Historical line
     fig.add_trace(go.Scatter(
-        x=fc_dates + fc_dates[::-1],
-        y=fc_upper + fc_lower[::-1],
-        fill="toself",
-        fillcolor="rgba(99,102,241,0.12)",
-        line=dict(color="rgba(0,0,0,0)"),
-        showlegend=False,
-        name="Confidence Band",
-    ))
-    fig.add_trace(go.Scatter(
-        x=fc_dates, y=fc_values,
-        name="Forecast",
-        line=dict(color=C_EMERALD, width=2.5, dash="dash"),
+        x=hist_dates, y=hist_values,
+        name="Historical",
+        line=dict(color=C_INDIGO, width=2.5),
         mode="lines",
+        hovertemplate="<b>%{y:,.0f}</b><extra>Historical</extra>",
     ))
+
+    if fc_dates and fc_values:
+        # Confidence band with visible border
+        fig.add_trace(go.Scatter(
+            x=fc_dates + fc_dates[::-1],
+            y=fc_upper + fc_lower[::-1],
+            fill="toself",
+            fillcolor="rgba(16,185,129,0.10)",
+            line=dict(color="rgba(16,185,129,0.22)", width=0.8),
+            showlegend=True,
+            name="90% CI",
+            hoverinfo="skip",
+        ))
+
+        # Forecast line
+        fig.add_trace(go.Scatter(
+            x=fc_dates, y=fc_values,
+            name="Forecast",
+            line=dict(color=C_EMERALD, width=2.5, dash="dash"),
+            mode="lines",
+            hovertemplate="<b>%{y:,.0f}</b><extra>Forecast</extra>",
+        ))
+
+        # Vertical separator at forecast start (add_shape handles date strings correctly)
+        fig.add_shape(
+            type="line",
+            x0=fc_dates[0], x1=fc_dates[0],
+            y0=0, y1=1, yref="paper",
+            line=dict(color="rgba(148,163,184,0.3)", width=1.5, dash="dot"),
+        )
+        fig.add_annotation(
+            x=fc_dates[0], y=0.98, yref="paper",
+            text="Forecast →",
+            showarrow=False,
+            font=dict(color="#64748b", size=10, family="Inter, sans-serif"),
+            xanchor="left", yanchor="top",
+        )
+
     fig.update_layout(**themed(
         height=height,
         title=title,
         yaxis_title=unit,
         xaxis_title="",
         hovermode="x unified",
+        yaxis_tickformat=",",
+        legend_orientation="h",
+        legend_yanchor="bottom",
+        legend_y=1.02,
+        legend_xanchor="right",
+        legend_x=1,
+        margin_l=60,
+        margin_r=20,
+        margin_t=60,
+        margin_b=40,
     ))
     return fig
 
