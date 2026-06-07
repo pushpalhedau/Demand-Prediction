@@ -13,7 +13,9 @@ from frontend.components.charts import bar_chart, pie_chart, monte_carlo_chart
 from frontend.components.theme import C_INDIGO, C_EMERALD, C_AMBER, C_RED, themed
 
 
-def render():
+def render(filters: dict = None):
+    filters      = filters or {}
+    default_area = filters.get("area") or "Business Bay"
     st.markdown(KPI_CSS, unsafe_allow_html=True)
     tab1, tab2, tab3 = st.tabs([
         "Project Launch Advisor", "Portfolio Overview", "Absorption Analysis"
@@ -28,7 +30,7 @@ def render():
         with st.form("launch_form"):
             c1, c2, c3 = st.columns(3)
             with c1:
-                l_area   = st.text_input("Area", value="Dubai South", key="l_area")
+                l_area   = st.text_input("Area", value=default_area, key="l_area")
                 l_type   = st.selectbox("Property Type",
                                          ["Apartment", "Villa", "Townhouse", "Penthouse", "Commercial"],
                                          key="l_type")

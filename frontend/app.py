@@ -24,15 +24,16 @@ st.set_page_config(
 )
 
 import frontend.api_client as api
-from frontend.components.theme import THEME_CSS
+from frontend.components.theme import THEME_CSS, LOADER_SCRIPT
 from frontend.components.kpi_cards import KPI_CSS
 from frontend.pages import p1_executive, p2_forecast, p3_market, p4_customer, p5_inventory, p6_ai_studio
 
 
 def main():
-    # Inject global CSS
+    # Inject global CSS + instant loader script
     st.markdown(THEME_CSS, unsafe_allow_html=True)
     st.markdown(KPI_CSS, unsafe_allow_html=True)
+    st.markdown(LOADER_SCRIPT, unsafe_allow_html=True)
 
     # ── Platform Header ──────────────────────────────────────────
     st.markdown(
@@ -83,22 +84,28 @@ def main():
         unsafe_allow_html=True,
     )
 
-    filters = {}
-    filters["year"] = st.sidebar.selectbox(
+    _raw_year = st.sidebar.selectbox(
         "Year", [2024, 2023, 2022, 2021, 2020, 2019], index=0
     )
-    filters["area"] = st.sidebar.selectbox(
+    _raw_area = st.sidebar.selectbox(
         "Area Focus",
         ["All UAE", "Business Bay", "Downtown Dubai", "Dubai Marina",
          "Dubai South", "JVC", "JLT", "Al Barsha", "Jumeirah Village",
          "Palm Jumeirah", "Dubai Creek Harbour"],
         index=0,
     )
-    filters["property_type"] = st.sidebar.selectbox(
+    _raw_ptype = st.sidebar.selectbox(
         "Property Type",
         ["All", "Apartment", "Villa", "Townhouse", "Penthouse", "Studio", "Commercial"],
         index=0,
     )
+
+    # Normalise to None so API calls treat "All" selections as unfiltered
+    filters = {
+        "year":          _raw_year,
+        "area":          None if _raw_area  == "All UAE" else _raw_area,
+        "property_type": None if _raw_ptype == "All"     else _raw_ptype,
+    }
 
     st.sidebar.markdown("---")
     st.sidebar.markdown(
@@ -125,22 +132,22 @@ def main():
     tabs = st.tabs(tab_labels)
 
     with tabs[0]:
-        p1_executive.render()
+        p1_executive.render(filters)
 
     with tabs[1]:
         p2_forecast.render(filters)
 
     with tabs[2]:
-        p3_market.render()
+        p3_market.render(filters)
 
     with tabs[3]:
-        p4_customer.render()
+        p4_customer.render(filters)
 
     with tabs[4]:
-        p5_inventory.render()
+        p5_inventory.render(filters)
 
     with tabs[5]:
-        p6_ai_studio.render()
+        p6_ai_studio.render(filters)
 
 
 if __name__ == "__main__":

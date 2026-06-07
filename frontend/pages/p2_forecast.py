@@ -51,8 +51,19 @@ def render(filters: dict):
         kpi_card("MAPE", f"{metrics.get('mape', 0):.1f}", None, suffix="%", gradient="amber",
                  help_text="Mean Absolute Percentage Error on the 20% holdout test set. Measures average % deviation from actual values. Under 10% is considered strong for real estate demand forecasting."),
         kpi_card("R²", f"{metrics.get('r2', 0):.4f}", None, gradient="emerald",
-                 help_text="Coefficient of determination on the test set. Measures how much of the variance in actuals is explained by the model. Values above 0.85 indicate strong predictive power."),
+                 help_text="Coefficient of determination on the validation set. Negative R² means the model's error variance exceeds the validation set's own variance — typically caused by a market regime shift between training and validation periods. A low MAPE alongside negative R² is not a contradiction: MAPE measures percentage closeness, while R² measures variance explained."),
     ], cols=4)
+
+    drift = fc_data.get("drift_info", {})
+    if drift.get("drift_detected"):
+        st.warning(
+            f"**Distribution Drift Detected** — Training mean: {drift.get('train_mean', 0):,.0f} units "
+            f"→ Validation mean: {drift.get('val_mean', 0):,.0f} units "
+            f"({drift.get('mean_shift_pct', 0):.0f}% shift). "
+            "The model was trained on a volatile growth period (2019–2022) but validated on a stable "
+            "plateau (2023–2024). This explains the negative R² despite low MAPE. "
+            "Retrain via the backend `/forecast/retrain` endpoint to apply the new regime feature."
+        )
 
     # ── Main Forecast Chart ──────────────────────────────────────
     st.markdown(section_header(

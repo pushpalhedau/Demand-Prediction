@@ -15,7 +15,10 @@ from frontend.components.charts import (
 from frontend.components.theme import C_INDIGO, C_EMERALD, C_AMBER, C_RED, themed
 
 
-def render():
+def render(filters: dict = None):
+    filters       = filters or {}
+    default_area  = filters.get("area")  or "Business Bay"
+    default_ptype = filters.get("property_type") or "Apartment"
     st.markdown(KPI_CSS, unsafe_allow_html=True)
     tab1, tab2, tab3, tab4 = st.tabs([
         "Buyer Segmentation", "Price Intelligence", "Rental Analysis", "Nationality Demand"
@@ -91,7 +94,7 @@ def render():
             st.markdown("**Price Predictor**")
             c1, c2, c3 = st.columns(3)
             with c1:
-                p_area = st.text_input("Area", value="Business Bay", key="p_area")
+                p_area = st.text_input("Area", value=default_area, key="p_area")
                 p_type = st.selectbox("Property Type",
                                        ["Apartment", "Villa", "Townhouse", "Penthouse", "Studio", "Commercial"],
                                        key="p_type")

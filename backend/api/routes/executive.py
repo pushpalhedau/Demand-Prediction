@@ -8,14 +8,13 @@ import pandas as pd
 
 from backend.data.loader import data_store
 from backend.data.cache import cache
-from backend.ml.scoring.opportunity import OpportunityScorer
+from backend.ml.scoring.opportunity import opp_scorer
 from backend.ml.scoring.risk import RiskScorer
 from backend.sentiment.processor import sentiment_processor
 from backend.ai.groq_client import groq_client
 
 router = APIRouter(prefix="/executive", tags=["executive"])
 
-opp_scorer  = OpportunityScorer()
 risk_scorer = RiskScorer()
 
 
@@ -86,7 +85,7 @@ def get_top_opportunities(top_n: int = Query(10, le=20)):
     df_ar  = data_store.get("areas")
     df_inf = data_store.get("infrastructure")
 
-    scored = opp_scorer.score_all_areas(df_tx, df_pi, df_ar, df_inf)
+    scored = opp_scorer.get_scored_areas_cached(df_tx, df_pi, df_ar, df_inf)
     result = opp_scorer.top_opportunities(scored, top_n)
     cache.set("exec_opportunities", {"n": top_n}, result, ttl=600)
     return result

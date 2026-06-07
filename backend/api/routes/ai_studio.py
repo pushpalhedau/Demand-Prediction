@@ -12,6 +12,7 @@ from backend.data.cache import cache
 from backend.ai.groq_client import groq_client
 from backend.ai.rag import rag_engine
 from backend.ai.scenario_engine import scenario_engine
+from backend.ai.news_client import news_client
 
 router = APIRouter(prefix="/ai", tags=["ai-studio"])
 log    = logging.getLogger(__name__)
@@ -106,9 +107,23 @@ def run_monte_carlo(req: MonteCarloRequest):
     )
 
 
+class InvestmentVerdictRequest(BaseModel):
+    purchase_price_aed: float
+    rental_yield_pct: float
+    holding_years: int
+    total_roi_pct: float
+    annualised_roi_pct: float
+
+
+class NewsCalibrationRequest(BaseModel):
+    template_name: str
+    area: str = "UAE"
+    levers: list[str]
+
+
 @router.post("/investment-analysis")
 def run_investment_analysis(req: InvestmentRequest):
-    result = scenario_engine.investment_analysis(
+    return scenario_engine.investment_analysis(
         purchase_price_aed=req.purchase_price_aed,
         area_sqft=req.area_sqft,
         rental_yield_pct=req.rental_yield_pct,
@@ -117,11 +132,71 @@ def run_investment_analysis(req: InvestmentRequest):
         financing_pct=req.financing_pct,
         mortgage_rate_pct=req.mortgage_rate_pct,
     )
-    # AI narrative
-    context = f"Investment: AED {req.purchase_price_aed:,.0f} property, {req.rental_yield_pct:.1f}% yield, {req.holding_years}yr hold"
-    question = f"Is this a good real estate investment in UAE? ROI={result['total_roi_pct']:.1f}%, annualised={result['annualised_roi_pct']:.1f}%"
-    result["ai_verdict"] = groq_client.answer_strategy_query(question, context)
-    return result
+
+
+@router.post("/investment-verdict")
+def get_investment_verdict(req: InvestmentVerdictRequest):
+    context = (
+        f"Investment: AED {req.purchase_price_aed:,.0f} property, "
+        f"{req.rental_yield_pct:.1f}% yield, {req.holding_years}yr hold"
+    )
+    question = (
+        f"Is this a good real estate investment in UAE? "
+        f"ROI={req.total_roi_pct:.1f}%, annualised={req.annualised_roi_pct:.1f}%"
+    )
+    verdict = groq_client.chat(question, context, max_tokens=400, temperature=0.3)
+    return {"ai_verdict": verdict}
+
+
+@router.post("/news-lever-calibration")
+def calibrate_levers_from_news(req: NewsCalibrationRequest):
+    import json, re
+
+    articles = news_client.fetch_recent_news(req.template_name, req.area)
+    if not articles:
+        return {"calibrated_levers": {}, "news_summary": "", "articles_used": 0}
+
+    news_text  = "\n".join(
+        f"- {a['title']}: {a['description']}" for a in articles[:8]
+    )
+    lever_desc = {k: _lever_description(k) for k in req.levers}
+
+    prompt = (
+        f"Given these recent news articles about {req.area} UAE real estate market, "
+        f"estimate realistic adjustment values for the following market levers. "
+        f"Return ONLY a valid JSON object with lever names as keys and float values. "
+        f"Scale: -5.0 to +10.0, where 0.0 means no change.\n\n"
+        f"Levers to calibrate: {json.dumps(lever_desc)}\n\nNews:\n{news_text}"
+    )
+    raw = groq_client.chat(prompt, max_tokens=300, temperature=0.1)
+
+    calibrated: dict = {}
+    try:
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            parsed = json.loads(match.group())
+            calibrated = {
+                k: max(-5.0, min(10.0, float(v)))
+                for k, v in parsed.items()
+                if k in req.levers
+            }
+    except Exception:
+        pass
+
+    return {
+        "calibrated_levers": calibrated,
+        "news_summary": f"Calibrated from {len(articles)} articles (most recent: {max((a['publishedAt'][:10] for a in articles if a.get('publishedAt')), default='N/A')})",
+        "articles_used": len(articles),
+        "articles": [
+            {
+                "title":       a["title"],
+                "source":      a["source"],
+                "publishedAt": a["publishedAt"],
+                "url":         a["url"],
+            }
+            for a in articles
+        ],
+    }
 
 
 @router.get("/market-comparison")
@@ -157,6 +232,146 @@ def compare_markets(areas: str = "Dubai South,Downtown Dubai,Business Bay,JVC"):
         context
     )
     return {"comparisons": comparisons, "ai_analysis": ai_comparison}
+
+
+@router.get("/news-forecast")
+def get_news_forecast():
+    """Fetch last 15 days of news across all categories, use Groq to extract sentiment
+    + lever adjustments, then apply via scenario engine to produce a news-augmented forecast."""
+    import json, re
+    from backend.ai.news_client import NEWS_CATEGORIES
+
+    # 1. Fetch & deduplicate news from all categories (last 15 days)
+    seen_urls: set = set()
+    all_articles: list[dict] = []
+    for cat in NEWS_CATEGORIES:
+        arts, _ = news_client.fetch_news_by_category(cat, days=15)
+        for a in arts:
+            if a.get("url") and a["url"] not in seen_urls:
+                seen_urls.add(a["url"])
+                all_articles.append(a)
+
+    # 2. Base forecast values from latest transaction data
+    df_tx = data_store.get("transactions")
+    base_demand = float(df_tx.groupby(["year", "month"]).size().mean()) if df_tx is not None and not df_tx.empty else 1000.0
+    base_price  = float(df_tx["price_per_sqft_aed"].mean()) if df_tx is not None and not df_tx.empty else 1200.0
+
+    if not all_articles or not groq_client.available:
+        return {
+            "sentiment_score": 50, "sentiment_label": "Neutral",
+            "key_signals": [], "base_demand": base_demand, "news_demand": base_demand,
+            "demand_delta_pct": 0.0, "base_price": base_price, "news_price": base_price,
+            "price_delta_pct": 0.0, "monthly_path_demand": [base_demand] * 3,
+            "monthly_path_price": [base_price] * 3,
+            "articles_used": 0, "articles": [],
+            "error": "No recent news found or AI unavailable.",
+        }
+
+    # 3. Build news text (titles only — keep prompt tight)
+    news_text = "\n".join(f"- {a['title']}" for a in all_articles[:20])
+
+    prompt = (
+        "You are a UAE real estate analyst. Analyse these news headlines from the last 15 days "
+        "and return ONLY a valid JSON object (no markdown, no explanation):\n"
+        "{\n"
+        '  "sentiment_score": <integer 0-100, 100=extremely bullish>,\n'
+        '  "key_signals": ["signal 1", "signal 2", "signal 3"],\n'
+        '  "levers": {\n'
+        '    "interest_rate_change_pct": <float -5 to 10>,\n'
+        '    "population_growth_pct": <float -5 to 10>,\n'
+        '    "gdp_growth_pct": <float -5 to 10>,\n'
+        '    "visa_policy_change": <float -5 to 10>,\n'
+        '    "new_supply_units_k": <float -5 to 10>,\n'
+        '    "oil_price_change_pct": <float -5 to 10>,\n'
+        '    "sentiment_change_index": <float -5 to 10>,\n'
+        '    "infrastructure_investment_bn": <float -5 to 10>\n'
+        "  }\n"
+        "}\n\n"
+        f"News headlines:\n{news_text}"
+    )
+
+    raw = groq_client.chat(prompt, max_tokens=400, temperature=0.1, cache_ttl=1800)
+
+    # 4. Parse Groq response
+    sentiment_score = 50
+    key_signals: list[str] = []
+    levers: dict = {}
+    error = ""
+    try:
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            parsed = json.loads(match.group())
+            sentiment_score = max(0, min(100, int(parsed.get("sentiment_score", 50))))
+            key_signals     = parsed.get("key_signals", [])[:5]
+            raw_levers      = parsed.get("levers", {})
+            levers = {k: max(-5.0, min(10.0, float(v))) for k, v in raw_levers.items()}
+    except Exception as exc:
+        error = f"AI analysis parse error: {exc}"
+
+    sentiment_label = "Bullish" if sentiment_score >= 65 else ("Bearish" if sentiment_score <= 40 else "Neutral")
+
+    # 5. Apply levers through scenario engine
+    result = scenario_engine.what_if(levers, base_demand, base_price, horizon_months=3)
+
+    return {
+        "sentiment_score":       sentiment_score,
+        "sentiment_label":       sentiment_label,
+        "key_signals":           key_signals,
+        "base_demand":           base_demand,
+        "news_demand":           result["new_demand"],
+        "demand_delta_pct":      result["demand_delta_pct"],
+        "base_price":            base_price,
+        "news_price":            result["new_price"],
+        "price_delta_pct":       result["price_delta_pct"],
+        "monthly_path_demand":   result.get("monthly_path_demand", []),
+        "monthly_path_price":    result.get("monthly_path_price", []),
+        "articles_used":         len(all_articles),
+        "articles":              [
+            {"title": a["title"], "source": a["source"],
+             "publishedAt": a["publishedAt"], "url": a["url"]}
+            for a in all_articles
+        ],
+        "error": error,
+    }
+
+
+@router.get("/latest-news")
+def get_latest_news(category: str = "All"):
+    from backend.ai.news_client import NEWS_CATEGORIES
+    if category == "All":
+        seen_urls: set = set()
+        all_articles: list = []
+        combined_error = ""
+        for cat in NEWS_CATEGORIES:
+            arts, err = news_client.fetch_news_by_category(cat)
+            for a in arts:
+                if a.get("url") and a["url"] not in seen_urls:
+                    seen_urls.add(a["url"])
+                    all_articles.append(a)
+            if err and not combined_error:
+                combined_error = err
+        all_articles.sort(key=lambda a: a.get("publishedAt", "") or "", reverse=True)
+        return {
+            "category":   "All",
+            "categories": ["All"] + list(NEWS_CATEGORIES.keys()),
+            "articles":   all_articles[:20],
+            "error":      combined_error if not all_articles else "",
+        }
+    articles, error = news_client.fetch_news_by_category(category)
+    return {
+        "category":   category,
+        "categories": ["All"] + list(NEWS_CATEGORIES.keys()),
+        "articles":   articles,
+        "error":      error,
+    }
+
+
+@router.get("/areas")
+def get_all_areas():
+    df_tx = data_store.get("transactions")
+    if df_tx is None or df_tx.empty or "area_name" not in df_tx.columns:
+        return []
+    return sorted(df_tx["area_name"].dropna().unique().tolist())
 
 
 @router.get("/available-levers")

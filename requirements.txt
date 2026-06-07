@@ -40,3 +40,5 @@ plotly>=5.22.0
 
 # ── Utilities ───────────────────────────────────────────────────
 streamlit-option-menu>=0.3.12
+diskcache>=5.6.0
+feedparser>=6.0.0

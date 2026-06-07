@@ -155,8 +155,83 @@ html, body, .stApp {
     border-top: none !important;
 }
 
-/* ── Spinner ────────────────────────────────────────────────── */
-.stSpinner > div { border-top-color: #6366f1 !important; }
+/* ── Loading: kill Streamlit's page-wide fade during rerun ─── */
+.stale {
+    opacity: 1 !important;
+    transition: none !important;
+    filter: none !important;
+}
+
+/* ── Global instant loader overlay ──────────────────────────── */
+#dp-loader {
+    position: fixed;
+    inset: 0;
+    background: rgba(7,7,26,0.88);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 1;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+
+#dp-loader::after {
+    content: '';
+    width: 42px;
+    height: 42px;
+    border: 3px solid rgba(99,102,241,0.15);
+    border-top-color: #6366f1;
+    border-right-color: rgba(99,102,241,0.5);
+    border-radius: 50%;
+    animation: dp-spin 0.7s cubic-bezier(0.55,0,0.45,1) infinite;
+}
+
+@keyframes dp-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Spinner card ────────────────────────────────────────────── */
+[data-testid="stSpinner"] {
+    background: rgba(17,17,40,0.97) !important;
+    border: 1px solid #1e1e3f !important;
+    border-radius: 12px !important;
+    padding: 14px 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.08) !important;
+    backdrop-filter: blur(12px) !important;
+    margin: 4px 0 !important;
+}
+
+/* Spinner ring — gradient arc look */
+.stSpinner > div {
+    width: 22px !important;
+    height: 22px !important;
+    border-width: 2.5px !important;
+    border-style: solid !important;
+    border-color: rgba(99,102,241,0.15) !important;
+    border-top-color: #6366f1 !important;
+    border-right-color: rgba(99,102,241,0.5) !important;
+    border-radius: 50% !important;
+    animation: dp-spin 0.7s cubic-bezier(0.55,0,0.45,1) infinite !important;
+    background: none !important;
+    flex-shrink: 0 !important;
+}
+
+@keyframes dp-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Hide spinner label — ring only */
+[data-testid="stSpinner"] p,
+[data-testid="stSpinner"] small p,
+[data-testid="stSpinner"] span {
+    display: none !important;
+}
 
 /* ── Progress Bar ────────────────────────────────────────────── */
 .stProgress > div > div { background: #6366f1 !important; }
@@ -230,3 +305,59 @@ C_BORDER   = "#1e1e3f"
 C_TEXT     = "#e2e8f0"
 C_SUBTEXT  = "#64748b"
 C_BG       = "#07071a"
+
+LOADER_SCRIPT = """
+<script>
+(function () {
+    var overlay = null;
+    var removeTimer = null;
+    var prevStale = false;
+
+    function show() {
+        if (overlay) return;
+        clearTimeout(removeTimer);
+        overlay = document.createElement('div');
+        overlay.id = 'dp-loader';
+        document.body.appendChild(overlay);
+    }
+
+    function hide() {
+        clearTimeout(removeTimer);
+        removeTimer = setTimeout(function () {
+            if (!overlay) return;
+            overlay.style.opacity = '0';
+            var el = overlay;
+            setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 160);
+            overlay = null;
+        }, 80);
+    }
+
+    // Hook all [data-baseweb="tab"] buttons for an instant response on click
+    function hookTabs() {
+        document.querySelectorAll('[data-baseweb="tab"]').forEach(function (t) {
+            if (t._dpHooked) return;
+            t._dpHooked = true;
+            t.addEventListener('mousedown', show);
+        });
+    }
+
+    // Also catch sidebar filter changes and button clicks via the stale mechanism
+    var staleObs = new MutationObserver(function () {
+        var stale = !!document.querySelector('.stale');
+        if (stale && !prevStale) { prevStale = true; show(); }
+        else if (!stale && prevStale) { prevStale = false; hide(); }
+    });
+    staleObs.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+
+    // Re-hook whenever Streamlit re-renders new tab buttons into the DOM
+    var hookTimer;
+    var domObs = new MutationObserver(function () {
+        clearTimeout(hookTimer);
+        hookTimer = setTimeout(hookTabs, 300);
+    });
+    domObs.observe(document.body, { childList: true, subtree: true });
+
+    hookTabs();
+})();
+</script>
+"""

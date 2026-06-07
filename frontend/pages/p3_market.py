@@ -11,7 +11,9 @@ from frontend.components.charts import bar_chart, scatter_chart, pie_chart, line
 from frontend.components.theme import C_INDIGO, C_EMERALD, C_AMBER, themed
 
 
-def render():
+def render(filters: dict = None):
+    filters = filters or {}
+    area    = filters.get("area")
     st.markdown(KPI_CSS, unsafe_allow_html=True)
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Opportunity Heatmap", "Competitor Intelligence",

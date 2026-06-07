@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
@@ -15,7 +16,10 @@ router = APIRouter(prefix="/forecast", tags=["forecast"])
 log    = logging.getLogger(__name__)
 
 # Global ensemble instances (fitted lazily)
-_ensembles: dict[str, ForecastEnsemble] = {}
+_ensembles:      dict[str, ForecastEnsemble] = {}
+# Area-specific ensemble cache — avoids refitting on every /predict?area=X call (B7)
+_area_ensembles: dict[str, ForecastEnsemble] = {}
+_MAX_AREA_CACHE  = 25  # keep at most N area models in memory
 
 
 def _get_ensemble(target: str = "units") -> ForecastEnsemble:
@@ -32,6 +36,31 @@ def _get_ensemble(target: str = "units") -> ForecastEnsemble:
     return _ensembles[target]
 
 
+def _get_area_ensemble(area: str, target: str,
+                       df_tx: "pd.DataFrame",
+                       df_ir: "pd.DataFrame",
+                       df_sent: "pd.DataFrame") -> Optional[ForecastEnsemble]:
+    """Return (or fit and cache) a ForecastEnsemble for a specific area (B7).
+    Caps cache at _MAX_AREA_CACHE entries to bound memory use."""
+    ck = f"{target}:{area}"
+    if ck in _area_ensembles:
+        return _area_ensembles[ck]
+    df_area = df_tx[df_tx["area_name"] == area].copy()
+    if len(df_area) < 30:
+        return None
+    try:
+        fe = ForecastEnsemble(target=target)
+        fe.fit(df_area, df_ir, df_sent, fast=True)  # area-level: LightGBM only, no CV
+        if len(_area_ensembles) >= _MAX_AREA_CACHE:
+            # Evict oldest entry (insertion order in Python 3.7+)
+            _area_ensembles.pop(next(iter(_area_ensembles)))
+        _area_ensembles[ck] = fe
+        return fe
+    except Exception as exc:
+        log.warning("Area ensemble fit failed for %s: %s", area, exc)
+        return None
+
+
 @router.get("/predict")
 def predict_demand(
     target:  str = Query("units",  description="units | revenue"),
@@ -46,17 +75,19 @@ def predict_demand(
     fe = _get_ensemble(target)
     result = fe.predict(horizon_days=horizon)
 
-    # If area filter requested, re-run on area subset
+    # If area filter requested, use cached area ensemble (B7)
     if area:
-        df_tx = data_store.get("transactions")
-        df_area = df_tx[df_tx["area_name"].str.lower() == area.lower()] if not df_tx.empty else df_tx
-        if len(df_area) >= 30:
-            fe_area = ForecastEnsemble(target=target)
-            df_ir   = data_store.get("interest_rates")
-            df_sent = data_store.get("sentiment_index")
-            fe_area.fit(df_area, df_ir, df_sent)
+        df_tx   = data_store.get("transactions").copy()
+        df_ir   = data_store.get("interest_rates").copy()
+        df_sent = data_store.get("sentiment_index").copy()
+        # Case-insensitive area match
+        area_norm = next(
+            (a for a in df_tx["area_name"].unique() if a.lower() == area.lower()), area
+        ) if not df_tx.empty else area
+        fe_area = _get_area_ensemble(area_norm, target, df_tx, df_ir, df_sent)
+        if fe_area is not None:
             result = fe_area.predict(horizon_days=horizon)
-            result["area_filter"] = area
+            result["area_filter"] = area_norm
 
     cache.set("forecast_predict", ckey, result, ttl=600)
     return result
@@ -99,21 +130,19 @@ def forecast_by_area(
     if cached:
         return cached
 
-    df_tx   = data_store.get("transactions")
-    df_ir   = data_store.get("interest_rates")
-    df_sent = data_store.get("sentiment_index")
+    df_tx   = data_store.get("transactions").copy()
+    df_ir   = data_store.get("interest_rates").copy()
+    df_sent = data_store.get("sentiment_index").copy()
 
     top_areas = df_tx["area_name"].value_counts().head(top_n).index.tolist() if not df_tx.empty else []
-    results = {}
-    for area in top_areas:
-        df_area = df_tx[df_tx["area_name"] == area]
-        if len(df_area) < 30:
-            continue
+
+    def _fit_area(area: str):
         try:
-            fe = ForecastEnsemble(target=target)
-            fe.fit(df_area, df_ir, df_sent)
+            fe = _get_area_ensemble(area, target, df_tx, df_ir, df_sent)
+            if fe is None:
+                return area, None
             fc = fe.predict(horizon_days=horizon)
-            results[area] = {
+            return area, {
                 "model": fc["model"],
                 "mape":  fc["metrics"].get("mape", 0),
                 "forecast_values": fc["forecast"]["values"][:3],
@@ -121,6 +150,13 @@ def forecast_by_area(
             }
         except Exception as exc:
             log.warning("Forecast failed for area %s: %s", area, exc)
+            return area, None
+
+    results = {}
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        for area, result in pool.map(_fit_area, top_areas):
+            if result is not None:
+                results[area] = result
 
     cache.set("forecast_by_area", ckey, results, ttl=900)
     return results

@@ -9,12 +9,11 @@ import pandas as pd
 
 from backend.data.loader import data_store
 from backend.data.cache import cache
-from backend.ml.scoring.opportunity import OpportunityScorer
+from backend.ml.scoring.opportunity import opp_scorer
 from backend.sentiment.processor import sentiment_processor
 
 router = APIRouter(prefix="/market", tags=["market"])
 log    = logging.getLogger(__name__)
-opp_scorer = OpportunityScorer()
 
 
 @router.get("/opportunities")
@@ -29,7 +28,7 @@ def get_opportunities(top_n: int = Query(15, le=30)):
     df_ar  = data_store.get("areas")
     df_inf = data_store.get("infrastructure")
 
-    scored = opp_scorer.score_all_areas(df_tx, df_pi, df_ar, df_inf)
+    scored = opp_scorer.get_scored_areas_cached(df_tx, df_pi, df_ar, df_inf)
     top    = opp_scorer.top_opportunities(scored, top_n)
     result = {"opportunities": top, "total_areas_scored": len(scored)}
     cache.set("market_opportunities", ckey, result, ttl=600)
@@ -48,7 +47,7 @@ def get_opportunity_heatmap():
     df_ar  = data_store.get("areas")
     df_inf = data_store.get("infrastructure")
 
-    scored = opp_scorer.score_all_areas(df_tx, df_pi, df_ar, df_inf)
+    scored = opp_scorer.get_scored_areas_cached(df_tx, df_pi, df_ar, df_inf)
     heatmap = scored[["area_name", "opportunity_score", "avg_price_sqft",
                        "transaction_count", "price_yoy_change_pct",
                        "rental_yield_pct", "expected_roi_pct"]].to_dict("records")

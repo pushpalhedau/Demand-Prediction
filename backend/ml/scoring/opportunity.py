@@ -11,6 +11,9 @@ import pandas as pd
 
 log = logging.getLogger(__name__)
 
+# Shared singleton — import this instead of creating new instances (B5)
+# Prevents three separate route modules each calling score_all_areas() independently.
+
 
 class OpportunityScorer:
 
@@ -97,6 +100,27 @@ class OpportunityScorer:
 
         return tx_agg.sort_values("opportunity_score", ascending=False).reset_index(drop=True)
 
+    def get_scored_areas_cached(
+        self,
+        df_transactions: pd.DataFrame,
+        df_price_index: pd.DataFrame,
+        df_areas: pd.DataFrame,
+        df_infrastructure: Optional[pd.DataFrame] = None,
+        df_sentiment: Optional[pd.DataFrame] = None,
+        ttl: int = 900,
+    ) -> pd.DataFrame:
+        """Score all areas, caching the result so multiple route handlers share one
+        computation pass per TTL window instead of each triggering their own (B5)."""
+        from backend.data.cache import cache as _c
+        cached = _c.get("opp_scored_areas", {})
+        if cached is not None:
+            return cached
+        result = self.score_all_areas(
+            df_transactions, df_price_index, df_areas, df_infrastructure, df_sentiment
+        )
+        _c.set("opp_scored_areas", {}, result, ttl=ttl)
+        return result
+
     def top_opportunities(self, df_scored: pd.DataFrame, top_n: int = 10) -> List[Dict]:
         cols = ["area_name", "opportunity_score", "success_probability",
                 "expected_roi_pct", "avg_price_sqft", "transaction_count",
@@ -120,3 +144,6 @@ class OpportunityScorer:
         if score >= 50:
             return f"Solid mid-tier opportunity in {area} with balanced risk/reward profile."
         return f"{area} is emerging — suitable for long-term positioning at lower entry prices."
+
+
+opp_scorer = OpportunityScorer()

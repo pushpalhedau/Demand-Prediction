@@ -11,11 +11,10 @@ import pandas as pd
 from backend.data.loader import data_store
 from backend.data.cache import cache
 from backend.ai.groq_client import groq_client
-from backend.ml.scoring.opportunity import OpportunityScorer
+from backend.ml.scoring.opportunity import opp_scorer
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 log    = logging.getLogger(__name__)
-opp_scorer = OpportunityScorer()
 
 
 class LaunchRequest(BaseModel):

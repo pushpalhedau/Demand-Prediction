@@ -5,6 +5,7 @@ All data is loaded once at startup and kept in memory.
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, Optional
 import pandas as pd
@@ -27,35 +28,59 @@ class DataLoader:
     def load_all(self) -> None:
         if self._loaded:
             return
-        log.info("Loading UAE Real Estate Data Lake …")
-        self._data["transactions"]        = self._transactions()
-        self._data["rentals"]             = self._rentals()
-        self._data["projects"]            = self._projects()
-        self._data["buildings"]           = self._buildings()
-        self._data["units"]               = self._units()
-        self._data["areas"]               = self._areas()
-        self._data["gdp"]                 = self._gdp()
-        self._data["population"]          = self._population()
-        self._data["interest_rates"]      = self._interest_rates()
-        self._data["cpi"]                 = self._cpi()
-        self._data["employment"]          = self._employment()
-        self._data["tourism"]             = self._tourism()
-        self._data["oil_prices"]          = self._oil_prices()
-        self._data["gold_prices"]         = self._gold_prices()
-        self._data["fdi"]                 = self._fdi()
-        self._data["infrastructure"]      = self._infrastructure()
-        self._data["listings"]            = self._listings()
-        self._data["developer_share"]     = self._developer_share()
-        self._data["price_index"]         = self._price_index()
-        self._data["sentiment_index"]     = self._sentiment_index()
-        self._data["gdelt_sentiment"]     = self._gdelt_sentiment()
+        log.info("Loading UAE Real Estate Data Lake (parallel) …")
+
+        loaders = {
+            "transactions":    self._transactions,
+            "rentals":         self._rentals,
+            "projects":        self._projects,
+            "buildings":       self._buildings,
+            "units":           self._units,
+            "areas":           self._areas,
+            "gdp":             self._gdp,
+            "population":      self._population,
+            "interest_rates":  self._interest_rates,
+            "cpi":             self._cpi,
+            "employment":      self._employment,
+            "tourism":         self._tourism,
+            "oil_prices":      self._oil_prices,
+            "gold_prices":     self._gold_prices,
+            "fdi":             self._fdi,
+            "infrastructure":  self._infrastructure,
+            "listings":        self._listings,
+            "developer_share": self._developer_share,
+            "price_index":     self._price_index,
+            "sentiment_index": self._sentiment_index,
+            "gdelt_sentiment": self._gdelt_sentiment,
+        }
+
+        # Load all CSVs concurrently — I/O-bound so threads are effective
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            future_to_name = {pool.submit(fn): name for name, fn in loaders.items()}
+            for future in as_completed(future_to_name):
+                name = future_to_name[future]
+                try:
+                    self._data[name] = future.result()
+                except Exception as exc:
+                    log.warning("Failed to load '%s': %s — using empty DataFrame", name, exc)
+                    self._data[name] = pd.DataFrame()
+
         self._loaded = True
+
+        # B11: Sort area-keyed DataFrames by area_name so value_counts / groupby
+        # can use a sorted index — 2-3× faster for repeated aggregations.
+        for name in ("transactions", "rentals", "listings", "price_index"):
+            df = self._data.get(name)
+            if df is not None and not df.empty and "area_name" in df.columns:
+                self._data[name] = df.sort_values("area_name").reset_index(drop=True)
+
         log.info("All datasets loaded. Keys: %s", list(self._data.keys()))
 
     def get(self, name: str) -> pd.DataFrame:
-        """Always returns a DataFrame — empty if the key is not loaded."""
+        """Always returns a copy — prevents in-place mutations in route handlers
+        from corrupting the shared in-memory data (B3 thread-safety fix)."""
         result = self._data.get(name)
-        return result if result is not None else pd.DataFrame()
+        return result.copy() if result is not None else pd.DataFrame()
 
     def all(self) -> Dict[str, pd.DataFrame]:
         return self._data

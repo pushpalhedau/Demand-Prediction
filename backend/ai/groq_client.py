@@ -1,14 +1,20 @@
 """
 GROQ LLM Client — wraps the GROQ API for all AI-powered features.
 Model: llama-3.3-70b-versatile (fast, high-quality, long context).
+
+Caching (B9): Responses are cached by prompt hash so identical briefings
+(same KPIs, same context) return instantly from cache instead of hitting
+the Groq API. Interactive ai_query calls pass cache_ttl=0 to bypass caching.
 """
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 from typing import Dict, List, Optional
 
 from backend.core.config import settings
+from backend.data.cache import cache as _result_cache
 
 log = logging.getLogger(__name__)
 
@@ -54,10 +60,25 @@ class GroqClient:
 
     def chat(self, user_message: str, context: str = "",
              system_override: Optional[str] = None,
-             max_tokens: int = 1024, temperature: float = 0.3) -> str:
+             max_tokens: int = 1024, temperature: float = 0.3,
+             cache_ttl: int = 300) -> str:
+        """
+        Call the Groq LLM. Responses are cached by content hash for `cache_ttl`
+        seconds. Pass cache_ttl=0 to bypass caching (for real-time queries).
+        """
         if not self._available:
             return self._fallback(user_message)
+
         system = system_override or SYSTEM_PROMPT
+
+        # Prompt hash cache (B9) — keyed on full message content
+        if cache_ttl > 0:
+            cache_key_raw = f"{system}|{context}|{user_message}|{max_tokens}|{temperature}"
+            prompt_hash   = hashlib.md5(cache_key_raw.encode()).hexdigest()
+            cached = _result_cache.get("groq_chat", {"h": prompt_hash})
+            if cached is not None:
+                return cached
+
         messages = [{"role": "system", "content": system}]
         if context:
             messages.append({"role": "user", "content": f"Context data:\n{context}"})
@@ -70,7 +91,10 @@ class GroqClient:
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
-            return response.choices[0].message.content.strip()
+            result = response.choices[0].message.content.strip()
+            if cache_ttl > 0:
+                _result_cache.set("groq_chat", {"h": prompt_hash}, result, ttl=cache_ttl)
+            return result
         except Exception as exc:
             log.error("GROQ chat error: %s", exc)
             return self._fallback(user_message)
@@ -96,16 +120,18 @@ Active Risk Alerts: {len(risks)}
 """
         prompt = ("Generate a 3-sentence executive intelligence briefing for a UAE real estate "
                   "developer based on the market data. Focus on actionable insights only.")
-        return self.chat(prompt, context, max_tokens=256, temperature=0.4)
+        # Executive summary changes only when KPIs change — cache for 10 minutes
+        return self.chat(prompt, context, max_tokens=256, temperature=0.4, cache_ttl=600)
 
     def answer_strategy_query(self, question: str, context: str) -> str:
-        return self.chat(question, context, max_tokens=1500, temperature=0.3)
+        # User-typed queries are interactive — don't cache
+        return self.chat(question, context, max_tokens=1500, temperature=0.3, cache_ttl=0)
 
     def analyze_scenario(self, scenario_desc: str, results: Dict) -> str:
         context = f"Scenario: {scenario_desc}\nSimulation Results: {results}"
         prompt = ("Analyse this what-if scenario for a UAE real estate developer. "
                   "State clearly: expected demand impact, price impact, and recommended action.")
-        return self.chat(prompt, context, max_tokens=512, temperature=0.3)
+        return self.chat(prompt, context, max_tokens=512, temperature=0.3, cache_ttl=600)
 
     def launch_recommendation(self, area: str, property_type: str,
                                units: int, price_psf: float, context: str) -> str:
@@ -113,7 +139,7 @@ Active Risk Alerts: {len(risks)}
                   f"in {area} at AED {price_psf:,.0f}/sqft. "
                   f"Provide: success probability reasoning, optimal launch timing, "
                   f"and 3 specific pricing/marketing recommendations.")
-        return self.chat(prompt, context, max_tokens=768, temperature=0.3)
+        return self.chat(prompt, context, max_tokens=768, temperature=0.3, cache_ttl=600)
 
     @staticmethod
     def _fallback(question: str) -> str:

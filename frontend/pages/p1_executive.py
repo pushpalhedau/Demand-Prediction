@@ -1,6 +1,8 @@
 """Tab 1 — Executive Command Center"""
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -15,23 +17,45 @@ from frontend.components.charts import (
 from frontend.components.theme import C_INDIGO, C_EMERALD, C_AMBER, C_RED, C_CYAN, themed
 
 
-def render():
+def _safe(future, default):
+    try:
+        return future.result()
+    except Exception:
+        return default
+
+
+def render(filters: dict = None):
+    filters = filters or {}
+    year    = filters.get("year")
+    area    = filters.get("area")
+
     st.markdown(KPI_CSS, unsafe_allow_html=True)
 
-    # ── AI Executive Summary ────────────────────────────────────────
-    with st.spinner("Generating AI executive briefing …"):
-        try:
-            ai_data = api.get_ai_executive_summary()
-            summary_text = ai_data.get("summary", "Market data is loading …")
-        except api.APIError as e:
-            summary_text = f"AI summary unavailable: {e}"
+    # ── Fetch all data in parallel ──────────────────────────────────
+    with st.spinner(""):
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            f_ai       = pool.submit(api.get_ai_executive_summary)
+            f_kpis     = pool.submit(api.get_executive_kpis, year)
+            f_opps     = pool.submit(api.get_top_opportunities, 8)
+            f_risks    = pool.submit(api.get_risk_summary)
+            f_overview = pool.submit(api.get_market_overview)
+            f_sent     = pool.submit(api.get_sentiment_summary)
 
+            ai_data  = _safe(f_ai,       {"summary": "Market data is loading …"})
+            kpis     = _safe(f_kpis,     {})
+            opps     = _safe(f_opps,     [])
+            risks    = _safe(f_risks,    {})
+            overview = _safe(f_overview, {})
+            sent     = _safe(f_sent,     {})
+
+    summary_text = ai_data.get("summary", "Market data is loading …")
     st.markdown(ai_insight_panel(summary_text, "AI Executive Intelligence Briefing"),
                 unsafe_allow_html=True)
 
     # ── KPI Row ─────────────────────────────────────────────────────
     try:
-        kpis = api.get_executive_kpis()
+        if not kpis:
+            raise api.APIError("KPI data unavailable")
         k = kpis.get("kpis", {})
         render_kpi_row([
             kpi_card("Transaction Volume", f"{k.get('total_transactions',{}).get('value',0):,}",
@@ -119,7 +143,6 @@ def render():
             help_text="Areas scored 0–100 by a composite index combining demand growth, price appreciation, rental yield, and infrastructure access. Based on the last 12 months of DLD transaction and project data."),
             unsafe_allow_html=True)
         try:
-            opps = api.get_top_opportunities(8)
             if opps:
                 df_opps = pd.DataFrame(opps)
                 fig = bar_chart(
@@ -136,7 +159,6 @@ def render():
             help_text="Market risk score (0–100) derived from price volatility, supply-demand imbalance, macroeconomic indicators, and GDELT news sentiment. Alerts are updated monthly."),
             unsafe_allow_html=True)
         try:
-            risks = api.get_risk_summary()
             overall = risks.get("overall_risk_score", 0)
             col_g, col_a = st.columns([1, 1])
             with col_g:
@@ -173,7 +195,6 @@ def render():
             help_text="Supply-side snapshot from DLD project and unit records. Shows active project count, total unit pipeline, average absorption rate, and total rental contract volume across Dubai."),
             unsafe_allow_html=True)
         try:
-            overview = api.get_market_overview()
             st.metric("Active Projects",     overview.get("active_projects", 0))
             st.metric("Total Supply Units",  f"{overview.get('total_supply_units', 0):,}")
             st.metric("Avg Absorption Rate", f"{overview.get('absorption_rate_pct', 0):.1f}%")
@@ -196,7 +217,6 @@ def render():
         help_text="Composite sentiment index (0–100) derived from GDELT news events, media tone, and transaction momentum. Score >60 = positive market mood. 24-month trend shown."),
         unsafe_allow_html=True)
     try:
-        sent = api.get_sentiment_summary()
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Sentiment Index",    f"{sent.get('current_score', 0):.1f}",
                    delta=f"{sent.get('trend_direction', 0):+.1f}")

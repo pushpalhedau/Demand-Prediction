@@ -34,7 +34,11 @@ class SHAPExplainer:
             return self._fallback_importance(top_n)
         try:
             import shap
-            X_arr = X.fillna(0).values
+            X_sample = X.fillna(0)
+            # Cap at 500 rows — SHAP is O(n×features×trees), 10k+ rows times out (A18)
+            if len(X_sample) > 500:
+                X_sample = X_sample.sample(500, random_state=42)
+            X_arr = X_sample.values
             shap_values = explainer.shap_values(X_arr)
             if isinstance(shap_values, list):
                 shap_values = shap_values[1]
@@ -43,14 +47,18 @@ class SHAPExplainer:
             total = sum(v for _, v in pairs) or 1
             results = []
             for name, importance in pairs:
-                direction_vals = shap_values[:, self.feature_names.index(name)] if shap_values.ndim > 1 else shap_values
-                direction = "positive" if float(np.mean(direction_vals)) > 0 else "negative"
+                if shap_values.ndim > 1:
+                    direction_vals = shap_values[:, self.feature_names.index(name)]
+                    # Median is more robust than mean for skewed SHAP distributions
+                    direction = "positive" if float(np.median(direction_vals)) > 0 else "negative"
+                else:
+                    direction = "positive" if float(np.median(shap_values)) > 0 else "negative"
                 results.append({
-                    "feature": name,
-                    "importance": round(float(importance), 4),
+                    "feature":        name,
+                    "importance":     round(float(importance), 4),
                     "importance_pct": round(float(importance / total) * 100, 1),
-                    "direction": direction,
-                    "label": self._human_label(name, direction),
+                    "direction":      direction,
+                    "label":          self._human_label(name, direction),
                 })
             return results
         except Exception as exc:
@@ -77,17 +85,26 @@ class SHAPExplainer:
     @staticmethod
     def _human_label(feature: str, direction: str) -> str:
         labels = {
-            "lag1": "Last month's demand",
-            "lag3": "3-month demand trend",
-            "lag12": "Year-ago demand",
-            "roll6": "6-month moving average",
-            "avg_mortgage_rate_pct": "Mortgage rate",
-            "uae_base_rate_pct": "Central bank rate",
-            "month": "Seasonality",
-            "trend": "Long-term trend",
-            "year": "Annual trend",
+            "lag1":                        "Last month's demand",
+            "lag2":                        "2-month demand lag",
+            "lag3":                        "3-month demand trend",
+            "lag6":                        "6-month demand lag",
+            "lag9":                        "9-month demand lag",
+            "lag12":                       "Year-ago demand",
+            "roll3":                       "3-month moving average",
+            "roll6":                       "6-month moving average",
+            "roll12":                      "12-month moving average",
+            "volatility":                  "Recent market volatility",
+            "yoy_log_diff":                "YoY growth rate",
+            "yoy_accel":                   "Growth acceleration",
+            "rate_x_lag12":                "Rate × year-ago demand",
+            "avg_mortgage_rate_pct":       "Mortgage rate",
+            "uae_base_rate_pct":           "Central bank rate",
+            "month":                       "Seasonality",
+            "trend":                       "Long-term trend",
+            "year":                        "Annual trend",
             "real_estate_sentiment_index": "Market sentiment",
-            "buyer_confidence_index": "Buyer confidence",
+            "buyer_confidence_index":      "Buyer confidence",
         }
         base = labels.get(feature, feature.replace("_", " ").title())
         arrow = " ↑" if direction == "positive" else " ↓"

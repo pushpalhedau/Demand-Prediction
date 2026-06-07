@@ -35,3 +35,6 @@ dist/
 
 #database
 *.db
+
+# Disk-backed API cache (diskcache writes SQLite + data files)
+.cache/
