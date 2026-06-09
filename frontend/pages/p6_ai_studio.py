@@ -18,10 +18,10 @@ import plotly.graph_objects as go
 def render(filters: dict = None):
     filters = filters or {}
     st.markdown(KPI_CSS, unsafe_allow_html=True)
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab4 = st.tabs([
         "Latest News",
         "What-If Scenario Engine",
-        "Monte Carlo Simulation", "Investment Calculator", "News Forecast"
+        "Investment Calculator",
     ])
 
     # ── Tab 1: Latest Market News ──────────────────────────────────
@@ -81,7 +81,7 @@ def render(filters: dict = None):
                 <div style="padding:10px 0 9px; border-bottom:1px solid #e8e8e8;">
                   <div style="font-size:0.72rem; color:#888; margin-bottom:3px;">{date}</div>
                   <a href="{url}" target="_blank" rel="noopener noreferrer"
-                     style="font-size:0.95rem; font-weight:600; color:#1a0dab;
+                     style="font-size:0.95rem; font-weight:600; color:#f1f5f9;
                             text-decoration:none; line-height:1.45;">
                     {title}
                   </a>
@@ -295,52 +295,63 @@ def render(filters: dict = None):
                 )
 
 
-    # ── Tab 3: Monte Carlo ─────────────────────────────────────────
-    with tab3:
-        st.markdown(section_header("Monte Carlo Simulation",
-                                    "Probabilistic demand and price forecast with uncertainty bands",
-                                    help_text="Runs N randomised demand and price trajectories based on historical volatility. Outputs P10 (bear case), P50 (base case), and P90 (bull case) scenario bounds over the selected horizon."),
-                    unsafe_allow_html=True)
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            mc_demand = st.number_input("Base Monthly Demand", 100.0, 10000.0, 1200.0, step=50.0, key="mc_d")
-        with c2:
-            mc_price  = st.number_input("Base Avg Price/Sqft (AED)", 500.0, 10000.0, 1400.0, step=50.0, key="mc_p")
-        with c3:
-            mc_horizon = st.selectbox("Horizon (months)", [6, 12, 24, 36], index=1, key="mc_h")
-        with c4:
-            mc_vol    = st.slider("Market Volatility", 0.03, 0.25, 0.08, 0.01, key="mc_v")
-        mc_sims = st.select_slider("Simulations", [500, 1000, 2000, 5000], value=2000, key="mc_n")
-
-        if st.button("Run Monte Carlo", key="mc_btn", type="primary"):
-            with st.spinner(f"Running {mc_sims:,} simulations …"):
-                try:
-                    result = api.run_monte_carlo(mc_demand, mc_price, mc_horizon, mc_sims, mc_vol)
-
-                    c1, c2, c3 = st.columns(3)
-                    df = result["demand_final"]
-                    c1.metric("Median Demand (P50)",     f"{df['p50']:,.0f}")
-                    c2.metric("Bear Case (P10)",          f"{df['p10']:,.0f}")
-                    c3.metric("Bull Case (P90)",          f"{df['p90']:,.0f}")
-                    c1.metric("Prob > Base",             f"{df['prob_above_base']:.0f}%")
-                    pf = result["price_final"]
-                    c2.metric("Median Price (P50)",      f"AED {pf['p50']:,.0f}/sqft")
-                    c3.metric("Price Bull (P90)",        f"AED {pf['p90']:,.0f}/sqft")
-
-                    fig_d = monte_carlo_chart(result, metric="demand", height=380)
-                    st.plotly_chart(fig_d, use_container_width=True)
-                    fig_p = monte_carlo_chart(result, metric="price", height=340)
-                    st.plotly_chart(fig_p, use_container_width=True)
-                except api.APIError as e:
-                    st.error(str(e))
+    # ── Tab 3: Monte Carlo — commented out ────────────────────────
+    # with tab3:
+    #     st.markdown(section_header("Monte Carlo Simulation",
+    #                                 "Probabilistic demand and price forecast with uncertainty bands",
+    #                                 help_text="Runs N randomised demand and price trajectories based on historical volatility. Outputs P10 (bear case), P50 (base case), and P90 (bull case) scenario bounds over the selected horizon."),
+    #                 unsafe_allow_html=True)
+    #     c1, c2, c3, c4 = st.columns(4)
+    #     with c1:
+    #         mc_demand = st.number_input("Base Monthly Demand", 100.0, 10000.0, 1200.0, step=50.0, key="mc_d")
+    #     with c2:
+    #         mc_price  = st.number_input("Base Avg Price/Sqft (AED)", 500.0, 10000.0, 1400.0, step=50.0, key="mc_p")
+    #     with c3:
+    #         mc_horizon = st.selectbox("Horizon (months)", [6, 12, 24, 36], index=1, key="mc_h")
+    #     with c4:
+    #         mc_vol    = st.slider("Market Volatility", 0.03, 0.25, 0.08, 0.01, key="mc_v")
+    #     mc_sims = st.select_slider("Simulations", [500, 1000, 2000, 5000], value=2000, key="mc_n")
+    #     if st.button("Run Monte Carlo", key="mc_btn", type="primary"):
+    #         with st.spinner(f"Running {mc_sims:,} simulations …"):
+    #             try:
+    #                 result = api.run_monte_carlo(mc_demand, mc_price, mc_horizon, mc_sims, mc_vol)
+    #                 c1, c2, c3 = st.columns(3)
+    #                 df = result["demand_final"]
+    #                 c1.metric("Median Demand (P50)", f"{df['p50']:,.0f}")
+    #                 c2.metric("Bear Case (P10)",      f"{df['p10']:,.0f}")
+    #                 c3.metric("Bull Case (P90)",      f"{df['p90']:,.0f}")
+    #                 c1.metric("Prob > Base",          f"{df['prob_above_base']:.0f}%")
+    #                 pf = result["price_final"]
+    #                 c2.metric("Median Price (P50)",   f"AED {pf['p50']:,.0f}/sqft")
+    #                 c3.metric("Price Bull (P90)",     f"AED {pf['p90']:,.0f}/sqft")
+    #                 fig_d = monte_carlo_chart(result, metric="demand", height=380)
+    #                 st.plotly_chart(fig_d, use_container_width=True)
+    #                 fig_p = monte_carlo_chart(result, metric="price", height=340)
+    #                 st.plotly_chart(fig_p, use_container_width=True)
+    #             except api.APIError as e:
+    #                 st.error(str(e))
 
     # ── Tab 4: Investment Calculator ──────────────────────────────
     with tab4:
         st.markdown(section_header("Investment ROI Calculator",
-                                    "Full financial analysis with AI verdict",
-                                    help_text="Full return-on-investment analysis for a given property. Calculates gross yield, capital gain, annual cash flow, total net return, and payback period based on your input assumptions."),
+                                    "DLD financials + live news + Groq AI verdict",
+                                    help_text="Full ROI analysis: calculates yield, capital gain, and cash flow from your inputs, then Groq LLM reviews live market news to deliver a buy/hold/caution verdict with confidence and risk signals."),
                     unsafe_allow_html=True)
         with st.form("inv_form"):
+            # Optional area + property type for targeted news
+            ci1, ci2 = st.columns(2)
+            with ci1:
+                try:
+                    _inv_areas = api.get_all_areas()
+                except Exception:
+                    _inv_areas = []
+                i_area = st.selectbox("Area (optional — improves news relevance)",
+                                       [""] + _inv_areas, key="i_area")
+            with ci2:
+                i_ptype = st.selectbox("Property Type (optional)",
+                                        ["", "Apartment", "Villa", "Townhouse", "Penthouse", "Studio", "Commercial"],
+                                        key="i_ptype")
+
             c1, c2 = st.columns(2)
             with c1:
                 i_price   = st.number_input("Purchase Price (AED)", 500_000, 100_000_000,
@@ -352,196 +363,205 @@ def render(filters: dict = None):
                 i_apprc   = st.number_input("Expected Annual Appreciation (%)", 0.0, 20.0, 5.0, step=0.5, key="i_apprc")
                 i_finance = st.slider("Financing (%)", 0, 80, 0, key="i_finance")
                 i_mort    = st.number_input("Mortgage Rate (%)", 1.0, 10.0, 4.0, step=0.25, key="i_mort")
-            submitted = st.form_submit_button("Calculate ROI")
+            submitted = st.form_submit_button("Calculate & Analyse Investment")
 
         if submitted:
-            with st.spinner("Calculating investment returns …"):
+            with st.spinner("Calculating returns, fetching market news, running AI analysis…"):
                 try:
-                    res = api.run_investment_analysis(
+                    res = api.run_investment_analysis_ai(
                         i_price, float(i_sqft), i_yield, i_years,
                         i_apprc, float(i_finance), i_mort,
+                        area=i_area, property_type=i_ptype,
                     )
-                    st.session_state["inv_result"] = res
-                    st.session_state["inv_params"] = {
-                        "price": i_price, "yield_pct": i_yield,
-                        "years": i_years,
-                    }
-                    st.session_state.pop("inv_verdict", None)
+                    st.session_state["inv_result_ai"] = res
+                    st.session_state["inv_years"] = i_years
                 except api.APIError as e:
                     st.error(str(e))
 
-        res = st.session_state.get("inv_result")
+        res = st.session_state.get("inv_result_ai")
         if res:
-            params = st.session_state.get("inv_params", {})
+            inv_years = st.session_state.get("inv_years", 5)
+
+            # ── Financial KPI cards ───────────────────────────────────
             render_kpi_row([
                 kpi_card("Total ROI", f"{res.get('total_roi_pct',0):.1f}",
                           None, suffix="%",
-                          gradient="emerald" if res.get("total_roi_pct",0)>20 else "amber",
-                          help_text="Total return on invested equity over the full holding period: (rental income + capital gain − costs) ÷ equity invested × 100. Covers your selected holding period."),
+                          gradient="emerald" if res.get("total_roi_pct",0) > 20 else "amber",
+                          help_text="Total return on invested equity: (rental income + capital gain − costs) ÷ equity × 100."),
                 kpi_card("Annualised ROI", f"{res.get('annualised_roi_pct',0):.1f}",
                           None, suffix="%", gradient="indigo",
-                          help_text="Compound annual growth rate of your total return over the holding period. Useful for comparing this investment to other asset classes on an apples-to-apples basis."),
+                          help_text="Annual compounded return over the holding period."),
                 kpi_card("Total Return", f"{res.get('total_return_aed',0)/1e6:.1f}M",
                           None, prefix="AED ", gradient="emerald",
-                          help_text="Absolute AED return over the holding period = cumulative rental income + capital gain on exit. Does not account for financing costs unless a mortgage rate is entered."),
+                          help_text="Cumulative rental income + capital gain on exit."),
                 kpi_card("Payback Period", f"{res.get('payback_years',0):.1f}",
                           None, suffix=" yrs", gradient="violet",
-                          help_text="Years required for cumulative rental income to recover the initial equity outlay. Shorter payback indicates a higher-yielding or lower-leverage investment."),
+                          help_text="Years for rental income to recover initial equity outlay."),
             ], cols=4)
 
+            # ── Financial breakdown + pie ─────────────────────────────
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown("**Financial Breakdown**")
                 breakdown = {
-                    "Purchase Price":        f"AED {res.get('purchase_price_aed',0):,.0f}",
-                    "Equity Required":       f"AED {res.get('equity_required_aed',0):,.0f}",
-                    "Annual Rental Income":  f"AED {res.get('annual_rental_income_aed',0):,.0f}",
-                    "Annual Cash Flow":      f"AED {res.get('annual_cashflow_aed',0):,.0f}",
-                    "Exit Value":            f"AED {res.get('exit_value_aed',0):,.0f}",
-                    "Capital Gain":          f"AED {res.get('capital_gain_aed',0):,.0f}",
+                    "Purchase Price":       f"AED {res.get('purchase_price_aed',0):,.0f}",
+                    "Equity Required":      f"AED {res.get('equity_required_aed',0):,.0f}",
+                    "Annual Rental Income": f"AED {res.get('annual_rental_income_aed',0):,.0f}",
+                    "Annual Cash Flow":     f"AED {res.get('annual_cashflow_aed',0):,.0f}",
+                    "Exit Value":           f"AED {res.get('exit_value_aed',0):,.0f}",
+                    "Capital Gain":         f"AED {res.get('capital_gain_aed',0):,.0f}",
                 }
                 df_bd = pd.DataFrame.from_dict(breakdown, orient="index", columns=["Value"])
                 st.dataframe(df_bd, use_container_width=True)
 
             with c2:
-                labels = ["Rental Income", "Capital Gain"]
-                vals   = [res.get("annual_rental_income_aed",0) * params.get("years", 1),
-                           res.get("capital_gain_aed", 0)]
                 from frontend.components.charts import pie_chart as pc
+                labels = ["Rental Income", "Capital Gain"]
+                vals   = [res.get("annual_rental_income_aed", 0) * inv_years,
+                           res.get("capital_gain_aed", 0)]
                 fig = pc(labels, vals, title="Return Composition", height=280)
                 st.plotly_chart(fig, use_container_width=True)
 
+            # ── AI Verdict ────────────────────────────────────────────
             st.markdown(section_header("AI Investment Verdict",
-                help_text="GROQ AI verdict synthesising your financial inputs and current macro conditions into a buy / hold / caution recommendation."),
+                help_text="Groq LLM verdict synthesising financial metrics, live news, and market context into a buy/hold/caution recommendation."),
                 unsafe_allow_html=True)
 
-            verdict = st.session_state.get("inv_verdict")
-            if verdict:
+            verdict    = res.get("verdict", "hold").lower()
+            conf       = res.get("confidence", "medium").lower()
+            verdict_color = {"buy": "#10b981", "hold": "#f59e0b", "caution": "#ef4444"}.get(verdict, "#64748b")
+            conf_color    = {"high": "#10b981", "medium": "#f59e0b", "low": "#ef4444"}.get(conf, "#64748b")
+            signals    = res.get("key_signals", [])
+            risks      = res.get("risk_factors", [])
+
+            # Verdict badge row
+            st.markdown(
+                f'<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 8px">'
+                f'<span style="background:{verdict_color}22;border:1px solid {verdict_color};'
+                f'color:{verdict_color};padding:5px 16px;border-radius:20px;'
+                f'font-size:13px;font-weight:700;font-family:Inter,sans-serif;text-transform:uppercase">'
+                f'{verdict}</span>'
+                f'<span style="background:{conf_color}22;border:1px solid {conf_color};'
+                f'color:{conf_color};padding:4px 12px;border-radius:20px;'
+                f'font-size:12px;font-weight:600;font-family:Inter,sans-serif">'
+                f'Confidence: {conf.title()}</span>' +
+                "".join(
+                    f'<span style="background:#0d0d20;border:1px solid #1e1e3f;color:#94a3b8;'
+                    f'padding:3px 10px;border-radius:4px;font-size:12px;font-family:Inter,sans-serif">'
+                    f'▸ {s}</span>'
+                    for s in signals
+                ) +
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            # Recommendation text
+            rec = res.get("recommendation", "")
+            if rec:
                 st.markdown(
-                    f"""<div class="ai-panel"><div class="ai-panel-header">
-                    <span class="ai-badge">AI</span>
-                    <span class="ai-panel-title">Investment Assessment</span></div>
-                    <div class="ai-panel-body">{verdict}</div></div>""",
+                    f'<p style="color:#94a3b8;font-style:italic;font-size:13px;'
+                    f'font-family:Inter,sans-serif;margin:4px 0 8px;'
+                    f'background:#0d0d20;padding:10px 14px;border-radius:6px;'
+                    f'border-left:3px solid #6366f1">{rec}</p>',
                     unsafe_allow_html=True,
                 )
-            elif st.button("Get AI Verdict", key="verdict_btn", type="secondary"):
-                with st.spinner("Asking AI for investment verdict …"):
-                    try:
-                        vres = api.get_investment_verdict(
-                            params.get("price", 0),
-                            params.get("yield_pct", 0),
-                            params.get("years", 5),
-                            res.get("total_roi_pct", 0),
-                            res.get("annualised_roi_pct", 0),
-                        )
-                        st.session_state["inv_verdict"] = vres.get("ai_verdict", "")
-                        st.rerun()
-                    except api.APIError as e:
-                        st.error(str(e))
 
-    # ── Tab 5: News Forecast ───────────────────────────────────────
-    with tab5:
-        st.markdown(section_header(
-            "News-Augmented Forecast",
-            "AI prediction based on last 15 days of news",
-            help_text="Fetches the latest UAE real estate news across all categories, sends them to Groq AI to extract a market sentiment score and key signals, then applies those signals through the scenario engine to produce a news-adjusted demand and price forecast."),
-            unsafe_allow_html=True)
-
-        _, col_refresh = st.columns([6, 1])
-        col_refresh.markdown("&nbsp;", unsafe_allow_html=True)
-        if col_refresh.button("Refresh", key="nf_refresh"):
-            st.session_state.pop("_news_forecast", None)
-
-        if "_news_forecast" not in st.session_state:
-            with st.spinner("Analysing latest news with AI…"):
-                try:
-                    st.session_state["_news_forecast"] = api.get_news_forecast()
-                except api.APIError as e:
-                    st.session_state["_news_forecast"] = {"error": str(e)}
-
-        nf = st.session_state.get("_news_forecast", {})
-
-        if nf.get("error") and not nf.get("key_signals"):
-            st.warning(nf["error"])
-        else:
-            if nf.get("error"):
-                st.warning(nf["error"])
-
-            # ── Row 1: Sentiment score + key signals ───────────────
-            score  = nf.get("sentiment_score", 50)
-            label  = nf.get("sentiment_label", "Neutral")
-            badge_type = "success" if label == "Bullish" else ("warning" if label == "Bearish" else "info")
-
-            c1, c2 = st.columns([1, 2])
-            with c1:
-                st.metric("Market Sentiment", f"{score} / 100")
+            # Risk factors
+            if risks:
                 st.markdown(
-                    alert_card(label, f"Based on {nf.get('articles_used', 0)} news articles", badge_type),
+                    '<div style="margin:4px 0 8px">' +
+                    "".join(
+                        f'<span style="display:inline-block;background:#ef444422;border:1px solid #ef4444;'
+                        f'color:#ef4444;padding:3px 10px;border-radius:4px;'
+                        f'font-size:12px;font-family:Inter,sans-serif;margin:2px 4px 2px 0">'
+                        f'⚠ {r}</span>'
+                        for r in risks
+                    ) + '</div>',
                     unsafe_allow_html=True,
                 )
-            with c2:
-                signals = nf.get("key_signals", [])
-                if signals:
-                    st.markdown("**Key Market Signals Detected:**")
-                    for s in signals:
-                        st.markdown(f"• {s}")
-                else:
-                    st.info("No key signals extracted.")
 
-            st.divider()
+            # News table
+            news = res.get("news_used", [])
+            if news:
+                st.markdown(
+                    '<p style="color:#64748b;font-size:11px;font-family:Inter,sans-serif;'
+                    'margin:12px 0 4px;text-transform:uppercase;letter-spacing:0.06em;'
+                    'font-weight:600">Market News Used</p>',
+                    unsafe_allow_html=True,
+                )
+                df_news = pd.DataFrame(news)[["title", "source", "publishedAt"]]
+                df_news.columns = ["Title", "Source", "Date"]
+                st.dataframe(df_news, use_container_width=True, hide_index=True)
 
-            # ── Row 2: Demand delta + chart ────────────────────────
-            demand_delta = nf.get("demand_delta_pct", 0.0)
-            price_delta  = nf.get("price_delta_pct",  0.0)
-            months       = list(range(1, len(nf.get("monthly_path_demand", [])) + 1))
-
-            c1, c2 = st.columns(2)
-            with c1:
-                st.metric("Demand Adjustment", f"{demand_delta:+.1f}%",
-                          delta=f"vs base {nf.get('base_demand', 0):,.0f} units/month")
-                fig_d = go.Figure()
-                fig_d.add_trace(go.Scatter(
-                    x=months,
-                    y=[nf.get("base_demand", 0)] * len(months),
-                    name="Base Forecast", line=dict(color="#9ca3af", dash="dash", width=2),
-                ))
-                fig_d.add_trace(go.Scatter(
-                    x=months, y=nf.get("monthly_path_demand", []),
-                    name="News-Adjusted", line=dict(color=C_INDIGO, width=2.5),
-                    fill="tonexty", fillcolor="rgba(99,102,241,0.08)",
-                ))
-                fig_d.update_layout(**themed(height=280, title="Demand: Base vs News-Adjusted",
-                                             xaxis_title="Month"))
-                st.plotly_chart(fig_d, use_container_width=True)
-
-            with c2:
-                st.metric("Price Adjustment", f"{price_delta:+.1f}%",
-                          delta=f"vs base AED {nf.get('base_price', 0):,.0f}/sqft")
-                fig_p = go.Figure()
-                fig_p.add_trace(go.Scatter(
-                    x=months,
-                    y=[nf.get("base_price", 0)] * len(months),
-                    name="Base Forecast", line=dict(color="#9ca3af", dash="dash", width=2),
-                ))
-                fig_p.add_trace(go.Scatter(
-                    x=months, y=nf.get("monthly_path_price", []),
-                    name="News-Adjusted", line=dict(color=C_EMERALD, width=2.5),
-                    fill="tonexty", fillcolor="rgba(16,185,129,0.08)",
-                ))
-                fig_p.update_layout(**themed(height=280, title="Price: Base vs News-Adjusted",
-                                             xaxis_title="Month"))
-                st.plotly_chart(fig_p, use_container_width=True)
-
-            # ── Row 3: Articles table ──────────────────────────────
-            articles = nf.get("articles", [])
-            if articles:
-                with st.expander(f"News articles analysed ({len(articles)})", expanded=False):
-                    df_arts = pd.DataFrame([
-                        {
-                            "Title":  a.get("title", ""),
-                            "Source": a.get("source", ""),
-                            "Date":   a.get("publishedAt", "")[:10] if a.get("publishedAt") else "",
-                        }
-                        for a in articles
-                    ])
-                    st.dataframe(df_arts, use_container_width=True, hide_index=True)
+    # ── Tab 5: News Forecast — commented out ──────────────────────
+    # with tab5:
+    #     st.markdown(section_header(
+    #         "News-Augmented Forecast",
+    #         "AI prediction based on last 15 days of news",
+    #         help_text="Fetches the latest UAE real estate news across all categories, sends them to Groq AI to extract a market sentiment score and key signals, then applies those signals through the scenario engine to produce a news-adjusted demand and price forecast."),
+    #         unsafe_allow_html=True)
+    #     _, col_refresh = st.columns([6, 1])
+    #     col_refresh.markdown("&nbsp;", unsafe_allow_html=True)
+    #     if col_refresh.button("Refresh", key="nf_refresh"):
+    #         st.session_state.pop("_news_forecast", None)
+    #     if "_news_forecast" not in st.session_state:
+    #         with st.spinner("Analysing latest news with AI…"):
+    #             try:
+    #                 st.session_state["_news_forecast"] = api.get_news_forecast()
+    #             except api.APIError as e:
+    #                 st.session_state["_news_forecast"] = {"error": str(e)}
+    #     nf = st.session_state.get("_news_forecast", {})
+    #     if nf.get("error") and not nf.get("key_signals"):
+    #         st.warning(nf["error"])
+    #     else:
+    #         if nf.get("error"):
+    #             st.warning(nf["error"])
+    #         score  = nf.get("sentiment_score", 50)
+    #         label  = nf.get("sentiment_label", "Neutral")
+    #         badge_type = "success" if label == "Bullish" else ("warning" if label == "Bearish" else "info")
+    #         c1, c2 = st.columns([1, 2])
+    #         with c1:
+    #             st.metric("Market Sentiment", f"{score} / 100")
+    #             st.markdown(alert_card(label, f"Based on {nf.get('articles_used', 0)} news articles", badge_type),
+    #                         unsafe_allow_html=True)
+    #         with c2:
+    #             signals = nf.get("key_signals", [])
+    #             if signals:
+    #                 st.markdown("**Key Market Signals Detected:**")
+    #                 for s in signals:
+    #                     st.markdown(f"• {s}")
+    #             else:
+    #                 st.info("No key signals extracted.")
+    #         st.divider()
+    #         demand_delta = nf.get("demand_delta_pct", 0.0)
+    #         price_delta  = nf.get("price_delta_pct",  0.0)
+    #         months       = list(range(1, len(nf.get("monthly_path_demand", [])) + 1))
+    #         c1, c2 = st.columns(2)
+    #         with c1:
+    #             st.metric("Demand Adjustment", f"{demand_delta:+.1f}%",
+    #                       delta=f"vs base {nf.get('base_demand', 0):,.0f} units/month")
+    #             fig_d = go.Figure()
+    #             fig_d.add_trace(go.Scatter(x=months, y=[nf.get("base_demand", 0)] * len(months),
+    #                                         name="Base Forecast", line=dict(color="#9ca3af", dash="dash", width=2)))
+    #             fig_d.add_trace(go.Scatter(x=months, y=nf.get("monthly_path_demand", []),
+    #                                         name="News-Adjusted", line=dict(color=C_INDIGO, width=2.5),
+    #                                         fill="tonexty", fillcolor="rgba(99,102,241,0.08)"))
+    #             fig_d.update_layout(**themed(height=280, title="Demand: Base vs News-Adjusted", xaxis_title="Month"))
+    #             st.plotly_chart(fig_d, use_container_width=True)
+    #         with c2:
+    #             st.metric("Price Adjustment", f"{price_delta:+.1f}%",
+    #                       delta=f"vs base AED {nf.get('base_price', 0):,.0f}/sqft")
+    #             fig_p = go.Figure()
+    #             fig_p.add_trace(go.Scatter(x=months, y=[nf.get("base_price", 0)] * len(months),
+    #                                         name="Base Forecast", line=dict(color="#9ca3af", dash="dash", width=2)))
+    #             fig_p.add_trace(go.Scatter(x=months, y=nf.get("monthly_path_price", []),
+    #                                         name="News-Adjusted", line=dict(color=C_EMERALD, width=2.5),
+    #                                         fill="tonexty", fillcolor="rgba(16,185,129,0.08)"))
+    #             fig_p.update_layout(**themed(height=280, title="Price: Base vs News-Adjusted", xaxis_title="Month"))
+    #             st.plotly_chart(fig_p, use_container_width=True)
+    #         articles = nf.get("articles", [])
+    #         if articles:
+    #             with st.expander(f"News articles analysed ({len(articles)})", expanded=False):
+    #                 df_arts = pd.DataFrame([{"Title": a.get("title",""), "Source": a.get("source",""),
+    #                                          "Date": a.get("publishedAt","")[:10]} for a in articles])
+    #                 st.dataframe(df_arts, use_container_width=True, hide_index=True)

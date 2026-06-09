@@ -115,6 +115,18 @@ class InvestmentVerdictRequest(BaseModel):
     annualised_roi_pct: float
 
 
+class InvestmentRequestAI(BaseModel):
+    purchase_price_aed: float
+    area_sqft: float
+    rental_yield_pct: float
+    holding_years: int = 5
+    appreciation_pct: float = 5.0
+    financing_pct: float = 0.0
+    mortgage_rate_pct: float = 4.0
+    area: str = ""
+    property_type: str = ""
+
+
 class NewsCalibrationRequest(BaseModel):
     template_name: str
     area: str = "UAE"
@@ -132,6 +144,117 @@ def run_investment_analysis(req: InvestmentRequest):
         financing_pct=req.financing_pct,
         mortgage_rate_pct=req.mortgage_rate_pct,
     )
+
+
+@router.post("/investment-analysis-ai")
+def run_investment_analysis_ai(req: InvestmentRequestAI):
+    """Hybrid investment analysis: financial calc + Groq LLM + live news."""
+    import json, re
+    from typing import List as _List
+
+    # ── Financial calculation (same as investment-analysis) ──────────
+    fin = scenario_engine.investment_analysis(
+        purchase_price_aed=req.purchase_price_aed,
+        area_sqft=req.area_sqft,
+        rental_yield_pct=req.rental_yield_pct,
+        holding_years=req.holding_years,
+        appreciation_pct=req.appreciation_pct,
+        financing_pct=req.financing_pct,
+        mortgage_rate_pct=req.mortgage_rate_pct,
+    )
+
+    # ── RAG context ───────────────────────────────────────────────────
+    rag_query = f"{req.area} {req.property_type} real estate investment ROI rental yield".strip()
+    rag_context = rag_engine.retrieve(rag_query or "UAE real estate investment ROI rental yield", top_k=4)
+
+    # ── Live news ─────────────────────────────────────────────────────
+    news_query = f"{req.area} {req.property_type} UAE real estate investment property".strip()
+    articles, _ = news_client._fetch_google_news_rss(
+        news_query or "UAE real estate investment ROI property market", max_results=8
+    )
+    news_lines = "\n".join(
+        f"{i+1}. {a['title']} — {a.get('source','Unknown')} — {a.get('publishedAt','')[:10]}"
+        for i, a in enumerate(articles)
+    ) or "No recent news available."
+
+    # ── Groq prompt ───────────────────────────────────────────────────
+    area_tag = f" in {req.area}" if req.area else ""
+    type_tag = f" {req.property_type}" if req.property_type else ""
+    system_prompt = (
+        "You are a UAE real estate investment expert. "
+        "Return ONLY valid JSON — no markdown, no text outside the JSON. "
+        "Keys: verdict, recommendation, confidence, key_signals, risk_factors."
+    )
+    prompt = f"""Evaluate this UAE{type_tag} property investment{area_tag}.
+
+FINANCIAL METRICS:
+- Purchase price: AED {req.purchase_price_aed:,.0f} | Size: {req.area_sqft:.0f} sqft
+- Rental yield: {req.rental_yield_pct:.1f}% | Holding period: {req.holding_years} years
+- Annual appreciation: {req.appreciation_pct:.1f}% | Financing: {req.financing_pct:.0f}% at {req.mortgage_rate_pct:.1f}%
+- Equity required: AED {fin.get('equity_required_aed', 0):,.0f}
+- Annual rental income: AED {fin.get('annual_rental_income_aed', 0):,.0f}
+- Annual cash flow: AED {fin.get('annual_cashflow_aed', 0):,.0f}
+- Exit value: AED {fin.get('exit_value_aed', 0):,.0f}
+- Capital gain: AED {fin.get('capital_gain_aed', 0):,.0f}
+- Total ROI: {fin.get('total_roi_pct', 0):.1f}% | Annualised ROI: {fin.get('annualised_roi_pct', 0):.1f}%
+- Payback period: {fin.get('payback_years', 0):.1f} years
+
+MARKET CONTEXT:
+{rag_context[:800] if rag_context else "Not available."}
+
+RECENT NEWS ({len(articles)} articles):
+{news_lines}
+
+Return ONLY valid JSON:
+{{
+  "verdict": "<buy|hold|caution>",
+  "recommendation": "<3-4 sentences: rationale, risks, and action>",
+  "confidence": "<high|medium|low>",
+  "key_signals": ["<signal 1>", "<signal 2>", "<signal 3>"],
+  "risk_factors": ["<risk 1>", "<risk 2>"]
+}}"""
+
+    raw = groq_client.chat(
+        prompt, system_override=system_prompt,
+        max_tokens=600, temperature=0.3, cache_ttl=300,
+    )
+
+    # ── Parse Groq response ───────────────────────────────────────────
+    verdict       = "hold"
+    recommendation = f"Based on a {req.rental_yield_pct:.1f}% rental yield and {fin.get('total_roi_pct',0):.1f}% total ROI over {req.holding_years} years."
+    confidence    = "medium"
+    key_signals:  _List[str] = []
+    risk_factors: _List[str] = []
+
+    try:
+        json_match = re.search(r'\{.*\}', raw, re.DOTALL)
+        if json_match:
+            parsed         = json.loads(json_match.group())
+            verdict        = str(parsed.get("verdict", "hold")).lower()
+            recommendation = str(parsed.get("recommendation", recommendation))
+            confidence     = str(parsed.get("confidence", "medium"))
+            key_signals    = list(parsed.get("key_signals", []))
+            risk_factors   = list(parsed.get("risk_factors", []))
+    except Exception as exc:
+        log.warning("Could not parse Groq investment JSON: %s | raw: %.200s", exc, raw)
+
+    return {
+        **fin,
+        "verdict":        verdict,
+        "recommendation": recommendation,
+        "confidence":     confidence,
+        "key_signals":    key_signals[:3],
+        "risk_factors":   risk_factors[:2],
+        "news_used": [
+            {
+                "title":       a.get("title", ""),
+                "source":      a.get("source", ""),
+                "publishedAt": a.get("publishedAt", "")[:10],
+                "url":         a.get("url", ""),
+            }
+            for a in articles[:6]
+        ],
+    }
 
 
 @router.post("/investment-verdict")

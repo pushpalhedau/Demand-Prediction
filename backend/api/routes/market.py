@@ -140,14 +140,18 @@ def get_migration_analysis():
 def get_white_space_analysis():
     """Areas with high demand but low supply = white space opportunities."""
     df_tx   = data_store.get("transactions")
-    df_proj = data_store.get("projects")
     df_list = data_store.get("listings")
 
     if df_tx.empty:
         return {"white_space_areas": []}
 
-    demand_by_area = df_tx.groupby("area_name").size().reset_index(name="demand_count")
+    # Demand: last 12 months only — matches the recency of the listings snapshot
+    latest_date = df_tx["transaction_date"].max()
+    cutoff      = latest_date - pd.DateOffset(months=12)
+    df_tx_recent = df_tx[df_tx["transaction_date"] >= cutoff]
+    demand_by_area = df_tx_recent.groupby("area_name").size().reset_index(name="demand_count")
 
+    # Supply: active listings (2024 snapshot)
     supply_by_area = pd.DataFrame(columns=["area_name", "supply_count"])
     if not df_list.empty and "area" in df_list.columns:
         supply_by_area = df_list.groupby("area").size().reset_index(name="supply_count")
@@ -160,7 +164,13 @@ def get_white_space_analysis():
     top_ws = merged.nlargest(10, "white_space_score")[
         ["area_name", "demand_count", "supply_count", "demand_supply_ratio", "white_space_score"]
     ].to_dict("records")
-    return {"white_space_areas": top_ws}
+    return {
+        "white_space_areas": top_ws,
+        "demand_period": {
+            "from": cutoff.strftime("%b %Y"),
+            "to":   latest_date.strftime("%b %Y"),
+        },
+    }
 
 
 @router.get("/price-trends")

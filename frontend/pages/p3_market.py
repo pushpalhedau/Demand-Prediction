@@ -15,9 +15,9 @@ def render(filters: dict = None):
     filters = filters or {}
     area    = filters.get("area")
     st.markdown(KPI_CSS, unsafe_allow_html=True)
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab4, tab5 = st.tabs([
         "Opportunity Heatmap", "Competitor Intelligence",
-        "Infrastructure Impact", "Migration & Demographics", "White Space Analysis"
+        "Migration & Demographics", "White Space Analysis"
     ])
 
     # ── Tab 1: Opportunity Heatmap ────────────────────────────────
@@ -137,48 +137,50 @@ def render(filters: dict = None):
                     df_ac, x="active_listings", y="avg_asking_price",
                     size="active_listings", text="area",
                     title="Listings vs Asking Price by Area", height=380,
+                    xaxis_title="Active Listings (supply volume)",
+                    yaxis_title="Avg Asking Price (AED)",
                 )
                 st.plotly_chart(fig, use_container_width=True)
         except api.APIError as e:
             st.error(str(e))
 
-    # ── Tab 3: Infrastructure Impact ──────────────────────────────
-    with tab3:
-        st.markdown(section_header("Infrastructure Impact Analysis",
-                                    "Active projects driving real estate demand",
-                                    help_text="UAE infrastructure projects scored by expected real estate impact based on budget size, proximity to residential areas, and project type (metro, road, free zone, etc.). Data as of 2024."),
-                    unsafe_allow_html=True)
-        try:
-            infra = api.get_infrastructure_impact()
-            projects = infra.get("projects", [])
-            impact_summary = infra.get("impact_summary", [])
-
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                if impact_summary:
-                    df_imp = pd.DataFrame(impact_summary)
-                    fig = bar_chart(df_imp["impact_on_real_estate"].tolist(),
-                                    df_imp["count"].tolist(),
-                                    title="Projects by RE Impact Level", height=280,
-                                    color=C_EMERALD)
-                    st.plotly_chart(fig, use_container_width=True)
-            with col2:
-                if impact_summary:
-                    fig = pie_chart(df_imp["impact_on_real_estate"].tolist(),
-                                    df_imp["total_budget"].tolist(),
-                                    title="Budget Allocation by Impact", height=280)
-                    st.plotly_chart(fig, use_container_width=True)
-
-            if projects:
-                df_proj = pd.DataFrame(projects)
-                display_cols = ["project_name", "project_type", "emirate",
-                                  "budget_aed_million", "expected_completion_year",
-                                  "impact_on_real_estate"]
-                avail = [c for c in display_cols if c in df_proj.columns]
-                st.dataframe(df_proj[avail].set_index("project_name"),
-                              use_container_width=True, height=400)
-        except api.APIError as e:
-            st.error(str(e))
+    # ── Tab 3: Infrastructure Impact — commented out ──────────────
+    # with tab3:
+    #     st.markdown(section_header("Infrastructure Impact Analysis",
+    #                                 "Active projects driving real estate demand",
+    #                                 help_text="UAE infrastructure projects scored by expected real estate impact based on budget size, proximity to residential areas, and project type (metro, road, free zone, etc.). Data as of 2024."),
+    #                 unsafe_allow_html=True)
+    #     try:
+    #         infra = api.get_infrastructure_impact()
+    #         projects = infra.get("projects", [])
+    #         impact_summary = infra.get("impact_summary", [])
+    #
+    #         col1, col2 = st.columns([1, 1])
+    #         with col1:
+    #             if impact_summary:
+    #                 df_imp = pd.DataFrame(impact_summary)
+    #                 fig = bar_chart(df_imp["impact_on_real_estate"].tolist(),
+    #                                 df_imp["count"].tolist(),
+    #                                 title="Projects by RE Impact Level", height=280,
+    #                                 color=C_EMERALD)
+    #                 st.plotly_chart(fig, use_container_width=True)
+    #         with col2:
+    #             if impact_summary:
+    #                 fig = pie_chart(df_imp["impact_on_real_estate"].tolist(),
+    #                                 df_imp["total_budget"].tolist(),
+    #                                 title="Budget Allocation by Impact", height=280)
+    #                 st.plotly_chart(fig, use_container_width=True)
+    #
+    #         if projects:
+    #             df_proj = pd.DataFrame(projects)
+    #             display_cols = ["project_name", "project_type", "emirate",
+    #                               "budget_aed_million", "expected_completion_year",
+    #                               "impact_on_real_estate"]
+    #             avail = [c for c in display_cols if c in df_proj.columns]
+    #             st.dataframe(df_proj[avail].set_index("project_name"),
+    #                           use_container_width=True, height=400)
+    #     except api.APIError as e:
+    #         st.error(str(e))
 
     # ── Tab 4: Migration & Demographics ───────────────────────────
     with tab4:
@@ -221,20 +223,41 @@ def render(filters: dict = None):
     with tab5:
         st.markdown(section_header("White Space Analysis",
                                     "High-demand, low-supply areas = untapped opportunity",
-                                    help_text="Areas where transaction demand significantly exceeds available listing supply. White Space Score = demand–supply gap index. High score = strong launch opportunity. Based on 2024 DLD and portal data."),
+                                    help_text="Areas where transaction demand (last 12 months, DLD) significantly exceeds active listing supply (property portal snapshot). Both windows are matched so the ratio is apples-to-apples. White Space Score = normalized demand/supply ratio, 0–100. High score = strong launch opportunity."),
                     unsafe_allow_html=True)
         try:
             ws = api.get_white_space()
             ws_areas = ws.get("white_space_areas", [])
+            period   = ws.get("demand_period", {})
             if ws_areas:
                 df_ws = pd.DataFrame(ws_areas)
+
+                # Period note
+                if period:
+                    st.markdown(
+                        f'<p style="color:#64748b;font-size:12px;font-family:Inter,sans-serif;margin:0 0 8px">'
+                        f'Demand = DLD transactions <b style="color:#94a3b8">{period.get("from")} – {period.get("to")}</b> &nbsp;|&nbsp; '
+                        f'Supply = active portal listings <b style="color:#94a3b8">(current snapshot)</b></p>',
+                        unsafe_allow_html=True,
+                    )
+
                 fig = scatter_chart(
                     df_ws, x="demand_count", y="supply_count",
                     size="white_space_score", text="area_name",
-                    title="Demand vs Supply by Area — Bigger bubble = higher opportunity", height=420,
+                    title="Demand vs Supply by Area — Bigger bubble = higher White Space Score",
+                    height=420,
+                    xaxis_title=f"Transactions — {period.get('from','12M')} to {period.get('to','now')} (demand)",
+                    yaxis_title="Active Listings (supply)",
                 )
                 st.plotly_chart(fig, use_container_width=True)
-                st.dataframe(df_ws.set_index("area_name").round(1),
-                              use_container_width=True, height=320)
+
+                # Rename columns for display
+                df_display = df_ws.set_index("area_name").rename(columns={
+                    "demand_count":        f"Transactions ({period.get('from','12M')}–{period.get('to','now')})",
+                    "supply_count":        "Active Listings (now)",
+                    "demand_supply_ratio": "Demand / Supply Ratio",
+                    "white_space_score":   "White Space Score (0–100)",
+                }).round(1)
+                st.dataframe(df_display, use_container_width=True, height=320)
         except api.APIError as e:
             st.error(str(e))

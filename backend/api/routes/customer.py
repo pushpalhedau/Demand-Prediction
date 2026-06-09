@@ -1,7 +1,9 @@
 """Customer & Pricing Intelligence API — Tab 4"""
 from __future__ import annotations
 
+import json
 import logging
+import re
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 from typing import Optional, List
@@ -11,6 +13,9 @@ from backend.data.loader import data_store
 from backend.data.cache import cache
 from backend.ml.segmentation.clustering import MarketSegmentation
 from backend.ml.pricing.price_model import PriceModel
+from backend.ai.groq_client import groq_client
+from backend.ai.news_client import news_client
+from backend.ai.rag import rag_engine
 
 router = APIRouter(prefix="/customer", tags=["customer"])
 log    = logging.getLogger(__name__)
@@ -78,6 +83,168 @@ def predict_price(req: PricingRequest):
         bedrooms=req.bedrooms, area_sqft=req.area_sqft,
         is_off_plan=req.is_off_plan, year=req.year, month=req.month,
     )
+
+
+class PricingRequestAI(BaseModel):
+    area: str
+    property_type: str
+    bedrooms: int
+    area_sqft: float
+    is_off_plan: bool = False
+    year: int = 2026
+    month: int = 6
+
+
+@router.post("/predict-price-ai")
+def predict_price_ai(req: PricingRequestAI):
+    """Hybrid price prediction: DLD statistical anchor + Groq LLM + live news."""
+    df_tx = data_store.get("transactions")
+
+    # ── Step 1: DLD statistical anchor (last 12 months) ──────────────
+    anchor_psf = None
+    n_tx       = 0
+    yoy_pct    = 0.0
+
+    if not df_tx.empty and "transaction_date" in df_tx.columns:
+        latest  = df_tx["transaction_date"].max()
+        cutoff  = latest - pd.DateOffset(months=12)
+        df_rec  = df_tx[df_tx["transaction_date"] >= cutoff]
+
+        # Specific: area + property_type + bedrooms
+        mask = (
+            (df_rec["area_name"].str.lower() == req.area.lower()) &
+            (df_rec["property_type"].str.lower() == req.property_type.lower()) &
+            (df_rec["bedrooms"] == req.bedrooms)
+        )
+        grp = df_rec[mask]
+        if len(grp) >= 5:
+            anchor_psf = float(grp["price_per_sqft_aed"].median())
+            n_tx = len(grp)
+
+        # Fallback: area only
+        if anchor_psf is None:
+            grp_area = df_rec[df_rec["area_name"].str.lower() == req.area.lower()]
+            if len(grp_area) >= 3:
+                anchor_psf = float(grp_area["price_per_sqft_aed"].median())
+                n_tx = len(grp_area)
+
+        # YoY for this area
+        cutoff_prev = cutoff - pd.DateOffset(months=12)
+        df_prev = df_tx[
+            (df_tx["transaction_date"] >= cutoff_prev) &
+            (df_tx["transaction_date"] < cutoff) &
+            (df_tx["area_name"].str.lower() == req.area.lower())
+        ]
+        if len(df_prev) >= 3 and anchor_psf:
+            prev_med = float(df_prev["price_per_sqft_aed"].median())
+            if prev_med > 0:
+                yoy_pct = round((anchor_psf - prev_med) / prev_med * 100, 1)
+
+    # Final fallback: model medians
+    pm = _get_price_model()
+    if anchor_psf is None:
+        anchor_psf = float(
+            pm._fallback_medians.get("area", {}).get(req.area) or
+            pm._fallback_medians.get("property_type", {}).get(req.property_type) or
+            pm._fallback_medians.get("global") or
+            1400.0
+        )
+
+    # ── Step 2: RAG context ──────────────────────────────────────────
+    rag_context = rag_engine.retrieve(
+        f"{req.area} {req.property_type} price yield", top_k=4
+    )
+
+    # ── Step 3: News ─────────────────────────────────────────────────
+    articles, _ = news_client._fetch_google_news_rss(
+        f"{req.area} property real estate prices Dubai", max_results=8
+    )
+
+    news_lines = "\n".join(
+        f"{i+1}. {a['title']} — {a.get('source','Unknown')} — {a.get('publishedAt','')[:10]}"
+        for i, a in enumerate(articles)
+    ) or "No recent news available."
+
+    # ── Step 4: Groq prompt ──────────────────────────────────────────
+    system_prompt = (
+        "You are a UAE real estate pricing expert. "
+        "Return ONLY valid JSON — no markdown, no explanation outside the JSON. "
+        "Keys: price_adjustment_pct, final_price_per_sqft_aed, reasoning, confidence, key_signals."
+    )
+    prompt = f"""Estimate the optimal price per sqft for this Dubai property.
+
+STATISTICAL ANCHOR (DLD transactions, last 12 months):
+- Area: {req.area} | Type: {req.property_type} | Beds: {req.bedrooms}
+- Median price/sqft: AED {anchor_psf:,.0f} (from {n_tx} transactions)
+- YoY area price change: {yoy_pct:+.1f}%
+
+PROPERTY SPECS:
+- Size: {req.area_sqft:.0f} sqft | Off-plan: {"Yes" if req.is_off_plan else "No"}
+- Target period: {req.month}/{req.year}
+
+MARKET CONTEXT:
+{rag_context[:800] if rag_context else "Not available."}
+
+RECENT NEWS ({len(articles)} articles):
+{news_lines}
+
+Return ONLY valid JSON:
+{{
+  "price_adjustment_pct": <float -20 to +20, relative to anchor>,
+  "final_price_per_sqft_aed": <float>,
+  "reasoning": "<2-3 sentences explaining key pricing factors>",
+  "confidence": "<high|medium|low>",
+  "key_signals": ["<signal 1>", "<signal 2>", "<signal 3>"]
+}}"""
+
+    raw = groq_client.chat(
+        prompt, system_override=system_prompt,
+        max_tokens=512, temperature=0.2, cache_ttl=300,
+    )
+
+    # ── Step 5: Parse Groq JSON ──────────────────────────────────────
+    adj_pct     = 0.0
+    final_psf   = anchor_psf
+    reasoning   = "Price based on DLD transaction median for this area and property type."
+    confidence  = "medium"
+    key_signals: List[str] = []
+
+    try:
+        json_match = re.search(r'\{.*\}', raw, re.DOTALL)
+        if json_match:
+            parsed      = json.loads(json_match.group())
+            adj_pct     = float(parsed.get("price_adjustment_pct", 0))
+            final_psf   = float(parsed.get("final_price_per_sqft_aed",
+                                           anchor_psf * (1 + adj_pct / 100)))
+            reasoning   = str(parsed.get("reasoning", reasoning))
+            confidence  = str(parsed.get("confidence", "medium"))
+            key_signals = list(parsed.get("key_signals", []))
+    except Exception as exc:
+        log.warning("Could not parse Groq pricing JSON: %s | raw: %.200s", exc, raw)
+
+    final_psf   = max(300.0, float(final_psf))
+    total_price = final_psf * req.area_sqft
+
+    return {
+        "recommended_price_per_sqft_aed": round(final_psf, 0),
+        "recommended_total_price_aed":    round(total_price, 0),
+        "premium_ceiling_aed":            round(final_psf * 1.15 * req.area_sqft, 0),
+        "discount_floor_aed":             round(final_psf * 0.90 * req.area_sqft, 0),
+        "anchor_price_per_sqft_aed":      round(anchor_psf, 0),
+        "price_adjustment_pct":           round(adj_pct, 1),
+        "reasoning":                      reasoning,
+        "confidence":                     confidence,
+        "key_signals":                    key_signals[:3],
+        "news_used": [
+            {
+                "title":       a.get("title", ""),
+                "source":      a.get("source", ""),
+                "publishedAt": a.get("publishedAt", "")[:10],
+                "url":         a.get("url", ""),
+            }
+            for a in articles[:6]
+        ],
+    }
 
 
 @router.get("/price-elasticity")

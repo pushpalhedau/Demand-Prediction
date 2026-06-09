@@ -213,28 +213,28 @@ def render(filters: dict = None):
             st.warning(str(e))
 
     # ── Sentiment Gauge ──────────────────────────────────────────
-    st.markdown(section_header("Market Sentiment Intelligence",
-        help_text="Composite sentiment index (0–100) derived from GDELT news events, media tone, and transaction momentum. Score >60 = positive market mood. 24-month trend shown."),
-        unsafe_allow_html=True)
-    try:
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Sentiment Index",    f"{sent.get('current_score', 0):.1f}",
-                   delta=f"{sent.get('trend_direction', 0):+.1f}")
-        c2.metric("Buyer Confidence",   f"{sent.get('buyer_confidence', 0):.1f}")
-        c3.metric("Seller Confidence",  f"{sent.get('seller_confidence', 0):.1f}")
-        c4.metric("Media Sentiment",    f"{sent.get('media_score', 0):.1f}")
-
-        history = sent.get("monthly_history", [])
-        if history:
-            df_hist = pd.DataFrame(history)
-            fig = area_chart(df_hist["date"].tolist(), df_hist["score"].tolist(),
-                              title="Sentiment Index (24 months)", height=220)
-            st.plotly_chart(fig, use_container_width=True)
-
-        if sent.get("alert"):
-            st.markdown(
-                alert_card("Sentiment Alert", sent["alert"]["message"], sent["alert"]["severity"]),
-                unsafe_allow_html=True,
-            )
-    except api.APIError as e:
-        st.warning(str(e))
+    # st.markdown(section_header("Market Sentiment Intelligence",
+    #     help_text="Composite sentiment index (0–100) derived from GDELT news events, media tone, and transaction momentum. Score >60 = positive market mood. 24-month trend shown."),
+    #     unsafe_allow_html=True)
+    # try:
+    #     c1, c2, c3, c4 = st.columns(4)
+    #     c1.metric("Sentiment Index",    f"{sent.get('current_score', 0):.1f}",
+    #                delta=f"{sent.get('trend_direction', 0):+.1f}")
+    #     c2.metric("Buyer Confidence",   f"{sent.get('buyer_confidence', 0):.1f}")
+    #     c3.metric("Seller Confidence",  f"{sent.get('seller_confidence', 0):.1f}")
+    #     c4.metric("Media Sentiment",    f"{sent.get('media_score', 0):.1f}")
+    #
+    #     history = sent.get("monthly_history", [])
+    #     if history:
+    #         df_hist = pd.DataFrame(history)
+    #         fig = area_chart(df_hist["date"].tolist(), df_hist["score"].tolist(),
+    #                           title="Sentiment Index (24 months)", height=220)
+    #         st.plotly_chart(fig, use_container_width=True)
+    #
+    #     if sent.get("alert"):
+    #         st.markdown(
+    #             alert_card("Sentiment Alert", sent["alert"]["message"], sent["alert"]["severity"]),
+    #             unsafe_allow_html=True,
+    #         )
+    # except api.APIError as e:
+    #     st.warning(str(e))

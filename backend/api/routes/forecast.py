@@ -28,10 +28,14 @@ def _get_ensemble(target: str = "units") -> ForecastEnsemble:
         fe._load_cache()
         if not fe._is_fitted:
             log.info("Fitting ForecastEnsemble target=%s …", target)
-            df_tx   = data_store.get("transactions")
-            df_ir   = data_store.get("interest_rates")
-            df_sent = data_store.get("sentiment_index")
-            fe.fit(df_tx, df_ir, df_sent)
+            df_tx    = data_store.get("transactions")
+            df_ir    = data_store.get("interest_rates")
+            df_sent  = data_store.get("sentiment_index")
+            df_cpi   = data_store.get("cpi")
+            df_px    = data_store.get("price_index")
+            df_rent  = data_store.get("rentals")
+            df_gdelt = data_store.get("gdelt_sentiment")
+            fe.fit(df_tx, df_ir, df_sent, df_cpi, df_px, df_rent, df_gdelt)
         _ensembles[target] = fe
     return _ensembles[target]
 
@@ -88,6 +92,51 @@ def predict_demand(
         if fe_area is not None:
             result = fe_area.predict(horizon_days=horizon)
             result["area_filter"] = area_norm
+
+    # ── Daily enrichment: raw daily history + day-distributed forecast ──
+    try:
+        _df_raw = data_store.get("transactions")
+        if _df_raw is not None and not _df_raw.empty:
+            _df_d = _df_raw.copy()
+            _area_val = result.get("area_filter")
+            if _area_val:
+                _df_d = _df_d[_df_d["area_name"] == _area_val]
+            _df_d["transaction_date"] = pd.to_datetime(_df_d["transaction_date"])
+            # Last 2 years of daily history
+            _cutoff = _df_d["transaction_date"].max() - pd.DateOffset(years=2)
+            _df_d = _df_d[_df_d["transaction_date"] >= _cutoff]
+            if target == "revenue":
+                _dh = (_df_d.groupby("transaction_date")["transaction_value_aed"]
+                       .sum().reset_index(name="count"))
+            else:
+                _dh = (_df_d.groupby("transaction_date").size()
+                       .reset_index(name="count"))
+            _dh = _dh.sort_values("transaction_date")
+            result["historical_daily"] = {
+                "dates":  [d.isoformat() for d in _dh["transaction_date"]],
+                "values": _dh["count"].round(1).tolist(),
+            }
+            # Distribute each monthly forecast value across the days of that month
+            _fd, _fv, _fl, _fu = [], [], [], []
+            for _ds, _v, _lo, _hi in zip(
+                result["forecast"]["dates"],
+                result["forecast"]["values"],
+                result["forecast"]["lower"],
+                result["forecast"]["upper"],
+            ):
+                _ms   = pd.Timestamp(_ds)
+                _days = (_ms + pd.offsets.MonthEnd(1)).day
+                _dv, _dlo, _dhi = _v / _days, _lo / _days, _hi / _days
+                for _off in range(_days):
+                    _fd.append((_ms + pd.Timedelta(days=_off)).isoformat())
+                    _fv.append(round(_dv, 2))
+                    _fl.append(round(_dlo, 2))
+                    _fu.append(round(_dhi, 2))
+            result["forecast_daily"] = {
+                "dates": _fd, "values": _fv, "lower": _fl, "upper": _fu,
+            }
+    except Exception as _exc:
+        log.warning("Daily enrichment failed: %s", _exc)
 
     cache.set("forecast_predict", ckey, result, ttl=600)
     return result
@@ -176,6 +225,9 @@ def retrain_models(target: str = Query("units")):
             removed.append(p.name)
     if target in _ensembles:
         del _ensembles[target]
+    # Clear area-level cache for this target too
+    for ck in [k for k in _area_ensembles if k.startswith(f"{target}:")]:
+        del _area_ensembles[ck]
     fe = _get_ensemble(target)
     return {
         "status": "retrained",

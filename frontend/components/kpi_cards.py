@@ -18,12 +18,7 @@ def kpi_card(label: str, value: str, change_pct: Optional[float] = None,
         "cyan":    "linear-gradient(135deg, #164e63, #155e75)",
         "rose":    "linear-gradient(135deg, #881337, #9f1239)",
     }
-    bar_colors = {
-        "indigo": "#6366f1", "emerald": "#10b981", "amber": "#f59e0b",
-        "violet": "#8b5cf6", "cyan": "#06b6d4", "rose": "#f43f5e",
-    }
     bg = gradients.get(gradient, gradients["indigo"])
-    bar = bar_colors.get(gradient, "#6366f1")
 
     change_html = ""
     if change_pct is not None:
@@ -36,17 +31,17 @@ def kpi_card(label: str, value: str, change_pct: Optional[float] = None,
 
     info_html = (
         f'<div class="kpi-info-wrap">'
-        f'<span class="kpi-info-icon">i</span>'
+        f'<span class="kpi-info-icon">?</span>'
         f'<div class="kpi-info-tip">{help_text}</div>'
         f'</div>'
     ) if help_text else ""
 
     return f"""
 <div class="kpi-card" style="background:{bg}">
-  <div class="kpi-bar" style="background:{bar}"></div>
-  {info_html}
-  <div class="kpi-icon">{icon}</div>
-  <div class="kpi-label">{label}</div>
+  <div class="kpi-label-row">
+    <span class="kpi-label">{label}</span>
+    {info_html}
+  </div>
   <div class="kpi-value">{prefix}{value}{suffix}</div>
   {change_html}
 </div>
@@ -148,25 +143,52 @@ KPI_CSS = """
   padding: 20px 20px 16px;
   position: relative;
   overflow: visible;
-  transition: transform .2s, box-shadow .2s;
   border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
-.kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+.kpi-label-row {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
 }
-.kpi-bar {
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  border-radius: 14px 14px 0 0;
+.kpi-label {
+  font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55);
+  line-height: 1.3; text-transform: uppercase; letter-spacing: 0.07em;
 }
-.kpi-icon  { font-size: 20px; margin-bottom: 8px; opacity: .85; }
-.kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase;
-             letter-spacing: .1em; color: rgba(255,255,255,.5); margin-bottom: 6px; }
-.kpi-value { font-size: 26px; font-weight: 800; color: #f1f5f9; line-height: 1.1; }
+.kpi-value {
+  font-size: 28px; font-weight: 800; color: #f1f5f9; line-height: 1.15;
+}
 .kpi-change { font-size: 12px; font-weight: 600; margin-top: 8px; }
 .kpi-up     { color: #34d399; }
 .kpi-down   { color: #f87171; }
 .kpi-neutral{ color: #fbbf24; }
+
+/* ── Info icon — KPI card ───────────────────────────────────── */
+.kpi-info-wrap {
+  position: relative; display: inline-flex; align-items: center;
+  flex-shrink: 0;
+}
+.kpi-info-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.5);
+  font-size: 9px; font-weight: 700;
+  cursor: help; border: 1px solid rgba(255,255,255,0.18);
+  font-family: Georgia, serif; transition: all 0.15s; line-height: 1;
+}
+.kpi-info-wrap:hover .kpi-info-icon {
+  background: rgba(255,255,255,0.2); color: #fff;
+  border-color: rgba(255,255,255,0.4);
+}
+.kpi-info-tip {
+  visibility: hidden; opacity: 0;
+  position: absolute; left: 0; top: calc(100% + 6px);
+  width: 215px; background: #111128;
+  border: 1px solid #3730a3; border-radius: 8px;
+  padding: 9px 11px; font-size: 11px; color: #a5b4fc;
+  line-height: 1.55; box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+  z-index: 99999; transition: opacity 0.15s; pointer-events: none;
+  font-style: normal; font-weight: 400;
+}
+.kpi-info-wrap:hover .kpi-info-tip { visibility: visible; opacity: 1; }
 
 .alert-card {
   display: flex; align-items: flex-start; gap: 12px;
@@ -196,35 +218,6 @@ KPI_CSS = """
 .sh-title-row { display: flex; align-items: center; }
 .sh-title   { font-size: 17px; font-weight: 700; color: #f1f5f9; }
 .sh-subtitle{ font-size: 12px; color: #64748b; margin-top: 3px; }
-
-/* ── Info icon — KPI card ───────────────────────────────────── */
-.kpi-info-wrap {
-  position: absolute; top: 10px; right: 10px; z-index: 20;
-}
-.kpi-info-icon {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 15px; height: 15px; border-radius: 50%;
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.4);
-  font-size: 9px; font-weight: 700; font-style: italic;
-  cursor: help; border: 1px solid rgba(255,255,255,0.13);
-  font-family: Georgia, serif; transition: all 0.15s; line-height: 1;
-}
-.kpi-info-wrap:hover .kpi-info-icon {
-  background: rgba(99,102,241,0.35); color: #c7d2fe;
-  border-color: rgba(99,102,241,0.55);
-}
-.kpi-info-tip {
-  visibility: hidden; opacity: 0;
-  position: absolute; right: 0; top: calc(100% + 6px);
-  width: 215px; background: #111128;
-  border: 1px solid #3730a3; border-radius: 8px;
-  padding: 9px 11px; font-size: 11px; color: #a5b4fc;
-  line-height: 1.55; box-shadow: 0 8px 32px rgba(0,0,0,0.55);
-  z-index: 99999; transition: opacity 0.15s; pointer-events: none;
-  font-style: normal; font-weight: 400;
-}
-.kpi-info-wrap:hover .kpi-info-tip { visibility: visible; opacity: 1; }
 
 /* ── Info icon — section header ─────────────────────────────── */
 .sh-info-wrap {

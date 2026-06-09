@@ -161,6 +161,14 @@ def predict_price(area: str, property_type: str, bedrooms: int, area_sqft: float
         "is_off_plan": is_off_plan, "year": year, "month": month,
     })
 
+def predict_price_ai(area: str, property_type: str, bedrooms: int, area_sqft: float,
+                     is_off_plan: bool = False, year: int = 2026, month: int = 6) -> Dict:
+    return _post("/customer/predict-price-ai", {
+        "area": area, "property_type": property_type,
+        "bedrooms": bedrooms, "area_sqft": area_sqft,
+        "is_off_plan": is_off_plan, "year": year, "month": month,
+    })
+
 @st.cache_data(ttl=900, show_spinner=False)
 def get_price_elasticity() -> list:
     return _get("/customer/price-elasticity")
@@ -202,6 +210,17 @@ def launch_advisor(area: str, property_type: str, total_units: int,
         "is_off_plan": is_off_plan, "amenities_score": amenities_score,
     })
 
+def launch_advisor_ai(area: str, property_type: str, total_units: int,
+                      price_per_sqft_aed: float, area_sqft_per_unit: float = 1000.0,
+                      launch_year: int = 2025, launch_month: int = 6,
+                      is_off_plan: bool = True, amenities_score: int = 7) -> Dict:
+    return _post("/inventory/launch-advisor-ai", {
+        "area": area, "property_type": property_type, "total_units": total_units,
+        "price_per_sqft_aed": price_per_sqft_aed, "area_sqft_per_unit": area_sqft_per_unit,
+        "launch_date_year": launch_year, "launch_date_month": launch_month,
+        "is_off_plan": is_off_plan, "amenities_score": amenities_score,
+    })
+
 @st.cache_data(ttl=300, show_spinner=False)
 def predict_sellout(area: str, units: int, price_per_sqft: float) -> Dict:
     return _get("/inventory/sellout-prediction",
@@ -233,6 +252,18 @@ def run_investment_analysis(purchase_price: float, area_sqft: float, rental_yiel
         "rental_yield_pct": rental_yield, "holding_years": holding_years,
         "appreciation_pct": appreciation, "financing_pct": financing,
         "mortgage_rate_pct": mortgage_rate,
+    })
+
+def run_investment_analysis_ai(purchase_price: float, area_sqft: float, rental_yield: float,
+                                holding_years: int = 5, appreciation: float = 5.0,
+                                financing: float = 0.0, mortgage_rate: float = 4.0,
+                                area: str = "", property_type: str = "") -> Dict:
+    return _post("/ai/investment-analysis-ai", {
+        "purchase_price_aed": purchase_price, "area_sqft": area_sqft,
+        "rental_yield_pct": rental_yield, "holding_years": holding_years,
+        "appreciation_pct": appreciation, "financing_pct": financing,
+        "mortgage_rate_pct": mortgage_rate,
+        "area": area, "property_type": property_type,
     })
 
 @st.cache_data(ttl=300, show_spinner=False)
