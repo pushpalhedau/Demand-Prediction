@@ -47,6 +47,8 @@ def clean_transactions(filepath):
     df['season_multiplier'] = df['season_multiplier'].fillna(1.0)
     df['freehold'] = df['freehold'].fillna(True).astype(bool)
 
+    df = df.drop_duplicates(subset=['transaction_id'], keep='first')
+
     return df
 
 
@@ -256,5 +258,271 @@ def clean_market_factors(filepath):
             df[col] = df[col].fillna(0).astype(int)
 
     df['market_event'] = df['market_event'].fillna("None")
+
+    return df
+
+
+def _parse_date_col(df, col):
+    if col in df.columns:
+        df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
+    return df
+
+
+def clean_leads_pipeline(filepath):
+    df = pd.read_csv(filepath)
+
+    date_cols = [
+        'lead_date', 'contacted_date', 'qualified_date',
+        'site_visit_scheduled_date', 'site_visit_done_date',
+        'proposal_sent_date', 'booking_date', 'lost_date',
+    ]
+    for col in date_cols:
+        df = _parse_date_col(df, col)
+
+    bool_cols = ['converted', 'nri_flag', 'corporate_buyer_flag', 'whatsapp_engaged', 'email_opened']
+    for col in bool_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(False).astype(bool)
+
+    df['lead_score'] = df['lead_score'].fillna(50).astype(int)
+    df['follow_up_count'] = df['follow_up_count'].fillna(0).astype(int)
+    df['time_in_stage_days'] = df['time_in_stage_days'].fillna(0).astype(int)
+    df['total_funnel_days'] = df['total_funnel_days'].fillna(0).astype(int)
+    df['budget_stated_aed'] = df['budget_stated_aed'].fillna(0).astype(int)
+
+    float_cols = ['cost_per_lead_aed', 'response_time_hours', 'conversion_probability']
+    for col in float_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(df[col].median())
+
+    str_defaults = {
+        'lead_source': 'Unknown', 'lead_campaign': 'Unknown', 'lead_medium': 'Unknown',
+        'utm_source': 'Unknown', 'utm_campaign': 'Unknown', 'lead_stage': 'New',
+        'lead_temperature': 'Cold', 'property_interest': 'Apartment',
+        'project_interest': 'Unknown', 'lost_reason': 'None', 'salesperson_id': 'Unknown',
+        'emirate_interest': 'Dubai', 'locality_interest': 'Unknown',
+        'bedroom_preference': '2BR', 'ai_recommendation': 'None',
+    }
+    for col, default in str_defaults.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default)
+
+    return df
+
+
+def clean_construction_tracker(filepath):
+    df = pd.read_csv(filepath)
+
+    date_cols = [
+        'report_date', 'milestone_planned_start', 'milestone_planned_end',
+        'milestone_actual_start', 'milestone_actual_end',
+        'next_milestone_due_date', 'handover_date_original', 'handover_date_revised',
+    ]
+    for col in date_cols:
+        df = _parse_date_col(df, col)
+
+    bool_cols = ['rera_inspection_passed', 'delay_risk_flag', 'escalation_flag']
+    for col in bool_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(False).astype(bool)
+
+    int_cols = ['delay_days', 'labour_deployed', 'labour_planned', 'safety_incidents']
+    for col in int_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(0).astype(int)
+
+    float_cols = [
+        'planned_progress_pct', 'actual_progress_pct', 'progress_variance_pct',
+        'planned_budget_aed', 'actual_cost_aed', 'cost_variance_aed', 'cost_overrun_pct',
+        'total_project_budget_aed', 'total_spent_to_date_aed', 'budget_utilization_pct',
+        'resource_utilization_pct', 'quality_score', 'project_health_score',
+    ]
+    for col in float_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(df[col].median())
+
+    str_defaults = {
+        'project_id': 'Unknown', 'project_name': 'Unknown Project',
+        'developer_id': 'Unknown', 'milestone_name': 'Unknown',
+        'delay_reason': 'None', 'contractor_id': 'Unknown',
+        'contractor_name': 'Unknown', 'next_milestone': 'Unknown',
+    }
+    for col, default in str_defaults.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default)
+
+    return df
+
+
+def clean_contractors(filepath):
+    df = pd.read_csv(filepath)
+
+    bool_cols = ['preferred_vendor', 'blacklisted']
+    for col in bool_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(False).astype(bool)
+
+    int_cols = ['established_year', 'total_projects_completed', 'active_projects_count',
+                'safety_record_incidents', 'projects_with_this_developer']
+    for col in int_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(0).astype(int)
+
+    float_cols = ['avg_delivery_score', 'avg_quality_score', 'avg_cost_adherence_score',
+                  'overall_performance_score', 'rating', 'daily_rate_aed']
+    for col in float_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(df[col].median())
+
+    str_defaults = {
+        'contractor_name': 'Unknown', 'contractor_type': 'Unknown',
+        'specialization': 'General', 'country_of_origin': 'Unknown',
+        'uae_license_no': 'N/A', 'grade': 'B',
+    }
+    for col, default in str_defaults.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default)
+
+    return df
+
+
+def clean_financials(filepath):
+    df = pd.read_csv(filepath)
+
+    df = _parse_date_col(df, 'period_date')
+
+    df['year'] = df['year'].fillna(2024).astype(int)
+    df['month'] = df['month'].fillna(1).astype(int)
+    df['quarter'] = df['quarter'].fillna('Q1')
+    df['entity_type'] = df['entity_type'].fillna('Project')
+    df['project_id'] = df['project_id'].fillna('Unknown')
+    df['project_name'] = df['project_name'].fillna('Unknown Project')
+    df['developer_id'] = df['developer_id'].fillna('Unknown')
+
+    aed_cols = [
+        'revenue_booked_aed', 'revenue_registered_aed', 'revenue_recognized_aed',
+        'collections_received_aed', 'collections_outstanding_aed', 'overdue_collections_aed',
+        'overdue_30_60d_aed', 'overdue_60_90d_aed', 'overdue_90d_plus_aed',
+        'gross_profit_aed', 'operating_expenses_aed', 'ebitda_aed', 'net_profit_aed',
+        'cash_inflow_aed', 'cash_outflow_aed', 'net_cash_flow_aed',
+        'cumulative_cash_position_aed', 'escrow_balance_aed', 'construction_draw_aed',
+        'sales_target_aed', 'pipeline_value_aed', 'forecast_next_3m_aed',
+        'forecast_next_12m_aed', 'bad_debt_provision_aed', 'refunds_issued_aed',
+        'dld_fees_collected_aed', 'vat_collected_aed',
+    ]
+    for col in aed_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(0.0)
+
+    pct_cols = ['collection_efficiency_pct', 'gross_margin_pct', 'net_margin_pct', 'sales_achievement_pct']
+    for col in pct_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(df[col].median())
+
+    return df
+
+
+def clean_competitor_market(filepath):
+    df = pd.read_csv(filepath)
+
+    date_cols = ['record_date', 'launch_date', 'expected_completion_date']
+    for col in date_cols:
+        df = _parse_date_col(df, col)
+
+    int_cols = ['total_units', 'units_launched', 'units_sold_reported',
+                'starting_price_aed', 'post_handover_years']
+    for col in int_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(0).astype(int)
+
+    float_cols = ['latitude', 'longitude', 'price_per_sqft_min_aed', 'price_per_sqft_max_aed',
+                  'distance_from_our_project_km']
+    for col in float_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(df[col].median())
+
+    str_defaults = {
+        'builder_name': 'Unknown', 'builder_tier': 'Tier 2', 'project_name': 'Unknown',
+        'project_type': 'Residential', 'property_segment': 'Mid-Market',
+        'property_types_offered': 'Apartment', 'launch_status': 'Unknown',
+        'emirate': 'Dubai', 'city': 'Dubai', 'locality': 'Unknown',
+        'payment_plan_type': 'Standard', 'rera_registration_no': 'N/A',
+        'amenities_offered': 'Unknown', 'source': 'Internal', 'data_confidence': 'Medium',
+        'notes': '',
+    }
+    for col, default in str_defaults.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default)
+
+    return df
+
+
+def clean_rental_market(filepath):
+    df = pd.read_csv(filepath)
+
+    df = _parse_date_col(df, 'period_date')
+
+    df['year'] = df['year'].fillna(2024).astype(int)
+    df['month'] = df['month'].fillna(1).astype(int)
+    df['quarter'] = df['quarter'].fillna('Q1')
+
+    str_defaults = {
+        'emirate': 'Dubai', 'city': 'Dubai', 'locality': 'Unknown',
+        'property_type': 'Apartment', 'bedrooms': '2BR',
+    }
+    for col, default in str_defaults.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default)
+
+    float_cols = [
+        'avg_annual_rent_aed', 'median_annual_rent_aed', 'avg_monthly_rent_aed',
+        'rent_yoy_change_pct', 'rent_mom_change_pct', 'gross_rental_yield_pct',
+        'net_rental_yield_pct', 'occupancy_rate_pct', 'vacancy_rate_pct',
+        'avg_tenancy_duration_months', 'short_term_rental_share_pct',
+        'short_term_avg_daily_rate_aed', 'short_term_occupancy_pct',
+        'short_term_annual_revenue_aed', 'market_avg_yield_pct', 'yield_vs_market_diff',
+        'avg_property_price_aed', 'price_to_rent_ratio',
+    ]
+    for col in float_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(df[col].median())
+
+    int_cols = ['new_listings_count', 'total_active_listings', 'ejari_registrations']
+    for col in int_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(0).astype(int)
+
+    return df
+
+
+def clean_documents_registry(filepath):
+    df = pd.read_csv(filepath)
+
+    date_cols = ['upload_date', 'document_date', 'expiry_date', 'handover_date_in_doc']
+    for col in date_cols:
+        df = _parse_date_col(df, col)
+
+    bool_cols = ['notarized', 'registered_with_dld', 'penalty_clause_present']
+    for col in bool_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(False).astype(bool)
+
+    df['days_to_expiry'] = df['days_to_expiry'].fillna(0).astype(int)
+    df['page_count'] = df['page_count'].fillna(1).astype(int)
+    df['file_size_kb'] = df['file_size_kb'].fillna(df['file_size_kb'].median())
+
+    str_defaults = {
+        'document_type': 'Unknown', 'document_name': 'Unknown',
+        'project_name': 'Unknown Project', 'developer_id': 'Unknown',
+        'buyer_id': 'Unknown', 'contractor_id': 'Unknown', 'transaction_id': 'Unknown',
+        'dld_permit_no': 'N/A', 'rera_registration_no': 'N/A',
+        'expiry_status': 'Unknown', 'signatory_buyer': 'Unknown',
+        'signatory_developer': 'Unknown', 'key_clauses_extracted': '',
+        'payment_schedule_json': '{}', 'ai_summary': '', 'language': 'English',
+        'emirate': 'Dubai',
+    }
+    for col, default in str_defaults.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default)
 
     return df

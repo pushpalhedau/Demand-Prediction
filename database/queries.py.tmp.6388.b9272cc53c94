@@ -1,0 +1,884 @@
+from sqlalchemy import func, desc, asc, Float
+from sqlalchemy.orm import Session
+from database.models import (
+    Transaction, Buyer, Developer, Property, Listing, MarketFactor,
+    LeadPipeline, ConstructionTracker, Financial, RentalMarket,
+)
+import pandas as pd
+import json
+from datetime import date, timedelta
+
+
+# ─── Executive KPIs ──────────────────────────────────────────────────────────
+
+def get_executive_kpis(session: Session, filters: dict = None) -> dict:
+    query = session.query(
+        func.count(Transaction.transaction_id).label("units_sold"),
+        func.sum(Transaction.total_transaction_value_aed).label("total_value"),
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+        func.avg(Transaction.discount_pct).label("avg_discount"),
+        func.avg(Transaction.lead_to_close_days).label("avg_lead_close"),
+        func.sum(Transaction.dld_transfer_fee_aed).label("total_dld_fees"),
+    )
+    query = _apply_filters(query, filters)
+    res = query.first()
+
+    units_sold = (res.units_sold or 0)
+    total_value = (res.total_value or 0)
+    avg_price_sqft = (res.avg_price_sqft or 0.0)
+    avg_discount = (res.avg_discount or 0.0)
+    avg_lead_close = (res.avg_lead_close or 0.0)
+    total_dld_fees = (res.total_dld_fees or 0)
+
+    # Conversion rate: booking_converted / total transactions
+    total_q = session.query(func.count(Transaction.transaction_id))
+    total_q = _apply_filters(total_q, filters)
+    converted_q = session.query(func.count(Transaction.transaction_id)).filter(
+        Transaction.booking_converted == True
+    )
+    converted_q = _apply_filters(converted_q, filters)
+    total_txn = total_q.scalar() or 1
+    converted = converted_q.scalar() or 0
+    conversion_rate = (converted / total_txn) * 100
+
+    # Golden Visa eligible transactions
+    golden_visa_q = session.query(func.count(Transaction.transaction_id)).filter(
+        Transaction.golden_visa_eligible == True
+    )
+    golden_visa_q = _apply_filters(golden_visa_q, filters)
+    golden_visa_count = golden_visa_q.scalar() or 0
+
+    # Inventory absorption rate (from listings)
+    listings_q = session.query(
+        func.avg(
+            func.cast(Listing.units_sold_last_30d, Float) /
+            func.nullif(func.cast(Listing.available_units, Float), 0)
+        ).label("absorption")
+    )
+    absorption_res = listings_q.first()
+    absorption_rate = float(absorption_res.absorption or 0) * 100
+
+    # YoY delta calculation
+    units_delta = total_value_delta = avg_sqft_delta = None
+    if filters and filters.get("start_date") and filters.get("end_date"):
+        sd, ed = filters["start_date"], filters["end_date"]
+        py_filters = {**filters,
+                      "start_date": sd.replace(year=sd.year - 1),
+                      "end_date": ed.replace(year=ed.year - 1)}
+        py_q = session.query(
+            func.count(Transaction.transaction_id).label("units"),
+            func.sum(Transaction.total_transaction_value_aed).label("value"),
+            func.avg(Transaction.price_per_sqft_aed).label("sqft"),
+        )
+        py_q = _apply_filters(py_q, py_filters)
+        py = py_q.first()
+        if py and py.units:
+            units_delta = ((units_sold - py.units) / py.units) * 100
+        if py and py.value:
+            total_value_delta = ((total_value - py.value) / py.value) * 100
+        if py and py.sqft:
+            avg_sqft_delta = ((avg_price_sqft - py.sqft) / py.sqft) * 100
+
+    # Top emirate and property category
+    emirate_q = session.query(Transaction.emirate, func.count(Transaction.transaction_id).label("cnt"))
+    emirate_q = _apply_filters(emirate_q, filters)
+    top_emirate_res = emirate_q.group_by(Transaction.emirate).order_by(desc("cnt")).first()
+    top_city = top_emirate_res[0] if top_emirate_res else "N/A"
+
+    cat_q = session.query(
+        Transaction.property_category,
+        func.count(Transaction.transaction_id).label("cnt")
+    )
+    cat_q = _apply_filters(cat_q, filters)
+    top_cat_res = cat_q.group_by(Transaction.property_category).order_by(desc("cnt")).first()
+    top_category = top_cat_res[0] if top_cat_res else "N/A"
+
+    total_buyers = session.query(func.count(Buyer.buyer_id)).scalar() or 0
+    unsold_listings = session.query(
+        func.count(Listing.listing_id)
+    ).filter(Listing.unsold_flag == True).scalar() or 0
+    slow_movers = session.query(
+        func.count(Listing.listing_id)
+    ).filter(Listing.slow_moving_flag == True).scalar() or 0
+
+    return {
+        "units_sold": units_sold,
+        "total_value": total_value,
+        "avg_price_sqft": avg_price_sqft,
+        "avg_discount": avg_discount,
+        "avg_lead_close": avg_lead_close,
+        "total_dld_fees": total_dld_fees,
+        "golden_visa_count": golden_visa_count,
+        "conversion_rate": conversion_rate,
+        "absorption_rate": absorption_rate,
+        "units_delta": units_delta,
+        "total_value_delta": total_value_delta,
+        "avg_sqft_delta": avg_sqft_delta,
+        "top_city": top_city,
+        "top_category": top_category,
+        "total_buyers": total_buyers,
+        "unsold_listings": unsold_listings,
+        "slow_movers": slow_movers,
+    }
+
+
+# ─── Monthly Trends ───────────────────────────────────────────────────────────
+
+def get_monthly_revenue_trend(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.year,
+        Transaction.month,
+        func.sum(Transaction.total_transaction_value_aed).label("revenue"),
+        func.count(Transaction.transaction_id).label("units"),
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(Transaction.year, Transaction.month).order_by(
+        Transaction.year, Transaction.month
+    )
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
+    return df
+
+
+def get_yoy_comparison(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.year,
+        Transaction.month,
+        func.count(Transaction.transaction_id).label("units"),
+        func.sum(Transaction.total_transaction_value_aed).label("revenue"),
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(Transaction.year, Transaction.month).order_by(
+        Transaction.month, Transaction.year
+    )
+    return pd.read_sql(query.statement, session.bind)
+
+
+# ─── Category & Segment Breakdowns ───────────────────────────────────────────
+
+def get_sales_by_property_type(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.property_type,
+        func.count(Transaction.transaction_id).label("units"),
+        func.sum(Transaction.total_transaction_value_aed).label("revenue"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(Transaction.property_type).order_by(desc("units"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_sales_by_property_category(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.property_category,
+        func.count(Transaction.transaction_id).label("units"),
+        func.sum(Transaction.total_transaction_value_aed).label("revenue"),
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(Transaction.property_category).order_by(desc("units"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_sales_by_city(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.city,
+        Transaction.emirate,
+        func.count(Transaction.transaction_id).label("units"),
+        func.sum(Transaction.total_transaction_value_aed).label("revenue"),
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(Transaction.city, Transaction.emirate).order_by(desc("units"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_sales_by_region(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.region,
+        func.count(Transaction.transaction_id).label("units"),
+        func.sum(Transaction.total_transaction_value_aed).label("revenue"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(Transaction.region).order_by(desc("units"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_sales_by_payment_plan(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.payment_plan,
+        func.count(Transaction.transaction_id).label("units"),
+        func.sum(Transaction.total_transaction_value_aed).label("revenue"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(Transaction.payment_plan).order_by(desc("units"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_sales_by_marketing_channel(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.marketing_channel,
+        func.count(Transaction.transaction_id).label("units"),
+        func.avg(Transaction.lead_to_close_days).label("avg_lead_days"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(Transaction.marketing_channel).order_by(desc("units"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+# ─── Price Intelligence ───────────────────────────────────────────────────────
+
+def get_price_trends_by_city(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.year,
+        Transaction.month,
+        Transaction.city,
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+        func.count(Transaction.transaction_id).label("transactions"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(
+        Transaction.year, Transaction.month, Transaction.city
+    ).order_by(Transaction.year, Transaction.month)
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
+    return df
+
+
+def get_price_by_locality(session: Session, filters: dict = None, top_n: int = 20) -> pd.DataFrame:
+    query = session.query(
+        Transaction.locality,
+        Transaction.city,
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+        func.count(Transaction.transaction_id).label("transactions"),
+        func.avg(Transaction.area_sqft).label("avg_area"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(Transaction.locality, Transaction.city).order_by(
+        desc("avg_price_sqft")
+    ).limit(top_n)
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_price_by_category_type(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.property_category,
+        Transaction.property_type,
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+        func.avg(Transaction.selling_price_aed).label("avg_selling_price"),
+        func.count(Transaction.transaction_id).label("transactions"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(
+        Transaction.property_category, Transaction.property_type
+    ).order_by(desc("avg_price_sqft"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+# ─── Regional Intelligence ────────────────────────────────────────────────────
+
+def get_developer_performance(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Developer.developer_id,
+        Developer.developer_name,
+        Developer.primary_city,
+        Developer.tier,
+        Developer.performance_score,
+        Developer.rating,
+        Developer.rera_registered,
+        Developer.active_projects,
+        Developer.latitude,
+        Developer.longitude,
+        func.count(Transaction.transaction_id).label("units_sold"),
+        func.sum(Transaction.total_transaction_value_aed).label("revenue"),
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+    ).join(Transaction, Transaction.developer_id == Developer.developer_id)
+    query = _apply_filters(query, filters)
+    query = query.group_by(
+        Developer.developer_id, Developer.developer_name, Developer.primary_city,
+        Developer.tier, Developer.performance_score, Developer.rating,
+        Developer.rera_registered, Developer.active_projects,
+        Developer.latitude, Developer.longitude,
+    ).order_by(desc("units_sold")).limit(25)
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_locality_hotspots(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.locality,
+        Transaction.city,
+        Transaction.region,
+        func.count(Transaction.transaction_id).label("transactions"),
+        func.sum(Transaction.total_transaction_value_aed).label("revenue"),
+        func.avg(Transaction.price_per_sqft_aed).label("avg_price_sqft"),
+    )
+    query = _apply_filters(query, filters)
+    query = query.group_by(
+        Transaction.locality, Transaction.city, Transaction.region
+    ).order_by(desc("transactions")).limit(30)
+    return pd.read_sql(query.statement, session.bind)
+
+
+# ─── Customer Intelligence ───────────────────────────────────────────────────
+
+def get_buyer_segments_data(session: Session) -> pd.DataFrame:
+    query = session.query(
+        Buyer.buyer_id,
+        Buyer.age,
+        Buyer.gender,
+        Buyer.estimated_annual_income_aed,
+        Buyer.number_of_past_purchases,
+        Buyer.loyalty_score,
+        Buyer.churn_risk_score,
+        Buyer.customer_segment,
+        Buyer.buyer_type,
+        Buyer.expat_status,
+        Buyer.golden_visa_intent,
+        Buyer.off_plan_preference,
+        Buyer.budget_max_aed,
+        Buyer.site_visit_taken,
+        Buyer.mortgage_preferred,
+        Buyer.years_in_uae,
+    )
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_lead_conversion_data(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Transaction.booking_converted,
+        Transaction.marketing_channel,
+        Transaction.lead_to_close_days,
+        Transaction.property_category,
+        Transaction.city,
+        Buyer.age,
+        Buyer.estimated_annual_income_aed,
+        Buyer.site_visit_taken,
+        Buyer.buyer_type,
+        Buyer.expat_status,
+        Buyer.golden_visa_intent,
+        Buyer.loyalty_score,
+        Buyer.mortgage_preferred,
+    ).join(Buyer, Transaction.buyer_id == Buyer.buyer_id)
+    query = _apply_filters(query, filters)
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_buyer_segment_summary(session: Session) -> pd.DataFrame:
+    query = session.query(
+        Buyer.customer_segment,
+        func.count(Buyer.buyer_id).label("count"),
+        func.avg(Buyer.estimated_annual_income_aed).label("avg_income"),
+        func.avg(Buyer.budget_max_aed).label("avg_budget"),
+        func.avg(Buyer.loyalty_score).label("avg_loyalty"),
+        func.avg(Buyer.churn_risk_score).label("avg_churn_risk"),
+    )
+    query = query.group_by(Buyer.customer_segment).order_by(desc("count"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+# ─── Inventory Intelligence ───────────────────────────────────────────────────
+
+def get_inventory_status(session: Session, filters: dict = None) -> pd.DataFrame:
+    query = session.query(
+        Listing.listing_id,
+        Listing.project_name,
+        Listing.city,
+        Listing.locality,
+        Listing.property_type,
+        Listing.property_category,
+        Listing.bedrooms,
+        Listing.completion_status,
+        Listing.construction_progress_pct,
+        Listing.available_units,
+        Listing.booked_units,
+        Listing.registered_units,
+        Listing.total_units_in_project,
+        Listing.demand_forecast_30d,
+        Listing.days_on_market,
+        Listing.unsold_flag,
+        Listing.slow_moving_flag,
+        Listing.overlaunch_flag,
+        Listing.stockout_risk_score,
+        Listing.holding_cost_per_day_aed,
+        Listing.estimated_holding_cost_aed,
+        Listing.units_sold_last_30d,
+        Listing.rental_income_potential_aed,
+        Listing.golden_visa_threshold_met,
+        Listing.off_plan_flag,
+    )
+    if filters:
+        if filters.get("city"):
+            query = query.filter(Listing.city == filters["city"])
+        if filters.get("property_type"):
+            query = query.filter(Listing.property_type == filters["property_type"])
+        if filters.get("property_category"):
+            query = query.filter(Listing.property_category == filters["property_category"])
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_inventory_summary_by_city(session: Session) -> pd.DataFrame:
+    query = session.query(
+        Listing.city,
+        func.sum(Listing.available_units).label("available"),
+        func.sum(Listing.booked_units).label("booked"),
+        func.sum(Listing.registered_units).label("registered"),
+        func.sum(Listing.total_units_in_project).label("total"),
+        func.avg(Listing.days_on_market).label("avg_days_on_market"),
+        func.sum(Listing.estimated_holding_cost_aed).label("total_holding_cost"),
+        func.count(Listing.listing_id).filter(Listing.unsold_flag == True).label("unsold_projects"),
+    )
+    query = query.group_by(Listing.city).order_by(desc("available"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+# ─── Market Factors ──────────────────────────────────────────────────────────
+
+def get_market_factor_stats(session: Session, city: str = None) -> dict:
+    query = session.query(MarketFactor)
+    if city:
+        query = query.filter(MarketFactor.city == city)
+    df = pd.read_sql(query.statement, session.bind)
+    if df.empty:
+        return {}
+
+    numeric_cols = [
+        "uae_central_bank_base_rate_pct", "mortgage_rate_avg_pct", "gdp_growth_pct",
+        "cpi_inflation_pct", "consumer_confidence_index", "real_estate_price_index",
+        "tourism_arrivals_index", "foreign_investment_inflow_bn_aed",
+        "institutional_investment_bn_aed", "property_registration_fee_pct",
+        "vat_rate_pct", "usd_aed_rate", "rental_yield_avg_pct",
+        "construction_cost_index", "oil_price_usd_bbl", "off_plan_sales_share_pct",
+    ]
+    binary_cols = ["ramadan_month", "expo_effect"]
+    stats = {}
+    for col in numeric_cols + binary_cols:
+        if col in df.columns:
+            series = df[col].dropna()
+            if len(series) > 0:
+                stats[col] = {
+                    "last": float(series.iloc[-1]),
+                    "min": float(series.min()),
+                    "max": float(series.max()),
+                    "is_binary": col in binary_cols,
+                }
+    return stats
+
+
+def get_market_factor_trend(session: Session, city: str = None) -> pd.DataFrame:
+    query = session.query(
+        MarketFactor.date,
+        MarketFactor.year,
+        MarketFactor.month,
+        MarketFactor.city,
+        MarketFactor.uae_central_bank_base_rate_pct,
+        MarketFactor.mortgage_rate_avg_pct,
+        MarketFactor.consumer_confidence_index,
+        MarketFactor.real_estate_price_index,
+        MarketFactor.transaction_volume_index,
+        MarketFactor.foreign_investment_inflow_bn_aed,
+        MarketFactor.tourism_arrivals_index,
+        MarketFactor.ramadan_month,
+        MarketFactor.expo_effect,
+        MarketFactor.golden_visa_applications,
+        MarketFactor.new_project_launches,
+        MarketFactor.off_plan_sales_share_pct,
+    )
+    if city:
+        query = query.filter(MarketFactor.city == city)
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df["date"] = pd.to_datetime(df["date"])
+    return df
+
+
+# ─── Filter Options ───────────────────────────────────────────────────────────
+
+def get_unique_filter_options(session: Session) -> dict:
+    cities = sorted([
+        c[0] for c in session.query(Transaction.city).distinct().all() if c[0]
+    ])
+    regions = sorted([
+        r[0] for r in session.query(Transaction.region).distinct().all() if r[0]
+    ])
+    emirates = sorted([
+        s[0] for s in session.query(Transaction.emirate).distinct().all() if s[0]
+    ])
+    property_types = sorted([
+        p[0] for p in session.query(Transaction.property_type).distinct().all() if p[0]
+    ])
+    property_categories = sorted([
+        c[0] for c in session.query(Transaction.property_category).distinct().all() if c[0]
+    ])
+    bedrooms = sorted([
+        b[0] for b in session.query(Transaction.bedrooms).distinct().all() if b[0]
+    ])
+    years = sorted([
+        y[0] for y in session.query(Transaction.year).distinct().all() if y[0]
+    ])
+
+    return {
+        "cities": cities,
+        "regions": regions,
+        "emirates": emirates,
+        "property_types": property_types,
+        "property_categories": property_categories,
+        "bedrooms": bedrooms,
+        "years": years,
+    }
+
+
+# ─── Internal Filter Helper ───────────────────────────────────────────────────
+
+def _apply_filters(query, filters: dict = None):
+    if not filters:
+        return query
+
+    if filters.get("city"):
+        query = query.filter(Transaction.city == filters["city"])
+    if filters.get("region"):
+        query = query.filter(Transaction.region == filters["region"])
+    if filters.get("emirate"):
+        query = query.filter(Transaction.emirate == filters["emirate"])
+    if filters.get("property_type"):
+        query = query.filter(Transaction.property_type == filters["property_type"])
+    if filters.get("property_category"):
+        query = query.filter(Transaction.property_category == filters["property_category"])
+    if filters.get("bedrooms"):
+        query = query.filter(Transaction.bedrooms == filters["bedrooms"])
+    if filters.get("start_date"):
+        query = query.filter(Transaction.transaction_date >= filters["start_date"])
+    if filters.get("end_date"):
+        query = query.filter(Transaction.transaction_date <= filters["end_date"])
+
+    return query
+
+
+# ─── CEO Dashboard KPIs ───────────────────────────────────────────────────────
+
+def get_ceo_kpis(session: Session) -> dict:
+    today = date.today()
+
+    # Use the latest available financial period (data may not reach today)
+    latest_fin_date = session.query(func.max(Financial.period_date)).scalar()
+    if latest_fin_date is None:
+        latest_fin_date = today
+    # Derive current/prev month from latest data, not calendar today
+    data_month_start = latest_fin_date.replace(day=1) if hasattr(latest_fin_date, 'replace') else today.replace(day=1)
+    prev_month_end = data_month_start - timedelta(days=1)
+    prev_month_start = prev_month_end.replace(day=1)
+
+    # Use the latest booking date from leads too
+    latest_booking_date = session.query(func.max(LeadPipeline.booking_date)).scalar()
+    if latest_booking_date is None:
+        latest_booking_date = today
+    lead_month_start = latest_booking_date.replace(day=1) if hasattr(latest_booking_date, 'replace') else today.replace(day=1)
+    lead_prev_end = lead_month_start - timedelta(days=1)
+    lead_prev_start = lead_prev_end.replace(day=1)
+
+    def _financial_sum(col, start, end):
+        res = session.query(func.sum(col)).filter(
+            Financial.period_date >= start,
+            Financial.period_date <= end,
+        ).scalar()
+        return float(res or 0)
+
+    def _financial_avg(col, start, end):
+        res = session.query(func.avg(col)).filter(
+            Financial.period_date >= start,
+            Financial.period_date <= end,
+        ).scalar()
+        return float(res or 0)
+
+    # Total revenue this month vs last month (using latest available data period)
+    rev_cur = _financial_sum(Financial.revenue_booked_aed, data_month_start, latest_fin_date)
+    rev_prev = _financial_sum(Financial.revenue_booked_aed, prev_month_start, prev_month_end)
+    rev_delta = ((rev_cur - rev_prev) / rev_prev * 100) if rev_prev else 0.0
+
+    # Bookings this month from leads (using latest available booking period)
+    bookings_cur = session.query(func.count(LeadPipeline.lead_id)).filter(
+        LeadPipeline.booking_date >= lead_month_start,
+        LeadPipeline.booking_date <= latest_booking_date,
+    ).scalar() or 0
+    bookings_prev = session.query(func.count(LeadPipeline.lead_id)).filter(
+        LeadPipeline.booking_date >= lead_prev_start,
+        LeadPipeline.booking_date <= lead_prev_end,
+    ).scalar() or 0
+    bookings_delta = ((bookings_cur - bookings_prev) / bookings_prev * 100) if bookings_prev else 0.0
+
+    # Collection efficiency
+    coll_eff = _financial_avg(Financial.collection_efficiency_pct, data_month_start, latest_fin_date)
+    coll_eff_prev = _financial_avg(Financial.collection_efficiency_pct, prev_month_start, prev_month_end)
+    coll_delta = coll_eff - coll_eff_prev
+
+    # Inventory available (sum across all listings)
+    inv_available = session.query(func.sum(Listing.available_units)).scalar() or 0
+
+    # Pipeline value from active leads
+    active_stages = ['Qualified', 'Site Visit Done', 'Proposal Sent', 'Negotiation']
+    pipeline_val = session.query(func.sum(LeadPipeline.budget_stated_aed)).filter(
+        LeadPipeline.lead_stage.in_(active_stages)
+    ).scalar() or 0
+
+    # Latest lead date to anchor lead period
+    latest_lead_date = session.query(func.max(LeadPipeline.lead_date)).scalar()
+    if latest_lead_date is None:
+        latest_lead_date = today
+    lead_cur_start = latest_lead_date.replace(day=1) if hasattr(latest_lead_date, 'replace') else today.replace(day=1)
+    lead_cur_prev_end = lead_cur_start - timedelta(days=1)
+    lead_cur_prev_start = lead_cur_prev_end.replace(day=1)
+
+    # Sales conversion rate this month
+    total_leads = session.query(func.count(LeadPipeline.lead_id)).filter(
+        LeadPipeline.lead_date >= lead_cur_start,
+    ).scalar() or 1
+    converted_leads = session.query(func.count(LeadPipeline.lead_id)).filter(
+        LeadPipeline.lead_date >= lead_cur_start,
+        LeadPipeline.converted == True,
+    ).scalar() or 0
+    conversion_rate = (converted_leads / total_leads) * 100
+
+    prev_total = session.query(func.count(LeadPipeline.lead_id)).filter(
+        LeadPipeline.lead_date >= lead_cur_prev_start,
+        LeadPipeline.lead_date <= lead_cur_prev_end,
+    ).scalar() or 1
+    prev_conv = session.query(func.count(LeadPipeline.lead_id)).filter(
+        LeadPipeline.lead_date >= lead_cur_prev_start,
+        LeadPipeline.lead_date <= lead_cur_prev_end,
+        LeadPipeline.converted == True,
+    ).scalar() or 0
+    conv_delta = (converted_leads / total_leads * 100) - (prev_conv / prev_total * 100)
+
+    # Project completion (avg actual progress per project, latest report)
+    latest_report_date = session.query(func.max(ConstructionTracker.report_date)).scalar()
+    proj_health = session.query(
+        func.avg(ConstructionTracker.actual_progress_pct)
+    ).scalar() or 0
+    prev_proj_start = None
+    if latest_report_date:
+        proj_report_month_start = latest_report_date.replace(day=1) if hasattr(latest_report_date, 'replace') else today.replace(day=1)
+        prev_proj_start = (proj_report_month_start - timedelta(days=1)).replace(day=1)
+    proj_health_prev = session.query(
+        func.avg(ConstructionTracker.actual_progress_pct)
+    ).filter(
+        ConstructionTracker.report_date < (prev_proj_start or today),
+    ).scalar() or proj_health
+    proj_delta = float(proj_health) - float(proj_health_prev)
+
+    # Occupancy rate and rental yield (latest period)
+    occupancy = session.query(func.avg(RentalMarket.occupancy_rate_pct)).scalar() or 0
+    rental_yield = session.query(func.avg(RentalMarket.gross_rental_yield_pct)).scalar() or 0
+
+    # Forecast revenue (sum of 3-month forecasts from latest period)
+    latest_period = session.query(func.max(Financial.period_date)).scalar()
+    forecast_rev = 0.0
+    if latest_period:
+        forecast_rev = session.query(func.sum(Financial.forecast_next_3m_aed)).filter(
+            Financial.period_date == latest_period
+        ).scalar() or 0
+
+    return {
+        "total_revenue_aed": rev_cur,
+        "revenue_mom_delta": rev_delta,
+        "bookings_this_month": bookings_cur,
+        "bookings_mom_delta": bookings_delta,
+        "collection_efficiency_pct": coll_eff,
+        "collection_delta": coll_delta,
+        "inventory_available": int(inv_available),
+        "pipeline_value_aed": float(pipeline_val),
+        "sales_conversion_rate_pct": conversion_rate,
+        "conversion_delta": conv_delta,
+        "project_completion_pct": float(proj_health),
+        "project_delta": proj_delta,
+        "occupancy_rate_pct": float(occupancy),
+        "rental_yield_pct": float(rental_yield),
+        "forecast_revenue_aed": float(forecast_rev),
+    }
+
+
+def get_ceo_ai_insights(session: Session) -> list:
+    today = date.today()
+    latest_fin = session.query(func.max(Financial.period_date)).scalar() or today
+    cur_month_start = latest_fin.replace(day=1) if hasattr(latest_fin, 'replace') else today.replace(day=1)
+    prev_month_end = cur_month_start - timedelta(days=1)
+    prev_month_start = prev_month_end.replace(day=1)
+
+    insights = []
+
+    # 1. Revenue MoM change
+    rev_cur = session.query(func.sum(Financial.revenue_booked_aed)).filter(
+        Financial.period_date >= cur_month_start
+    ).scalar() or 0
+    rev_prev = session.query(func.sum(Financial.revenue_booked_aed)).filter(
+        Financial.period_date >= prev_month_start,
+        Financial.period_date <= prev_month_end,
+    ).scalar() or 1
+    rev_pct = ((float(rev_cur) - float(rev_prev)) / float(rev_prev)) * 100
+
+    if rev_pct >= 0:
+        insights.append({
+            "type": "positive",
+            "icon": "trending_up",
+            "title": f"Revenue up {rev_pct:.1f}% MoM",
+            "body": f"This month's bookings reached AED {float(rev_cur)/1e6:.1f}M vs AED {float(rev_prev)/1e6:.1f}M last month.",
+        })
+    else:
+        insights.append({
+            "type": "warning",
+            "icon": "trending_down",
+            "title": f"Revenue down {abs(rev_pct):.1f}% MoM",
+            "body": f"Revenue fell to AED {float(rev_cur)/1e6:.1f}M from AED {float(rev_prev)/1e6:.1f}M. Review sales pipeline.",
+        })
+
+    # 2. At-risk projects
+    at_risk = session.query(
+        ConstructionTracker.project_name,
+        func.max(ConstructionTracker.delay_days).label("max_delay"),
+    ).filter(
+        ConstructionTracker.delay_risk_flag == True,
+    ).group_by(ConstructionTracker.project_name).order_by(desc("max_delay")).limit(3).all()
+
+    if at_risk:
+        names = ", ".join([r[0] for r in at_risk[:2]])
+        total_risk = session.query(func.count(ConstructionTracker.record_id.distinct())).filter(
+            ConstructionTracker.delay_risk_flag == True
+        ).scalar() or 0
+        insights.append({
+            "type": "alert",
+            "icon": "warning",
+            "title": f"{total_risk} project milestone(s) at risk",
+            "body": f"Delayed: {names}. Max delay: {at_risk[0][1]} days. Immediate escalation recommended.",
+        })
+    else:
+        insights.append({
+            "type": "positive",
+            "icon": "check_circle",
+            "title": "All projects on schedule",
+            "body": "No delay risk flags detected across active construction milestones.",
+        })
+
+    # 3. Top demand growth locality
+    locality_q = session.query(
+        Transaction.locality,
+        func.count(Transaction.transaction_id).label("cnt"),
+    ).filter(
+        Transaction.transaction_date >= cur_month_start,
+    ).group_by(Transaction.locality).order_by(desc("cnt")).first()
+
+    if locality_q:
+        insights.append({
+            "type": "positive",
+            "icon": "location_on",
+            "title": f"Hotspot: {locality_q[0]}",
+            "body": f"{locality_q[1]} transactions this month — leading demand zone. Consider accelerating launch activity there.",
+        })
+    else:
+        insights.append({
+            "type": "positive",
+            "icon": "location_on",
+            "title": "Dubai Marina leads demand",
+            "body": "Highest transaction concentration in Marina district this period.",
+        })
+
+    return insights
+
+
+def get_revenue_collections_trend(session: Session, months: int = 12) -> pd.DataFrame:
+    cutoff = date.today() - timedelta(days=months * 30)
+    query = session.query(
+        Financial.period_date,
+        func.sum(Financial.revenue_booked_aed).label("revenue_booked_aed"),
+        func.sum(Financial.collections_received_aed).label("collections_received_aed"),
+        func.sum(Financial.net_cash_flow_aed).label("net_cash_flow_aed"),
+    ).filter(
+        Financial.period_date >= cutoff,
+    ).group_by(Financial.period_date).order_by(Financial.period_date)
+
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df["period_date"] = pd.to_datetime(df["period_date"])
+    return df
+
+
+def get_inventory_breakdown(session: Session) -> pd.DataFrame:
+    query = session.query(
+        Listing.emirate,
+        func.sum(Listing.available_units).label("available_units"),
+        func.sum(Listing.booked_units).label("booked_units"),
+        func.sum(Listing.registered_units).label("registered_units"),
+    ).group_by(Listing.emirate).order_by(desc("available_units"))
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_forecast_chart_data(session: Session) -> pd.DataFrame:
+    cutoff = date.today() - timedelta(days=180)
+    query = session.query(
+        Financial.period_date,
+        func.sum(Financial.revenue_booked_aed).label("revenue_actual_aed"),
+        func.sum(Financial.forecast_next_3m_aed).label("forecast_next_3m_aed"),
+        func.sum(Financial.forecast_next_12m_aed).label("forecast_next_12m_aed"),
+    ).filter(
+        Financial.period_date >= cutoff,
+    ).group_by(Financial.period_date).order_by(Financial.period_date)
+
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df["period_date"] = pd.to_datetime(df["period_date"])
+    return df
+
+
+def get_project_health_scores(session: Session) -> pd.DataFrame:
+    query = session.query(
+        ConstructionTracker.project_name,
+        func.avg(ConstructionTracker.project_health_score).label("health_score"),
+        func.avg(ConstructionTracker.actual_progress_pct).label("progress_pct"),
+        func.max(ConstructionTracker.delay_days).label("max_delay_days"),
+        func.max(ConstructionTracker.delay_risk_flag).label("at_risk"),
+    ).group_by(ConstructionTracker.project_name).order_by(desc("health_score")).limit(10)
+    return pd.read_sql(query.statement, session.bind)
+
+
+def get_lead_funnel_summary(session: Session) -> pd.DataFrame:
+    stages = ['New', 'Contacted', 'Qualified', 'Site Visit Scheduled', 'Site Visit Done',
+              'Proposal Sent', 'Negotiation', 'Booked', 'Lost']
+    query = session.query(
+        LeadPipeline.lead_stage,
+        func.count(LeadPipeline.lead_id).label("count"),
+    ).group_by(LeadPipeline.lead_stage).order_by(desc("count"))
+    df = pd.read_sql(query.statement, session.bind)
+    return df
+
+
+def get_copilot_context_summary(session: Session) -> str:
+    kpis = get_ceo_kpis(session)
+
+    top_city_row = session.query(
+        Transaction.city, func.count(Transaction.transaction_id).label("cnt")
+    ).group_by(Transaction.city).order_by(desc("cnt")).first()
+    top_city = top_city_row[0] if top_city_row else "Dubai"
+
+    at_risk_count = session.query(func.count(ConstructionTracker.record_id)).filter(
+        ConstructionTracker.delay_risk_flag == True
+    ).scalar() or 0
+
+    context = {
+        "total_revenue_this_month_aed": round(kpis["total_revenue_aed"] / 1e6, 2),
+        "revenue_mom_change_pct": round(kpis["revenue_mom_delta"], 1),
+        "bookings_this_month": kpis["bookings_this_month"],
+        "collection_efficiency_pct": round(kpis["collection_efficiency_pct"], 1),
+        "inventory_available_units": kpis["inventory_available"],
+        "pipeline_value_aed_million": round(kpis["pipeline_value_aed"] / 1e6, 1),
+        "sales_conversion_rate_pct": round(kpis["sales_conversion_rate_pct"], 1),
+        "project_completion_avg_pct": round(kpis["project_completion_pct"], 1),
+        "occupancy_rate_pct": round(kpis["occupancy_rate_pct"], 1),
+        "rental_yield_pct": round(kpis["rental_yield_pct"], 2),
+        "forecast_revenue_next_3m_aed_million": round(kpis["forecast_revenue_aed"] / 1e6, 1),
+        "projects_at_delay_risk": at_risk_count,
+        "top_demand_city": top_city,
+        "currency": "AED",
+        "market": "UAE Real Estate",
+        "data_as_of": str(date.today()),
+    }
+    return json.dumps(context, indent=2)

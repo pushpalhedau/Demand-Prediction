@@ -1,0 +1,201 @@
+contractor_id,contractor_name,contractor_type,specialization,country_of_origin,uae_license_no,grade,established_year,total_projects_completed,active_projects_count,avg_delivery_score,avg_quality_score,avg_cost_adherence_score,overall_performance_score,safety_record_incidents,rating,preferred_vendor,blacklisted,daily_rate_aed,projects_with_this_developer
+CONT001,Al Habtoor Engineering,Main Contractor,Commercial Towers,Germany,DM-92694,B,1981,78,5,89.6,94.5,87.1,90.4,4,3.5,True,False,402.0,4
+CONT002,Arabtec Construction,Main Contractor,Mixed-Use,UK,DM-74175,A,1987,94,1,96.1,68.9,57.7,74.2,8,3.4,False,True,189.0,12
+CONT003,Shapoorji Pallonji ME,MEP Contractor,Interior Finishing,Egypt,DM-91859,C,2010,38,4,87.5,66.9,79.2,77.9,2,3.4,False,False,345.0,2
+CONT004,Khansaheb Civil Engineering,Main Contractor,Commercial Towers,Egypt,DM-75302,A,1985,25,11,79.5,70.9,73.8,74.7,8,3.8,False,True,443.0,8
+CONT005,ACC (Arabian Construction Co),Interior Fit-Out,Structural Works,UAE,DM-68574,A,1983,44,4,81.0,65.8,82.7,76.5,6,4.9,False,False,205.0,14
+CONT006,ASGC Construction,Structural,High-Rise Residential,India,DM-54584,B,1998,156,4,88.7,90.7,58.1,79.2,1,3.4,False,False,351.0,12
+CONT007,Consolidated Contractors (CCC),MEP Contractor,High-Rise Residential,Egypt,DM-51410,C,1992,150,12,85.6,62.7,78.3,75.5,0,3.3,False,False,332.0,3
+CONT008,Ssangyong Engineering,MEP Contractor,Luxury Villas,India,DM-48927,C,2003,136,6,69.2,74.2,62.7,68.7,8,3.3,False,True,370.0,6
+CONT009,Hyundai Engineering UAE,MEP Contractor,MEP Systems,UAE,DM-79454,C,1995,41,2,68.0,92.4,70.3,76.9,7,4.2,False,True,371.0,15
+CONT010,China State Construction UAE,Landscaping,High-Rise Residential,India,DM-49907,C,1990,125,11,76.3,70.9,93.3,80.2,0,3.7,True,False,441.0,15
+CONT011,Multiplex Constructions ME,Civil,Landscaping & Public Realm,Pakistan,DM-91261,C,1987,157,5,78.6,82.5,95.7,85.6,3,3.2,True,False,251.0,14
+CONT012,Brookfield Multiplex,Main Contractor,Mixed-Use,Pakistan,DM-60793,B,1975,145,3,83.5,61.5,63.7,69.6,2,3.7,False,False,467.0,0
+CONT013,Alec Contracting,Façade,Commercial Towers,Egypt,DM-62662,B,2004,115,1,93.1,81.2,84.0,86.1,3,3.8,True,False,358.0,8
+CONT014,Drake & Scull,Façade,Façade & Cladding,India,DM-83750,B,1982,63,3,77.2,60.3,69.3,68.9,4,3.8,False,False,326.0,13
+CONT015,Ginco General Contracting,Interior Fit-Out,Luxury Villas,Philippines,DM-58489,A,1987,87,12,63.6,70.1,61.8,65.2,1,3.5,False,False,317.0,5
+CONT016,Energoprojekt,Main Contractor,Luxury Villas,India,DM-83306,A,2011,63,1,63.2,64.8,92.2,73.4,7,5.0,False,True,238.0,6
+CONT017,Dutco Balfour Beatty,MEP Contractor,Low-Rise Residential,Egypt,DM-79392,B,1975,149,11,74.2,86.2,52.8,71.1,6,4.3,False,False,301.0,1
+CONT018,Carillion Alawi,Façade,Interior Finishing,Philippines,DM-88340,A,1976,152,5,90.4,86.3,56.8,77.8,2,3.6,False,False,314.0,9
+CONT019,Besix ME,Façade,Luxury Villas,India,DM-87879,B,1991,158,1,65.5,94.2,75.4,78.4,6,4.0,False,False,397.0,9
+CONT020,Six Construct,Façade,Landscaping & Public Realm,China,DM-59508,B,1992,156,3,95.6,80.4,80.2,85.4,4,3.5,True,False,345.0,4
+CONT021,Depa United,MEP Contractor,Low-Rise Residential,China,DM-64035,A,2009,130,1,80.8,77.8,86.6,81.7,7,4.6,True,True,230.0,15
+CONT022,Interiors & Contracting,Civil,Interior Finishing,Turkey,DM-96599,B,1996,34,12,57.2,81.3,56.6,65.0,6,3.8,False,False,340.0,5
+CONT023,ECC Contracting,Façade,Façade & Cladding,India,DM-58873,A,1981,76,5,64.4,60.4,81.7,68.8,1,3.2,False,False,384.0,3
+CONT024,National Projects & Construction,Civil,Commercial Towers,India,DM-40463,B,1992,73,11,64.5,93.8,59.4,72.6,4,4.6,False,False,328.0,14
+CONT025,Al Fara'a Group,Landscaping,Mixed-Use,China,DM-34492,B,2007,48,4,81.5,71.1,92.2,81.6,8,4.1,True,True,238.0,13
+CONT026,Deyaar Construction,MEP Contractor,Landscaping & Public Realm,UK,DM-80820,C,1985,175,11,75.9,62.5,88.8,75.7,2,4.5,False,False,236.0,10
+CONT027,Gulf Contracting,Interior Fit-Out,Structural Works,Egypt,DM-64571,A,1980,138,6,70.6,88.6,55.7,71.6,0,4.8,False,False,356.0,9
+CONT028,National Marine Dredging,Façade,Mixed-Use,Philippines,DM-54558,A,2002,91,8,88.3,87.6,86.9,87.6,2,3.2,True,False,425.0,0
+CONT029,Cansult Maunsell,Façade,Low-Rise Residential,India,DM-34854,B,1977,110,5,89.7,95.4,70.8,85.3,5,4.4,True,False,297.0,4
+CONT030,Laing O'Rourke ME,Structural,Landscaping & Public Realm,Turkey,DM-25485,C,1978,122,8,88.8,93.0,60.3,80.7,3,3.3,True,False,215.0,14
+CONT031,Al Habtoor Engineering LLC,Interior Fit-Out,Landscaping & Public Realm,UAE,DM-70981,B,1997,41,5,78.8,89.4,90.9,86.4,7,4.3,True,True,454.0,12
+CONT032,Arabtec Construction LLC,MEP Contractor,MEP Systems,Pakistan,DM-76605,B,2011,56,2,84.8,83.1,69.9,79.3,8,4.7,False,True,250.0,4
+CONT033,Shapoorji Pallonji ME LLC,Civil,Luxury Villas,Pakistan,DM-47685,C,1990,117,12,77.7,77.1,92.0,82.3,7,3.1,True,True,311.0,2
+CONT034,Khansaheb Civil Engineering LLC,Structural,Interior Finishing,Turkey,DM-85834,B,1992,97,11,83.3,68.4,91.6,81.1,1,4.0,True,False,188.0,0
+CONT035,ACC (Arabian Construction Co) LLC,Façade,Façade & Cladding,UAE,DM-37558,C,1981,74,4,76.8,88.3,94.6,86.6,6,4.5,True,False,298.0,5
+CONT036,ASGC Construction LLC,MEP Contractor,Commercial Towers,India,DM-29301,B,1983,88,1,84.2,94.2,84.2,87.5,6,3.1,True,False,425.0,1
+CONT037,Consolidated Contractors (CCC) LLC,Civil,MEP Systems,Turkey,DM-78113,B,2007,127,1,57.8,74.3,85.7,72.6,7,3.6,False,True,383.0,0
+CONT038,Ssangyong Engineering LLC,Main Contractor,Interior Finishing,UK,DM-99738,B,1995,119,9,66.8,79.4,53.0,66.4,8,4.8,False,True,195.0,0
+CONT039,Hyundai Engineering UAE LLC,Structural,Commercial Towers,Pakistan,DM-26261,C,1995,57,3,56.8,82.5,81.6,73.6,7,3.6,False,True,232.0,13
+CONT040,China State Construction UAE LLC,Landscaping,Low-Rise Residential,Pakistan,DM-15322,C,2009,81,3,77.5,69.8,95.1,80.8,4,4.8,True,False,358.0,12
+CONT041,Multiplex Constructions ME LLC,Landscaping,Low-Rise Residential,Pakistan,DM-98306,B,1989,19,7,70.4,65.3,87.4,74.4,2,3.1,False,False,307.0,6
+CONT042,Brookfield Multiplex LLC,Interior Fit-Out,Commercial Towers,UK,DM-90469,A,2005,126,7,87.7,76.3,56.0,73.3,6,3.6,False,False,342.0,6
+CONT043,Alec Contracting LLC,Main Contractor,Low-Rise Residential,India,DM-28451,C,1976,103,1,75.8,61.3,93.4,76.8,5,3.9,False,False,460.0,9
+CONT044,Drake & Scull LLC,Structural,Façade & Cladding,Philippines,DM-63173,B,2010,121,9,94.7,68.1,81.2,81.3,7,4.6,True,True,260.0,11
+CONT045,Ginco General Contracting LLC,Structural,Interior Finishing,China,DM-79528,A,1980,105,10,90.1,91.7,88.2,90.0,0,4.6,True,False,266.0,9
+CONT046,Energoprojekt LLC,MEP Contractor,Commercial Towers,India,DM-61101,A,2001,92,12,68.5,74.7,73.2,72.1,5,5.0,False,False,340.0,2
+CONT047,Dutco Balfour Beatty LLC,MEP Contractor,MEP Systems,UAE,DM-38864,C,1987,68,6,74.3,92.4,64.8,77.2,6,4.9,False,False,257.0,3
+CONT048,Carillion Alawi LLC,Civil,Mixed-Use,Turkey,DM-60808,B,1991,102,5,76.4,83.9,70.9,77.1,4,4.4,False,False,316.0,13
+CONT049,Besix ME LLC,Main Contractor,Interior Finishing,India,DM-83351,C,1985,19,2,58.3,85.6,78.9,74.3,5,5.0,False,False,367.0,9
+CONT050,Six Construct LLC,Interior Fit-Out,Landscaping & Public Realm,Pakistan,DM-10718,C,1989,110,8,72.0,81.1,77.5,76.9,0,4.2,False,False,227.0,2
+CONT051,Depa United LLC,Façade,Interior Finishing,China,DM-98061,B,2008,134,8,76.8,69.1,56.3,67.4,6,4.4,False,False,346.0,9
+CONT052,Interiors & Contracting LLC,Main Contractor,Landscaping & Public Realm,Philippines,DM-57860,A,1990,103,8,56.5,60.4,68.1,61.7,0,4.7,False,False,189.0,2
+CONT053,ECC Contracting LLC,Landscaping,Low-Rise Residential,Egypt,DM-96886,C,2003,128,5,74.4,78.2,76.3,76.3,4,4.5,False,False,287.0,8
+CONT054,National Projects & Construction LLC,Civil,High-Rise Residential,China,DM-16927,C,2004,84,7,81.5,73.4,54.0,69.6,7,3.0,False,True,240.0,11
+CONT055,Al Fara'a Group LLC,Civil,Commercial Towers,Turkey,DM-86822,B,1983,111,4,72.3,97.8,85.6,85.2,0,3.8,True,False,437.0,10
+CONT056,Deyaar Construction LLC,Façade,Interior Finishing,Egypt,DM-71676,C,1998,141,6,67.7,95.7,54.6,72.7,4,3.1,False,False,455.0,13
+CONT057,Gulf Contracting LLC,Façade,High-Rise Residential,UAE,DM-74132,B,1998,139,4,60.5,66.5,70.5,65.8,3,3.5,False,False,331.0,11
+CONT058,National Marine Dredging LLC,Interior Fit-Out,Mixed-Use,South Korea,DM-85096,A,1996,157,9,81.7,83.9,54.0,73.2,0,3.3,False,False,265.0,6
+CONT059,Cansult Maunsell LLC,Interior Fit-Out,Mixed-Use,India,DM-28379,B,2011,114,12,89.9,85.5,94.5,90.0,2,3.7,True,False,382.0,8
+CONT060,Laing O'Rourke ME LLC,Landscaping,High-Rise Residential,India,DM-82070,A,1999,46,1,94.7,63.6,61.2,73.2,5,3.3,False,False,460.0,13
+CONT061,Al Habtoor Engineering LLC,Main Contractor,High-Rise Residential,India,DM-93157,B,2004,51,5,96.7,80.9,51.0,76.2,0,3.5,False,False,452.0,15
+CONT062,Arabtec Construction LLC,Landscaping,Façade & Cladding,India,DM-17617,C,1989,114,6,84.2,85.1,63.7,77.7,8,3.5,False,True,399.0,14
+CONT063,Shapoorji Pallonji ME LLC,Landscaping,Luxury Villas,India,DM-40168,C,1998,100,8,75.5,93.9,73.8,81.1,2,3.9,True,False,202.0,5
+CONT064,Khansaheb Civil Engineering LLC,Landscaping,Luxury Villas,India,DM-69489,B,2015,178,5,78.8,70.7,58.6,69.4,3,3.4,False,False,467.0,8
+CONT065,ACC (Arabian Construction Co) LLC,Interior Fit-Out,Landscaping & Public Realm,Pakistan,DM-71450,A,1986,29,11,59.1,73.9,92.0,75.0,2,3.4,False,False,317.0,4
+CONT066,ASGC Construction LLC,Landscaping,Mixed-Use,China,DM-10181,B,2006,136,4,80.0,72.3,56.5,69.6,4,4.8,False,False,235.0,7
+CONT067,Consolidated Contractors (CCC) LLC,Main Contractor,High-Rise Residential,UAE,DM-61893,B,1979,135,10,96.6,77.7,58.8,77.7,2,3.5,False,False,288.0,7
+CONT068,Ssangyong Engineering LLC,Structural,Commercial Towers,Philippines,DM-90598,C,2002,51,2,92.4,92.5,51.4,78.8,8,4.9,False,True,379.0,7
+CONT069,Hyundai Engineering UAE LLC,Landscaping,Mixed-Use,UAE,DM-29788,C,1991,12,5,90.8,88.8,55.2,78.3,1,3.9,False,False,272.0,1
+CONT070,China State Construction UAE LLC,Interior Fit-Out,High-Rise Residential,Germany,DM-83501,C,1984,135,11,75.9,60.9,84.1,73.6,3,3.3,False,False,458.0,13
+CONT071,Multiplex Constructions ME LLC,Façade,Mixed-Use,India,DM-30324,A,2015,97,10,81.3,86.9,92.9,87.0,7,4.2,True,True,350.0,9
+CONT072,Brookfield Multiplex LLC,MEP Contractor,Interior Finishing,India,DM-53131,A,2006,152,10,93.6,81.6,86.0,87.1,1,4.8,True,False,346.0,12
+CONT073,Alec Contracting LLC,Civil,Structural Works,India,DM-37198,C,2011,176,4,68.8,77.7,73.6,73.4,3,4.0,False,False,203.0,8
+CONT074,Drake & Scull LLC,Interior Fit-Out,Landscaping & Public Realm,Pakistan,DM-23640,B,1999,167,11,65.4,65.1,83.3,71.3,4,3.4,False,False,441.0,12
+CONT075,Ginco General Contracting LLC,Civil,Landscaping & Public Realm,Pakistan,DM-70510,B,1977,124,7,66.1,82.1,73.1,73.8,6,4.1,False,False,241.0,9
+CONT076,Energoprojekt LLC,Structural,Interior Finishing,Turkey,DM-69814,A,2007,98,4,67.3,89.4,83.7,80.1,8,4.4,True,True,330.0,4
+CONT077,Dutco Balfour Beatty LLC,Façade,Low-Rise Residential,India,DM-51955,B,2013,47,2,64.0,79.8,70.2,71.3,0,4.1,False,False,365.0,10
+CONT078,Carillion Alawi LLC,Structural,Façade & Cladding,UAE,DM-91040,C,1998,71,12,77.5,67.6,59.7,68.3,5,4.2,False,False,219.0,6
+CONT079,Besix ME LLC,Civil,Commercial Towers,Egypt,DM-73816,A,2010,114,2,76.1,80.1,90.4,82.2,2,3.7,True,False,421.0,7
+CONT080,Six Construct LLC,Civil,MEP Systems,India,DM-39788,B,1979,37,9,61.4,68.0,63.2,64.2,0,4.9,False,False,199.0,5
+CONT081,Depa United LLC,Civil,Mixed-Use,India,DM-63466,C,1995,126,3,69.8,68.6,93.7,77.4,7,4.0,False,True,448.0,2
+CONT082,Interiors & Contracting LLC,Façade,Façade & Cladding,Turkey,DM-26214,C,1982,172,6,63.9,65.0,70.1,66.3,4,3.1,False,False,284.0,15
+CONT083,ECC Contracting LLC,Interior Fit-Out,MEP Systems,India,DM-77697,A,1992,122,2,87.9,91.9,95.6,91.8,0,4.6,True,False,437.0,10
+CONT084,National Projects & Construction LLC,Landscaping,Façade & Cladding,Germany,DM-61289,A,1996,73,4,96.6,88.2,54.6,79.8,6,3.9,False,False,340.0,13
+CONT085,Al Fara'a Group LLC,Main Contractor,Low-Rise Residential,Pakistan,DM-75644,B,1989,165,5,89.0,90.5,64.5,81.3,1,4.6,True,False,201.0,6
+CONT086,Deyaar Construction LLC,Structural,Commercial Towers,Pakistan,DM-32968,B,1988,142,7,89.0,61.3,59.4,69.9,2,3.3,False,False,284.0,13
+CONT087,Gulf Contracting LLC,Landscaping,Low-Rise Residential,UAE,DM-64305,A,1992,178,4,80.4,96.9,95.5,90.9,5,3.2,True,False,367.0,8
+CONT088,National Marine Dredging LLC,Interior Fit-Out,Low-Rise Residential,India,DM-92900,A,1987,90,2,74.0,89.0,85.9,83.0,3,3.7,True,False,388.0,12
+CONT089,Cansult Maunsell LLC,Main Contractor,MEP Systems,Germany,DM-14523,B,1981,94,3,71.3,88.6,75.3,78.4,0,4.1,False,False,213.0,9
+CONT090,Laing O'Rourke ME LLC,Façade,Façade & Cladding,Philippines,DM-96654,B,2015,35,10,72.8,74.9,53.3,67.0,4,3.1,False,False,272.0,1
+CONT091,Al Habtoor Engineering LLC,Main Contractor,Luxury Villas,China,DM-35249,B,2008,63,11,67.4,86.5,87.3,80.4,2,4.5,True,False,275.0,10
+CONT092,Arabtec Construction LLC,Façade,Commercial Towers,Turkey,DM-83828,C,2002,86,1,61.4,77.8,78.9,72.7,2,3.4,False,False,194.0,0
+CONT093,Shapoorji Pallonji ME LLC,MEP Contractor,Landscaping & Public Realm,UK,DM-64259,A,1976,18,3,80.5,73.4,55.2,69.7,4,4.9,False,False,283.0,2
+CONT094,Khansaheb Civil Engineering LLC,Façade,Mixed-Use,Pakistan,DM-35808,B,1997,54,10,82.0,81.5,52.1,71.9,6,4.3,False,False,242.0,0
+CONT095,ACC (Arabian Construction Co) LLC,Landscaping,Mixed-Use,Turkey,DM-58153,A,1994,21,8,87.5,74.7,83.6,81.9,2,5.0,True,False,395.0,3
+CONT096,ASGC Construction LLC,Civil,Low-Rise Residential,UK,DM-75995,B,1999,35,5,69.7,76.8,69.5,72.0,0,3.8,False,False,446.0,4
+CONT097,Consolidated Contractors (CCC) LLC,MEP Contractor,Mixed-Use,South Korea,DM-43452,B,1981,117,4,93.1,76.4,61.3,76.9,7,4.5,False,True,293.0,1
+CONT098,Ssangyong Engineering LLC,Civil,Structural Works,India,DM-60272,C,1986,55,10,57.0,66.7,76.0,66.6,6,3.8,False,False,222.0,10
+CONT099,Hyundai Engineering UAE LLC,Façade,Structural Works,South Korea,DM-74684,B,1995,92,12,69.4,89.0,86.9,81.8,2,3.6,True,False,297.0,5
+CONT100,China State Construction UAE LLC,Structural,High-Rise Residential,Pakistan,DM-46647,B,1994,88,5,78.4,61.5,71.7,70.5,0,3.0,False,False,403.0,7
+CONT101,Multiplex Constructions ME LLC,Landscaping,Commercial Towers,China,DM-56784,B,1999,51,4,61.9,71.1,63.3,65.4,8,4.6,False,True,382.0,6
+CONT102,Brookfield Multiplex LLC,MEP Contractor,MEP Systems,Philippines,DM-48137,B,1992,164,6,66.5,64.7,83.9,71.7,7,4.3,False,True,233.0,13
+CONT103,Alec Contracting LLC,Façade,Commercial Towers,UAE,DM-82314,A,2001,79,3,84.2,75.8,54.3,71.4,3,4.8,False,False,243.0,9
+CONT104,Drake & Scull LLC,Structural,Low-Rise Residential,Pakistan,DM-10016,B,2005,79,8,79.5,65.7,57.8,67.7,5,4.0,False,False,427.0,15
+CONT105,Ginco General Contracting LLC,Interior Fit-Out,Landscaping & Public Realm,Egypt,DM-78291,C,2003,101,8,83.3,77.4,54.8,71.8,2,4.0,False,False,436.0,4
+CONT106,Energoprojekt LLC,Structural,Interior Finishing,Pakistan,DM-53077,C,2013,165,3,84.3,85.5,66.2,78.7,8,4.3,False,True,335.0,6
+CONT107,Dutco Balfour Beatty LLC,Landscaping,Mixed-Use,India,DM-60023,A,1980,96,7,74.7,84.7,81.5,80.3,0,4.3,True,False,311.0,6
+CONT108,Carillion Alawi LLC,Façade,Luxury Villas,Turkey,DM-23954,A,1976,10,4,58.0,84.0,55.0,65.7,4,4.2,False,False,242.0,9
+CONT109,Besix ME LLC,Structural,High-Rise Residential,Pakistan,DM-46448,B,1985,131,10,86.3,65.0,88.2,79.8,0,4.7,False,False,385.0,6
+CONT110,Six Construct LLC,Structural,Landscaping & Public Realm,Philippines,DM-30619,A,2004,148,5,60.4,84.6,79.4,74.8,7,3.3,False,True,377.0,11
+CONT111,Depa United LLC,Civil,Low-Rise Residential,China,DM-30818,A,2004,102,1,79.5,78.0,81.3,79.6,4,3.1,False,False,384.0,7
+CONT112,Interiors & Contracting LLC,Main Contractor,Structural Works,Pakistan,DM-17028,C,1976,101,4,84.8,81.2,65.5,77.2,1,4.3,False,False,456.0,12
+CONT113,ECC Contracting LLC,Landscaping,Landscaping & Public Realm,South Korea,DM-42806,B,2010,175,2,86.6,93.0,55.0,78.2,2,3.3,False,False,444.0,13
+CONT114,National Projects & Construction LLC,Structural,Luxury Villas,UK,DM-75120,B,1992,169,5,66.1,93.8,84.8,81.6,7,3.0,True,True,238.0,2
+CONT115,Al Fara'a Group LLC,Interior Fit-Out,Luxury Villas,Germany,DM-62442,C,1991,54,5,64.8,91.7,53.7,70.1,1,4.5,False,False,213.0,2
+CONT116,Deyaar Construction LLC,Façade,Luxury Villas,Pakistan,DM-86084,A,2015,45,9,69.6,94.3,65.5,76.5,0,4.6,False,False,204.0,0
+CONT117,Gulf Contracting LLC,Façade,Commercial Towers,Egypt,DM-51993,A,2006,60,1,76.9,63.0,58.3,66.1,6,3.2,False,False,480.0,6
+CONT118,National Marine Dredging LLC,Landscaping,Mixed-Use,UAE,DM-95317,C,2009,121,4,82.1,80.1,75.2,79.1,8,4.7,False,True,317.0,9
+CONT119,Cansult Maunsell LLC,Civil,High-Rise Residential,South Korea,DM-90720,C,1990,178,6,74.1,93.9,78.8,82.3,8,4.2,True,True,381.0,4
+CONT120,Laing O'Rourke ME LLC,Main Contractor,Commercial Towers,Pakistan,DM-31364,C,2004,152,7,73.0,91.0,76.5,80.2,8,5.0,True,True,427.0,11
+CONT121,Al Habtoor Engineering LLC,Main Contractor,MEP Systems,India,DM-39985,B,1987,70,5,60.6,67.0,53.6,60.4,6,3.6,False,False,325.0,6
+CONT122,Arabtec Construction LLC,Main Contractor,Façade & Cladding,Egypt,DM-31247,C,1980,94,1,68.2,65.8,93.0,75.7,4,3.4,False,False,345.0,13
+CONT123,Shapoorji Pallonji ME LLC,MEP Contractor,MEP Systems,India,DM-62679,C,1987,148,3,70.8,94.5,61.8,75.7,5,4.8,False,False,352.0,1
+CONT124,Khansaheb Civil Engineering LLC,Interior Fit-Out,Luxury Villas,UAE,DM-87221,B,1979,170,7,83.3,77.7,80.1,80.4,5,3.4,True,False,369.0,7
+CONT125,ACC (Arabian Construction Co) LLC,Landscaping,High-Rise Residential,Philippines,DM-97191,B,1992,119,5,84.0,74.6,85.5,81.4,5,4.6,True,False,449.0,3
+CONT126,ASGC Construction LLC,Landscaping,Mixed-Use,China,DM-11548,A,1987,135,5,89.2,91.4,79.2,86.6,2,4.1,True,False,233.0,15
+CONT127,Consolidated Contractors (CCC) LLC,Interior Fit-Out,Landscaping & Public Realm,Egypt,DM-30853,B,1994,145,2,77.9,77.1,56.8,70.6,1,3.0,False,False,187.0,4
+CONT128,Ssangyong Engineering LLC,Façade,Landscaping & Public Realm,Egypt,DM-35739,B,1989,96,1,57.0,85.0,88.5,76.8,3,3.4,False,False,214.0,15
+CONT129,Hyundai Engineering UAE LLC,Interior Fit-Out,Interior Finishing,Turkey,DM-87212,B,1994,26,12,69.9,87.5,60.0,72.5,4,4.1,False,False,255.0,8
+CONT130,China State Construction UAE LLC,Interior Fit-Out,High-Rise Residential,China,DM-27366,B,1977,99,5,75.7,88.6,72.3,78.9,8,4.1,False,True,195.0,9
+CONT131,Multiplex Constructions ME LLC,Interior Fit-Out,Façade & Cladding,Pakistan,DM-34546,B,1987,179,2,65.6,75.3,79.1,73.3,0,4.8,False,False,236.0,15
+CONT132,Brookfield Multiplex LLC,Interior Fit-Out,Structural Works,China,DM-71908,C,1992,79,6,63.1,87.1,58.9,69.7,6,4.8,False,False,235.0,11
+CONT133,Alec Contracting LLC,Interior Fit-Out,Mixed-Use,Turkey,DM-85131,A,1981,89,1,65.6,67.7,71.5,68.3,5,3.4,False,False,328.0,2
+CONT134,Drake & Scull LLC,Civil,Interior Finishing,UAE,DM-87180,A,1975,130,12,71.8,83.2,72.3,75.8,8,3.3,False,True,236.0,14
+CONT135,Ginco General Contracting LLC,Main Contractor,Luxury Villas,Pakistan,DM-54668,C,1992,179,7,85.2,90.8,54.2,76.7,8,3.7,False,True,187.0,2
+CONT136,Energoprojekt LLC,Interior Fit-Out,Interior Finishing,Pakistan,DM-97218,A,2011,133,11,59.5,73.7,82.4,71.9,1,4.8,False,False,336.0,4
+CONT137,Dutco Balfour Beatty LLC,Civil,Interior Finishing,China,DM-55395,C,1996,70,8,91.8,91.6,90.9,91.4,1,4.8,True,False,253.0,12
+CONT138,Carillion Alawi LLC,MEP Contractor,Mixed-Use,Turkey,DM-88442,B,1998,115,2,89.0,70.1,53.4,70.8,1,4.8,False,False,208.0,11
+CONT139,Besix ME LLC,Civil,Structural Works,India,DM-32742,C,2006,31,4,81.5,70.1,69.6,73.7,0,3.0,False,False,214.0,12
+CONT140,Six Construct LLC,Façade,Luxury Villas,Turkey,DM-65236,B,2008,136,5,69.5,95.6,54.8,73.3,4,4.3,False,False,415.0,15
+CONT141,Depa United LLC,Landscaping,High-Rise Residential,Turkey,DM-60517,B,2002,70,4,61.4,88.2,80.2,76.6,2,3.6,False,False,304.0,13
+CONT142,Interiors & Contracting LLC,Main Contractor,Mixed-Use,Pakistan,DM-13118,B,1978,151,11,91.1,97.7,50.8,79.9,4,4.5,False,False,280.0,12
+CONT143,ECC Contracting LLC,Structural,Commercial Towers,India,DM-63911,A,1997,94,4,77.4,80.0,80.5,79.3,7,4.5,False,True,285.0,15
+CONT144,National Projects & Construction LLC,Façade,High-Rise Residential,China,DM-67193,B,1992,133,11,88.0,72.9,77.0,79.3,6,3.6,False,False,205.0,11
+CONT145,Al Fara'a Group LLC,Landscaping,Luxury Villas,South Korea,DM-46361,B,1997,146,11,58.9,68.5,93.7,73.7,6,4.5,False,False,377.0,11
+CONT146,Deyaar Construction LLC,Interior Fit-Out,High-Rise Residential,China,DM-15546,C,2002,83,4,95.6,78.1,85.7,86.5,0,4.8,True,False,288.0,8
+CONT147,Gulf Contracting LLC,Landscaping,Interior Finishing,Pakistan,DM-25583,B,1978,78,5,90.8,78.1,61.6,76.8,1,3.4,False,False,375.0,3
+CONT148,National Marine Dredging LLC,Civil,Landscaping & Public Realm,UK,DM-49543,B,2002,162,8,78.2,66.9,56.6,67.2,8,3.8,False,True,384.0,0
+CONT149,Cansult Maunsell LLC,Landscaping,Luxury Villas,India,DM-89789,B,2013,99,9,93.2,76.7,79.8,83.2,7,3.2,True,True,248.0,7
+CONT150,Laing O'Rourke ME LLC,Civil,Luxury Villas,Pakistan,DM-33595,B,1984,145,7,74.0,67.4,67.2,69.5,4,4.5,False,False,239.0,15
+CONT151,Al Habtoor Engineering LLC,Structural,Structural Works,Pakistan,DM-16670,C,2013,29,2,84.4,94.9,82.7,87.3,7,4.6,True,True,227.0,3
+CONT152,Arabtec Construction LLC,Interior Fit-Out,Commercial Towers,Pakistan,DM-52710,B,1990,114,3,67.4,60.7,83.7,70.6,6,4.1,False,False,213.0,4
+CONT153,Shapoorji Pallonji ME LLC,Landscaping,Structural Works,Turkey,DM-23116,B,1979,14,1,66.6,91.4,73.8,77.3,8,4.6,False,True,202.0,0
+CONT154,Khansaheb Civil Engineering LLC,Structural,Façade & Cladding,UAE,DM-55617,B,2003,96,4,90.5,74.7,63.2,76.1,5,3.3,False,False,313.0,13
+CONT155,ACC (Arabian Construction Co) LLC,Structural,Commercial Towers,Turkey,DM-45681,C,1996,175,1,75.4,78.4,67.2,73.7,8,3.0,False,True,366.0,12
+CONT156,ASGC Construction LLC,Main Contractor,MEP Systems,Pakistan,DM-54146,B,1987,87,4,74.7,72.4,74.8,74.0,4,3.1,False,False,206.0,12
+CONT157,Consolidated Contractors (CCC) LLC,Interior Fit-Out,Structural Works,Pakistan,DM-84864,C,1986,132,5,70.5,80.0,71.5,74.0,2,4.3,False,False,295.0,7
+CONT158,Ssangyong Engineering LLC,Civil,Structural Works,Pakistan,DM-27308,A,1997,120,11,72.8,60.1,56.3,63.1,8,4.0,False,True,210.0,6
+CONT159,Hyundai Engineering UAE LLC,Structural,Mixed-Use,Pakistan,DM-78323,B,1991,89,12,55.2,92.3,94.8,80.8,2,3.0,True,False,373.0,1
+CONT160,China State Construction UAE LLC,Interior Fit-Out,Mixed-Use,India,DM-66134,C,1996,46,8,62.6,63.3,66.5,64.1,3,3.4,False,False,425.0,4
+CONT161,Multiplex Constructions ME LLC,Structural,Luxury Villas,India,DM-99109,A,1999,80,3,64.1,85.8,54.6,68.2,4,3.9,False,False,238.0,12
+CONT162,Brookfield Multiplex LLC,Main Contractor,Façade & Cladding,Pakistan,DM-19772,A,1989,91,9,76.1,60.9,72.6,69.9,8,4.4,False,True,255.0,15
+CONT163,Alec Contracting LLC,Façade,Low-Rise Residential,UAE,DM-86884,B,2008,146,9,60.2,66.7,68.4,65.1,0,4.6,False,False,285.0,1
+CONT164,Drake & Scull LLC,Main Contractor,Luxury Villas,Egypt,DM-44090,A,2002,123,8,93.0,61.0,53.2,69.1,7,3.2,False,True,479.0,2
+CONT165,Ginco General Contracting LLC,Interior Fit-Out,Façade & Cladding,Philippines,DM-40596,C,1981,23,4,73.6,61.4,94.2,76.4,1,4.5,False,False,268.0,13
+CONT166,Energoprojekt LLC,Civil,Structural Works,Germany,DM-16570,C,2000,50,7,69.3,90.8,64.8,75.0,2,3.5,False,False,445.0,3
+CONT167,Dutco Balfour Beatty LLC,Structural,Mixed-Use,India,DM-29429,B,1994,159,8,87.7,77.3,78.6,81.2,1,3.2,True,False,467.0,8
+CONT168,Carillion Alawi LLC,Façade,Commercial Towers,Pakistan,DM-95045,B,2011,37,5,92.7,79.0,77.7,83.1,7,4.2,True,True,277.0,10
+CONT169,Besix ME LLC,MEP Contractor,High-Rise Residential,China,DM-57113,B,2004,32,9,95.8,88.4,94.5,92.9,2,4.4,True,False,223.0,12
+CONT170,Six Construct LLC,Main Contractor,High-Rise Residential,Pakistan,DM-60833,B,2007,173,5,67.0,63.9,73.3,68.1,5,3.1,False,False,292.0,9
+CONT171,Depa United LLC,Interior Fit-Out,Structural Works,India,DM-11737,A,1994,28,9,75.7,60.7,60.5,65.6,0,4.4,False,False,228.0,3
+CONT172,Interiors & Contracting LLC,Landscaping,Landscaping & Public Realm,India,DM-45126,B,2005,94,3,91.1,79.1,78.4,82.9,2,4.3,True,False,318.0,10
+CONT173,ECC Contracting LLC,MEP Contractor,Interior Finishing,Turkey,DM-13904,A,1981,147,2,81.9,64.7,65.9,70.8,4,4.4,False,False,204.0,14
+CONT174,National Projects & Construction LLC,Civil,High-Rise Residential,Philippines,DM-96970,B,1986,104,9,74.3,79.9,72.6,75.6,5,4.8,False,False,222.0,3
+CONT175,Al Fara'a Group LLC,MEP Contractor,MEP Systems,China,DM-25158,B,1979,23,8,69.6,68.9,80.6,73.0,2,4.3,False,False,463.0,14
+CONT176,Deyaar Construction LLC,Interior Fit-Out,MEP Systems,Pakistan,DM-55446,A,2008,57,2,91.0,88.3,65.8,81.7,3,4.4,True,False,213.0,12
+CONT177,Gulf Contracting LLC,Structural,MEP Systems,Turkey,DM-30904,C,2014,94,8,69.1,61.8,95.8,75.6,1,4.4,False,False,330.0,7
+CONT178,National Marine Dredging LLC,Main Contractor,Structural Works,Philippines,DM-98705,C,1989,23,9,76.8,90.0,95.5,87.4,3,3.5,True,False,225.0,6
+CONT179,Cansult Maunsell LLC,MEP Contractor,Landscaping & Public Realm,China,DM-36318,C,1998,167,9,86.6,94.2,92.5,91.1,3,4.7,True,False,372.0,7
+CONT180,Laing O'Rourke ME LLC,Structural,Structural Works,UAE,DM-81319,C,1983,158,6,80.1,78.5,79.8,79.5,3,4.7,False,False,351.0,2
+CONT181,Al Habtoor Engineering LLC,Civil,High-Rise Residential,Germany,DM-21611,A,2008,100,8,80.3,67.6,66.1,71.3,6,4.8,False,False,362.0,11
+CONT182,Arabtec Construction LLC,Structural,High-Rise Residential,Turkey,DM-70649,C,2010,39,10,69.0,63.5,70.4,67.6,3,4.0,False,False,467.0,1
+CONT183,Shapoorji Pallonji ME LLC,Main Contractor,Façade & Cladding,UAE,DM-36380,C,1983,12,11,89.8,84.8,78.3,84.3,1,3.2,True,False,253.0,11
+CONT184,Khansaheb Civil Engineering LLC,MEP Contractor,Low-Rise Residential,South Korea,DM-79093,C,2004,66,12,84.5,66.0,57.7,69.4,1,3.1,False,False,240.0,15
+CONT185,ACC (Arabian Construction Co) LLC,Main Contractor,Luxury Villas,Egypt,DM-11511,B,2001,40,2,72.5,68.0,72.3,70.9,2,3.4,False,False,420.0,8
+CONT186,ASGC Construction LLC,Interior Fit-Out,Low-Rise Residential,India,DM-46397,A,1984,23,9,75.3,89.4,77.1,80.6,2,3.6,True,False,427.0,6
+CONT187,Consolidated Contractors (CCC) LLC,Structural,Commercial Towers,China,DM-76369,B,2011,171,12,92.6,61.6,91.8,82.0,8,4.1,True,True,333.0,6
+CONT188,Ssangyong Engineering LLC,Façade,Façade & Cladding,UAE,DM-35876,C,2015,12,12,65.3,90.6,94.1,83.3,0,4.5,True,False,220.0,4
+CONT189,Hyundai Engineering UAE LLC,Main Contractor,Luxury Villas,Pakistan,DM-58131,B,1990,176,10,66.3,96.1,55.3,72.6,3,4.4,False,False,431.0,14
+CONT190,China State Construction UAE LLC,Main Contractor,Façade & Cladding,Pakistan,DM-54581,B,1982,180,2,62.1,92.2,90.3,81.5,8,3.1,True,True,297.0,5
+CONT191,Multiplex Constructions ME LLC,Main Contractor,Façade & Cladding,Pakistan,DM-18906,B,2006,13,2,79.1,67.0,66.7,70.9,5,4.6,False,False,260.0,7
+CONT192,Brookfield Multiplex LLC,Interior Fit-Out,Mixed-Use,India,DM-46978,C,1989,37,1,74.7,89.4,93.0,85.7,6,3.6,True,False,245.0,2
+CONT193,Alec Contracting LLC,Façade,High-Rise Residential,India,DM-59632,B,2009,124,7,62.5,79.0,63.2,68.2,8,3.0,False,True,390.0,7
+CONT194,Drake & Scull LLC,Landscaping,Interior Finishing,Egypt,DM-86998,A,1979,55,4,58.0,89.5,93.7,80.4,8,3.7,True,True,200.0,15
+CONT195,Ginco General Contracting LLC,MEP Contractor,Structural Works,UAE,DM-74891,C,1992,149,1,64.6,79.1,50.4,64.7,3,3.0,False,False,321.0,5
+CONT196,Energoprojekt LLC,Civil,Low-Rise Residential,Pakistan,DM-25162,A,2009,56,5,75.4,66.7,78.5,73.5,2,3.2,False,False,471.0,0
+CONT197,Dutco Balfour Beatty LLC,Landscaping,Mixed-Use,Philippines,DM-33274,B,1989,79,1,62.2,88.0,65.9,72.0,3,4.0,False,False,216.0,15
+CONT198,Carillion Alawi LLC,Landscaping,High-Rise Residential,Philippines,DM-82391,B,2003,166,9,71.3,93.4,59.2,74.6,2,3.2,False,False,214.0,2
+CONT199,Besix ME LLC,Landscaping,Luxury Villas,China,DM-91362,B,1976,84,11,71.9,86.0,66.5,74.8,2,3.2,False,False,284.0,3
+CONT200,Six Construct LLC,Façade,Structural Works,UAE,DM-20164,C,2000,149,1,58.6,81.4,66.7,68.9,4,3.1,False,False,411.0,9
