@@ -455,3 +455,128 @@ def _apply_sale_filters(query, filters: dict = None):
         query = query.filter(Sale.sale_date <= filters["end_date"])
 
     return query
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Chinese Brand Market Impact — constants & queries
+# ─────────────────────────────────────────────────────────────────────────────
+
+CHINESE_BRANDS = ['MG', 'BYD', 'Jetour', 'Geely']
+
+BRAND_ORIGIN = {
+    'Toyota': 'Japanese',      'Nissan': 'Japanese',       'Mitsubishi': 'Japanese',
+    'Honda': 'Japanese',       'Lexus': 'Japanese',
+    'Hyundai': 'Korean',       'Kia': 'Korean',
+    'BMW': 'European',         'Mercedes-Benz': 'European', 'Volkswagen': 'European',
+    'Land Rover': 'European',  'Polestar': 'European',
+    'Ford': 'American',        'Chevrolet': 'American',    'Jeep': 'American',
+    'Tesla': 'American',
+    'MG': 'Chinese',           'BYD': 'Chinese',           'Jetour': 'Chinese',
+    'Geely': 'Chinese',
+}
+
+
+def _filters_no_brand(filters: dict) -> dict:
+    """Return a copy of filters with brand cleared so Chinese brand queries see all brands."""
+    if not filters:
+        return {}
+    return {**filters, 'brand': None}
+
+
+def get_chinese_brand_yearly_share(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Year-by-year units per brand with origin tag. Brand filter is always ignored."""
+    query = session.query(
+        Sale.year,
+        Sale.brand,
+        func.sum(Sale.units_sold).label("units")
+    )
+    query = _apply_sale_filters(query, _filters_no_brand(filters))
+    query = query.group_by(Sale.year, Sale.brand).order_by(Sale.year)
+    df = pd.read_sql(query.statement, session.bind)
+    if df.empty:
+        return df
+    df['units'] = df['units'] * NATIONAL_SCALE_FACTOR
+    df['origin'] = df['brand'].map(BRAND_ORIGIN).fillna('Other')
+    return df
+
+
+def get_price_competitiveness(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Weighted avg selling price and total units per brand+category. Brand filter ignored."""
+    query = session.query(
+        Sale.brand,
+        Sale.vehicle_category,
+        func.avg(Sale.selling_price_aed).label("avg_price"),
+        func.sum(Sale.units_sold).label("units")
+    )
+    query = _apply_sale_filters(query, _filters_no_brand(filters))
+    query = query.group_by(Sale.brand, Sale.vehicle_category)
+    df = pd.read_sql(query.statement, session.bind)
+    if df.empty:
+        return df
+    df['units'] = df['units'] * NATIONAL_SCALE_FACTOR
+    df['origin'] = df['brand'].map(BRAND_ORIGIN).fillna('Other')
+    grand_total = df['units'].sum()
+    df['market_share_pct'] = (df['units'] / grand_total * 100).round(2) if grand_total else 0.0
+    return df
+
+
+def get_ev_segment_by_brand_year(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Electric vehicle units by brand and year. Brand and fuel_type filters ignored."""
+    f = {**_filters_no_brand(filters), 'fuel_type': None}
+    query = session.query(
+        Sale.year,
+        Sale.brand,
+        func.sum(Sale.units_sold).label("ev_units")
+    ).filter(Sale.fuel_type == 'Electric')
+    query = _apply_sale_filters(query, f)
+    query = query.group_by(Sale.year, Sale.brand).order_by(Sale.year)
+    df = pd.read_sql(query.statement, session.bind)
+    if df.empty:
+        return df
+    df['ev_units'] = df['ev_units'] * NATIONAL_SCALE_FACTOR
+    df['origin'] = df['brand'].map(BRAND_ORIGIN).fillna('Other')
+    return df
+
+
+def get_market_share_shift(session: Session, filters: dict = None) -> pd.DataFrame:
+    """Brand market share in the base year vs latest year within the filter date range."""
+    if filters and filters.get("start_date") and filters.get("end_date"):
+        base_year = filters["start_date"].year
+        curr_year = filters["end_date"].year
+    else:
+        base_year, curr_year = 2019, 2026
+
+    if base_year >= curr_year:
+        curr_year = base_year + 1
+
+    # Apply region/category filters only — no date or brand filtering here
+    extra: dict = {}
+    if filters:
+        if filters.get("region"):
+            extra["region"] = filters["region"]
+        if filters.get("vehicle_category"):
+            extra["vehicle_category"] = filters["vehicle_category"]
+
+    def _year_shares(yr: int) -> dict:
+        q = session.query(Sale.brand, func.sum(Sale.units_sold).label("units"))
+        q = _apply_sale_filters(q, extra)
+        q = q.filter(Sale.year == yr).group_by(Sale.brand)
+        rows = q.all()
+        total = sum(r.units for r in rows)
+        return {r.brand: round(r.units / total * 100, 2) for r in rows} if total else {}
+
+    base_shares = _year_shares(base_year)
+    curr_shares  = _year_shares(curr_year)
+    all_brands   = set(base_shares) | set(curr_shares)
+
+    records = [{
+        'brand':        b,
+        'base_share':   base_shares.get(b, 0.0),
+        'curr_share':   curr_shares.get(b,  0.0),
+        'share_change': round(curr_shares.get(b, 0.0) - base_shares.get(b, 0.0), 2),
+        'origin':       BRAND_ORIGIN.get(b, 'Other'),
+        'base_year':    base_year,
+        'curr_year':    curr_year,
+    } for b in all_brands]
+
+    return pd.DataFrame(records).sort_values('share_change', ascending=False)

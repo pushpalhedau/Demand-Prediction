@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 load_dotenv()
 
 # Active data mode: "test" → automobile_demand.db, "real" → real_demand.db
-_data_mode = "test"
+_data_mode = "real"
 
 _TEST_DB_URL = os.getenv("DATABASE_URL", "sqlite:///./automobile_demand.db")
 _REAL_DB_URL = os.getenv("REAL_DATABASE_URL", "sqlite:///./real_demand.db")

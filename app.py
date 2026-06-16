@@ -36,7 +36,7 @@ inject_custom_css()
 #    This must happen before any database query so every render function
 #    automatically hits the right database.
 if "data_mode" not in st.session_state:
-    st.session_state.data_mode = "test"
+    st.session_state.data_mode = "real"
 
 set_data_mode(st.session_state.data_mode)
 
