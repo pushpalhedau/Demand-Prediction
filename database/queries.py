@@ -5,6 +5,10 @@ from database.connection import get_db_session # This line is already present, n
 import pandas as pd
 from datetime import datetime, date
 
+# Dataset is a 1/17 (~5.9%) sample of the UAE national market.
+# Multiply sample unit counts by this factor to get implied national figures.
+NATIONAL_SCALE_FACTOR = 17
+
 
 def get_executive_kpis(session: Session, filters: dict = None) -> dict:
     """
@@ -86,8 +90,8 @@ def get_executive_kpis(session: Session, filters: dict = None) -> dict:
     inv_reorder = session.query(func.count(Inventory.inventory_id)).filter(Inventory.reorder_needed == True).scalar()
 
     return {
-        "total_sales": total_sales,
-        "total_revenue": total_revenue,
+        "total_sales": total_sales * NATIONAL_SCALE_FACTOR,
+        "total_revenue": total_revenue * NATIONAL_SCALE_FACTOR,
         "avg_discount": avg_discount,
         "avg_lead_close": avg_lead_close,
         "total_sales_delta": total_sales_delta,
@@ -118,6 +122,8 @@ def get_monthly_revenue_trend(session: Session, filters: dict = None) -> pd.Data
     df = pd.read_sql(query.statement, session.bind)
     if not df.empty:
         df['date'] = pd.to_datetime(df[['year', 'month']].assign(day=1))
+        df['sales'] = df['sales'] * NATIONAL_SCALE_FACTOR
+        df['revenue'] = df['revenue'] * NATIONAL_SCALE_FACTOR
     return df
 
 
@@ -133,7 +139,11 @@ def get_sales_by_category(session: Session, filters: dict = None) -> pd.DataFram
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.vehicle_category).order_by(desc("sales"))
 
-    return pd.read_sql(query.statement, session.bind)
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df['sales'] = df['sales'] * NATIONAL_SCALE_FACTOR
+        df['revenue'] = df['revenue'] * NATIONAL_SCALE_FACTOR
+    return df
 
 
 def get_sales_by_fuel_type(session: Session, filters: dict = None) -> pd.DataFrame:
@@ -148,7 +158,11 @@ def get_sales_by_fuel_type(session: Session, filters: dict = None) -> pd.DataFra
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.fuel_type).order_by(desc("sales"))
 
-    return pd.read_sql(query.statement, session.bind)
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df['sales'] = df['sales'] * NATIONAL_SCALE_FACTOR
+        df['revenue'] = df['revenue'] * NATIONAL_SCALE_FACTOR
+    return df
 
 
 def get_sales_by_region(session: Session, filters: dict = None) -> pd.DataFrame:
@@ -163,7 +177,11 @@ def get_sales_by_region(session: Session, filters: dict = None) -> pd.DataFrame:
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.emirate).order_by(desc("sales"))
 
-    return pd.read_sql(query.statement, session.bind)
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df['sales'] = df['sales'] * NATIONAL_SCALE_FACTOR
+        df['revenue'] = df['revenue'] * NATIONAL_SCALE_FACTOR
+    return df
 
 
 def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -> pd.DataFrame:
@@ -177,6 +195,9 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
         Dealer.emirate,           # was: region
         Dealer.performance_score,
         Dealer.tier,
+        Dealer.google_rating,
+        Dealer.ev_charging_station,
+        Dealer.service_center,
         Dealer.latitude,
         Dealer.longitude,
         func.sum(Sale.units_sold).label("units_sold"),
@@ -192,11 +213,38 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
         Dealer.emirate,
         Dealer.performance_score,
         Dealer.tier,
+        Dealer.google_rating,
+        Dealer.ev_charging_station,
+        Dealer.service_center,
         Dealer.latitude,
         Dealer.longitude
     ).order_by(desc("units_sold")).limit(20)
 
-    return pd.read_sql(query.statement, session.bind)
+    df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df['units_sold'] = df['units_sold'] * NATIONAL_SCALE_FACTOR
+        df['revenue']    = df['revenue']    * NATIONAL_SCALE_FACTOR
+
+        # Top vehicle category per dealer (respects same date/region filters)
+        cat_q = session.query(
+            Sale.dealer_id,
+            Sale.vehicle_category,
+            func.sum(Sale.units_sold).label("cnt")
+        )
+        cat_q = _apply_sale_filters(cat_q, filters)
+        cat_q = cat_q.group_by(Sale.dealer_id, Sale.vehicle_category)
+        cat_df = pd.read_sql(cat_q.statement, session.bind)
+        if not cat_df.empty:
+            top_cat_df = (
+                cat_df.sort_values("cnt", ascending=False)
+                      .drop_duplicates("dealer_id")[["dealer_id", "vehicle_category"]]
+                      .rename(columns={"vehicle_category": "top_category"})
+            )
+            df = df.merge(top_cat_df, on="dealer_id", how="left")
+        else:
+            df["top_category"] = None
+
+    return df
 
 
 def get_yoy_comparison(session: Session, filters: dict = None) -> pd.DataFrame:
@@ -213,6 +261,9 @@ def get_yoy_comparison(session: Session, filters: dict = None) -> pd.DataFrame:
     query = query.group_by(Sale.year, Sale.month).order_by(Sale.month, Sale.year)
 
     df = pd.read_sql(query.statement, session.bind)
+    if not df.empty:
+        df['sales'] = df['sales'] * NATIONAL_SCALE_FACTOR
+        df['revenue'] = df['revenue'] * NATIONAL_SCALE_FACTOR
     return df
 
 
@@ -224,6 +275,7 @@ def get_customer_segments_data(session: Session) -> pd.DataFrame:
         Customer.customer_id,
         Customer.age,
         Customer.gender,
+        Customer.nationality,                      # REAL — FCSC 2023 census
         Customer.estimated_monthly_income_aed,    # was: estimated_annual_income
         Customer.credit_score,
         Customer.number_of_past_purchases,
@@ -283,6 +335,73 @@ def update_inventory_from_csv(session: Session, df: pd.DataFrame):
     Bulk insert/update the inventory table.
     """
     pass
+
+
+def get_uae_base_rate_kpi(session: Session, filters: dict = None) -> dict:
+    """
+    Returns the UAE base rate (CBUAE OPR) for the selected period and YoY delta.
+    Uses the period-end rate (last month within the date range).
+    Stored as ExternalFactor.us_fed_rate_pct (renamed during seeding).
+    """
+    def _period_end_rate(start_date, end_date):
+        q = session.query(ExternalFactor.us_fed_rate_pct, ExternalFactor.year, ExternalFactor.month)
+        if start_date and end_date:
+            sy, sm = start_date.year, start_date.month
+            ey, em = end_date.year, end_date.month
+            q = q.filter(
+                (ExternalFactor.year * 100 + ExternalFactor.month) >= (sy * 100 + sm),
+                (ExternalFactor.year * 100 + ExternalFactor.month) <= (ey * 100 + em),
+            )
+        row = q.order_by(ExternalFactor.year.desc(), ExternalFactor.month.desc()).first()
+        return row.us_fed_rate_pct if row else None
+
+    current_rate = _period_end_rate(
+        filters.get("start_date") if filters else None,
+        filters.get("end_date") if filters else None,
+    )
+
+    delta = None
+    if filters and filters.get("start_date") and filters.get("end_date") and current_rate is not None:
+        sd, ed = filters["start_date"], filters["end_date"]
+        prior_rate = _period_end_rate(
+            sd.replace(year=sd.year - 1),
+            ed.replace(year=ed.year - 1),
+        )
+        if prior_rate is not None:
+            delta = round(current_rate - prior_rate, 2)
+
+    return {"rate": current_rate or 0.0, "delta": delta}
+
+
+def get_top_brand_kpi(session: Session, filters: dict = None) -> dict:
+    """
+    Returns the #1 brand by national-implied units sold for the selected period,
+    its market share %, and YoY share delta.
+    """
+    def _brand_shares(f):
+        q = session.query(Sale.brand, func.sum(Sale.units_sold).label("units"))
+        q = _apply_sale_filters(q, f)
+        rows = q.group_by(Sale.brand).all()
+        if not rows:
+            return None, None
+        total = sum(r.units for r in rows)
+        top = max(rows, key=lambda r: r.units)
+        share = round((top.units / total) * 100, 1) if total else 0.0
+        return top.brand, share
+
+    brand, share = _brand_shares(filters)
+
+    delta = None
+    if filters and filters.get("start_date") and filters.get("end_date") and share is not None:
+        sd, ed = filters["start_date"], filters["end_date"]
+        prior_filters = filters.copy()
+        prior_filters["start_date"] = sd.replace(year=sd.year - 1)
+        prior_filters["end_date"] = ed.replace(year=ed.year - 1)
+        _, prior_share = _brand_shares(prior_filters)
+        if prior_share is not None:
+            delta = round(share - prior_share, 1)
+
+    return {"brand": brand or "N/A", "share": share or 0.0, "delta": delta}
 
 
 def get_unique_filter_options(session: Session) -> dict:

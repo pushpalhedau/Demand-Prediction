@@ -9,12 +9,17 @@ from sklearn.preprocessing import StandardScaler
 # Add the project root to python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from database.connection import get_db_session
+from database.connection import get_db_session, get_data_mode
 from database.models import Customer
 
-# Setup folder for saving model files
-MODEL_DIR = "models/clustering"
-os.makedirs(MODEL_DIR, exist_ok=True)
+_BASE_MODEL_DIR = "models/clustering"
+
+
+def _model_dir() -> str:
+    """Return mode-specific model directory: models/clustering/test or .../real"""
+    d = os.path.join(_BASE_MODEL_DIR, get_data_mode())
+    os.makedirs(d, exist_ok=True)
+    return d
 
 def train_customer_segmentation(n_clusters: int = 5):
     """
@@ -128,12 +133,13 @@ def train_customer_segmentation(n_clusters: int = 5):
         session.bulk_update_mappings(Customer, update_mappings)
         session.commit()
         
-        # Save scaler and model files
-        with open(os.path.join(MODEL_DIR, "scaler.pkl"), "wb") as f:
+        # Save scaler and model files (mode-specific directory)
+        mdir = _model_dir()
+        with open(os.path.join(mdir, "scaler.pkl"), "wb") as f:
             pickle.dump(scaler, f)
-        with open(os.path.join(MODEL_DIR, "kmeans.pkl"), "wb") as f:
+        with open(os.path.join(mdir, "kmeans.pkl"), "wb") as f:
             pickle.dump(kmeans, f)
-        with open(os.path.join(MODEL_DIR, "cluster_mapping.pkl"), "wb") as f:
+        with open(os.path.join(mdir, "cluster_mapping.pkl"), "wb") as f:
             pickle.dump(cluster_mapping, f)
             
         print("Customer clustering completed and models saved.")
@@ -156,11 +162,12 @@ def predict_customer_segment(customer_data: dict) -> str:
     Predict the segment for a new customer based on their input attributes.
     """
     try:
-        with open(os.path.join(MODEL_DIR, "scaler.pkl"), "rb") as f:
+        mdir = _model_dir()
+        with open(os.path.join(mdir, "scaler.pkl"), "rb") as f:
             scaler = pickle.load(f)
-        with open(os.path.join(MODEL_DIR, "kmeans.pkl"), "rb") as f:
+        with open(os.path.join(mdir, "kmeans.pkl"), "rb") as f:
             kmeans = pickle.load(f)
-        with open(os.path.join(MODEL_DIR, "cluster_mapping.pkl"), "rb") as f:
+        with open(os.path.join(mdir, "cluster_mapping.pkl"), "rb") as f:
             cluster_mapping = pickle.load(f)
             
         features = [

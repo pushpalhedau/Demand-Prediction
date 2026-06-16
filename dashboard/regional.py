@@ -2,7 +2,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-from database.connection import get_db_session
+from database.connection import get_db_session, get_data_mode
 from database.queries import get_dealer_performance_leaderboard
 from utils.helpers import get_color_palette
 
@@ -82,22 +82,50 @@ def render_regional(filters: dict):
         
         # 3. Sortable Leaderboard Table
         st.markdown("### Top Performing Dealer Leaderboard")
-        
-        # Format columns for displays
+
         disp_df = df_dealers.copy()
         disp_df['Total Revenue (AED)'] = disp_df['revenue'].apply(lambda x: f"AED {x:,.0f}")
-        disp_df.rename(columns={
-            'dealer_name': 'Dealer Name',
-            'emirate': 'Emirate',
-            'area': 'Area',
-            'performance_score': 'Performance Score',
-            'tier': 'Tier',
-            'units_sold': 'Units Sold'
-        }, inplace=True)
-        
-        # Display table
+
+        if get_data_mode() == "real":
+            # --- Real mode: replace synthetic Tier + Performance Score with real data ---
+
+            def ev_label(row):
+                ev = bool(row.get('ev_charging_station'))
+                sc = bool(row.get('service_center'))
+                if ev and sc:   return "Full"
+                if ev or sc:    return "Partial"
+                return "None"
+
+            disp_df['EV Infrastructure'] = disp_df.apply(ev_label, axis=1)
+            disp_df['Google Rating'] = disp_df['google_rating'].apply(
+                lambda x: f"{x} ★" if pd.notnull(x) and x > 0 else "–"
+            )
+            # Avg Deal Value: ×17 cancels in numerator/denominator — no extra scaling needed
+            disp_df['Avg Deal Value (AED)'] = (disp_df['revenue'] / disp_df['units_sold']).apply(
+                lambda x: f"AED {x:,.0f}" if pd.notnull(x) and x > 0 else "–"
+            )
+            disp_df['Top Category'] = disp_df['top_category'].fillna('–')
+            disp_df.rename(columns={
+                'dealer_name': 'Dealer Name',
+                'emirate':     'Emirate',
+                'area':        'Area',
+            }, inplace=True)
+            display_cols = ['Dealer Name', 'Emirate', 'Area', 'Google Rating', 'EV Infrastructure', 'Avg Deal Value (AED)', 'Top Category']
+
+        else:
+            # --- Test mode: keep original synthetic columns unchanged ---
+            disp_df.rename(columns={
+                'dealer_name':       'Dealer Name',
+                'emirate':           'Emirate',
+                'area':              'Area',
+                'performance_score': 'Performance Score',
+                'tier':              'Tier',
+                'units_sold':        'Units Sold',
+            }, inplace=True)
+            display_cols = ['Dealer Name', 'Emirate', 'Area', 'Tier', 'Performance Score', 'Units Sold', 'Total Revenue (AED)']
+
         st.dataframe(
-            disp_df[['Dealer Name', 'Emirate', 'Area', 'Tier', 'Performance Score', 'Units Sold', 'Total Revenue (AED)']],
+            disp_df[display_cols],
             use_container_width=True,
             hide_index=True
         )

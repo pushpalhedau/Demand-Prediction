@@ -10,12 +10,17 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 # Add the project root to python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from database.connection import get_db_session
+from database.connection import get_db_session, get_data_mode
 from database.models import Sale, Customer, Vehicle
 
-# Setup folder for saving model files
-MODEL_DIR = "models/xgboost"
-os.makedirs(MODEL_DIR, exist_ok=True)
+_BASE_MODEL_DIR = "models/xgboost"
+
+
+def _model_dir() -> str:
+    """Return mode-specific model directory: models/xgboost/test or .../real"""
+    d = os.path.join(_BASE_MODEL_DIR, get_data_mode())
+    os.makedirs(d, exist_ok=True)
+    return d
 
 def train_xgboost_pipeline():
     """
@@ -99,14 +104,15 @@ def train_xgboost_pipeline():
         )
         model.fit(X_train_scaled, y_train)
         
-        # Save pipelines and models
-        with open(os.path.join(MODEL_DIR, "scaler.pkl"), "wb") as f:
+        # Save pipelines and models (mode-specific directory)
+        mdir = _model_dir()
+        with open(os.path.join(mdir, "scaler.pkl"), "wb") as f:
             pickle.dump(scaler, f)
-        with open(os.path.join(MODEL_DIR, "encoders.pkl"), "wb") as f:
+        with open(os.path.join(mdir, "encoders.pkl"), "wb") as f:
             pickle.dump(encoders, f)
-        with open(os.path.join(MODEL_DIR, "xgboost_model.pkl"), "wb") as f:
+        with open(os.path.join(mdir, "xgboost_model.pkl"), "wb") as f:
             pickle.dump(model, f)
-        with open(os.path.join(MODEL_DIR, "feature_names.pkl"), "wb") as f:
+        with open(os.path.join(mdir, "feature_names.pkl"), "wb") as f:
             pickle.dump(list(X.columns), f)
             
         # Get feature importances
@@ -137,14 +143,15 @@ def predict_deal_probability(input_data: dict) -> dict:
     Provides feature contributions as a lightweight explainability layer.
     """
     try:
-        # Load pipeline elements
-        with open(os.path.join(MODEL_DIR, "scaler.pkl"), "rb") as f:
+        # Load pipeline elements (mode-specific directory)
+        mdir = _model_dir()
+        with open(os.path.join(mdir, "scaler.pkl"), "rb") as f:
             scaler = pickle.load(f)
-        with open(os.path.join(MODEL_DIR, "encoders.pkl"), "rb") as f:
+        with open(os.path.join(mdir, "encoders.pkl"), "rb") as f:
             encoders = pickle.load(f)
-        with open(os.path.join(MODEL_DIR, "xgboost_model.pkl"), "rb") as f:
+        with open(os.path.join(mdir, "xgboost_model.pkl"), "rb") as f:
             model = pickle.load(f)
-        with open(os.path.join(MODEL_DIR, "feature_names.pkl"), "rb") as f:
+        with open(os.path.join(mdir, "feature_names.pkl"), "rb") as f:
             feature_names = pickle.load(f)
             
         # Compile input into record

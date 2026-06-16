@@ -1,0 +1,51 @@
+dealer_id,dealer_name,brand,region,city,established_year,years_active,synthetic_tier,google_place_id,google_name,google_rating,user_ratings_total,reviews_per_year,distance_km,match_confidence,query_used,brand_rank,brand_rank_per_year,brand_sales_weight
+DLR0015,AGMC - Dubai,BMW,Dubai,Dubai,1996,30,Platinum,ChIJ3Uctl-lpXz4RhhyZW3iwkXI,AGMC - BMW - Sheikh Zayed Road,4.3,3596,119.9,0.49,medium,AGMC - Dubai,1,1,0.979
+DLR0016,AGMC - Sharjah,BMW,Sharjah,Sharjah,2004,22,Gold,ChIJSeOVUl9ZXz4RTRwHUhxxLNE,Al Ibdaa Al Mutamayez Auto Maintenance Workshop,4.3,66,3.0,1.55,low,AGMC - Sharjah BMW,2,2,0.018
+DLR0017,AGMC - Ras Al Khaimah,BMW,Ras Al Khaimah,Ras Al Khaimah,2010,16,Silver,ChIJMzAcAVRx9j4RhraSNFwC1EE,BEST AUTO SPARE PARTS LLC,4.3,11,0.7,2.9,low,AGMC - Ras Al Khaimah BMW,3,3,0.003
+DLR0048,Al Ghandi - Sharjah Chevrolet,Chevrolet,Sharjah,Sharjah,2007,19,Silver,ChIJ3a2XMV1ZXz4RVfhZmJL1dx8,Al Ghandi Auto Showroom Sharjah - معرض الكندي للسيارات الشارقة,4.1,1155,60.8,0.69,medium,Al Ghandi - Sharjah Chevrolet,1,1,0.9561
+DLR0032,Al Ghandi Auto - Dubai Chevrolet,Chevrolet,Dubai,Dubai,1971,55,Gold,ChIJVYKAIdlDXz4RL913WYUUhGY,Cadillac Boutique by Al Ghandi Auto,4.4,51,0.9,1.13,medium,Al Ghandi Auto - Dubai Chevrolet,2,2,0.0422
+DLR0033,Al Ghandi Auto - Abu Dhabi Chevrolet,Chevrolet,Abu Dhabi,Abu Dhabi,1975,51,Gold,ChIJ1Qp5tiVpXj4Ruw66cBpVFik,Al Ghandi Auto Parts Abu Dhabi,1.5,2,0.0,0.66,medium,Al Ghandi Auto - Abu Dhabi Chevrolet,3,3,0.0017
+DLR0050,Emirates Motor Co - Al Ain Ford,Ford,Al Ain,Al Ain,2018,8,Bronze,ChIJI4gkL7W2ij4Rx8XuLWbuaGA,Emirates Insurance Company (PJSC) - Al Ain,3.9,152,19.0,1.84,low,Emirates Motor Co Al Ain,1,1,0.5609
+DLR0034,Emirates Motor Company - Abu Dhabi Ford,Ford,Abu Dhabi,Abu Dhabi,1981,45,Gold,ChIJW7DraC1mXj4R7Fs9hvZpnBc,Nasco Emirates,4.4,68,1.5,1.04,medium,Emirates Motor Company Abu Dhabi,2,3,0.2509
+DLR0044,United Diesel - Dubai Ford,Ford,Dubai,Dubai,2005,21,Silver,ChIJVYKAIdlDXz4RL913WYUUhGY,Cadillac Boutique by Al Ghandi Auto,4.4,51,2.4,0.35,medium,Ford dealer Dubai UAE,3,2,0.1882
+DLR0035,International Traders - Dubai Ford,Ford,Dubai,Dubai,1991,35,Gold,ChIJx4YO8odCXz4RdWOjaeJH-MU,International Traders (ME) Ltd.,,0,0.0,1.13,medium,International Traders Ford Dubai,4,4,0.0
+DLR0005,Al-Futtaim Honda - Dubai,Honda,Dubai,Dubai,2003,23,Gold,ChIJCbKNTIJCXz4RZy1lqpMwM0g,"Holistay Luxury Homes, Down Town Direct Access Dubai Mall - family studio @downtown , direct access to dubai mall",,0,0.0,1.49,medium,Al Dubai,1,1,0.0
+DLR0006,Al-Futtaim Honda - Abu Dhabi,Honda,Abu Dhabi,Abu Dhabi,2008,18,Gold,ChIJufI-cg9EXj4RCBGXQZMuzMc,Abu Dhabi,,0,0.0,0.82,medium,Al Abu Dhabi,1,1,0.0
+DLR0027,Juma Al Majid - Sharjah Hyundai,Hyundai,Sharjah,Sharjah,1980,46,Gold,ChIJ54UHwmFZXz4RFmEz0hI140o,Juma Al Majid Electro Mechanical Works,3.2,13,0.3,2.25,low,Juma Al Majid Sharjah,1,1,1.0
+DLR0026,Juma Al Majid - Dubai Hyundai,Hyundai,Dubai,Dubai,1974,52,Platinum,ChIJTyoPIm5DXz4RbBpHLnOTb-k,Majid,,0,0.0,0.98,medium,Juma Al Majid - Dubai Hyundai,2,2,0.0
+DLR0028,Juma Al Majid - Abu Dhabi Hyundai,Hyundai,Abu Dhabi,Abu Dhabi,1985,41,Gold,,,,0,0.0,-1.0,not_found,,2,2,0.0
+DLR0049,Juma Al Majid - Ajman Hyundai,Hyundai,Ajman,Ajman,2015,11,Bronze,,,,0,0.0,-1.0,not_found,,2,2,0.0
+DLR0023,Ali & Sons - Abu Dhabi Jeep,Jeep,Abu Dhabi,Abu Dhabi,2001,25,Gold,ChIJO9UnaUJpXj4RaQH41KQE58o,ISG Middle East,,0,0.0,1.02,medium,Ali & Sons Abu Dhabi,1,1,0.0
+DLR0029,Kia UAE - Dubai Motor City,Kia,Dubai,Dubai,2008,18,Gold,,,,0,0.0,-1.0,not_found,,1,1,0.0
+DLR0030,Kia UAE - Abu Dhabi,Kia,Abu Dhabi,Abu Dhabi,2010,16,Gold,,,,0,0.0,-1.0,not_found,,1,1,0.0
+DLR0031,Kia UAE - Sharjah,Kia,Sharjah,Sharjah,2012,14,Silver,,,,0,0.0,-1.0,not_found,,1,1,0.0
+DLR0007,Trading Enterprises - Dubai Land Rover,Land Rover,Dubai,Dubai,1993,33,Platinum,ChIJj8a2cSxqXz4R9ztOBQy773g,Land Rover Authorised Repairer Al Tayer Motors,4.0,180,5.5,1.01,medium,Trading Enterprises - Dubai Land Rover Land Rover,1,1,0.9474
+DLR0008,Trading Enterprises - Abu Dhabi Land Rover,Land Rover,Abu Dhabi,Abu Dhabi,2000,26,Gold,ChIJGyC_LuppXj4RFnAmCLU4XKE,AL AIN RENT A CAR - ABUDHABI BRANCH 2,4.5,10,0.4,1.49,medium,Trading Enterprises Abu Dhabi,2,2,0.0526
+DLR0041,Premier Motors - Abu Dhabi Land Rover,Land Rover,Abu Dhabi,Abu Dhabi,1991,35,Platinum,,,,0,0.0,-1.0,not_found,,3,3,0.0
+DLR0009,Al-Futtaim Lexus - Dubai,Lexus,Dubai,Dubai,2002,24,Platinum,ChIJIax5GXJdXz4RuMPVsJyeq94,Lexus Showroom DFC,4.3,736,30.7,0.58,medium,Al-Futtaim Lexus - Dubai,1,1,1.0
+DLR0018,Gargash Motors - Al Quoz,Mercedes-Benz,Dubai,Dubai,1958,68,Platinum,ChIJkz2CTCdrXz4RwJj5AVQNgB8,Gargash - Quoz,3.8,1530,22.5,0.58,medium,Gargash Motors - Al Quoz,1,1,0.8703
+DLR0047,Gargash - Fujairah Mercedes,Mercedes-Benz,Fujairah,Fujairah,2008,18,Silver,ChIJSQlEt4X49D4R_3I6Qf7cPhE,"Gargash - Mercedes-Benz Showroom, Fujairah",4.0,162,9.0,0.19,high,Gargash - Fujairah Mercedes,2,2,0.0922
+DLR0020,Gargash Motors - Sharjah,Mercedes-Benz,Sharjah,Sharjah,1998,28,Gold,ChIJ2eoBSV9ZXz4RLqocCe4vrDE,Al Fakhama Auto Maint الفخامة لصيانة السيارات,4.5,65,2.3,2.83,low,Gargash Motors - Sharjah Mercedes-Benz,3,3,0.037
+DLR0019,Gargash Motors - Abu Dhabi,Mercedes-Benz,Abu Dhabi,Abu Dhabi,1985,41,Platinum,ChIJPxmFdDhnXj4RJMFpoH3K0Ag,Mercedes-Benz car charging station Musriff Mall,5.0,1,0.0,0.94,medium,Mercedes-Benz dealer Abu Dhabi UAE,4,4,0.0006
+DLR0022,Ali & Sons - Al Ain Mitsubishi,Mitsubishi,Al Ain,Al Ain,1988,38,Gold,ChIJL5vkktS2ij4R6RmcFas72Ns,Kanad Hospital,4.6,1506,39.6,1.96,low,Ali & Sons Al Ain,1,1,0.8002
+DLR0024,Al Habtoor Motors - Dubai,Mitsubishi,Dubai,Dubai,1983,43,Gold,ChIJpTH6cdRrXz4RS6gzl016cpA,Carology.ae,4.8,374,8.7,1.82,low,Mitsubishi dealer Dubai UAE,2,2,0.1987
+DLR0043,Swaidan Trading - Dubai Mitsubishi,Mitsubishi,Dubai,Dubai,2000,26,Silver,ChIJ46nwRCloXz4RwsrlW9pVGXU,Savanna Group of Companies,4.5,2,0.1,0.5,medium,Swaidan Trading - Dubai Mitsubishi,3,3,0.0011
+DLR0021,Ali & Sons - Abu Dhabi Mitsubishi,Mitsubishi,Abu Dhabi,Abu Dhabi,1979,47,Platinum,ChIJO9UnaUJpXj4RaQH41KQE58o,ISG Middle East,,0,0.0,1.22,medium,Ali & Sons Abu Dhabi,4,4,0.0
+DLR0025,Al Habtoor Motors - Abu Dhabi,Mitsubishi,Abu Dhabi,Abu Dhabi,1990,36,Silver,,,,0,0.0,-1.0,not_found,,4,4,0.0
+DLR0010,Arabian Automobiles - Deira,Nissan,Dubai,Dubai,1976,50,Platinum,ChIJhZ-aO9xcXz4RA0G2HJQqpIw,Nissan Showroom - Deira Dubai - AWR Automotive,4.3,2615,52.3,2.32,low,Arabian Automobiles - Deira,1,1,0.8004
+DLR0046,Al Masaood - Al Ain Nissan,Nissan,Al Ain,Al Ain,2005,21,Silver,ChIJ97gkvTO3ij4RJ0t-N0QtaM0,Nissan Showroom Al Ain - Al Masaood Automobiles,4.3,566,27.0,2.96,low,Al Masaood - Al Ain Nissan,2,2,0.1732
+DLR0013,Arabian Automobiles - Sharjah,Nissan,Sharjah,Sharjah,2002,24,Gold,ChIJh0dthgFZXz4RoaFufz7VjAE,"SEOUL AUTO PARTS -BR-03 (Hyundai, kia, Nissan, MG Spare parts)",4.6,53,2.2,1.36,medium,Nissan dealer Sharjah UAE,3,3,0.0162
+DLR0011,Arabian Automobiles - Sheikh Zayed Road,Nissan,Dubai,Dubai,1990,36,Platinum,ChIJP5VcXGBpXz4RffEh0j2EQuc,Auto Spare Collector,4.8,33,0.9,1.99,low,Arabian Automobiles - Sheikh Zayed Road,4,4,0.0101
+DLR0012,Arabian Automobiles - Abu Dhabi,Nissan,Abu Dhabi,Abu Dhabi,1995,31,Gold,,,,0,0.0,-1.0,not_found,,5,5,0.0
+DLR0014,Arabian Automobiles - Ajman,Nissan,Ajman,Ajman,2010,16,Silver,,,,0,0.0,-1.0,not_found,,5,5,0.0
+DLR0042,Al Masaood - Abu Dhabi Nissan,Nissan,Abu Dhabi,Abu Dhabi,1982,44,Gold,,,,0,0.0,-1.0,not_found,,5,5,0.0
+DLR0038,Tesla UAE - Mall of Emirates,Tesla,Dubai,Dubai,2023,3,Gold,ChIJrZCt7XVrXz4RUbclET2I8RY,Tesla Supercharger,3.5,76,25.3,1.19,medium,Tesla UAE - Mall of Emirates,1,1,0.7677
+DLR0037,Tesla UAE - Yas Mall Abu Dhabi,Tesla,Abu Dhabi,Abu Dhabi,2022,4,Gold,ChIJy_gAjn1FXj4Rx8hzoXiXStY,Tesla Destination Charger,3.7,15,3.8,0.9,medium,Tesla UAE - Yas Mall Abu Dhabi,2,2,0.1515
+DLR0036,Tesla UAE - Dubai Mall,Tesla,Dubai,Dubai,2021,5,Platinum,ChIJoRf0O4JCXz4RMIJdmwBVnwg,Tesla Destination Charger,3.6,8,1.6,0.41,medium,Tesla UAE - Dubai Mall,3,3,0.0808
+DLR0002,Al-Futtaim Motors - Abu Dhabi Mussafah,Toyota,Abu Dhabi,Abu Dhabi,2001,25,Platinum,ChIJK_smqIBBXj4R2P6nJiTghQA,Al Fan Emirates Abu Dhabi الفن الاماراتي أبو ظبي,4.7,10771,430.8,2.28,low,Al Abu Dhabi,1,1,0.9859
+DLR0003,Al-Futtaim Motors - Sharjah,Toyota,Sharjah,Sharjah,2005,21,Gold,ChIJe6-LGmRZXz4ROgnFJFb3L04,Al-Futtaim Auto Centers - Emirates,4.4,102,4.9,1.72,low,Al-Futtaim Motors - Sharjah,2,2,0.0093
+DLR0001,Al-Futtaim Motors - Dubai Festival City,Toyota,Dubai,Dubai,1997,29,Platinum,ChIJBySZqHtdXz4R8FCzHjNOwIg,Al-Futtaim Automotive,4.1,50,1.7,0.81,medium,Al-Futtaim Motors - Dubai Festival City,3,3,0.0046
+DLR0045,Al-Futtaim Motors - RAK Toyota,Toyota,Ras Al Khaimah,Ras Al Khaimah,2015,11,Silver,ChIJ9VsGW_Z19j4RO5RZSDCTo8o,Ras Al Khaimah UAE,5.0,2,0.2,0.47,medium,Al Ras Al Khaimah,4,4,0.0002
+DLR0004,Al-Futtaim Motors - Al Ain,Toyota,Al Ain,Al Ain,2008,18,Gold,ChIJSaDVy0Wxij4Rf5_yW-qMb_U,Al Ain,,0,0.0,2.89,low,Al Al Ain,5,5,0.0
+DLR0039,Al Nabooda - Dubai Volkswagen,Volkswagen,Dubai,Dubai,1968,58,Gold,ChIJq6rqrX1CXz4RD_wLA9QqfTE,"Khalifa Juma Al Nabooda, Office 201",4.5,64,1.1,0.7,medium,Al Nabooda - Dubai Volkswagen,1,1,1.0
+DLR0040,Al Nabooda - Abu Dhabi Volkswagen,Volkswagen,Abu Dhabi,Abu Dhabi,1972,54,Gold,,,,0,0.0,-1.0,not_found,,2,2,0.0
