@@ -743,7 +743,7 @@ def _render_forecast_comparison(filters: dict, colors: dict):
             fig.add_trace(go.Scatter(
                 x=plot_sent["ds"], y=plot_sent["yhat"],
                 name="Sentiment-Enhanced Forecast", mode="lines",
-                line=dict(color=colors["accent"], width=2.5, dash="dot"),
+                line=dict(color="#ec4899", width=2.5, dash="dot"),
             ))
             fut_sent = plot_sent[plot_sent["actual"].isna()]
             if not fut_sent.empty:

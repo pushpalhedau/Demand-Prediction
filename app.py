@@ -33,7 +33,7 @@ from dashboard.strategic_planning import render_strategic_planning
 
 # ── Page Config ──────────────────────────────────────────
 st.set_page_config(
-    page_title="CEO Real Estate Intelligence",
+    page_title="Predicta X",
     page_icon="RE",
     layout="wide",
     initial_sidebar_state="expanded",

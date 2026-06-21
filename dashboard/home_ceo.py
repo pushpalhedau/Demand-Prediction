@@ -1,5 +1,6 @@
 import streamlit as st
 import plotly.graph_objects as go
+import pandas as pd
 from datetime import date
 
 from database.queries import (
@@ -7,11 +8,12 @@ from database.queries import (
     get_ceo_ai_insights,
     get_revenue_collections_trend,
     get_inventory_breakdown,
-    get_forecast_chart_data,
+    get_revenue_vs_target_forecast,
     get_project_health_scores,
 )
 from utils.helpers import (
     render_kpi_card,
+    render_chart_header,
     fmt_aed,
     fmt_number,
     get_re_colors,
@@ -102,6 +104,7 @@ def render_ceo_dashboard(filters: dict, session):
             fmt_aed(kpis["total_revenue_aed"]),
             f"{abs(kpis['revenue_mom_delta']):.1f}% MoM",
             kpis["revenue_mom_delta"] >= 0,
+            tooltip="Total revenue collected from all property sales and rental payments this month across all projects.",
         )
     with c2:
         render_kpi_card(
@@ -109,6 +112,7 @@ def render_ceo_dashboard(filters: dict, session):
             fmt_number(kpis["bookings_this_month"]),
             f"{abs(kpis['bookings_mom_delta']):.1f}% MoM",
             kpis["bookings_mom_delta"] >= 0,
+            tooltip="Number of new property booking confirmations received this month.",
         )
     with c3:
         render_kpi_card(
@@ -116,16 +120,19 @@ def render_ceo_dashboard(filters: dict, session):
             f"{kpis['collection_efficiency_pct']:.1f}%",
             f"{abs(kpis['collection_delta']):.1f}pp",
             kpis["collection_delta"] >= 0,
+            tooltip="Percentage of scheduled payment installments successfully collected from buyers and tenants.",
         )
     with c4:
         render_kpi_card(
             "Inventory Available",
             fmt_number(kpis["inventory_available"], " units"),
+            tooltip="Total number of units currently available for sale or lease across all projects and emirates.",
         )
     with c5:
         render_kpi_card(
             "Pipeline Value",
             fmt_aed(kpis["pipeline_value_aed"]),
+            tooltip="Estimated total value of deals currently in the sales pipeline, including leads and under-negotiation properties.",
         )
 
     st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
@@ -138,6 +145,7 @@ def render_ceo_dashboard(filters: dict, session):
             f"{kpis['sales_conversion_rate_pct']:.1f}%",
             f"{abs(kpis['conversion_delta']):.1f}pp",
             kpis["conversion_delta"] >= 0,
+            tooltip="Percentage of qualified leads that converted into confirmed bookings this period.",
         )
     with c7:
         render_kpi_card(
@@ -145,16 +153,19 @@ def render_ceo_dashboard(filters: dict, session):
             f"{kpis['project_completion_pct']:.1f}%",
             f"{abs(kpis['project_delta']):.1f}pp",
             kpis["project_delta"] >= 0,
+            tooltip="Weighted average construction completion percentage across all active development projects.",
         )
     with c8:
         render_kpi_card(
             "Occupancy Rate",
             f"{kpis['occupancy_rate_pct']:.1f}%",
+            tooltip="Percentage of all managed rental units that are currently occupied by tenants.",
         )
     with c9:
         render_kpi_card(
             "Rental Yield",
             f"{kpis['rental_yield_pct']:.2f}%",
+            tooltip="Annual rental income as a percentage of total property value, indicating rental investment performance.",
         )
     with c10:
         render_kpi_card(
@@ -162,6 +173,7 @@ def render_ceo_dashboard(filters: dict, session):
             fmt_aed(kpis["forecast_revenue_aed"]),
             "next 3 months",
             True,
+            tooltip="Projected total revenue for the next 3 months based on current booking trends and market analysis.",
         )
 
     st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
@@ -193,6 +205,12 @@ def render_ceo_dashboard(filters: dict, session):
     chart_l, chart_r = st.columns([6, 4])
 
     with chart_l:
+        render_chart_header(
+            "Revenue & Collections Trend (AED M)",
+            "Tracks monthly revenue booked vs. actual collections over the past 12 months. "
+            "A widening gap between the two lines signals a collections shortfall — use this "
+            "to flag payment delays and prioritise follow-ups before cash-flow is impacted.",
+        )
         try:
             trend_df = get_revenue_collections_trend(session, months=12)
             if not trend_df.empty:
@@ -215,7 +233,8 @@ def render_ceo_dashboard(filters: dict, session):
                     mode="lines+markers",
                     marker=dict(size=5),
                 ))
-                layout = plotly_dark_layout("Revenue & Collections Trend (AED M)", 320)
+                layout = plotly_dark_layout("", 320)
+                layout["margin"]["t"] = 10
                 layout["yaxis"]["ticksuffix"] = "M"
                 fig.update_layout(**layout)
                 st.plotly_chart(fig, use_container_width=True)
@@ -225,6 +244,12 @@ def render_ceo_dashboard(filters: dict, session):
             st.warning(f"Chart unavailable: {e}")
 
     with chart_r:
+        render_chart_header(
+            "Inventory by Emirate",
+            "Shows the split of units across Available, Booked, and Registered status for each "
+            "emirate. Use this to identify where supply is piling up or demand is strongest, "
+            "and to redirect sales efforts or launch promotions in slow-moving markets.",
+        )
         try:
             inv_df = get_inventory_breakdown(session)
             if not inv_df.empty:
@@ -250,7 +275,8 @@ def render_ceo_dashboard(filters: dict, session):
                     orientation="h",
                     marker_color=colors["indigo"],
                 ))
-                layout2 = plotly_dark_layout("Inventory by Emirate", 320)
+                layout2 = plotly_dark_layout("", 320)
+                layout2["margin"]["t"] = 10
                 layout2["barmode"] = "stack"
                 fig2.update_layout(**layout2)
                 st.plotly_chart(fig2, use_container_width=True)
@@ -266,25 +292,58 @@ def render_ceo_dashboard(filters: dict, session):
     chart_l2, chart_r2 = st.columns([6, 4])
 
     with chart_l2:
+        render_chart_header(
+            "Revenue vs Target & 3M Forecast (AED M)",
+            "Shows actual revenue against your sales target for the past 6 months, then "
+            "extends as a 3-month forward projection (shaded zone). A widening gap between "
+            "forecast and target is an early warning to review the pipeline or adjust targets.",
+        )
         try:
-            fc_df = get_forecast_chart_data(session)
+            fc_df = get_revenue_vs_target_forecast(session)
             if not fc_df.empty:
+                hist = fc_df[~fc_df["is_forecast"]]
+                fcast = fc_df[fc_df["is_forecast"]]
+
                 fig3 = go.Figure()
+
+                # Actual revenue — solid green with area fill
                 fig3.add_trace(go.Scatter(
-                    x=fc_df["period_date"],
-                    y=fc_df["revenue_actual_aed"] / 1e6,
+                    x=hist["period_date"],
+                    y=hist["revenue_aed"] / 1e6,
                     name="Actual Revenue",
                     line=dict(color=colors["primary"], width=2.5),
                     fill="tozeroy",
                     fillcolor="rgba(16,185,129,0.08)",
+                    mode="lines+markers",
+                    marker=dict(size=5),
                 ))
+
+                # Forecast line — dashed cyan, connected from last actual point
+                connector = hist[["period_date", "revenue_aed"]].tail(1)
+                forecast_line = pd.concat(
+                    [connector, fcast[["period_date", "revenue_aed"]]],
+                    ignore_index=True,
+                )
                 fig3.add_trace(go.Scatter(
-                    x=fc_df["period_date"],
-                    y=fc_df["forecast_next_3m_aed"] / 1e6,
+                    x=forecast_line["period_date"],
+                    y=forecast_line["revenue_aed"] / 1e6,
                     name="3M Forecast",
                     line=dict(color=colors["cyan"], width=2, dash="dash"),
+                    mode="lines",
                 ))
-                layout3 = plotly_dark_layout("Revenue Forecast (AED M)", 280)
+
+                # Sales Target — dotted amber across full range
+                if fc_df["target_aed"].fillna(0).sum() > 0:
+                    fig3.add_trace(go.Scatter(
+                        x=fc_df["period_date"],
+                        y=fc_df["target_aed"] / 1e6,
+                        name="Sales Target",
+                        line=dict(color=colors["gold"], width=1.5, dash="dot"),
+                        mode="lines",
+                    ))
+
+                layout3 = plotly_dark_layout("", 280)
+                layout3["margin"]["t"] = 10
                 layout3["yaxis"]["ticksuffix"] = "M"
                 fig3.update_layout(**layout3)
                 st.plotly_chart(fig3, use_container_width=True)
@@ -294,6 +353,13 @@ def render_ceo_dashboard(filters: dict, session):
             st.warning(f"Chart unavailable: {e}")
 
     with chart_r2:
+        render_chart_header(
+            "Project Health Scores",
+            "Rates each active project 0–100 based on construction progress, budget adherence, "
+            "and delivery timelines. Green (≥80) is on track, amber (60–79) needs attention, "
+            "red (<60) requires immediate intervention. Use this to prioritise site visits and "
+            "resource reallocation.",
+        )
         try:
             proj_df = get_project_health_scores(session)
             if not proj_df.empty:
@@ -315,7 +381,8 @@ def render_ceo_dashboard(filters: dict, session):
                     text=[f"{s:.0f}" for s in proj_df["health_score"]],
                     textposition="auto",
                 ))
-                layout4 = plotly_dark_layout("Project Health Scores", 280)
+                layout4 = plotly_dark_layout("", 280)
+                layout4["margin"]["t"] = 10
                 layout4["xaxis"]["range"] = [0, 100]
                 fig4.update_layout(**layout4)
                 st.plotly_chart(fig4, use_container_width=True)

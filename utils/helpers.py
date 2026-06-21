@@ -21,7 +21,7 @@ def inject_custom_css():
         """, unsafe_allow_html=True)
 
 
-def render_kpi_card(title: str, value: str, delta: str = None, is_positive: bool = True, icon: str = "", invert_arrow: bool = False):
+def render_kpi_card(title: str, value: str, delta: str = None, is_positive: bool = True, icon: str = "", invert_arrow: bool = False, tooltip: str = None):
     delta_html = ""
     if delta:
         cls = "positive" if is_positive else "negative"
@@ -33,11 +33,23 @@ def render_kpi_card(title: str, value: str, delta: str = None, is_positive: bool
 
     icon_html = f'<div class="kpi-icon">{icon}</div>' if icon else ""
 
+    tooltip_html = ""
+    if tooltip:
+        tooltip_html = (
+            f'<div class="kpi-info-wrapper">'
+            f'<span class="kpi-info-icon">?</span>'
+            f'<div class="kpi-tooltip-box">{tooltip}</div>'
+            f'</div>'
+        )
+
     st.markdown(
+        f'<div style="position:relative;">'
         f'<div class="kpi-card">{icon_html}'
         f'<div class="kpi-title">{title}</div>'
         f'<div class="kpi-value">{value}</div>'
         f'{delta_html}'
+        f'</div>'
+        f'{tooltip_html}'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -133,15 +145,48 @@ def plotly_dark_layout(title: str = "", height: int = 400) -> dict:
     )
 
 
-def section_header(title: str, badge: str = "", icon: str = ""):
+def render_chart_header(title: str, tooltip: str = None):
+    tooltip_html = ""
+    if tooltip:
+        tooltip_html = (
+            f'<div class="kpi-info-wrapper" style="position:relative;top:auto;right:auto;'
+            f'display:inline-flex;align-items:center;margin-left:8px;vertical-align:middle;">'
+            f'<span class="kpi-info-icon">?</span>'
+            f'<div class="kpi-tooltip-box" style="bottom:auto;top:calc(100% + 6px);'
+            f'left:0;right:auto;width:240px;">{tooltip}</div>'
+            f'</div>'
+        )
+    st.markdown(
+        f'<div style="display:flex;align-items:center;margin-bottom:2px;padding:0 4px;">'
+        f'<span style="font-size:13px;font-weight:700;color:#f0f4f8;'
+        f'font-family:\'Outfit\',sans-serif;letter-spacing:-0.01em;">{title}</span>'
+        f'{tooltip_html}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def section_header(title: str, badge: str = "", icon: str = "", tooltip: str = ""):
     icon_span = f"<span style='margin-right:6px'>{icon}</span>" if icon else ""
     badge_span = (
         f'<span class="section-badge" style="margin-left:8px">{badge}</span>'
         if badge else ""
     )
-    st.markdown(f"""
-    <div class="section-header">
-        <span class="section-title">{icon_span}{title}</span>
-        {badge_span}
-    </div>
-    """, unsafe_allow_html=True)
+    tooltip_html = ""
+    if tooltip:
+        tooltip_html = (
+            f'<div class="kpi-info-wrapper" style="position:relative;top:auto;right:auto;'
+            f'display:inline-flex;align-items:center;margin-left:10px;vertical-align:middle;">'
+            f'<span class="kpi-info-icon">?</span>'
+            f'<div class="kpi-tooltip-box" style="bottom:auto;top:calc(100% + 6px);'
+            f'left:0;right:auto;width:260px;">{tooltip}</div>'
+            f'</div>'
+        )
+    st.markdown(
+        f'<div class="section-header" style="align-items:center;">'
+        f'<span class="section-title">{icon_span}{title}</span>'
+        f'{badge_span}'
+        f'{tooltip_html}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )

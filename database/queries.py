@@ -830,6 +830,49 @@ def get_forecast_chart_data(session: Session) -> pd.DataFrame:
     return df
 
 
+def get_revenue_vs_target_forecast(session: Session, months_history: int = 6) -> pd.DataFrame:
+    """Returns historical revenue + target for past N months, plus 3 projected future months.
+
+    Columns: period_date, revenue_aed, target_aed, is_forecast (bool)
+    Future revenue is the latest forecast_next_3m_aed split evenly across 3 months.
+    Future target uses the trailing average monthly target.
+    """
+    cutoff = date.today() - timedelta(days=months_history * 30)
+    query = session.query(
+        Financial.period_date,
+        func.sum(Financial.revenue_booked_aed).label("revenue_aed"),
+        func.sum(Financial.sales_target_aed).label("target_aed"),
+        func.sum(Financial.forecast_next_3m_aed).label("forecast_next_3m_aed"),
+    ).filter(
+        Financial.period_date >= cutoff,
+    ).group_by(Financial.period_date).order_by(Financial.period_date)
+
+    df = pd.read_sql(query.statement, session.bind)
+    if df.empty:
+        return df
+
+    df["period_date"] = pd.to_datetime(df["period_date"])
+    df["is_forecast"] = False
+
+    latest = df.iloc[-1]
+    monthly_forecast = (latest["forecast_next_3m_aed"] or 0) / 3
+    avg_target = df["target_aed"].fillna(0).mean()
+    last_date = latest["period_date"]
+
+    future_rows = [
+        {
+            "period_date": last_date + pd.DateOffset(months=i),
+            "revenue_aed": monthly_forecast,
+            "target_aed": avg_target,
+            "forecast_next_3m_aed": None,
+            "is_forecast": True,
+        }
+        for i in range(1, 4)
+    ]
+
+    return pd.concat([df, pd.DataFrame(future_rows)], ignore_index=True)
+
+
 def get_project_health_scores(session: Session) -> pd.DataFrame:
     query = session.query(
         ConstructionTracker.project_name,
@@ -977,6 +1020,108 @@ def get_lead_kpis(session: Session) -> dict:
     }
 
 
+# ─── Cross-Domain Lead Intelligence ──────────────────────────────────────────
+
+def get_demand_supply_gap(session: Session) -> pd.DataFrame:
+    """Lead demand (emirate × bedroom) vs available inventory from Listings."""
+    lead_q = session.query(
+        LeadPipeline.emirate_interest.label("emirate"),
+        LeadPipeline.bedroom_preference.label("bedrooms"),
+        func.count(LeadPipeline.lead_id).label("lead_count"),
+    ).filter(
+        LeadPipeline.emirate_interest.isnot(None),
+        LeadPipeline.bedroom_preference.isnot(None),
+    ).group_by(LeadPipeline.emirate_interest, LeadPipeline.bedroom_preference)
+    df_leads = pd.read_sql(lead_q.statement, session.bind)
+
+    supply_q = session.query(
+        Listing.emirate,
+        Listing.bedrooms,
+        func.sum(Listing.available_units).label("available_units"),
+    ).filter(
+        Listing.emirate.isnot(None),
+        Listing.bedrooms.isnot(None),
+    ).group_by(Listing.emirate, Listing.bedrooms)
+    df_supply = pd.read_sql(supply_q.statement, session.bind)
+
+    if df_leads.empty:
+        return df_leads
+    merged = df_leads.merge(df_supply, on=["emirate", "bedrooms"], how="left")
+    merged["available_units"] = merged["available_units"].fillna(0).astype(int)
+    return merged
+
+
+def get_project_risk_pipeline(session: Session) -> pd.DataFrame:
+    """Late-stage leads per project crossed with construction health scores."""
+    LATE_STAGES = ['Site Visit Done', 'Proposal Sent', 'Negotiation']
+
+    lead_q = session.query(
+        LeadPipeline.project_interest.label("project_name"),
+        func.count(LeadPipeline.lead_id).label("late_stage_leads"),
+        func.sum(LeadPipeline.budget_stated_aed).label("at_risk_value_aed"),
+    ).filter(
+        LeadPipeline.lead_stage.in_(LATE_STAGES),
+        LeadPipeline.project_interest.isnot(None),
+    ).group_by(LeadPipeline.project_interest)
+    df_leads = pd.read_sql(lead_q.statement, session.bind)
+
+    health_q = session.query(
+        ConstructionTracker.project_name,
+        func.avg(ConstructionTracker.project_health_score).label("health_score"),
+        func.max(ConstructionTracker.delay_days).label("delay_days"),
+        func.max(func.cast(ConstructionTracker.delay_risk_flag, Float)).label("delay_risk"),
+        func.avg(ConstructionTracker.actual_progress_pct).label("progress_pct"),
+    ).group_by(ConstructionTracker.project_name)
+    df_health = pd.read_sql(health_q.statement, session.bind)
+
+    if df_leads.empty:
+        return df_leads
+    merged = df_leads.merge(df_health, on="project_name", how="left")
+    merged["health_score"] = merged["health_score"].fillna(50).round(1)
+    merged["delay_days"] = merged["delay_days"].fillna(0).astype(int)
+    merged["delay_risk"] = merged["delay_risk"].fillna(0).astype(bool)
+    return merged.sort_values("at_risk_value_aed", ascending=False).head(10)
+
+
+def get_lead_budget_vs_market(session: Session) -> pd.DataFrame:
+    """Avg lead budget vs avg actual transaction price by emirate × property type."""
+    lead_q = session.query(
+        LeadPipeline.emirate_interest.label("emirate"),
+        LeadPipeline.property_interest.label("property_type"),
+        func.avg(LeadPipeline.budget_stated_aed).label("avg_budget_aed"),
+        func.count(LeadPipeline.lead_id).label("lead_count"),
+    ).filter(
+        LeadPipeline.emirate_interest.isnot(None),
+        LeadPipeline.property_interest.isnot(None),
+        LeadPipeline.budget_stated_aed.isnot(None),
+    ).group_by(LeadPipeline.emirate_interest, LeadPipeline.property_interest)
+    df_leads = pd.read_sql(lead_q.statement, session.bind)
+
+    txn_q = session.query(
+        Transaction.emirate,
+        Transaction.property_type,
+        func.avg(Transaction.selling_price_aed).label("avg_market_price_aed"),
+        func.count(Transaction.transaction_id).label("txn_count"),
+    ).filter(
+        Transaction.emirate.isnot(None),
+        Transaction.property_type.isnot(None),
+        Transaction.selling_price_aed.isnot(None),
+    ).group_by(Transaction.emirate, Transaction.property_type)
+    df_txn = pd.read_sql(txn_q.statement, session.bind)
+
+    if df_leads.empty or df_txn.empty:
+        return pd.DataFrame()
+    merged = df_leads.merge(df_txn, on=["emirate", "property_type"], how="inner")
+    if merged.empty:
+        return merged
+    merged["budget_gap_pct"] = (
+        (merged["avg_budget_aed"] - merged["avg_market_price_aed"])
+        / merged["avg_market_price_aed"] * 100
+    ).round(1)
+    merged["label"] = merged["emirate"] + " · " + merged["property_type"]
+    return merged.sort_values("budget_gap_pct")
+
+
 # ─── Project Performance ──────────────────────────────────────────────────────
 
 def get_project_portfolio(session: Session) -> pd.DataFrame:
@@ -987,7 +1132,7 @@ def get_project_portfolio(session: Session) -> pd.DataFrame:
         Listing.property_category,
         Listing.completion_status,
         func.avg(Listing.construction_progress_pct).label("avg_progress"),
-        func.sum(Listing.total_units_in_project).label("total_units"),
+        func.max(Listing.total_units_in_project).label("total_units"),
         func.sum(Listing.available_units).label("available_units"),
         func.sum(Listing.booked_units).label("booked_units"),
         func.sum(Listing.registered_units).label("registered_units"),

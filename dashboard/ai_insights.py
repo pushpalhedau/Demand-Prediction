@@ -36,7 +36,11 @@ def render_ai_insights(filters: dict):
         else:
             mf = df_market.copy()
             if not city_filter:
-                mf = mf.groupby("date").mean(numeric_only=True).reset_index()
+                count_cols = [c for c in mf.columns if c in ("new_project_launches", "golden_visa_applications")]
+                rate_cols = [c for c in mf.select_dtypes("number").columns if c not in count_cols]
+                agg = {c: "mean" for c in rate_cols}
+                agg.update({c: "sum" for c in count_cols})
+                mf = mf.groupby("date").agg(agg).reset_index()
 
             # ── UAE CB Rate + Mortgage Rate ────────────────
             section_header("Interest Rate Environment")
@@ -288,7 +292,11 @@ def render_ai_insights(filters: dict):
 
         mf_inv = df_market.copy()
         if not city_filter:
-            mf_inv = mf_inv.groupby("date").mean(numeric_only=True).reset_index()
+            count_cols_inv = [c for c in mf_inv.columns if c in ("new_project_launches", "golden_visa_applications")]
+            rate_cols_inv = [c for c in mf_inv.select_dtypes("number").columns if c not in count_cols_inv]
+            agg_inv = {c: "mean" for c in rate_cols_inv}
+            agg_inv.update({c: "sum" for c in count_cols_inv})
+            mf_inv = mf_inv.groupby("date").agg(agg_inv).reset_index()
 
         section_header("Foreign & Institutional Investment Flows")
         col_i1, col_i2 = st.columns(2)
@@ -377,34 +385,34 @@ def render_ai_insights(filters: dict):
                     st.plotly_chart(fig, use_container_width=True)
 
         # ── Key signals summary ────────────────────────────
-        section_header("Current Market Signal Scorecard")
-        if factor_stats:
-            signals = []
-            def get_signal(key, label, good_low=True, unit=""):
-                if key not in factor_stats:
-                    return
-                stat = factor_stats[key]
-                val = stat["last"]
-                mid = (stat["min"] + stat["max"]) / 2
-                is_good = val < mid if good_low else val > mid
-                signals.append({
-                    "Signal": label,
-                    "Current": f"{val:.2f}{unit}",
-                    "Status": "Positive" if is_good else "Caution",
-                })
+        # section_header("Current Market Signal Scorecard")
+        # if factor_stats:
+        #     signals = []
+        #     def get_signal(key, label, good_low=True, unit=""):
+        #         if key not in factor_stats:
+        #             return
+        #         stat = factor_stats[key]
+        #         val = stat["last"]
+        #         mid = (stat["min"] + stat["max"]) / 2
+        #         is_good = val < mid if good_low else val > mid
+        #         signals.append({
+        #             "Signal": label,
+        #             "Current": f"{val:.2f}{unit}",
+        #             "Status": "Positive" if is_good else "Caution",
+        #         })
 
-            get_signal("uae_central_bank_base_rate_pct", "UAE CB Base Rate", good_low=True, unit="%")
-            get_signal("mortgage_rate_avg_pct", "Avg Mortgage Rate", good_low=True, unit="%")
-            get_signal("consumer_confidence_index", "Consumer Confidence", good_low=False)
-            get_signal("tourism_arrivals_index", "Tourism Arrivals Index", good_low=False)
-            get_signal("foreign_investment_inflow_bn_aed", "Foreign Investment Inflows", good_low=False, unit=" Bn")
-            get_signal("cpi_inflation_pct", "CPI Inflation", good_low=True, unit="%")
-            get_signal("property_registration_fee_pct", "DLD Registration Fee", good_low=True, unit="%")
-            get_signal("off_plan_sales_share_pct", "Off-Plan Sales Share", good_low=False, unit="%")
+        #     get_signal("uae_central_bank_base_rate_pct", "UAE CB Base Rate", good_low=True, unit="%")
+        #     get_signal("mortgage_rate_avg_pct", "Avg Mortgage Rate", good_low=True, unit="%")
+        #     get_signal("consumer_confidence_index", "Consumer Confidence", good_low=False)
+        #     get_signal("tourism_arrivals_index", "Tourism Arrivals Index", good_low=False)
+        #     get_signal("foreign_investment_inflow_bn_aed", "Foreign Investment Inflows", good_low=False, unit=" Bn")
+        #     get_signal("cpi_inflation_pct", "CPI Inflation", good_low=True, unit="%")
+        #     get_signal("property_registration_fee_pct", "DLD Registration Fee", good_low=True, unit="%")
+        #     get_signal("off_plan_sales_share_pct", "Off-Plan Sales Share", good_low=False, unit="%")
 
-            if signals:
-                st.dataframe(
-                    pd.DataFrame(signals),
-                    use_container_width=True,
-                    hide_index=True,
-                )
+        #     if signals:
+        #         st.dataframe(
+        #             pd.DataFrame(signals),
+        #             use_container_width=True,
+        #             hide_index=True,
+        #         )

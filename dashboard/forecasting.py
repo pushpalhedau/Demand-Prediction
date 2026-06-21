@@ -70,12 +70,12 @@ def render_forecasting(filters: dict):
     target_label = "Units" if "Units" in target else "Revenue (AED)"
 
     # ── Metrics strip ─────────────────────────────────────
-    section_header("Model Performance")
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Forecast Accuracy", f"{metrics['accuracy']:.1f}%")
-    m2.metric("MAE", f"{metrics['mae']:.1f}")
-    m3.metric("RMSE", f"{metrics['rmse']:.1f}")
-    m4.metric("Regressors Active", str(len(active_regs)))
+    # section_header("Model Performance")
+    # m1, m2, m3, m4 = st.columns(4)
+    # m1.metric("Forecast Accuracy", f"{metrics['accuracy']:.1f}%")
+    # m2.metric("MAE", f"{metrics['mae']:.1f}")
+    # m3.metric("RMSE", f"{metrics['rmse']:.1f}")
+    # m4.metric("Regressors Active", str(len(active_regs)))
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -108,12 +108,12 @@ def render_forecasting(filters: dict):
     ))
 
     # Historical prediction line
-    fig.add_trace(go.Scatter(
-        x=hist["ds"], y=hist["yhat"],
-        mode="lines",
-        name="Model Fit",
-        line=dict(color=colors["primary"], width=1.5, dash="dot"),
-    ))
+    # fig.add_trace(go.Scatter(
+    #     x=hist["ds"], y=hist["yhat"],
+    #     mode="lines",
+    #     name="Model Fit",
+    #     line=dict(color=colors["primary"], width=1.5, dash="dot"),
+    # ))
 
     # Future forecast
     fig.add_trace(go.Scatter(
@@ -210,6 +210,6 @@ def render_forecasting(filters: dict):
             "event_demand_multiplier": "Market Event Multiplier",
         }
         labels = [reg_display.get(r, r.replace("_", " ").title()) for r in active_regs]
-        st.markdown(f"""<div class="insight-box">
-            <b>Active Regressors ({len(active_regs)}):</b> {', '.join(labels)}
-        </div>""", unsafe_allow_html=True)
+        # st.markdown(f"""<div class="insight-box">
+        #     <b>Active Regressors ({len(active_regs)}):</b> {', '.join(labels)}
+        # </div>""", unsafe_allow_html=True)

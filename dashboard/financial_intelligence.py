@@ -201,33 +201,33 @@ def render_financial_intelligence(filters: dict):
             <b>Total Overdue:</b> {fmt_aed(overdue['total_overdue'])}
         </div>""", unsafe_allow_html=True)
 
-    with col_d:
-        section_header("Revenue Forecast (3M & 12M)")
-        if not df_forecast.empty:
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=df_forecast["period_date"],
-                y=df_forecast["revenue_actual_aed"] / 1e6,
-                name="Actual Revenue (AED M)",
-                line=dict(color=colors["primary"], width=2.5),
-                mode="lines+markers", marker=dict(size=5),
-            ))
-            fig.add_trace(go.Scatter(
-                x=df_forecast["period_date"],
-                y=df_forecast["forecast_next_3m_aed"] / 1e6,
-                name="3M Forecast (AED M)",
-                line=dict(color=colors["gold"], width=2, dash="dash"),
-                mode="lines",
-            ))
-            fig.add_trace(go.Scatter(
-                x=df_forecast["period_date"],
-                y=df_forecast["forecast_next_12m_aed"] / 1e6,
-                name="12M Forecast (AED M)",
-                line=dict(color=colors["indigo"], width=2, dash="dot"),
-                mode="lines",
-            ))
-            layout = plotly_dark_layout("", 300)
-            layout["yaxis"]["title"] = "AED Millions"
-            layout["legend"] = dict(orientation="h", y=-0.2, bgcolor="rgba(0,0,0,0)")
-            fig.update_layout(**layout)
-            st.plotly_chart(fig, use_container_width=True)
+    # with col_d:
+    #     section_header("Revenue Forecast (3M & 12M)")
+    #     if not df_forecast.empty:
+    #         fig = go.Figure()
+    #         fig.add_trace(go.Scatter(
+    #             x=df_forecast["period_date"],
+    #             y=df_forecast["revenue_actual_aed"] / 1e6,
+    #             name="Actual Revenue (AED M)",
+    #             line=dict(color=colors["primary"], width=2.5),
+    #             mode="lines+markers", marker=dict(size=5),
+    #         ))
+    #         fig.add_trace(go.Scatter(
+    #             x=df_forecast["period_date"],
+    #             y=df_forecast["forecast_next_3m_aed"] / 1e6,
+    #             name="3M Forecast (AED M)",
+    #             line=dict(color=colors["gold"], width=2, dash="dash"),
+    #             mode="lines",
+    #         ))
+    #         fig.add_trace(go.Scatter(
+    #             x=df_forecast["period_date"],
+    #             y=df_forecast["forecast_next_12m_aed"] / 1e6,
+    #             name="12M Forecast (AED M)",
+    #             line=dict(color=colors["indigo"], width=2, dash="dot"),
+    #             mode="lines",
+    #         ))
+    #         layout = plotly_dark_layout("", 300)
+    #         layout["yaxis"]["title"] = "AED Millions"
+    #         layout["legend"] = dict(orientation="h", y=-0.2, bgcolor="rgba(0,0,0,0)")
+    #         fig.update_layout(**layout)
+    #         st.plotly_chart(fig, use_container_width=True)
