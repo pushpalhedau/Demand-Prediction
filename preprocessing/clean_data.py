@@ -103,7 +103,6 @@ def clean_developers(filepath):
     df['primary_city'] = df['primary_city'].fillna("Dubai")
     df['operating_cities'] = df['operating_cities'].fillna("Dubai")
     df['emirate'] = df['emirate'].fillna("Dubai")
-    df['address'] = df['address'].fillna("Unknown")
     df['tier'] = df['tier'].fillna("Tier 2")
     df['established_year'] = df['established_year'].fillna(2000).astype(int)
     df['rera_registration_no'] = df['rera_registration_no'].fillna("N/A")
@@ -121,13 +120,30 @@ def clean_developers(filepath):
     ).astype(int)
     df['performance_score'] = df['performance_score'].fillna(df['performance_score'].median())
     df['rating'] = df['rating'].fillna(3.5)
-    df['total_projects_launched'] = df['total_projects_launched'].fillna(1).astype(int)
-    df['active_projects'] = df['active_projects'].fillna(1).astype(int)
-    df['completed_projects'] = df['completed_projects'].fillna(0).astype(int)
-    df['specialization'] = df['specialization'].fillna("Residential")
-    df['off_plan_focus'] = df['off_plan_focus'].fillna(False).astype(bool)
-    df['latitude'] = df['latitude'].fillna(25.2048)   # Dubai default
-    df['longitude'] = df['longitude'].fillna(55.2708)
+
+    optional_int_cols = {
+        'total_projects_launched': 1,
+        'active_projects': 1,
+        'completed_projects': 0,
+    }
+    for col, default in optional_int_cols.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default).astype(int)
+
+    optional_str_cols = {'specialization': 'Residential', 'address': 'Unknown'}
+    for col, default in optional_str_cols.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default)
+
+    optional_bool_cols = {'off_plan_focus': False}
+    for col, default in optional_bool_cols.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default).astype(bool)
+
+    if 'latitude' in df.columns:
+        df['latitude'] = df['latitude'].fillna(25.2048)
+    if 'longitude' in df.columns:
+        df['longitude'] = df['longitude'].fillna(55.2708)
 
     return df
 
@@ -136,39 +152,57 @@ def clean_properties(filepath):
     df = pd.read_csv(filepath)
 
     df['project_name'] = df['project_name'].fillna("Unknown Project")
-    df['dld_permit_no'] = df['dld_permit_no'].fillna("N/A")
     df['property_type'] = df['property_type'].fillna("Apartment")
     df['property_category'] = df['property_category'].fillna("Mid-Market")
     df['bedrooms'] = df['bedrooms'].fillna("2BR")
-    df['bathrooms'] = df['bathrooms'].fillna(2).astype(int)
-    df['carpet_area_sqft_min'] = df['carpet_area_sqft_min'].fillna(
-        df['carpet_area_sqft_min'].median()
-    )
-    df['carpet_area_sqft_max'] = df['carpet_area_sqft_max'].fillna(
-        df['carpet_area_sqft_max'].median()
-    )
-    df['builtup_area_sqft'] = df['builtup_area_sqft'].fillna(df['builtup_area_sqft'].median())
-    df['base_price_aed'] = df['base_price_aed'].fillna(0).astype(int)
-    df['price_per_sqft_aed'] = df['price_per_sqft_aed'].fillna(df['price_per_sqft_aed'].median())
     df['emirate'] = df['emirate'].fillna("Dubai")
     df['city'] = df['city'].fillna("Dubai")
     df['locality'] = df['locality'].fillna("Unknown")
-    df['region'] = df['region'].fillna("South UAE")
-    df['total_floors'] = df['total_floors'].fillna(10).astype(int)
-    df['parking_spaces'] = df['parking_spaces'].fillna(1).astype(int)
-    df['amenities_score'] = df['amenities_score'].fillna(5.0)
     df['completion_status'] = df['completion_status'].fillna("Off-Plan")
     df['launch_year'] = df['launch_year'].fillna(2022).astype(int)
-    df['possession_year'] = df['possession_year'].fillna(2026).astype(int)
-    df['is_active'] = df['is_active'].fillna(True).astype(bool)
     df['freehold'] = df['freehold'].fillna(True).astype(bool)
-    df['leasehold_years'] = df['leasehold_years'].fillna(0).astype(int)
-    df['service_charge_aed_sqft'] = df['service_charge_aed_sqft'].fillna(15.0)
-    df['rental_yield_pct'] = df['rental_yield_pct'].fillna(6.0)
-    df['capital_appreciation_pct'] = df['capital_appreciation_pct'].fillna(7.0)
-    df['roi_pct'] = df['roi_pct'].fillna(df['rental_yield_pct'] + df['capital_appreciation_pct'])
     df['golden_visa_eligible'] = df['golden_visa_eligible'].fillna(False).astype(bool)
-    df['vat_applicable'] = df['vat_applicable'].fillna(False).astype(bool)
+
+    optional_str_cols = {
+        'dld_permit_no': 'N/A', 'region': 'South UAE',
+    }
+    for col, default in optional_str_cols.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default)
+
+    optional_int_cols = {
+        'bathrooms': 2, 'total_floors': 10, 'parking_spaces': 1,
+        'possession_year': 2026, 'leasehold_years': 0,
+        'base_price_aed': 0, 'listed_price_aed': 0,
+        'total_units_in_project': 100,
+    }
+    for col, default in optional_int_cols.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default).astype(int)
+
+    optional_float_cols = {
+        'carpet_area_sqft_min': None, 'carpet_area_sqft_max': None,
+        'builtup_area_sqft': None, 'area_sqft': None,
+        'price_per_sqft_aed': None, 'amenities_score': 5.0,
+        'service_charge_aed_sqft': 15.0, 'service_charge_per_sqft_aed': 15.0,
+        'rental_yield_pct': 6.0, 'capital_appreciation_pct': 7.0,
+        'walkability_score': None, 'metro_proximity_km': None,
+        'school_proximity_km': None,
+    }
+    for col, default in optional_float_cols.items():
+        if col in df.columns:
+            fill = df[col].median() if default is None else default
+            df[col] = df[col].fillna(fill)
+
+    if 'roi_pct' in df.columns:
+        rental = df.get('rental_yield_pct', pd.Series(6.0, index=df.index))
+        appreciation = df.get('capital_appreciation_pct', pd.Series(7.0, index=df.index))
+        df['roi_pct'] = df['roi_pct'].fillna(rental + appreciation)
+
+    optional_bool_cols = {'is_active': True, 'vat_applicable': False, 'off_plan_focus': False}
+    for col, default in optional_bool_cols.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(default).astype(bool)
 
     return df
 
@@ -223,12 +257,26 @@ def clean_listings(filepath):
 def clean_market_factors(filepath):
     df = pd.read_csv(filepath)
 
+    # Handle date column rename: new CSV uses record_date, DB model uses date
+    if 'record_date' in df.columns and 'date' not in df.columns:
+        df = df.rename(columns={'record_date': 'date'})
     df['date'] = pd.to_datetime(df['date'], format='mixed').dt.date
+
+    # Handle renamed columns: map new CSV names to DB model names
+    col_renames = {
+        'uae_gdp_growth_pct': 'gdp_growth_pct',
+        'inflation_cpi': 'cpi_inflation_pct',
+        'tourism_arrivals_millions': 'tourism_arrivals_index',
+    }
+    df = df.rename(columns={k: v for k, v in col_renames.items() if k in df.columns})
+
     df['year'] = df['year'].fillna(pd.to_datetime(df['date']).dt.year).astype(int)
     df['month'] = df['month'].fillna(pd.to_datetime(df['date']).dt.month).astype(int)
     df['quarter'] = df['quarter'].fillna("Q1")
-    df['city'] = df['city'].fillna("Dubai")
-    df['emirate'] = df['emirate'].fillna("Dubai")
+
+    for col in ['city', 'emirate']:
+        if col in df.columns:
+            df[col] = df[col].fillna("Dubai")
 
     numeric_cols = [
         'uae_central_bank_base_rate_pct', 'mortgage_rate_avg_pct', 'oil_price_usd_bbl',
@@ -257,7 +305,8 @@ def clean_market_factors(filepath):
         if col in df.columns:
             df[col] = df[col].fillna(0).astype(int)
 
-    df['market_event'] = df['market_event'].fillna("None")
+    if 'market_event' in df.columns:
+        df['market_event'] = df['market_event'].fillna("None")
 
     return df
 
@@ -389,15 +438,19 @@ def clean_contractors(filepath):
 def clean_financials(filepath):
     df = pd.read_csv(filepath)
 
+    # Handle date column rename: new CSV uses report_date, DB model uses period_date
+    if 'report_date' in df.columns and 'period_date' not in df.columns:
+        df = df.rename(columns={'report_date': 'period_date'})
     df = _parse_date_col(df, 'period_date')
 
     df['year'] = df['year'].fillna(2024).astype(int)
     df['month'] = df['month'].fillna(1).astype(int)
     df['quarter'] = df['quarter'].fillna('Q1')
-    df['entity_type'] = df['entity_type'].fillna('Project')
-    df['project_id'] = df['project_id'].fillna('Unknown')
-    df['project_name'] = df['project_name'].fillna('Unknown Project')
     df['developer_id'] = df['developer_id'].fillna('Unknown')
+
+    for col, default in [('entity_type', 'Project'), ('project_id', 'Unknown'), ('project_name', 'Unknown Project')]:
+        if col in df.columns:
+            df[col] = df[col].fillna(default)
 
     aed_cols = [
         'revenue_booked_aed', 'revenue_registered_aed', 'revenue_recognized_aed',
@@ -460,15 +513,21 @@ def clean_competitor_market(filepath):
 def clean_rental_market(filepath):
     df = pd.read_csv(filepath)
 
+    # Handle date column rename: new CSV uses record_date, DB model uses period_date
+    if 'record_date' in df.columns and 'period_date' not in df.columns:
+        df = df.rename(columns={'record_date': 'period_date'})
     df = _parse_date_col(df, 'period_date')
 
-    df['year'] = df['year'].fillna(2024).astype(int)
-    df['month'] = df['month'].fillna(1).astype(int)
-    df['quarter'] = df['quarter'].fillna('Q1')
+    if 'year' in df.columns:
+        df['year'] = df['year'].fillna(2024).astype(int)
+    if 'month' in df.columns:
+        df['month'] = df['month'].fillna(1).astype(int)
+    if 'quarter' in df.columns:
+        df['quarter'] = df['quarter'].fillna('Q1')
 
     str_defaults = {
         'emirate': 'Dubai', 'city': 'Dubai', 'locality': 'Unknown',
-        'property_type': 'Apartment', 'bedrooms': '2BR',
+        'property_type': 'Apartment', 'property_category': 'Mid-Market', 'bedrooms': '2BR',
     }
     for col, default in str_defaults.items():
         if col in df.columns:
@@ -507,9 +566,12 @@ def clean_documents_registry(filepath):
         if col in df.columns:
             df[col] = df[col].fillna(False).astype(bool)
 
-    df['days_to_expiry'] = df['days_to_expiry'].fillna(0).astype(int)
-    df['page_count'] = df['page_count'].fillna(1).astype(int)
-    df['file_size_kb'] = df['file_size_kb'].fillna(df['file_size_kb'].median())
+    if 'days_to_expiry' in df.columns:
+        df['days_to_expiry'] = df['days_to_expiry'].fillna(0).astype(int)
+    if 'page_count' in df.columns:
+        df['page_count'] = df['page_count'].fillna(1).astype(int)
+    if 'file_size_kb' in df.columns:
+        df['file_size_kb'] = df['file_size_kb'].fillna(df['file_size_kb'].median())
 
     str_defaults = {
         'document_type': 'Unknown', 'document_name': 'Unknown',

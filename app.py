@@ -66,7 +66,9 @@ SUB_PAGES = {
     "Market":     ["Demand Forecast", "Market Intelligence", "Rental Trends"],
     "Finance":    ["Financial Intelligence", "Risk Management"],
     "Investors":  ["Investor Intelligence"],
-    "Operations": ["Inventory Intelligence", "Pricing Intelligence", "Document Intelligence", "Strategic Planning"],
+    "Operations": ["Inventory Intelligence", "Pricing Intelligence", 
+                #    "Document Intelligence", "Strategic Planning"
+                   ],
 }
 
 TAB_ICONS = ["house-fill", "graph-up-arrow", "buildings", "globe-americas", "cash-stack", "bar-chart-line-fill", "gear-fill"]

@@ -62,11 +62,16 @@ def main():
 
     try:
         txn_count = session.query(Transaction).count()
-        new_tables_empty = session.query(Financial).count() == 0
+        financial_count = session.query(Financial).count()
+        rental_count = session.query(RentalMarket).count()
+        doc_count = session.query(DocumentRegistry).count()
+        all_seeded = txn_count > 0 and financial_count > 0 and rental_count > 0 and doc_count > 0
 
-        if txn_count > 0 and not new_tables_empty:
+        if all_seeded:
             print("Database already fully seeded (13 tables). Skipping.")
             return
+
+        new_tables_empty = financial_count == 0
 
         if txn_count > 0 and new_tables_empty:
             print("Existing 6 tables found. Seeding only the 7 new tables...")

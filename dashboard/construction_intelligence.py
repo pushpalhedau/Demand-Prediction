@@ -149,32 +149,32 @@ def render_construction_intelligence(filters: dict):
             st.plotly_chart(fig, use_container_width=True)
 
     # ── Row 3: Milestone delay analysis ───────────────────
-    st.markdown("<br>", unsafe_allow_html=True)
-    section_header("Milestone Delay Analysis")
-    if not df_milestones.empty:
-        top12_m = df_milestones.head(12).copy()
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=top12_m["avg_delay"],
-            y=top12_m["milestone_name"],
-            orientation="h",
-            name="Avg Delay (days)",
-            marker=dict(
-                color=top12_m["avg_delay"],
-                colorscale=[[0, colors["primary"]], [1, colors["danger"]]],
-                line=dict(width=0),
-            ),
-            text=[f"{v:.0f}d avg | {int(r)} at risk"
-                  for v, r in zip(top12_m["avg_delay"], top12_m["risk_count"].fillna(0))],
-            textposition="outside",
-            textfont=dict(size=10, color="#94a3b8"),
-        ))
-        layout = plotly_dark_layout("", 380)
-        layout["xaxis"]["title"] = "Avg Delay (days)"
-        layout["yaxis"]["autorange"] = "reversed"
-        layout["margin"]["l"] = 200
-        fig.update_layout(**layout)
-        st.plotly_chart(fig, use_container_width=True)
+    # st.markdown("<br>", unsafe_allow_html=True)
+    # section_header("Milestone Delay Analysis")
+    # if not df_milestones.empty:
+    #     top12_m = df_milestones.head(12).copy()
+    #     fig = go.Figure()
+    #     fig.add_trace(go.Bar(
+    #         x=top12_m["avg_delay"],
+    #         y=top12_m["milestone_name"],
+    #         orientation="h",
+    #         name="Avg Delay (days)",
+    #         marker=dict(
+    #             color=top12_m["avg_delay"],
+    #             colorscale=[[0, colors["primary"]], [1, colors["danger"]]],
+    #             line=dict(width=0),
+    #         ),
+    #         text=[f"{v:.0f}d avg | {int(r)} at risk"
+    #               for v, r in zip(top12_m["avg_delay"], top12_m["risk_count"].fillna(0))],
+    #         textposition="outside",
+    #         textfont=dict(size=10, color="#94a3b8"),
+    #     ))
+    #     layout = plotly_dark_layout("", 380)
+    #     layout["xaxis"]["title"] = "Avg Delay (days)"
+    #     layout["yaxis"]["autorange"] = "reversed"
+    #     layout["margin"]["l"] = 200
+    #     fig.update_layout(**layout)
+    #     st.plotly_chart(fig, use_container_width=True)
 
     # ── Row 4: Contractor performance ─────────────────────
     st.markdown("<br>", unsafe_allow_html=True)
