@@ -524,7 +524,7 @@ RECOMMENDED DEALER ACTIONS
 2. {'Offer targeted EV test-drive incentives and highlight green plate benefits in marketing campaigns to accelerate conversion in the EV segment.' if direction == 'up' else 'Review current discount strategy in underperforming segments and redirect marketing spend to higher-signal categories.'}
 3. Hedge against geopolitical risk by maintaining a 15–20 day safety stock buffer at high-throughput dealerships in Northern Emirates, where supply chain lead times are longest.
 
-[NOTE: This briefing is generated using keyword-based mock analysis. Configure XAI_API_KEY in .env to enable Grok AI-powered insights.]"""
+"""
 
     return briefing
 
