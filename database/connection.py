@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -8,8 +10,38 @@ load_dotenv()
 # Active data mode: "test" → automobile_demand.db, "real" → real_demand.db
 _data_mode = "real"
 
-_TEST_DB_URL = os.getenv("DATABASE_URL", "sqlite:///./automobile_demand.db")
-_REAL_DB_URL = os.getenv("REAL_DATABASE_URL", "sqlite:///./real_demand.db")
+
+def _resolve_writable_sqlite_path(filename: str) -> str:
+    """
+    Return a writable path for a sqlite db file that ships committed in the repo.
+
+    Some hosts (e.g. Streamlit Community Cloud) clone the repo into a
+    read-only filesystem, so writes against the committed .db file fail with
+    "attempt to write a readonly database". If the repo directory isn't
+    writable, copy the committed baseline into a writable temp directory once
+    and use that copy instead. Writes then succeed for the life of the
+    session — they just won't survive an app restart, since the committed
+    file (the source of truth on redeploy) is never modified.
+    """
+    local_path = os.path.abspath(filename)
+    probe_dir = os.path.dirname(local_path) or "."
+    probe_file = os.path.join(probe_dir, f".write_test_{os.getpid()}")
+    try:
+        with open(probe_file, "w") as f:
+            f.write("x")
+        os.remove(probe_file)
+        return local_path
+    except OSError:
+        pass
+
+    tmp_path = os.path.join(tempfile.gettempdir(), filename)
+    if not os.path.exists(tmp_path) and os.path.exists(local_path):
+        shutil.copy2(local_path, tmp_path)
+    return tmp_path
+
+
+_TEST_DB_URL = os.getenv("DATABASE_URL") or f"sqlite:///{_resolve_writable_sqlite_path('automobile_demand.db')}"
+_REAL_DB_URL = os.getenv("REAL_DATABASE_URL") or f"sqlite:///{_resolve_writable_sqlite_path('real_demand.db')}"
 
 
 def _build_engine(url):
