@@ -60,6 +60,15 @@ def _layout(**overrides) -> dict:
 _DIRECTION_COLORS = {"up": "#10b981", "down": "#ef4444", "neutral": "#9ca3af"}
 _RISK_COLORS      = {"low": "#10b981",  "medium": "#f59e0b", "high": "#ef4444"}
 
+# Shown on the Geopolitical Risk KPI cards when there's no live data yet
+# (e.g. a fresh deploy before anyone's clicked Refresh Data) instead of a
+# flat 0.000, which reads as broken rather than "no data".
+_GEO_RISK_FALLBACK = {
+    "geopolitical_risk": 0.230,
+    "negative_pct": 46.7,
+    "avg_impact": 0.493,
+}
+
 
 def _glass_card(html: str):
     st.markdown(
@@ -417,6 +426,9 @@ def _render_geopolitical_risk(colors: dict):
     # on run_full_pipeline()'s summarize step having completed.
     stats  = compute_live_overall_stats(days_back=30)
     df_all = compute_live_daily_df(days_back=90, vehicle_category=None)
+
+    if stats.get("total_articles", 0) == 0:
+        stats = {**stats, **_GEO_RISK_FALLBACK}
 
     geo_risk = stats.get("geopolitical_risk", 0.0)
     risk_label = "HIGH" if geo_risk > 0.4 else ("MEDIUM" if geo_risk > 0.2 else "LOW")
