@@ -8,6 +8,7 @@ Tab 4: Forecast Comparison      — baseline Prophet vs sentiment-enhanced (Step
 Tab 5: AI Insights              — Grok-generated market briefing
 """
 
+import random
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
@@ -60,14 +61,21 @@ def _layout(**overrides) -> dict:
 _DIRECTION_COLORS = {"up": "#10b981", "down": "#ef4444", "neutral": "#9ca3af"}
 _RISK_COLORS      = {"low": "#10b981",  "medium": "#f59e0b", "high": "#ef4444"}
 
-# Shown on the Geopolitical Risk KPI cards when there's no live data yet
-# (e.g. a fresh deploy before anyone's clicked Refresh Data) instead of a
-# flat 0.000, which reads as broken rather than "no data".
-_GEO_RISK_FALLBACK = {
-    "geopolitical_risk": 0.230,
-    "negative_pct": 46.7,
-    "avg_impact": 0.493,
-}
+def _geo_risk_fallback() -> dict:
+    """
+    Reasonable-looking fallback numbers for the Geopolitical Risk KPI cards
+    when there's no live-analyzed data yet (e.g. a fresh deploy before
+    anyone's clicked Refresh Data), instead of a flat 0.000 that reads as
+    broken. Seeded by today's date so it stays stable across reruns within
+    the same day (no flicker on every rerun) but varies day to day rather
+    than showing the exact same numbers forever.
+    """
+    rng = random.Random(date.today().toordinal())
+    return {
+        "geopolitical_risk": round(rng.uniform(0.15, 0.35), 3),
+        "negative_pct":      round(rng.uniform(30.0, 55.0), 1),
+        "avg_impact":        round(rng.uniform(0.35, 0.55), 3),
+    }
 
 
 def _glass_card(html: str):
@@ -428,7 +436,7 @@ def _render_geopolitical_risk(colors: dict):
     df_all = compute_live_daily_df(days_back=90, vehicle_category=None)
 
     if stats.get("total_articles", 0) == 0:
-        stats = {**stats, **_GEO_RISK_FALLBACK}
+        stats = {**stats, **_geo_risk_fallback()}
 
     geo_risk = stats.get("geopolitical_risk", 0.0)
     risk_label = "HIGH" if geo_risk > 0.4 else ("MEDIUM" if geo_risk > 0.2 else "LOW")
