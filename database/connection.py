@@ -16,20 +16,24 @@ def _resolve_writable_sqlite_path(filename: str) -> str:
     Return a writable path for a sqlite db file that ships committed in the repo.
 
     Some hosts (e.g. Streamlit Community Cloud) clone the repo into a
-    read-only filesystem, so writes against the committed .db file fail with
-    "attempt to write a readonly database". If the repo directory isn't
-    writable, copy the committed baseline into a writable temp directory once
-    and use that copy instead. Writes then succeed for the life of the
-    session — they just won't survive an app restart, since the committed
-    file (the source of truth on redeploy) is never modified.
+    filesystem where existing (committed) files are read-only even though
+    *new* files can still be created in the same directory — so a probe that
+    just creates and deletes a sibling file isn't a reliable test. Instead,
+    try to actually open the target file itself for read+write (or create it,
+    if it doesn't exist yet). If that fails, copy the committed baseline into
+    a writable temp directory and use that copy instead. Writes then succeed
+    for the life of the session — they just won't survive an app restart,
+    since the committed file (the source of truth on redeploy) is never
+    modified.
     """
     local_path = os.path.abspath(filename)
-    probe_dir = os.path.dirname(local_path) or "."
-    probe_file = os.path.join(probe_dir, f".write_test_{os.getpid()}")
     try:
-        with open(probe_file, "w") as f:
-            f.write("x")
-        os.remove(probe_file)
+        if os.path.exists(local_path):
+            with open(local_path, "r+b"):
+                pass
+        else:
+            with open(local_path, "wb"):
+                pass
         return local_path
     except OSError:
         pass
