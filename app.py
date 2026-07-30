@@ -148,11 +148,9 @@ with st.sidebar:
     # st.markdown("<hr style='border-color: rgba(255,255,255,0.08); margin: 12px 0;'>", unsafe_allow_html=True)
 
     # ── Navigation ─────────────────────────────────────────────────────────
-    st.markdown("""
-        <div style="text-align: center; padding: 4px 0;">
-            <h3 style="color: #f3f4f6; font-size: 18px; margin-bottom: 5px;">Predicta X</h3>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; padding: 4px 0 10px;'>", unsafe_allow_html=True)
+    st.image("assets/images/logo.png", use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Sleek sidebar menu with option_menu
     selected_page = option_menu(

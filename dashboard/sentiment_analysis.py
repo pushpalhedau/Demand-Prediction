@@ -151,17 +151,17 @@ def render_sentiment_analysis(filters: dict):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── 5 Sub-tabs ────────────────────────────────────────────────────────
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "Recent News",
+    # ── 4 Sub-tabs ────────────────────────────────────────────────────────
+    tab2, tab3, tab4, tab5 = st.tabs([
+        # "Recent News",
         "Geopolitical Risk",
         "Economic Signals",
         "Forecast Comparison",
         "AI Insights",
     ])
 
-    with tab1:
-        _render_recent_news(colors)
+    # with tab1:
+    #     _render_recent_news(colors)
 
     with tab2:
         _render_geopolitical_risk(colors)
