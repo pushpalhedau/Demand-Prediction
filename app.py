@@ -150,7 +150,7 @@ with st.sidebar:
     # ── Navigation ─────────────────────────────────────────────────────────
     st.markdown("""
         <div style="text-align: center; padding: 4px 0;">
-            <h3 style="color: #f3f4f6; font-size: 18px; margin-bottom: 5px;">Navigation</h3>
+            <h3 style="color: #f3f4f6; font-size: 18px; margin-bottom: 5px;">Predicta X</h3>
         </div>
     """, unsafe_allow_html=True)
 

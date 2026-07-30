@@ -21,6 +21,10 @@ from sentiment.signal_processor import (
     get_daily_summaries,
     get_overall_sentiment_stats,
     get_category_sentiment_summary,
+    compute_live_daily_df,
+    compute_live_overall_stats,
+    compute_live_category_summary,
+    ensure_recent_articles_analyzed,
 )
 from sentiment.fetchers.gdelt_fetcher import get_stored_articles, get_article_stats, TIMESPAN_OPTIONS
 from sentiment.analyzers.grok_analyzer import is_live_mode, generate_market_briefing
@@ -115,19 +119,30 @@ def render_sentiment_analysis(filters: dict):
         )
         timespan = TIMESPAN_OPTIONS[timespan_label]
 
+    pipeline_running = st.session_state.get("sentiment_pipeline_running", False)
+
     with ctrl_col2:
         st.markdown("<div style='margin-top:28px;'>", unsafe_allow_html=True)
-        refresh = st.button("Refresh Data", type="primary", use_container_width=True)
+        refresh = st.button(
+            "Refresh Data",
+            type="primary",
+            use_container_width=True,
+            disabled=pipeline_running,
+        )
         st.markdown("</div>", unsafe_allow_html=True)
 
-    if refresh:
-        with st.spinner("Fetching news from GDELT and analysing signals..."):
-            status = run_full_pipeline(
-                timespan=timespan,
-                max_articles_per_query=50,
-                analyze_limit=200,
-            )
-        st.session_state["sentiment_pipeline_status"] = status
+    if refresh and not pipeline_running:
+        st.session_state["sentiment_pipeline_running"] = True
+        try:
+            with st.spinner("Fetching news from GDELT and analysing signals..."):
+                status = run_full_pipeline(
+                    timespan=timespan,
+                    max_articles_per_query=50,
+                    analyze_limit=200,
+                )
+            st.session_state["sentiment_pipeline_status"] = status
+        finally:
+            st.session_state["sentiment_pipeline_running"] = False
         _show_pipeline_status(status)
         st.rerun()
 
@@ -136,17 +151,17 @@ def render_sentiment_analysis(filters: dict):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── 4 Sub-tabs ────────────────────────────────────────────────────────
-    tab2, tab3, tab4, tab5 = st.tabs([
-        # "Sentiment Intelligence",
+    # ── 5 Sub-tabs ────────────────────────────────────────────────────────
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "Recent News",
         "Geopolitical Risk",
         "Economic Signals",
         "Forecast Comparison",
         "AI Insights",
     ])
 
-    # with tab1:
-    #     _render_sentiment_intelligence(colors)
+    with tab1:
+        _render_recent_news(colors)
 
     with tab2:
         _render_geopolitical_risk(colors)
@@ -345,14 +360,63 @@ def _render_sentiment_intelligence(colors: dict):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Tab 1 — Recent News
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _render_recent_news(colors: dict):
+    st.markdown("### Recent News")
+    st.markdown(
+        "<p style='color:#9ca3af;font-size:13px;margin-bottom:16px;'>"
+        "The newest cached UAE automobile-market articles. This is a local read — "
+        "it always shows something even if the news source is temporarily unreachable.</p>",
+        unsafe_allow_html=True,
+    )
+
+    articles = get_stored_articles(days_back=30, analyzed_only=False, limit=20)
+
+    if not articles:
+        st.info("No articles cached yet. Click **Refresh Data** above to fetch the latest news.")
+        return
+
+    for a in articles:
+        title  = a.get("title") or "Untitled"
+        domain = a.get("domain") or "unknown source"
+        pub    = a.get("published_date")
+        url    = a.get("url") or ""
+        date_str = str(pub) if pub else "—"
+
+        title_html = (
+            f'<a href="{url}" target="_blank" style="color:#f3f4f6;text-decoration:none;">{title}</a>'
+            if url else title
+        )
+        st.markdown(
+            f"""<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:14px;font-weight:600;">{title_html}</div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">{domain} &nbsp;·&nbsp; {date_str}</div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Tab 2 — Geopolitical Risk
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _render_geopolitical_risk(colors: dict):
     st.markdown("### Geopolitical Risk Monitor")
 
-    stats  = get_overall_sentiment_stats()
-    df_all = get_daily_summaries(days_back=90, vehicle_category=None)
+    # Analyze whatever's freshly cached but not yet scored (bounded, so this
+    # stays fast even in live Grok mode) so the KPIs below reflect the same
+    # articles the "Recent News" tab shows, without waiting on a full
+    # fetch -> analyze -> summarize pipeline run.
+    ensure_recent_articles_analyzed(limit=30)
+
+    # Computed live from the same cached-article pool as the "Recent News" tab,
+    # rather than the DailySentimentSummary table — so these cards and the
+    # timeline chart always reflect what's in the DB now, with no dependency
+    # on run_full_pipeline()'s summarize step having completed.
+    stats  = compute_live_overall_stats(days_back=30)
+    df_all = compute_live_daily_df(days_back=90, vehicle_category=None)
 
     geo_risk = stats.get("geopolitical_risk", 0.0)
     risk_label = "HIGH" if geo_risk > 0.4 else ("MEDIUM" if geo_risk > 0.2 else "LOW")
@@ -459,15 +523,20 @@ def _render_geopolitical_risk(colors: dict):
 def _render_economic_signals(colors: dict):
     st.markdown("### Economic Signal Tracker")
 
-    cat_df = get_category_sentiment_summary(days_back=90)
-    df_all = get_daily_summaries(days_back=90, vehicle_category=None)
+    # Analyze whatever's freshly cached but not yet scored (bounded, so this
+    # stays fast) so this tab reflects the same articles the "Recent News"
+    # tab shows, without waiting on a full pipeline run.
+    ensure_recent_articles_analyzed(limit=30)
+
+    cat_df = compute_live_category_summary(days_back=90)
+    df_all = compute_live_daily_df(days_back=90, vehicle_category=None)
 
     if cat_df.empty and df_all.empty:
         st.info("No economic signal data available. Click **Refresh Data** to load news.")
         return
 
     # KPIs from the "All" aggregate
-    stats = get_overall_sentiment_stats()
+    stats = compute_live_overall_stats(days_back=30)
     ec1, ec2, ec3, ec4 = st.columns(4)
     with ec1:
         render_kpi_card("Avg Demand Change", f"{stats.get('avg_demand_change', 0):+.2f}%",
@@ -828,8 +897,13 @@ def _render_ai_insights(colors: dict):
     if generate or "sentiment_briefing" in st.session_state:
         if generate:
             with st.spinner("Generating market briefing..."):
-                stats    = get_overall_sentiment_stats()
-                cat_df   = get_category_sentiment_summary(days_back=30)
+                # Analyze whatever's freshly cached but not yet scored so the
+                # briefing and Signal Summary below reflect the same articles
+                # the "Recent News" tab shows, without waiting on a full
+                # pipeline run.
+                ensure_recent_articles_analyzed(limit=30)
+                stats    = compute_live_overall_stats(days_back=30)
+                cat_df   = compute_live_category_summary(days_back=30)
                 cat_rows = []
                 if not cat_df.empty:
                     cat_agg = (

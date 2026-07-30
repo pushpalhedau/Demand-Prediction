@@ -229,22 +229,22 @@ def render_forecasting(filters: dict):
         )
 
     # 2. Display Model Performance Metrics
-    st.markdown("### Model Evaluation (Historical Validation)")
-    m_col1, m_col2, m_col3 = st.columns(3)
-    
+    # st.markdown("### Model Evaluation (Historical Validation)")
+    # m_col1, m_col2, m_col3 = st.columns(3)
+
     unit_label = "Units" if target == "units_sold" else "AED"
-    with m_col1:
-        st.metric(
-            label="Historical Validation RMSE", 
-            value=f"{metrics['rmse']:,.1f} {unit_label}",
-            help="Root Mean Squared Error measures average prediction error magnitude."
-        )
-    with m_col2:
-        st.metric(
-            label="Mean Absolute Error (MAE)", 
-            value=f"{metrics['mae']:,.1f} {unit_label}",
-            help="Average absolute difference between actual sales and predictions."
-        )
+    # with m_col1:
+    #     st.metric(
+    #         label="Historical Validation RMSE",
+    #         value=f"{metrics['rmse']:,.1f} {unit_label}",
+    #         help="Root Mean Squared Error measures average prediction error magnitude."
+    #     )
+    # with m_col2:
+    #     st.metric(
+    #         label="Mean Absolute Error (MAE)",
+    #         value=f"{metrics['mae']:,.1f} {unit_label}",
+    #         help="Average absolute difference between actual sales and predictions."
+    #     )
     # with m_col3:
     #     st.metric(
     #         label="Average Forecast Accuracy", 

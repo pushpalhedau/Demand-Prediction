@@ -40,6 +40,7 @@ from sentiment.analyzers.grok_analyzer import (
     save_signals_to_db,
     get_unanalyzed_articles,
     is_live_mode,
+    _analyze_mock,
 )
 
 logger = logging.getLogger(__name__)
@@ -298,6 +299,164 @@ def get_daily_summaries(
         return df
     finally:
         session.close()
+
+
+def ensure_recent_articles_analyzed(limit: int = 30) -> Dict:
+    """
+    Best-effort: analyze whatever's currently unanalyzed in the cached-article
+    pool (the same one the "Recent News" tab reads), up to `limit` articles.
+
+    Without this, compute_live_overall_stats()/compute_live_daily_df() would
+    only ever reflect old articles that happen to already have a
+    SentimentSignal — freshly fetched news sits with a sentiment_score of
+    None until something analyzes it. This lets the Geopolitical Risk KPIs
+    pick up fresh cached news directly, without depending on run_full_pipeline()
+    (and its live GDELT fetch step, which can be rate-limited) ever completing.
+
+    Always uses fast keyword-based mock scoring, regardless of whether live
+    Grok mode is configured — this runs automatically just from opening a
+    tab, so it deliberately never makes a real (slow, billed) Grok API call.
+    Explicit "Refresh Data" clicks still go through analyze_articles() and
+    use real Grok analysis when XAI_API_KEY is set.
+
+    Never raises — any failure is swallowed and reported in the returned
+    dict so callers can proceed with whatever was already analyzed.
+    """
+    try:
+        unanalyzed = get_unanalyzed_articles(limit=limit)
+        if not unanalyzed:
+            return {"analyzed": 0}
+        signals = _analyze_mock(unanalyzed)
+        result = save_signals_to_db(unanalyzed, signals)
+        return {"analyzed": result.get("inserted", 0)}
+    except Exception as e:
+        logger.warning("ensure_recent_articles_analyzed failed, continuing with what's already analyzed: %s", e)
+        return {"analyzed": 0, "error": str(e)}
+
+
+def compute_live_daily_df(days_back: int = 90, vehicle_category: Optional[str] = None) -> pd.DataFrame:
+    """
+    Build daily aggregate rows directly from currently cached, analyzed
+    articles — the same pool the "Recent News" tab reads via
+    get_stored_articles() — instead of the persisted DailySentimentSummary
+    table. This decouples the Geopolitical Risk charts from needing a full
+    fetch -> analyze -> summarize pipeline run to have completed; it just
+    reflects whatever's already analyzed in the DB right now.
+
+    Returns a DataFrame shaped like get_daily_summaries()'s output.
+    """
+    rows = get_stored_articles(days_back=days_back, analyzed_only=True, limit=2000)
+    if not rows:
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows)
+    for col in ["sentiment_score", "impact_score", "demand_change_pct"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    df["published_date"] = pd.to_datetime(df["published_date"]).dt.date
+    df["demand_direction"] = df["demand_direction"].fillna("neutral")
+    df["affected_category"] = df["affected_category"].fillna("All")
+
+    if vehicle_category is not None:
+        df = df[df["affected_category"] == vehicle_category]
+
+    summaries = _compute_daily_stats(df, vehicle_category=vehicle_category)
+    if not summaries:
+        return pd.DataFrame()
+
+    out = pd.DataFrame(summaries)
+    out["summary_date"] = pd.to_datetime(out["summary_date"])
+    return out
+
+
+def compute_live_category_summary(days_back: int = 90) -> pd.DataFrame:
+    """
+    Per-(category, day) sentiment averages computed directly from currently
+    cached, analyzed articles — the same pool as the "Recent News" tab —
+    instead of the persisted DailySentimentSummary table. Used by the
+    Economic Signals and AI Insights category breakdowns/heatmap.
+
+    Returns a DataFrame shaped like get_category_sentiment_summary()'s output:
+    columns category, date, sentiment, impact, demand_change, geo_risk,
+    total_articles, positive, negative.
+    """
+    rows = get_stored_articles(days_back=days_back, analyzed_only=True, limit=2000)
+    if not rows:
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows)
+    for col in ["sentiment_score", "impact_score", "demand_change_pct"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    df["published_date"] = pd.to_datetime(df["published_date"]).dt.date
+    df["demand_direction"] = df["demand_direction"].fillna("neutral")
+    df["affected_category"] = df["affected_category"].fillna("All")
+
+    records: List[Dict] = []
+    for category in df["affected_category"].unique():
+        cat_df = df[df["affected_category"] == category]
+        for row in _compute_daily_stats(cat_df, vehicle_category=category):
+            records.append({
+                "category":       category,
+                "date":           row["summary_date"],
+                "sentiment":      row["avg_sentiment_score"] or 0.0,
+                "impact":         row["avg_impact_score"] or 0.0,
+                "demand_change":  row["avg_demand_change_pct"] or 0.0,
+                "geo_risk":       row["geopolitical_risk_score"] or 0.0,
+                "total_articles": row["total_articles"] or 0,
+                "positive":       row["positive_signals"] or 0,
+                "negative":       row["negative_signals"] or 0,
+            })
+
+    return pd.DataFrame(records)
+
+
+def compute_live_overall_stats(days_back: int = 30) -> Dict:
+    """
+    KPI-card stats computed directly from currently cached, analyzed articles
+    (the same pool as the "Recent News" tab), instead of the persisted
+    DailySentimentSummary table. Always reflects what's in the DB right now —
+    no dependency on run_full_pipeline()'s summarize step having completed.
+
+    Returns the same shape as get_overall_sentiment_stats().
+    """
+    rows = get_stored_articles(days_back=days_back, analyzed_only=True, limit=2000)
+    if not rows:
+        return _empty_stats()
+
+    df = pd.DataFrame(rows)
+    df["sentiment_score"] = pd.to_numeric(df["sentiment_score"], errors="coerce")
+    df["impact_score"] = pd.to_numeric(df["impact_score"], errors="coerce")
+    df["demand_change_pct"] = pd.to_numeric(df.get("demand_change_pct"), errors="coerce")
+    df["demand_direction"] = df["demand_direction"].fillna("neutral")
+    df["published_date"] = pd.to_datetime(df["published_date"])
+
+    total_articles = len(df)
+    total_pos = int((df["sentiment_score"] > 0.15).sum())
+    total_neg = int((df["sentiment_score"] < -0.15).sum())
+
+    cutoff_7 = pd.Timestamp(date.today() - timedelta(days=7))
+    last_7 = df[df["published_date"] >= cutoff_7]["sentiment_score"].mean()
+    prior  = df[df["published_date"] <  cutoff_7]["sentiment_score"].mean()
+    trend_7d = round(float(last_7 - prior), 4) if pd.notna(last_7) and pd.notna(prior) else 0.0
+
+    dir_counts = df["demand_direction"].value_counts()
+    dominant_dir = dir_counts.index[0] if not dir_counts.empty else "neutral"
+
+    avg_impact = _safe_mean(df["impact_score"]) or 0.0
+    neg_ratio = total_neg / total_articles if total_articles else 0.0
+
+    return {
+        "avg_sentiment":     round(_safe_mean(df["sentiment_score"]) or 0.0, 3),
+        "avg_impact":        round(avg_impact, 3),
+        "avg_demand_change": round(_safe_mean(df["demand_change_pct"]) or 0.0, 3),
+        "geopolitical_risk": round(avg_impact * neg_ratio, 3),
+        "total_articles":    total_articles,
+        "positive_pct":      round(total_pos / total_articles * 100, 1) if total_articles else 0.0,
+        "negative_pct":      round(total_neg / total_articles * 100, 1) if total_articles else 0.0,
+        "dominant_direction": dominant_dir,
+        "trend_7d":          trend_7d,
+        "last_updated":      df["published_date"].max(),
+        "mode":              "live" if is_live_mode() else "mock",
+    }
 
 
 def get_overall_sentiment_stats() -> Dict:

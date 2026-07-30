@@ -20,6 +20,7 @@ import os
 import sys
 import time
 import logging
+import threading
 from datetime import datetime, date, timedelta
 from typing import List, Dict, Optional
 
@@ -116,6 +117,14 @@ def _parse_gdelt_date(raw: str) -> Optional[date]:
 _GDELT_MIN_INTERVAL = 6.0
 _last_request_time: float = 0.0
 
+# GDELT's limit is global (per source IP), not per-thread. Two concurrent
+# callers (e.g. two browser sessions both clicking "Refresh Data") can each
+# pass the "has enough time elapsed?" check before either updates
+# _last_request_time, then both fire within the same window and both get
+# 429'd together. Holding this lock for the full throttle+request+backoff
+# cycle serializes all outbound GDELT calls process-wide so that can't happen.
+_gdelt_lock = threading.Lock()
+
 
 def _throttle():
     """Block until at least _GDELT_MIN_INTERVAL seconds have passed since the last request."""
@@ -130,40 +139,42 @@ def _throttle():
 def _get(url: str, params: Dict, retries: int = 3):
     """
     Rate-limited GET with exponential backoff on 429/timeout.
-    Enforces ≥6s between all GDELT requests. Returns parsed JSON or None.
+    Enforces ≥6s between all GDELT requests, serialized across threads/sessions
+    via _gdelt_lock. Returns parsed JSON or None.
     """
     base_wait = 10.0  # start with 10s backoff on error (safe margin above GDELT's 5s limit)
 
-    for attempt in range(retries):
-        _throttle()
-        try:
-            resp = requests.get(url, params=params, timeout=30)
+    with _gdelt_lock:
+        for attempt in range(retries):
+            _throttle()
+            try:
+                resp = requests.get(url, params=params, timeout=30)
 
-            if resp.status_code == 429:
-                # GDELT says "one every 5 seconds" — wait longer before retry
-                retry_after = float(resp.headers.get("Retry-After", base_wait * (2 ** attempt)))
-                logger.warning(
-                    "GDELT 429 (attempt %d/%d) — waiting %.0fs before retry",
-                    attempt + 1, retries, retry_after,
-                )
-                if attempt < retries - 1:
-                    time.sleep(retry_after)
-                continue
+                if resp.status_code == 429:
+                    # GDELT says "one every 5 seconds" — wait longer before retry
+                    retry_after = float(resp.headers.get("Retry-After", base_wait * (2 ** attempt)))
+                    logger.warning(
+                        "GDELT 429 (attempt %d/%d) — waiting %.0fs before retry",
+                        attempt + 1, retries, retry_after,
+                    )
+                    if attempt < retries - 1:
+                        time.sleep(retry_after)
+                    continue
 
-            resp.raise_for_status()
-            return resp.json()
+                resp.raise_for_status()
+                return resp.json()
 
-        except requests.exceptions.Timeout:
-            logger.warning("GDELT timeout (attempt %d/%d)", attempt + 1, retries)
-        except requests.exceptions.HTTPError as e:
-            logger.warning("GDELT HTTP error %s (attempt %d/%d)", e, attempt + 1, retries)
-        except ValueError:
-            logger.warning("GDELT non-JSON response (attempt %d/%d)", attempt + 1, retries)
-        except requests.exceptions.RequestException as e:
-            logger.warning("GDELT request error: %s (attempt %d/%d)", e, attempt + 1, retries)
+            except requests.exceptions.Timeout:
+                logger.warning("GDELT timeout (attempt %d/%d)", attempt + 1, retries)
+            except requests.exceptions.HTTPError as e:
+                logger.warning("GDELT HTTP error %s (attempt %d/%d)", e, attempt + 1, retries)
+            except ValueError:
+                logger.warning("GDELT non-JSON response (attempt %d/%d)", attempt + 1, retries)
+            except requests.exceptions.RequestException as e:
+                logger.warning("GDELT request error: %s (attempt %d/%d)", e, attempt + 1, retries)
 
-        if attempt < retries - 1:
-            time.sleep(base_wait * (2 ** attempt))
+            if attempt < retries - 1:
+                time.sleep(base_wait * (2 ** attempt))
 
     return None
 
@@ -205,10 +216,28 @@ def fetch_articles_for_query(
     return [a for a in articles if (a.get("language") or "").lower() == "english"]
 
 
+def _infer_theme(article: Dict) -> Dict:
+    """
+    Best-effort mapping of a combined-query article back to one of our
+    UAE_AUTO_QUERIES themes, by keyword overlap against the article title.
+    Falls back to the first (general) theme when nothing scores.
+    """
+    title = (article.get("title") or "").lower()
+    best, best_score = UAE_AUTO_QUERIES[0], -1
+    for q in UAE_AUTO_QUERIES:
+        keywords = [w.lower() for w in q["query"].split() if len(w) > 3]
+        score = sum(1 for w in keywords if w in title)
+        if score > best_score:
+            best, best_score = q, score
+    return best
+
+
 def fetch_all_themes(
     timespan: str = "30d",
     max_records_per_query: int = 50,
     delay_between_queries: float = 5.0,
+    one_per_day: bool = True,
+    combine_queries: bool = True,
 ) -> List[Dict]:
     """
     Fetch articles for all UAE auto-market themes and return a deduplicated list.
@@ -220,13 +249,64 @@ def fetch_all_themes(
         timespan:               GDELT timespan string.
         max_records_per_query:  Articles to request per theme (max 250).
         delay_between_queries:  Seconds to wait between GDELT calls (be polite).
+            Ignored when combine_queries=True since there's only one call.
+        one_per_day:            Quick volume-control switch. When True (default),
+            keeps only the single most-recent article per (theme, calendar day)
+            instead of every match. This cuts what the analyze step has to
+            process way down, so a full fetch -> analyze -> summarize pipeline
+            run reliably finishes in one go instead of leaving articles stuck
+            in `pending_analysis` and the KPI cards at zero. Each day's signal
+            becomes one article's read rather than an average across several.
+        combine_queries:        When True (default), issues ONE GDELT call
+            covering all themes via an OR'd query instead of one call per
+            theme — 6x fewer requests, much faster, and far less likely to
+            trip GDELT's 429 rate limit. Each returned article is tagged with
+            its best-matching theme afterward via keyword overlap against the
+            title (see _infer_theme). Set False to fall back to the slower,
+            more precisely-bucketed per-theme querying.
 
     Returns:
-        Flat, URL-deduplicated list of article dicts.
+        Flat, deduplicated list of article dicts.
     """
     seen_urls: set = set()
+    seen_days: set = set()
     all_articles: List[Dict] = []
 
+    if combine_queries:
+        combined_query = " OR ".join(f'({q["query"]})' for q in UAE_AUTO_QUERIES)
+        raw = fetch_articles_for_query(
+            query=combined_query,
+            timespan=timespan,
+            max_records=min(max_records_per_query * len(UAE_AUTO_QUERIES), 250),
+        )
+
+        for article in raw:
+            url = (article.get("url") or "").strip()
+            if not url or url in seen_urls:
+                continue
+
+            q = _infer_theme(article)
+            if one_per_day:
+                day = _parse_gdelt_date(article.get("seendate", ""))
+                day_key = (q["theme"], day)
+                if day is None or day_key in seen_days:
+                    continue
+                seen_days.add(day_key)
+
+            seen_urls.add(url)
+            article["_theme"] = q["theme"]
+            article["_query_name"] = q["name"]
+            article["_query_label"] = q["label"]
+            article["_affected_category"] = q["affected_category"]
+            all_articles.append(article)
+
+        logger.info(
+            "GDELT | combined query | fetched=%d | unique=%d",
+            len(raw), len(all_articles),
+        )
+        return all_articles
+
+    # ── Fallback: original slower per-theme path (one GDELT call per theme) ──
     for q in UAE_AUTO_QUERIES:
         raw = fetch_articles_for_query(
             query=q["query"],
@@ -235,16 +315,27 @@ def fetch_all_themes(
         )
 
         new_for_theme = 0
+        # raw is already sorted DateDesc, so the first hit per (theme, day)
+        # is that day's most recent article.
         for article in raw:
             url = (article.get("url") or "").strip()
-            if url and url not in seen_urls:
-                seen_urls.add(url)
-                article["_theme"] = q["theme"]
-                article["_query_name"] = q["name"]
-                article["_query_label"] = q["label"]
-                article["_affected_category"] = q["affected_category"]
-                all_articles.append(article)
-                new_for_theme += 1
+            if not url or url in seen_urls:
+                continue
+
+            if one_per_day:
+                day = _parse_gdelt_date(article.get("seendate", ""))
+                day_key = (q["theme"], day)
+                if day is None or day_key in seen_days:
+                    continue
+                seen_days.add(day_key)
+
+            seen_urls.add(url)
+            article["_theme"] = q["theme"]
+            article["_query_name"] = q["name"]
+            article["_query_label"] = q["label"]
+            article["_affected_category"] = q["affected_category"]
+            all_articles.append(article)
+            new_for_theme += 1
 
         logger.info(
             "GDELT | theme='%s' | fetched=%d | new_unique=%d",
