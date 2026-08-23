@@ -2,7 +2,7 @@
 Signal Processor — orchestrates the full sentiment pipeline.
 
 Execution order:
-  1. Fetch fresh articles from GDELT (all UAE auto themes)
+  1. Fetch fresh articles from GDELT (all NA auto themes)
   2. Deduplicate and persist new articles to news_articles
   3. Identify articles with no SentimentSignal yet
   4. Analyze them via Grok (or mock fallback)

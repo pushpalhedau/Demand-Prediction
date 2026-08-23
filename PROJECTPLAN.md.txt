@@ -414,7 +414,7 @@ Display:
 
 ## Features
 
-- Interactive India/UAE map
+- Interactive US map
 - Drill-down analytics
 
 ---
@@ -510,9 +510,9 @@ Generate AI-driven business insights dynamically.
 ## Example Insights
 
 ```
-SUV demand in Pune expected to rise by 18%.
+SUV demand in Houston expected to rise by 18%.
 
-EV adoption increasing fastest in Bengaluru.
+EV adoption increasing fastest in Los Angeles.
 
 Sedan sales declining for 3 consecutive quarters.
 

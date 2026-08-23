@@ -64,11 +64,20 @@ try:
 except Exception:
     # Fail-safe fallbacks if DB is not seeded or active
     options = {
-        "regions": ["Abu Dhabi", "Ajman", "Dubai", "Fujairah", "Ras Al Khaimah", "Sharjah", "Umm Al Quwain"],
-        "cities": ["Abu Dhabi City", "Al Quoz", "Business Bay", "Deira", "Downtown Dubai", "Dubai Marina", "Jumeirah", "Khalifa City", "Musaffah", "Sharjah City"],
+        "regions": ["California", "Texas", "Florida", "New York", "Illinois", "Georgia", "Ohio", "Michigan"],
+        "cities": [
+            "Los Angeles", "San Francisco", "San Diego", "Sacramento",
+            "Houston", "Dallas", "Austin", "San Antonio",
+            "Miami", "Orlando", "Tampa", "Jacksonville",
+            "New York City", "Buffalo", "Albany", "Rochester",
+            "Chicago", "Naperville", "Springfield",
+            "Atlanta", "Savannah", "Augusta",
+            "Columbus", "Cleveland", "Cincinnati",
+            "Detroit", "Grand Rapids", "Ann Arbor"
+        ],
         "categories": ["SUV", "Sedan", "Luxury", "EV", "Sports Car", "Pickup Truck", "Van/Commercial"],
-        "fuel_types": ["Petrol", "Diesel", "Electric", "Hybrid"],
-        "brands": ["Toyota", "Nissan", "Hyundai", "Kia", "Honda", "Mercedes-Benz", "BMW", "Audi", "Lexus", "Land Rover", "Tesla", "BYD"],
+        "fuel_types": ["Gasoline", "Diesel", "Electric", "Hybrid"],
+        "brands": ["Toyota", "Nissan", "Hyundai", "Kia", "Honda", "Mercedes-Benz", "BMW", "Audi", "Lexus", "Ford", "Chevrolet", "Tesla"],
         "years": [2021, 2022, 2023, 2024, 2025, 2026]
     }
 finally:
@@ -222,14 +231,14 @@ with st.sidebar:
     start_date = st.date_input("Start Date", value=date(2021, 1, 1))
     end_date = st.date_input("End Date", value=date(2026, 5, 31))
 
-    region = st.selectbox("Emirate", options=["All"] + options["regions"])
+    region = st.selectbox("State", options=["All"] + options["regions"])
 
-    # Filter areas dynamically based on emirate
+    # Filter cities dynamically based on state
     if region != "All":
         session = get_db_session()
         try:
             from database.models import Sale
-            region_cities = [c[0] for c in session.query(Sale.area).filter(Sale.emirate == region).distinct().all() if c[0]]
+            region_cities = [c[0] for c in session.query(Sale.city).filter(Sale.state == region).distinct().all() if c[0]]
             city_options = sorted(region_cities)
         except Exception:
             city_options = options["cities"]
@@ -238,7 +247,7 @@ with st.sidebar:
     else:
         city_options = options["cities"]
 
-    city = st.selectbox("Area", options=["All"] + city_options)
+    city = st.selectbox("City", options=["All"] + city_options)
     brand = st.selectbox("Brand", options=["All"] + options["brands"])
     category = st.selectbox("Vehicle Category", options=["All"] + options["categories"])
     fuel_type = st.selectbox("Fuel Type", options=["All"] + options["fuel_types"])
@@ -247,8 +256,8 @@ with st.sidebar:
     filters = {
         "start_date": start_date,
         "end_date": end_date,
-        "emirate": None if region == "All" else region,
-        "area": None if city == "All" else city,
+        "region": None if region == "All" else region,
+        "city": None if city == "All" else city,
         "brand": None if brand == "All" else brand,
         "vehicle_category": None if category == "All" else category,
         "fuel_type": None if fuel_type == "All" else fuel_type

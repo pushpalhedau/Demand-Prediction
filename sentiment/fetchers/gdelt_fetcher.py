@@ -1,5 +1,5 @@
 """
-GDELT Doc v2 API fetcher for UAE automobile market intelligence.
+GDELT Doc v2 API fetcher for North American automobile market intelligence.
 
 GDELT (Global Database of Events, Language, and Tone) is a free, real-time
 global news database with no API key required.
@@ -10,7 +10,7 @@ Two data products used here:
 
 Flow:
   fetch_all_themes()
-      └─→ fetch_articles_for_query()  [for each UAE_AUTO_QUERIES entry]
+      └─→ fetch_articles_for_query()  [for each NA_AUTO_QUERIES entry]
   save_articles_to_db()               [deduplicates by URL, persists to SQLite]
   fetch_tone_timeline()               [used by the dashboard for trend charts]
   get_stored_articles()               [loads persisted articles + signals for rendering]
@@ -40,50 +40,50 @@ logger = logging.getLogger(__name__)
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UAE automobile market themed search queries
+# North American automobile market themed search queries
 # Each entry maps to a thematic bucket used later for per-theme aggregation.
 # ─────────────────────────────────────────────────────────────────────────────
-UAE_AUTO_QUERIES: List[Dict] = [
+NA_AUTO_QUERIES: List[Dict] = [
     {
-        "name": "uae_auto_demand",
-        "label": "UAE Auto Demand",
+        "name": "na_auto_demand",
+        "label": "US Auto Demand",
         # Keep query short: GDELT works best with 2-3 keywords or one short phrase
-        "query": "UAE automobile car sales Dubai",
+        "query": "US automobile car sales dealership",
         "theme": "auto_demand",
         "affected_category": "All",
     },
     {
-        "name": "ev_market_uae",
-        "label": "EV Market UAE",
-        "query": "electric vehicle UAE Dubai EV",
+        "name": "ev_market_na",
+        "label": "EV Market US",
+        "query": "electric vehicle US EV tax credit",
         "theme": "ev_market",
         "affected_category": "EV",
     },
     {
+        "name": "tariff_trade",
+        "label": "Auto Tariffs & Trade",
+        "query": "auto tariff import vehicle trade",
+        "theme": "tariff_trade",
+        "affected_category": "All",
+    },
+    {
         "name": "fuel_oil_prices",
         "label": "Fuel & Oil Prices",
-        "query": "oil price UAE OPEC fuel Dubai",
+        "query": "gas price oil US crude",
         "theme": "fuel_economic",
         "affected_category": "All",
     },
     {
-        "name": "uae_macro_economy",
-        "label": "UAE Economy",
-        "query": "UAE economy inflation GDP Dubai",
+        "name": "us_macro_economy",
+        "label": "US Economy",
+        "query": "US economy inflation Fed interest rate",
         "theme": "macro_economic",
         "affected_category": "All",
     },
     {
-        "name": "geopolitical_risk",
-        "label": "Geopolitical Risk",
-        "query": "Middle East geopolitical oil supply Gulf",
-        "theme": "geopolitical",
-        "affected_category": "All",
-    },
-    {
-        "name": "luxury_suv_uae",
-        "label": "Luxury & SUV UAE",
-        "query": "luxury car SUV UAE Dubai Mercedes BMW",
+        "name": "luxury_suv_na",
+        "label": "Luxury & SUV US",
+        "query": "luxury SUV truck US Mercedes BMW",
         "theme": "luxury_suv",
         "affected_category": "Luxury",
     },
@@ -219,12 +219,12 @@ def fetch_articles_for_query(
 def _infer_theme(article: Dict) -> Dict:
     """
     Best-effort mapping of a combined-query article back to one of our
-    UAE_AUTO_QUERIES themes, by keyword overlap against the article title.
+    NA_AUTO_QUERIES themes, by keyword overlap against the article title.
     Falls back to the first (general) theme when nothing scores.
     """
     title = (article.get("title") or "").lower()
-    best, best_score = UAE_AUTO_QUERIES[0], -1
-    for q in UAE_AUTO_QUERIES:
+    best, best_score = NA_AUTO_QUERIES[0], -1
+    for q in NA_AUTO_QUERIES:
         keywords = [w.lower() for w in q["query"].split() if len(w) > 3]
         score = sum(1 for w in keywords if w in title)
         if score > best_score:
@@ -240,7 +240,7 @@ def fetch_all_themes(
     combine_queries: bool = True,
 ) -> List[Dict]:
     """
-    Fetch articles for all UAE auto-market themes and return a deduplicated list.
+    Fetch articles for all NA auto-market themes and return a deduplicated list.
 
     Each article dict is enriched with:
         _theme, _query_name, _query_label, _affected_category
@@ -273,11 +273,11 @@ def fetch_all_themes(
     all_articles: List[Dict] = []
 
     if combine_queries:
-        combined_query = " OR ".join(f'({q["query"]})' for q in UAE_AUTO_QUERIES)
+        combined_query = " OR ".join(f'({q["query"]})' for q in NA_AUTO_QUERIES)
         raw = fetch_articles_for_query(
             query=combined_query,
             timespan=timespan,
-            max_records=min(max_records_per_query * len(UAE_AUTO_QUERIES), 250),
+            max_records=min(max_records_per_query * len(NA_AUTO_QUERIES), 250),
         )
 
         for article in raw:
@@ -307,7 +307,7 @@ def fetch_all_themes(
         return all_articles
 
     # ── Fallback: original slower per-theme path (one GDELT call per theme) ──
-    for q in UAE_AUTO_QUERIES:
+    for q in NA_AUTO_QUERIES:
         raw = fetch_articles_for_query(
             query=q["query"],
             timespan=timespan,
@@ -447,11 +447,11 @@ def fetch_tone_timeline(
 
 def fetch_all_tone_timelines(timespan: str = "90d") -> Dict[str, List[Dict]]:
     """
-    Fetch tone timelines for all UAE auto themes.
+    Fetch tone timelines for all NA auto themes.
     Returns dict: {theme_name: [{"date": date, "tone": float}, ...]}
     """
     timelines: Dict[str, List[Dict]] = {}
-    for q in UAE_AUTO_QUERIES:
+    for q in NA_AUTO_QUERIES:
         tl = fetch_tone_timeline(q["query"], timespan=timespan)
         timelines[q["name"]] = tl
         logger.info("Tone timeline | theme='%s' | points=%d", q["label"], len(tl))
@@ -471,7 +471,7 @@ def get_stored_articles(
 
     Args:
         days_back:     How many calendar days back to include.
-        theme:         Filter by search_query name (e.g. 'ev_market_uae').
+        theme:         Filter by search_query name (e.g. 'ev_market_na').
         analyzed_only: If True, return only articles that have a SentimentSignal.
         limit:         Max rows to return.
 
@@ -551,7 +551,7 @@ def get_article_stats() -> Dict:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 
-    print("Fetching UAE auto market articles from GDELT (last 7 days)...")
+    print("Fetching NA auto market articles from GDELT (last 7 days)...")
     articles = fetch_all_themes(timespan="7d", max_records_per_query=10, delay_between_queries=5.0)
     print(f"Fetched {len(articles)} unique articles")
 

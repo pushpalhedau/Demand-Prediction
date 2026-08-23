@@ -1,51 +1,49 @@
-dealer_id,dealer_name,brand,region,city,state,tier,established_year,monthly_capacity,showroom_area_sqft,service_center,ev_charging_station,num_salespeople,annual_target_units,performance_score,rating,latitude,longitude
-DLR0001,Al-Futtaim Motors - Dubai Festival City,Toyota,Dubai,Dubai,Dubai,Platinum,1997,543,43741,True,True,13,6516,82.9,4.1,25.23054,55.353925
-DLR0002,Al-Futtaim Motors - Abu Dhabi Mussafah,Toyota,Abu Dhabi,Abu Dhabi,Abu Dhabi,Platinum,2001,563,18463,True,True,52,6756,86.4,4.7,24.349144,54.495299
-DLR0003,Al-Futtaim Motors - Sharjah,Toyota,Sharjah,Sharjah,Sharjah,Gold,2005,268,32807,True,False,13,3216,78.8,4.4,25.347747,55.424991
-DLR0004,Al-Futtaim Motors - Al Ain,Toyota,Al Ain,Al Ain,Abu Dhabi,Gold,2008,349,37714,True,False,48,4188,81.7,4.0,24.211536,55.748371
-DLR0005,Al-Futtaim Honda - Dubai,Honda,Dubai,Dubai,Dubai,Gold,2003,335,44500,True,True,22,4020,67.6,4.5,25.187842,55.270709
-DLR0006,Al-Futtaim Honda - Abu Dhabi,Honda,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,2008,196,38071,True,False,17,2352,69.2,4.1,24.455592,54.385256
-DLR0007,Trading Enterprises - Dubai Land Rover,Land Rover,Dubai,Dubai,Dubai,Platinum,1993,482,18484,True,True,58,5784,88.2,4.0,25.141461,55.210728
-DLR0008,Trading Enterprises - Abu Dhabi Land Rover,Land Rover,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,2000,182,15310,True,False,26,2184,74.4,4.5,24.449168,54.377312
-DLR0009,Al-Futtaim Lexus - Dubai,Lexus,Dubai,Dubai,Dubai,Platinum,2002,425,18587,True,True,42,5100,84.0,4.3,25.228272,55.344937
-DLR0010,Arabian Automobiles - Deira,Nissan,Dubai,Dubai,Dubai,Platinum,1976,472,12535,True,True,56,5664,82.8,4.3,25.263003,55.310053
-DLR0011,Arabian Automobiles - Sheikh Zayed Road,Nissan,Dubai,Dubai,Dubai,Platinum,1990,535,32472,True,True,36,6420,93.1,4.8,25.195221,55.271878
-DLR0012,Arabian Automobiles - Abu Dhabi,Nissan,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,1995,236,29654,True,False,12,2832,63.4,,24.458367,54.384948
-DLR0013,Arabian Automobiles - Sharjah,Nissan,Sharjah,Sharjah,Sharjah,Gold,2002,301,35759,True,False,34,3612,66.4,4.6,25.338268,55.418952
-DLR0014,Arabian Automobiles - Ajman,Nissan,Ajman,Ajman,Ajman,Silver,2010,111,24371,False,False,12,1332,59.3,,25.415186,55.520321
-DLR0015,AGMC - Dubai,BMW,Dubai,Dubai,Dubai,Platinum,1996,403,18789,True,True,32,4836,86.1,4.3,25.170505,55.246932
-DLR0016,AGMC - Sharjah,BMW,Sharjah,Sharjah,Sharjah,Gold,2004,380,43533,True,False,11,4560,68.8,4.3,25.353354,55.414049
-DLR0017,AGMC - Ras Al Khaimah,BMW,Ras Al Khaimah,Ras Al Khaimah,Ras Al Khaimah,Silver,2010,103,24135,False,False,45,1236,55.2,4.3,25.789956,55.951894
-DLR0018,Gargash Motors - Al Quoz,Mercedes-Benz,Dubai,Dubai,Dubai,Platinum,1958,432,28720,True,True,56,5184,82.8,3.8,25.1292,55.218253
-DLR0019,Gargash Motors - Abu Dhabi,Mercedes-Benz,Abu Dhabi,Abu Dhabi,Abu Dhabi,Platinum,1985,509,43600,True,True,53,6108,95.6,5.0,24.457257,54.378392
-DLR0020,Gargash Motors - Sharjah,Mercedes-Benz,Sharjah,Sharjah,Sharjah,Gold,1998,206,21803,True,False,53,2472,64.5,4.5,25.341322,55.429063
-DLR0021,Ali & Sons - Abu Dhabi Mitsubishi,Mitsubishi,Abu Dhabi,Abu Dhabi,Abu Dhabi,Platinum,1979,393,25167,True,False,18,4716,94.6,4.7,24.445405,54.384962
-DLR0022,Ali & Sons - Al Ain Mitsubishi,Mitsubishi,Al Ain,Al Ain,Abu Dhabi,Gold,1988,319,10614,True,False,30,3828,65.4,4.6,24.215183,55.742828
-DLR0023,Ali & Sons - Abu Dhabi Jeep,Jeep,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,2001,371,9624,True,False,19,4452,84.5,4.1,24.461181,54.383515
-DLR0024,Al Habtoor Motors - Dubai,Mitsubishi,Dubai,Dubai,Dubai,Gold,1983,220,38166,True,False,30,2640,62.9,4.8,25.198663,55.267365
-DLR0025,Al Habtoor Motors - Abu Dhabi,Mitsubishi,Abu Dhabi,Abu Dhabi,Abu Dhabi,Silver,1990,115,9808,True,False,15,1380,71.6,,24.444665,54.379231
-DLR0026,Juma Al Majid - Dubai Hyundai,Hyundai,Dubai,Dubai,Dubai,Platinum,1974,468,20457,True,True,24,5616,86.7,4.2,25.208537,55.279605
-DLR0027,Juma Al Majid - Sharjah Hyundai,Hyundai,Sharjah,Sharjah,Sharjah,Gold,1980,351,16167,True,False,54,4212,83.8,3.2,25.350244,55.421988
-DLR0028,Juma Al Majid - Abu Dhabi Hyundai,Hyundai,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,1985,287,43909,True,False,8,3444,82.8,,24.450345,54.376136
-DLR0029,Kia UAE - Dubai Motor City,Kia,Dubai,Dubai,Dubai,Gold,2008,234,26598,True,True,40,2808,84.1,,25.035997,55.237508
-DLR0030,Kia UAE - Abu Dhabi,Kia,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,2010,217,35160,True,False,48,2604,72.9,,24.446851,54.381052
-DLR0031,Kia UAE - Sharjah,Kia,Sharjah,Sharjah,Sharjah,Silver,2012,93,44530,True,False,23,1116,65.3,,25.346923,55.422079
-DLR0032,Al Ghandi Auto - Dubai Chevrolet,Chevrolet,Dubai,Dubai,Dubai,Gold,1971,373,37223,True,False,18,4476,82.5,4.4,25.207553,55.276116
-DLR0033,Al Ghandi Auto - Abu Dhabi Chevrolet,Chevrolet,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,1975,304,28952,True,False,42,3648,63.8,1.5,24.448179,54.375597
-DLR0034,Emirates Motor Company - Abu Dhabi Ford,Ford,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,1981,318,9280,True,False,56,3816,81.2,4.4,24.4517,54.385133
-DLR0035,International Traders - Dubai Ford,Ford,Dubai,Dubai,Dubai,Gold,1991,317,39827,True,False,9,3804,82.6,4.4,25.21161,55.279191
-DLR0036,Tesla UAE - Dubai Mall,Tesla,Dubai,Dubai,Dubai,Platinum,2021,539,38257,False,True,19,6468,89.8,3.6,25.202425,55.276983
-DLR0037,Tesla UAE - Yas Mall Abu Dhabi,Tesla,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,2022,287,22694,False,True,49,3444,79.2,3.7,24.483146,54.615385
-DLR0038,Tesla UAE - Mall of Emirates,Tesla,Dubai,Dubai,Dubai,Gold,2023,219,24793,False,True,57,2628,64.6,3.5,25.123656,55.193575
-DLR0039,Al Nabooda - Dubai Volkswagen,Volkswagen,Dubai,Dubai,Dubai,Gold,1968,207,20997,True,False,12,2484,75.2,4.5,25.200832,55.274485
-DLR0040,Al Nabooda - Abu Dhabi Volkswagen,Volkswagen,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,1972,324,30362,True,False,8,3888,71.9,,24.456612,54.383874
-DLR0041,Premier Motors - Abu Dhabi Land Rover,Land Rover,Abu Dhabi,Abu Dhabi,Abu Dhabi,Platinum,1991,561,43269,True,True,57,6732,92.7,,24.460934,54.383915
-DLR0042,Al Masaood - Abu Dhabi Nissan,Nissan,Abu Dhabi,Abu Dhabi,Abu Dhabi,Gold,1982,251,40394,True,False,28,3012,75.1,,24.461506,54.381324
-DLR0043,Swaidan Trading - Dubai Mitsubishi,Mitsubishi,Dubai,Dubai,Dubai,Silver,2000,81,23749,True,False,52,972,65.8,4.5,25.200685,55.268888
-DLR0044,United Diesel - Dubai Ford,Ford,Dubai,Dubai,Dubai,Silver,2005,164,44070,True,False,29,1968,57.6,4.4,25.209226,55.267111
-DLR0045,Al-Futtaim Motors - RAK Toyota,Toyota,Ras Al Khaimah,Ras Al Khaimah,Ras Al Khaimah,Silver,2015,177,42382,True,False,46,2124,56.1,5.0,25.783089,55.933483
-DLR0046,Al Masaood - Al Ain Nissan,Nissan,Al Ain,Al Ain,Abu Dhabi,Silver,2005,115,40170,False,False,14,1380,65.3,4.3,24.201187,55.735728
-DLR0047,Gargash - Fujairah Mercedes,Mercedes-Benz,Fujairah,Fujairah,Fujairah,Silver,2008,88,44886,True,False,27,1056,65.1,4.0,25.130723,56.328868
-DLR0048,Al Ghandi - Sharjah Chevrolet,Chevrolet,Sharjah,Sharjah,Sharjah,Silver,2007,128,11947,True,False,47,1536,62.9,4.1,25.341593,55.412524
-DLR0049,Juma Al Majid - Ajman Hyundai,Hyundai,Ajman,Ajman,Ajman,Bronze,2015,44,10139,False,False,22,528,49.4,,25.399868,55.508891
-DLR0050,Emirates Motor Co - Al Ain Ford,Ford,Al Ain,Al Ain,Abu Dhabi,Bronze,2018,52,17321,False,False,12,624,58.2,3.9,24.215924,55.743483
+dealer_id,dealer_name,brand,state,city,address,zip_code,tier,established_year,monthly_capacity,showroom_area_sqft,service_center,ev_charging_station,num_salespeople,annual_target_units,performance_score,google_rating,latitude,longitude
+DLR0001,Metro Hyundai Los Angeles,Hyundai,California,Los Angeles,6838 Market St,87709,Platinum,1985,207,16910,True,False,65,1788,94.2,4.4,33.91305,-118.39207
+DLR0002,Legacy Toyota of Sacramento,Toyota,California,Sacramento,9634 Auto Plaza Dr,35901,Silver,2011,207,10117,True,False,14,5518,85.0,4.7,38.44365,-121.58387
+DLR0003,Legacy Toyota of San Diego,Toyota,California,San Diego,5527 Highway 1,17742,Silver,2011,313,13742,True,True,6,2259,85.5,4.9,32.74916,-117.29475
+DLR0004,Jeep of Los Angeles,Jeep,California,Los Angeles,4642 Highway 1,47040,Silver,1990,273,11393,True,False,49,3480,88.7,4.4,34.07392,-118.35016
+DLR0005,Highline Tesla San Diego,Tesla,California,San Diego,5421 Highway 1,33174,Gold,2005,310,42801,True,True,56,3126,75.4,3.6,32.60593,-117.22768
+DLR0006,Chevrolet Superstore San Diego,Chevrolet,California,San Diego,4067 Highway 1,97430,Silver,1997,159,23124,True,True,50,2560,56.6,4.0,32.70794,-117.24342
+DLR0007,Legacy Jeep of Dallas,Jeep,Texas,Dallas,5515 Highway 1,62842,Silver,2005,400,19699,True,False,19,3304,81.9,3.9,32.78052,-96.72599
+DLR0008,Premier BMW Houston,BMW,Texas,Houston,7359 Commerce Way,34188,Gold,2009,207,19634,True,False,8,1253,58.1,4.7,29.62707,-95.43562
+DLR0009,Dallas Chevrolet,Chevrolet,Texas,Dallas,758 Highway 1,91250,Gold,1985,307,38605,False,True,58,1498,80.8,3.6,32.73618,-96.65947
+DLR0010,Dallas Auto Group Lexus,Lexus,Texas,Dallas,7728 Highway 1,22965,Gold,2006,471,22350,True,True,55,1858,77.6,3.6,32.67647,-96.69611
+DLR0011,Legacy Lexus of San Antonio,Lexus,Texas,San Antonio,8035 Market St,68584,Silver,1989,341,24585,True,True,67,5409,73.7,4.1,29.3193,-98.58932
+DLR0012,Mercedes-Benz of San Antonio,Mercedes-Benz,Texas,San Antonio,2006 Auto Plaza Dr,27494,Gold,2000,597,29698,True,True,25,2083,91.3,4.4,29.46884,-98.44254
+DLR0013,Ram of Tampa,Ram,Florida,Tampa,7461 Commerce Way,89305,Gold,1995,564,39245,True,False,56,6038,76.7,4.8,27.97674,-82.35212
+DLR0014,Chevrolet Superstore Tampa,Chevrolet,Florida,Tampa,5217 Main St,11974,Gold,1997,599,41941,True,True,5,2702,63.2,3.4,28.07884,-82.47274
+DLR0015,Legacy Chevrolet of Miami,Chevrolet,Florida,Miami,4213 Auto Plaza Dr,25325,Platinum,2006,353,31449,False,True,70,3603,87.7,4.8,25.82791,-80.05284
+DLR0016,Orlando Auto Group GMC,GMC,Florida,Orlando,5119 Highway 1,82828,Platinum,1998,417,28464,True,False,13,6899,67.4,4.5,28.6133,-81.42525
+DLR0017,Toyota of Orlando,Toyota,Florida,Orlando,9635 Commerce Way,88749,Silver,2015,527,25204,False,False,10,5658,58.6,4.2,28.62892,-81.25179
+DLR0018,Subaru of Miami,Subaru,Florida,Miami,9535 Main St,43207,Gold,1988,564,32986,True,False,5,6125,86.8,4.6,25.62639,-80.27144
+DLR0019,New York City Auto Group Hyundai,Hyundai,New York,New York City,9521 Commerce Way,33667,Platinum,2005,355,9095,True,False,50,4865,65.2,4.7,40.66721,-73.9
+DLR0020,Legacy Chevrolet of Albany,Chevrolet,New York,Albany,1233 Auto Plaza Dr,59469,Gold,2012,530,14940,True,True,38,5164,89.7,4.9,42.59151,-73.78382
+DLR0021,Legacy Toyota of New York City,Toyota,New York,New York City,8570 Highway 1,76122,Silver,2003,111,22517,False,False,30,1373,70.7,3.5,40.62339,-74.1507
+DLR0022,Metro Honda Rochester,Honda,New York,Rochester,4551 Commerce Way,89864,Gold,2014,580,35822,True,True,31,6330,65.1,3.9,43.27932,-77.59994
+DLR0023,Legacy Ram of New York City,Ram,New York,New York City,347 Auto Plaza Dr,86914,Silver,1992,235,19932,True,False,5,2341,79.1,4.6,40.79795,-74.02448
+DLR0024,Premier Honda Rochester,Honda,New York,Rochester,2630 Market St,70442,Silver,2012,218,37140,True,False,28,1162,83.1,4.8,43.16042,-77.62891
+DLR0025,Premier Toyota Springfield,Toyota,Illinois,Springfield,3006 Main St,14612,Platinum,1992,377,10424,True,False,64,2531,57.2,3.6,39.74705,-89.78194
+DLR0026,Naperville Kia,Kia,Illinois,Naperville,4955 Auto Plaza Dr,30749,Gold,1997,158,8061,True,False,17,508,76.9,4.1,41.70073,-88.1741
+DLR0027,Naperville Auto Group GMC,GMC,Illinois,Naperville,2367 Auto Plaza Dr,63771,Gold,1992,555,25754,True,True,60,2649,95.0,3.5,41.73903,-88.09003
+DLR0028,Ford of Naperville,Ford,Illinois,Naperville,303 Market St,18083,Platinum,1985,565,14967,True,True,57,4530,65.4,4.3,41.77786,-88.04867
+DLR0029,Chicago Auto Group Toyota,Toyota,Illinois,Chicago,4631 Main St,90702,Silver,2008,597,39653,True,False,46,3453,80.9,4.9,41.83656,-87.53585
+DLR0030,Naperville Auto Group Chevrolet,Chevrolet,Illinois,Naperville,3034 Auto Plaza Dr,56385,Silver,1997,410,19752,True,True,60,2752,55.8,3.6,41.81835,-88.09107
+DLR0031,Highline Ram Augusta,Ram,Georgia,Augusta,1564 Commerce Way,31265,Silver,1988,483,13317,True,True,64,3797,97.6,3.4,33.32847,-81.86257
+DLR0032,Savannah Jeep,Jeep,Georgia,Savannah,1001 Market St,47353,Silver,2001,166,31006,True,True,38,4364,67.7,4.4,32.18177,-81.23575
+DLR0033,Atlanta Jeep,Jeep,Georgia,Atlanta,8405 Auto Plaza Dr,65770,Silver,2003,176,28481,True,False,44,5217,79.4,4.5,33.89403,-84.41222
+DLR0034,Nissan of Augusta,Nissan,Georgia,Augusta,3648 Commerce Way,48520,Silver,1997,568,11480,False,True,17,4936,61.4,4.8,33.37703,-82.10064
+DLR0035,Premier Subaru Augusta,Subaru,Georgia,Augusta,3491 Commerce Way,89198,Gold,2007,415,40499,True,False,11,5321,86.4,4.6,33.49448,-82.12912
+DLR0036,Augusta Auto Group Mercedes-Benz,Mercedes-Benz,Georgia,Augusta,5078 Main St,10292,Silver,1991,304,35513,True,False,79,2951,85.9,4.7,33.44189,-82.06476
+DLR0037,Legacy Jeep of Cleveland,Jeep,Ohio,Cleveland,200 Highway 1,61820,Gold,2013,342,25302,True,False,32,3061,60.6,3.6,41.55467,-81.74256
+DLR0038,Cincinnati Tesla,Tesla,Ohio,Cincinnati,4781 Highway 1,62578,Platinum,2012,258,18290,True,True,40,3893,75.1,3.8,38.96665,-84.51755
+DLR0039,Metro Tesla Columbus,Tesla,Ohio,Columbus,8846 Main St,31062,Gold,1992,150,18906,True,False,62,6360,97.3,4.9,40.0971,-83.12725
+DLR0040,Highline Toyota Cincinnati,Toyota,Ohio,Cincinnati,4308 Main St,83483,Gold,2011,466,30819,True,True,11,2146,61.9,4.7,39.12837,-84.44146
+DLR0041,Highline Chevrolet Cincinnati,Chevrolet,Ohio,Cincinnati,1198 Highway 1,12714,Gold,2008,102,15652,False,True,22,6324,59.3,3.8,39.20704,-84.60815
+DLR0042,Honda Superstore Columbus,Honda,Ohio,Columbus,8801 Highway 1,22068,Gold,2011,378,40359,True,False,58,2114,65.5,3.6,40.09321,-82.8824
+DLR0043,Legacy Ram of Detroit,Ram,Michigan,Detroit,4570 Commerce Way,45395,Gold,2001,509,24078,True,True,18,6689,75.7,4.8,42.23047,-83.02948
+DLR0044,Highline Ford Detroit,Ford,Michigan,Detroit,3862 Main St,24136,Platinum,2013,80,19896,True,True,77,3102,77.9,3.7,42.47798,-82.95031
+DLR0045,Ram Superstore Grand Rapids,Ram,Michigan,Grand Rapids,8303 Market St,71367,Gold,1995,370,9853,True,False,54,4547,87.3,4.6,42.87699,-85.54097
+DLR0046,Metro Honda Detroit,Honda,Michigan,Detroit,5570 Market St,35257,Platinum,1993,536,10296,True,True,37,1490,82.2,4.0,42.45796,-83.10005
+DLR0047,Kia Superstore Ann Arbor,Kia,Michigan,Ann Arbor,6615 Commerce Way,16556,Silver,1999,399,43152,True,True,11,4907,91.4,3.5,42.26569,-83.62525
+DLR0048,Premier Ram Detroit,Ram,Michigan,Detroit,7533 Highway 1,25505,Gold,1994,267,43058,True,False,34,3120,79.2,4.5,42.33408,-82.92367

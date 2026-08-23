@@ -8,7 +8,7 @@ This document explains how the platform is built and how information moves throu
 
 ## 1. What the Platform Does
 
-The platform is a single web dashboard that helps UAE automobile businesses forecast demand, understand customers, plan inventory, and track how world events affect the car market. It combines a transaction database, three predictive models, and a live news-analysis pipeline into one interface, organized into seven modules a user navigates between.
+The platform is a single web dashboard that helps North American (US, 8-state) automobile businesses forecast demand, understand customers, plan inventory, and track how world events affect the car market. It combines a transaction database, three predictive models, and a live news-analysis pipeline into one interface, organized into seven modules a user navigates between.
 
 ---
 
@@ -62,7 +62,7 @@ flowchart TB
     class F layerExternal
 ```
 
-A single set of filters (date range, Emirate, city, brand, vehicle type, fuel type) sits above all seven modules and narrows down what each one shows. Choosing a module on the left simply swaps which module renders in the main panel — the filters and underlying data connection stay the same underneath.
+A single set of filters (date range, state, city, brand, vehicle type, fuel type) sits above all seven modules and narrows down what each one shows. Choosing a module on the left simply swaps which module renders in the main panel — the filters and underlying data connection stay the same underneath.
 
 One important operating characteristic: nothing is cached. Each time a user changes a filter or a setting, the relevant module re-queries the database and — on the Forecasting page — retrains its prediction model from scratch. This keeps every view fully up to date at the cost of some responsiveness; it's a reasonable tradeoff at the current data volume and worth revisiting if usage grows.
 
@@ -102,7 +102,7 @@ erDiagram
         string stock "current stock, forecasted demand, reorder status"
     }
     EXTERNAL_FACTORS {
-        string conditions "fuel prices, GDP, inflation, exchange rate"
+        string conditions "fuel prices, GDP, inflation, tariffs"
     }
     NEWS_ARTICLES {
         string article "source, title, publish date"
@@ -115,7 +115,7 @@ erDiagram
     }
 ```
 
-Two independent copies of this database exist side by side: one holding **real UAE market data** and one holding **synthetic test data**. The application currently always runs against the real-data copy, though the underlying design supports switching between the two.
+Two independent copies of this database exist side by side, both fully synthetic: one holding a **richer, primary NA market dataset** (referred to internally as "real" mode, in the sense of being the main dataset the app is built around, not because it's sourced from actual real-world sales records) and one holding a lighter **synthetic test dataset**. The application currently always runs against the primary dataset, though the underlying design supports switching between the two.
 
 A practical detail worth documenting: on hosting environments where the application's own folder can't be written to, the platform automatically detects this and works from a temporary writable copy of the database instead, so the app doesn't crash — any changes made in that situation simply don't persist past that session, and the committed database is never at risk of corruption.
 
@@ -164,12 +164,12 @@ The forecasting module predicts future sales volume or revenue using a time-seri
 | Forecast horizon | 30 to 365 days, user-selectable |
 | Confidence range | 70%–99%, user-selectable |
 | Seasonal patterns learned | Weekly and yearly |
-| Market factors considered | Up to 18, including fuel prices, GDP growth, inflation, exchange rate, tourism, and EV infrastructure — each only used if it actually varies in the data |
+| Market factors considered | Up to 18, including fuel prices, GDP growth, inflation, import tariffs, tourism, and EV infrastructure — each only used if it actually varies in the data |
 | Model validation | Last 30 days of history held back and compared against the model's own prediction, to report accuracy honestly |
 
 ### What-if scenario testing
 
-The most interactive part of this module lets a user drag sliders for market conditions — for example, raising the assumed petrol price — and immediately see how the forecast shifts. Two things happen together when a slider moves:
+The most interactive part of this module lets a user drag sliders for market conditions — for example, raising the assumed gasoline price — and immediately see how the forecast shifts. Two things happen together when a slider moves:
 
 1. The model itself is re-evaluated with the new assumption applied to the future period only (history is never altered).
 2. A secondary, hand-tuned sensitivity reference (built from domain assumptions about how strongly each factor typically affects car demand) further scales the future prediction, so the visual effect of moving a slider is clear and proportionate.
@@ -239,7 +239,7 @@ Both models are trained ahead of time on historical data rather than learning li
 
 ## 8. Sentiment & Geopolitical Risk Pipeline
 
-This module connects real-world news to expected car demand. It pulls recent articles relevant to the UAE auto market, fuel prices, and the broader economy from a global news index, then scores each one for sentiment (positive/negative), potential impact, and economic risk level.
+This module connects real-world news to expected car demand. It pulls recent articles relevant to the US auto market, fuel prices, tariffs/trade policy, and the broader economy from a global news index, then scores each one for sentiment (positive/negative), potential impact, and economic risk level.
 
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {
@@ -247,7 +247,7 @@ This module connects real-world news to expected car demand. It pulls recent art
   'lineColor':'#64748B','fontFamily':'Segoe UI, Helvetica, Arial, sans-serif','fontSize':'16px'
 }}}%%
 flowchart TB
-    A["Global news feed<br/>auto-fetched, rate-limited"] --> B["Relevant articles<br/>UAE auto market, fuel, economy"]
+    A["Global news feed<br/>auto-fetched, rate-limited"] --> B["Relevant articles<br/>US auto market, fuel, economy"]
     B --> C{"AI scoring service<br/>configured?"}
     C -->|Yes| D["AI reads each article and scores:<br/>sentiment, impact, risk"]
     C -->|No / unavailable| E["Rule-based fallback scorer<br/>keyword-based, always available"]
@@ -277,7 +277,7 @@ The daily risk score itself reflects both **how negative** the day's news was an
 |---|---|
 | Executive Overview | Aggregated sales/revenue queries |
 | Demand Forecasting | Forecasting model (Section 6) |
-| Comparative Analytics | Year-over-year queries, plus a dedicated competitive analysis of Chinese auto brands entering the UAE market |
+| Comparative Analytics | Year-over-year queries, plus a dedicated Import Tariff Exposure analysis comparing domestic and import auto brands under the 2025 Section 232 tariffs |
 | Regional Intelligence | Dealer performance queries, mapped geographically |
 | Customer Intelligence | Segmentation + lead-scoring models (Section 7) |
 | Inventory Intelligence | Stock-level and reorder queries, compared against forecasted demand |

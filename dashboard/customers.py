@@ -45,7 +45,7 @@ def render_customers(filters: dict):
             # ----------------------------------------------------------------
             with sub_col2:
                 if is_real:
-                    # Nationality distribution — REAL (FCSC 2023 census)
+                    # Nationality distribution — modeled NA customer data
                     st.markdown("#### Nationality Distribution")
                     nat_counts = df_cust["nationality"].value_counts()
                     top10      = nat_counts.head(10)
@@ -84,13 +84,13 @@ def render_customers(filters: dict):
                 if is_real:
                     st.markdown("#### Nationality Characteristic Analysis")
                     metrics_map = {
-                        "estimated_monthly_income_aed": "Monthly Income (AED)",
+                        "estimated_annual_income_usd": "Annual Income (USD)",
                         "age":                          "Average Age",
                         "number_of_past_purchases":     "Past Purchases",
                     }
                     group_col       = "nationality"
                     group_label     = "Nationality"
-                    default_metrics = ["estimated_monthly_income_aed", "number_of_past_purchases"]
+                    default_metrics = ["estimated_annual_income_usd", "number_of_past_purchases"]
                     # Default to top 8 nationalities to keep chart readable
                     top8_nations    = df_cust["nationality"].value_counts().head(8).index.tolist()
                     filter_options  = df_cust["nationality"].value_counts().index.tolist()
@@ -103,7 +103,7 @@ def render_customers(filters: dict):
                         "credit_score":                "Credit Score",
                         "age":                         "Average Age",
                         "number_of_past_purchases":    "Past Purchases",
-                        "estimated_monthly_income_aed":"Monthly Income (AED)",
+                        "estimated_annual_income_usd": "Annual Income (USD)",
                         "churn_risk_score":            "Churn Risk",
                     }
                     group_col      = "customer_segment"
@@ -180,7 +180,7 @@ def render_customers(filters: dict):
                 fig_bubble = px.scatter(
                     sampled_df,
                     x="age",
-                    y="estimated_monthly_income_aed",
+                    y="estimated_annual_income_usd",
                     size="bubble_size",
                     color="nationality_grp",
                     hover_data={
@@ -198,7 +198,7 @@ def render_customers(filters: dict):
                     plot_bgcolor="rgba(0,0,0,0)",
                     font=dict(color="#f3f4f6", family="Plus Jakarta Sans"),
                     xaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.05)", title="Customer Age"),
-                    yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.05)", title="Monthly Income (AED)"),
+                    yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.05)", title="Annual Income (USD)"),
                     legend_title_text="Nationality",
                     margin=dict(l=0, r=0, t=10, b=0),
                     height=300
@@ -209,7 +209,7 @@ def render_customers(filters: dict):
                     sampled_df,
                     x="age",
                     y="churn_risk_score",
-                    size="estimated_monthly_income_aed",
+                    size="estimated_annual_income_usd",
                     color="customer_segment",
                     hover_data={"credit_score": True},
                     color_discrete_sequence=colors["colors_seq"]
@@ -239,26 +239,26 @@ def render_customers(filters: dict):
                 age        = st.slider("Customer Age", min_value=21, max_value=75, value=38)
                 gender     = st.selectbox("Gender", options=["Male", "Female", "Other"])
                 occupation = st.selectbox("Occupation", options=["Salaried", "Business Owner", "Self-Employed", "Government Employee"])
-                income     = st.number_input("Monthly Income (AED)", min_value=2000, max_value=200000, value=25000, step=1000)
+                income     = st.number_input("Annual Income (USD)", min_value=20000, max_value=300000, value=75000, step=5000)
 
             with form_col2:
                 credit_score     = st.slider("Credit Score", min_value=400, max_value=850, value=710)
                 loyalty_score    = st.slider("Loyalty Rating", min_value=0, max_value=100, value=65)
                 vehicle_category = st.selectbox("Vehicle Category", options=["SUV", "Sedan", "Hatchback", "Luxury", "EV", "Commercial"])
-                fuel_type        = st.selectbox("Fuel Type", options=["Petrol", "Diesel", "CNG", "Electric", "Hybrid"])
+                fuel_type        = st.selectbox("Fuel Type", options=["Gasoline", "Diesel", "CNG", "Electric", "Hybrid"])
 
             with form_col3:
                 discount_pct      = st.slider("Applied Discount (%)", min_value=0.0, max_value=25.0, value=6.5, step=0.5)
                 financing_type    = st.selectbox("Financing Type", options=["Bank Loan", "Cash", "Dealer Finance", "Lease"])
                 marketing_channel = st.selectbox("Lead Source Channel", options=["Referral", "Digital", "Showroom Walk-in", "Auto Expo", "TV"])
-                base_price        = st.number_input("Vehicle Base Price (INR)", min_value=200000, max_value=15000000, value=1250000, step=50000)
+                base_price        = st.number_input("Vehicle Base Price (USD)", min_value=15000, max_value=250000, value=42000, step=1000)
 
             if st.button("Evaluate Conversion Probability", type="primary"):
                 lead_data = {
                     "age":                          age,
                     "gender":                       gender,
                     "occupation":                   occupation,
-                    "estimated_monthly_income_aed": income,
+                    "estimated_annual_income_usd":  income,
                     "credit_score":                 credit_score,
                     "loyalty_score":                loyalty_score,
                     "vehicle_category":             vehicle_category,

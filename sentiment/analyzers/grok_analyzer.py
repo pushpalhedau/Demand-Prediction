@@ -42,9 +42,9 @@ _BATCH_SIZE: int = 10  # articles per Grok API call
 # Grok system prompt
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You are a financial and automotive market intelligence analyst specializing in the UAE automobile market.
+_SYSTEM_PROMPT = """You are a financial and automotive market intelligence analyst specializing in the North American (US) automobile market.
 
-For each news article title provided, extract structured demand forecasting signals relevant to the UAE auto market.
+For each news article title provided, extract structured demand forecasting signals relevant to the US auto market.
 
 Return a JSON object with this exact schema:
 {
@@ -52,7 +52,7 @@ Return a JSON object with this exact schema:
     {
       "article_index": <integer, 0-based index matching the input list>,
       "sentiment_score": <float -1.0 to 1.0, where -1=very negative, 0=neutral, 1=very positive>,
-      "impact_score": <float 0.0 to 1.0, how much this news could impact UAE auto demand>,
+      "impact_score": <float 0.0 to 1.0, how much this news could impact US auto demand>,
       "affected_vehicle_category": <one of: "EV", "Luxury", "SUV", "Sedan", "Commercial", "All">,
       "economic_risk": <one of: "low", "medium", "high">,
       "demand_direction": <one of: "up", "down", "neutral">,
@@ -64,11 +64,11 @@ Return a JSON object with this exact schema:
 }
 
 Rules:
-- Consider context: UAE is oil-rich, EV adoption is rising, luxury cars are popular, fuel prices affect demand.
-- Geopolitical tension in MENA reduces consumer confidence → negative for all categories.
-- EV policy/incentives → positive for EV category.
-- Oil price drops → positive for petrol vehicles, neutral for EV.
-- Economic growth → positive for luxury and SUV.
+- Consider context: US auto tariffs and Fed rate policy strongly affect financing-led demand; EV adoption growth has slowed since the federal EV tax credit expired in Oct 2025; trucks and SUVs remain the dominant segments.
+- Import tariffs (Section 232) raise costs for Japanese/Korean/European brands more than domestic (Big 3 + Tesla) brands → mixed impact by brand origin.
+- EV policy/incentive news → positive for EV category when incentives expand, negative when they are cut.
+- Gas price drops → positive for gasoline/truck demand, neutral for EV.
+- Economic growth / Fed rate cuts → positive for luxury, SUV, and financed purchases.
 - Return exactly one signal per input article in the same order.
 - Only return valid JSON, nothing else."""
 
@@ -418,7 +418,7 @@ def get_unanalyzed_articles(limit: int = 100) -> List[Dict]:
 # Market Briefing Generator
 # ─────────────────────────────────────────────────────────────────────────────
 
-_BRIEFING_SYSTEM_PROMPT = """You are a senior UAE automobile market intelligence analyst.
+_BRIEFING_SYSTEM_PROMPT = """You are a senior North American automobile market intelligence analyst.
 Write a concise, data-driven market briefing for automobile dealership executives.
 Use the signal data provided. Be specific, actionable, and professional.
 Structure your response with exactly three clearly labeled sections:
@@ -470,7 +470,7 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
     if is_live_mode():
         # ── Live: call Grok ──────────────────────────────────────────────
         user_msg = (
-            f"UAE Automobile Market Signal Data (last 30 days):\n"
+            f"US Automobile Market Signal Data (last 30 days):\n"
             f"- Average sentiment score: {avg_sentiment:+.3f} (scale: -1 to +1)\n"
             f"- Dominant demand direction: {direction}\n"
             f"- Estimated demand change: {demand_change:+.1f}%\n"
@@ -509,20 +509,20 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
         top_cat = sorted_cats[0].get("category", "EV") if sorted_cats else "EV"
 
     briefing = f"""MARKET SENTIMENT OVERVIEW
-The UAE automobile market is displaying {mood} sentiment over the past 30 days, with an average signal score of {avg_sentiment:+.2f} across {total_articles} analysed news sources. Demand signals are {trend_word} week-over-week (7-day trend: {trend_7d:+.3f}), with {positive_pct:.0f}% of coverage carrying constructive signals and {negative_pct:.0f}% flagging headwinds. The dominant demand direction across categories is {direction.upper()}, with an estimated aggregate demand shift of {demand_change:+.1f}%.
+The US automobile market is displaying {mood} sentiment over the past 30 days, with an average signal score of {avg_sentiment:+.2f} across {total_articles} analysed news sources. Demand signals are {trend_word} week-over-week (7-day trend: {trend_7d:+.3f}), with {positive_pct:.0f}% of coverage carrying constructive signals and {negative_pct:.0f}% flagging headwinds. The dominant demand direction across categories is {direction.upper()}, with an estimated aggregate demand shift of {demand_change:+.1f}%.
 
 KEY RISK FACTORS & OPPORTUNITIES
-- Geopolitical Risk: {risk_level.upper()} ({geo_risk:.2f}/1.0) — Regional developments continue to be monitored as a demand moderator for high-value vehicle segments.
-- Oil & Fuel Prices: Crude oil volatility directly affects consumer spending capacity in petrol-dependent vehicle categories (SUV, Pickup).
-- EV Adoption Tailwind: Government EV incentive programmes and expanding charging infrastructure are supporting a structural shift, particularly in Dubai.
-- Luxury Segment: Strong expatriate spending and tourism recovery continue to support Luxury and premium segment performance.
+- Tariff & Trade Risk: {risk_level.upper()} ({geo_risk:.2f}/1.0) — Section 232 auto tariff developments continue to be monitored as a cost and demand moderator, particularly for import-heavy brands.
+- Fuel Prices: Gasoline price volatility directly affects consumer spending capacity in truck- and SUV-heavy segments.
+- EV Adoption Headwind: The federal EV tax credit's Oct 2025 expiration has cooled EV momentum; charging infrastructure buildout is the remaining structural tailwind.
+- Luxury Segment: Resilient high-income consumer spending continues to support Luxury and premium segment performance.
 - {top_cat} Category Signal: The {top_cat} segment is showing the strongest news-driven demand signal in the current period.
-- Interest Rate Sensitivity: Elevated UAE benchmark rates increase EMI burden, which may dampen financing-led demand in mid-range segments.
+- Interest Rate Sensitivity: Fed funds rate trajectory directly affects loan APRs, which may dampen financing-led demand in mid-range segments.
 
 RECOMMENDED DEALER ACTIONS
-1. Prioritise {top_cat} inventory replenishment at Tier-1 showrooms in Dubai and Abu Dhabi to capture positive demand momentum before it peaks.
-2. {'Offer targeted EV test-drive incentives and highlight green plate benefits in marketing campaigns to accelerate conversion in the EV segment.' if direction == 'up' else 'Review current discount strategy in underperforming segments and redirect marketing spend to higher-signal categories.'}
-3. Hedge against geopolitical risk by maintaining a 15–20 day safety stock buffer at high-throughput dealerships in Northern Emirates, where supply chain lead times are longest.
+1. Prioritise {top_cat} inventory replenishment at Tier-1 dealerships in California and Texas to capture positive demand momentum before it peaks.
+2. {'Offer targeted EV test-drive incentives and highlight remaining state-level EV rebates in marketing campaigns to accelerate conversion in the EV segment.' if direction == 'up' else 'Review current discount strategy in underperforming segments and redirect marketing spend to higher-signal categories.'}
+3. Hedge against tariff risk by maintaining a 15–20 day safety stock buffer for import-heavy brands, where supply chain lead times and landed costs are most exposed.
 
 """
 
@@ -552,11 +552,11 @@ if __name__ == "__main__":
     print(f"Model: {_GROK_MODEL}\n")
 
     test_articles = [
-        {"article_id": 1, "title": "UAE Car Sales Surge 15% in April Driven by EV Adoption"},
-        {"article_id": 2, "title": "OPEC Oil Cuts Raise Fuel Price Concerns Across Gulf States"},
-        {"article_id": 3, "title": "Dubai Luxury Vehicle Registrations Hit Record High in Q1 2025"},
-        {"article_id": 4, "title": "Middle East Geopolitical Tensions Weigh on Consumer Confidence"},
-        {"article_id": 5, "title": "Tesla Opens Third Service Center in Abu Dhabi Amid Growing Demand"},
+        {"article_id": 1, "title": "US Car Sales Surge 15% in April Driven by EV Adoption"},
+        {"article_id": 2, "title": "Auto Tariffs Raise Vehicle Price Concerns Across Import Brands"},
+        {"article_id": 3, "title": "Luxury Vehicle Registrations Hit Record High in Q1 2025"},
+        {"article_id": 4, "title": "Fed Rate Decision Weighs on Consumer Financing Confidence"},
+        {"article_id": 5, "title": "Tesla Opens Third Service Center in Texas Amid Growing Demand"},
     ]
 
     print(f"Analyzing {len(test_articles)} articles...\n")

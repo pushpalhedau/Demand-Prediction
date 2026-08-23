@@ -33,32 +33,32 @@ def train_xgboost_pipeline():
         # Join Sales, Customers, and Vehicles to compile a rich feature set
         query = session.query(
             Sale.test_drive_converted,
-            Sale.base_price_aed.label('base_price'),
+            Sale.base_price_usd.label('base_price'),
             Sale.discount_pct,
             Sale.financing_type,
             Sale.marketing_channel,
             Sale.vehicle_category,
             Sale.fuel_type,
-            Sale.emirate,
+            Sale.state,
             Customer.age,
             Customer.gender,
             Customer.occupation,
-            Customer.estimated_monthly_income_aed,
+            Customer.estimated_annual_income_usd,
             Customer.credit_score,
             Customer.loyalty_score
         ).join(Customer, Sale.customer_id == Customer.customer_id) \
          .join(Vehicle, Sale.vehicle_id == Vehicle.vehicle_id)
-         
+
         df = pd.read_sql(query.statement, session.bind)
         if df.empty or len(df) < 100:
             return None, "Insufficient data to train XGBoost lead scoring model (need at least 100 transactions)."
-            
+
         # Target column: test_drive_converted (binary classification)
         df['test_drive_converted'] = df['test_drive_converted'].fillna(False).astype(int)
-        
+
         # Features to use
-        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'emirate', 'gender', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_monthly_income_aed', 'credit_score', 'loyalty_score']
+        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'gender', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_usd', 'credit_score', 'loyalty_score']
         
         # Handle missing values
         for cat in cat_features:
@@ -155,23 +155,23 @@ def predict_deal_probability(input_data: dict) -> dict:
             feature_names = pickle.load(f)
             
         # Compile input into record
-        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'emirate', 'gender', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_monthly_income_aed', 'credit_score', 'loyalty_score']
-        
+        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'gender', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_usd', 'credit_score', 'loyalty_score']
+
         record = {}
         # Assign values with fallbacks
         record['financing_type'] = input_data.get('financing_type', 'Bank Loan')
         record['marketing_channel'] = input_data.get('marketing_channel', 'Referral')
         record['vehicle_category'] = input_data.get('vehicle_category', 'SUV')
-        record['fuel_type'] = input_data.get('fuel_type', 'Petrol')
-        record['emirate'] = input_data.get('emirate', 'Dubai')
+        record['fuel_type'] = input_data.get('fuel_type', 'Gasoline')
+        record['state'] = input_data.get('state', 'California')
         record['gender'] = input_data.get('gender', 'Male')
         record['occupation'] = input_data.get('occupation', 'Salaried')
-        
-        record['base_price'] = float(input_data.get('base_price', 1200000))
+
+        record['base_price'] = float(input_data.get('base_price', 38000))
         record['discount_pct'] = float(input_data.get('discount_pct', 5.0))
         record['age'] = float(input_data.get('age', 35))
-        record['estimated_monthly_income_aed'] = float(input_data.get('estimated_monthly_income_aed', 25000))
+        record['estimated_annual_income_usd'] = float(input_data.get('estimated_annual_income_usd', 75000))
         record['credit_score'] = float(input_data.get('credit_score', 720))
         record['loyalty_score'] = float(input_data.get('loyalty_score', 60))
         
@@ -228,9 +228,9 @@ def predict_deal_probability(input_data: dict) -> dict:
             
             # High discount and high income usually drive conversion positively, while low credit score drives it negatively
             discount = record['discount_pct']
-            income = record['estimated_monthly_income_aed']
+            income = record['estimated_annual_income_usd']
             credit = record['credit_score']
-            
+
             shap_explanations = [
                 {
                     "feature": "discount_pct",
@@ -245,10 +245,10 @@ def predict_deal_probability(input_data: dict) -> dict:
                     "description": f"Credit score ({int(credit)}) affects closing eligibility."
                 },
                 {
-                    "feature": "estimated_monthly_income_aed",
-                    "score": 0.12 if income > 35000 else (-0.08 if income < 8000 else 0.01),
-                    "direction": "positive" if income >= 8000 else "negative",
-                    "description": f"Monthly income ({int(income):,} AED) matches target segment."
+                    "feature": "estimated_annual_income_usd",
+                    "score": 0.12 if income > 90000 else (-0.08 if income < 40000 else 0.01),
+                    "direction": "positive" if income >= 40000 else "negative",
+                    "description": f"Annual income (${int(income):,}) matches target segment."
                 }
             ]
             shap_explanations = sorted(shap_explanations, key=lambda x: abs(x['score']), reverse=True)

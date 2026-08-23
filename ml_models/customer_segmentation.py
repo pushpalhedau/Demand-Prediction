@@ -32,7 +32,7 @@ def train_customer_segmentation(n_clusters: int = 5):
         query = session.query(
             Customer.customer_id,
             Customer.age,
-            Customer.estimated_monthly_income_aed,
+            Customer.estimated_annual_income_usd,
             Customer.credit_score,
             Customer.number_of_past_purchases,
             Customer.loyalty_score,
@@ -47,7 +47,7 @@ def train_customer_segmentation(n_clusters: int = 5):
         # Select numeric features for clustering
         features = [
             'age', 
-            'estimated_monthly_income_aed', 
+            'estimated_annual_income_usd', 
             'credit_score', 
             'number_of_past_purchases', 
             'loyalty_score', 
@@ -57,7 +57,7 @@ def train_customer_segmentation(n_clusters: int = 5):
         # Fill missing values just in case
         X = df[features].copy()
         X['age'] = X['age'].fillna(X['age'].median())
-        X['estimated_monthly_income_aed'] = X['estimated_monthly_income_aed'].fillna(X['estimated_monthly_income_aed'].median())
+        X['estimated_annual_income_usd'] = X['estimated_annual_income_usd'].fillna(X['estimated_annual_income_usd'].median())
         X['credit_score'] = X['credit_score'].fillna(X['credit_score'].median())
         X['number_of_past_purchases'] = X['number_of_past_purchases'].fillna(0)
         X['loyalty_score'] = X['loyalty_score'].fillna(50.0)
@@ -89,13 +89,13 @@ def train_customer_segmentation(n_clusters: int = 5):
         unassigned_labels = ["Budget Buyer", "Premium Buyer", "EV Enthusiast", "Fleet Buyer", "High Repeat"]
         
         # Identify "Premium Buyer" as the cluster with the highest average monthly income
-        premium_cluster = cluster_means['estimated_monthly_income_aed'].idxmax()
+        premium_cluster = cluster_means['estimated_annual_income_usd'].idxmax()
         cluster_mapping[premium_cluster] = "Premium Buyer"
         if "Premium Buyer" in unassigned_labels: unassigned_labels.remove("Premium Buyer")
         
         # Identify "Budget Buyer" as the cluster with the lowest average monthly income
         remaining = [c for c in range(n_clusters) if c not in cluster_mapping]
-        budget_cluster = cluster_means.loc[remaining, 'estimated_monthly_income_aed'].idxmin()
+        budget_cluster = cluster_means.loc[remaining, 'estimated_annual_income_usd'].idxmin()
         cluster_mapping[budget_cluster] = "Budget Buyer"
         if "Budget Buyer" in unassigned_labels: unassigned_labels.remove("Budget Buyer")
         
@@ -172,7 +172,7 @@ def predict_customer_segment(customer_data: dict) -> str:
             
         features = [
             customer_data.get('age', 40),
-            customer_data.get('estimated_monthly_income_aed', 25000.0),
+            customer_data.get('estimated_annual_income_usd', 75000.0),
             customer_data.get('credit_score', 700),
             customer_data.get('number_of_past_purchases', 1),
             customer_data.get('loyalty_score', 50.0),

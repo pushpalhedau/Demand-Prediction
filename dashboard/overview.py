@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from database.connection import get_db_session
-from database.queries import get_executive_kpis, get_monthly_revenue_trend, get_sales_by_category, get_sales_by_fuel_type, get_sales_by_region, get_uae_base_rate_kpi, get_top_brand_kpi
+from database.queries import get_executive_kpis, get_monthly_revenue_trend, get_sales_by_category, get_sales_by_fuel_type, get_sales_by_region, get_fed_rate_kpi, get_top_brand_kpi
 from database.connection import get_data_mode
 from utils.helpers import render_kpi_card, get_color_palette
 
@@ -35,10 +35,10 @@ def render_overview(filters: dict):
             if kpis['total_revenue_delta'] is not None:
                 is_positive_revenue = kpis['total_revenue_delta'] >= 0
                 revenue_delta_str = f"{kpis['total_revenue_delta']:.2f}% YoY"
-            render_kpi_card("Total Revenue", f"AED {kpis['total_revenue'] / 1_000_000:.2f}M", delta=revenue_delta_str, is_positive=is_positive_revenue)
+            render_kpi_card("Total Revenue", f"${kpis['total_revenue'] / 1_000_000:.2f}M", delta=revenue_delta_str, is_positive=is_positive_revenue)
         with col3:
             if get_data_mode() == "real":
-                base_rate_kpi = get_uae_base_rate_kpi(session, filters)
+                base_rate_kpi = get_fed_rate_kpi(session, filters)
                 rate_delta_str = "N/A"
                 is_positive_rate = True
                 if base_rate_kpi['delta'] is not None:
@@ -46,7 +46,7 @@ def render_overview(filters: dict):
                     sign = "+" if bps > 0 else ""
                     rate_delta_str = f"{sign}{bps} bps YoY"
                     is_positive_rate = bps <= 0  # lower rate = cheaper financing = positive
-                render_kpi_card("UAE Base Rate (CBUAE)", f"{base_rate_kpi['rate']:.2f}%", delta=rate_delta_str, is_positive=is_positive_rate)
+                render_kpi_card("US Fed Funds Rate", f"{base_rate_kpi['rate']:.2f}%", delta=rate_delta_str, is_positive=is_positive_rate)
             else:
                 discount_delta_str = "N/A"
                 is_positive_discount = False
@@ -86,11 +86,11 @@ def render_overview(filters: dict):
             fig.add_trace(go.Scatter(
                 x=trend_df['date'], 
                 y=trend_df['revenue'],
-                name='Revenue (AED)',
+                name='Revenue (USD)',
                 line=dict(color=colors['primary'], width=3.5),
                 mode='lines+markers',
                 marker=dict(size=8, color=colors['secondary']),
-                hovertemplate='Date: %{x|%B %Y}<br>Revenue: AED %{y:,.0f}'
+                hovertemplate='Date: %{x|%B %Y}<br>Revenue: $%{y:,.0f}'
             ))
             
             # Sales bars on secondary Y axis
@@ -117,7 +117,7 @@ def render_overview(filters: dict):
                     title=""
                 ),
                 yaxis=dict(
-                    title=dict(text="Monthly Revenue (AED)", font=dict(color=colors['primary'])),
+                    title=dict(text="Monthly Revenue (USD)", font=dict(color=colors['primary'])),
                     showgrid=True, 
                     gridcolor='rgba(255,255,255,0.05)',
                     tickfont=dict(color=colors['primary'])
@@ -192,9 +192,7 @@ def render_overview(filters: dict):
                 st.plotly_chart(fig, use_container_width=True)
                 if get_data_mode() == "real":
                     st.caption(
-                        "**Electric** — Focus2move UAE market data (2023–2024 confirmed) · IEA Global EV Outlook 2025  |  "
-                        "**Hybrid** — Calibrated to Toyota UAE electrified-sales reports + IEA total electrified (HEV = total electrified − BEV)  |  "
-                        "**Petrol / Diesel** — Derived from OEM vehicle specifications and Focus2move confirmed model volumes"
+                        "Modeled NA EV market data — fuel-type mix is a synthetic demo dataset derived from OEM vehicle specifications."
                     )
             else:
                 st.info("No fuel data available.")
@@ -206,12 +204,12 @@ def render_overview(filters: dict):
         reg_df = get_sales_by_region(session, filters)
         if not reg_df.empty:
             fig = px.bar(
-                reg_df, 
-                x='emirate', 
-                y='revenue', 
+                reg_df,
+                x='state',
+                y='revenue',
                 color='revenue',
                 color_continuous_scale='Viridis',
-                labels={'revenue': 'Revenue (AED)'}
+                labels={'revenue': 'Revenue (USD)'}
             )
             fig.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',

@@ -6,7 +6,7 @@ from datetime import datetime
 # Add the project root to python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from database.connection import Base, engine, get_db_session
+from database.connection import Base, engine, get_db_session, set_data_mode
 from database.models import Customer, Vehicle, Dealer, Sale, Inventory, ExternalFactor
 from preprocessing.clean_data import (
     clean_customers,
@@ -43,7 +43,8 @@ def seed_table(session, df, model_class, name):
 
 def main():
     print("Initializing Database Seeding Pipeline...")
-    
+    set_data_mode("test")  # ensure get_db_session() targets automobile_demand.db, not real_demand.db
+
     # Create all tables in database
     print("Creating all tables in the database if they don't exist...")
     Base.metadata.create_all(engine)

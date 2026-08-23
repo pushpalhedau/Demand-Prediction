@@ -43,9 +43,10 @@ def render_regional(filters: dict):
                 size="units_sold",
                 color="revenue",
                 hover_name="dealer_name",
-                hover_data={"emirate": True, "area": True, "tier": True, "performance_score": True, "units_sold": True, "revenue": True},
+                hover_data={"state": True, "city": True, "tier": True, "performance_score": True, "units_sold": True, "revenue": True},
                 color_continuous_scale="Viridis",
-                zoom=3.8,
+                zoom=3.2,
+                center={"lat": 39.0, "lon": -98.0},
                 mapbox_style="open-street-map"
             )
             fig_map.update_layout(
@@ -84,7 +85,7 @@ def render_regional(filters: dict):
         st.markdown("### Top Performing Dealer Leaderboard")
 
         disp_df = df_dealers.copy()
-        disp_df['Total Revenue (AED)'] = disp_df['revenue'].apply(lambda x: f"AED {x:,.0f}")
+        disp_df['Total Revenue (USD)'] = disp_df['revenue'].apply(lambda x: f"${x:,.0f}")
 
         if get_data_mode() == "real":
             # --- Real mode: replace synthetic Tier + Performance Score with real data ---
@@ -101,28 +102,28 @@ def render_regional(filters: dict):
                 lambda x: f"{x} ★" if pd.notnull(x) and x > 0 else "–"
             )
             # Avg Deal Value: ×17 cancels in numerator/denominator — no extra scaling needed
-            disp_df['Avg Deal Value (AED)'] = (disp_df['revenue'] / disp_df['units_sold']).apply(
-                lambda x: f"AED {x:,.0f}" if pd.notnull(x) and x > 0 else "–"
+            disp_df['Avg Deal Value (USD)'] = (disp_df['revenue'] / disp_df['units_sold']).apply(
+                lambda x: f"${x:,.0f}" if pd.notnull(x) and x > 0 else "–"
             )
             disp_df['Top Category'] = disp_df['top_category'].fillna('–')
             disp_df.rename(columns={
                 'dealer_name': 'Dealer Name',
-                'emirate':     'Emirate',
-                'area':        'Area',
+                'state':       'State',
+                'city':        'City',
             }, inplace=True)
-            display_cols = ['Dealer Name', 'Emirate', 'Area', 'Google Rating', 'EV Infrastructure', 'Avg Deal Value (AED)', 'Top Category']
+            display_cols = ['Dealer Name', 'State', 'City', 'Google Rating', 'EV Infrastructure', 'Avg Deal Value (USD)', 'Top Category']
 
         else:
             # --- Test mode: keep original synthetic columns unchanged ---
             disp_df.rename(columns={
                 'dealer_name':       'Dealer Name',
-                'emirate':           'Emirate',
-                'area':              'Area',
+                'state':             'State',
+                'city':              'City',
                 'performance_score': 'Performance Score',
                 'tier':              'Tier',
                 'units_sold':        'Units Sold',
             }, inplace=True)
-            display_cols = ['Dealer Name', 'Emirate', 'Area', 'Tier', 'Performance Score', 'Units Sold', 'Total Revenue (AED)']
+            display_cols = ['Dealer Name', 'State', 'City', 'Tier', 'Performance Score', 'Units Sold', 'Total Revenue (USD)']
 
         st.dataframe(
             disp_df[display_cols],
@@ -132,7 +133,7 @@ def render_regional(filters: dict):
         
         # Print leader insight
         top_dealer = df_dealers.iloc[0]
-        st.success(f"**Top Dealer Alert:** **{top_dealer['dealer_name']}** based in **{top_dealer['emirate']}** is leading this period with **{top_dealer['units_sold']:,} units sold** driving a total revenue of **AED {top_dealer['revenue']:,.2f}**.")
+        st.success(f"**Top Dealer Alert:** **{top_dealer['dealer_name']}** based in **{top_dealer['state']}** is leading this period with **{top_dealer['units_sold']:,} units sold** driving a total revenue of **${top_dealer['revenue']:,.2f}**.")
         
     except Exception as e:
         st.error(f"Error rendering Regional Intelligence: {e}")

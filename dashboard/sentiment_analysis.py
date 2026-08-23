@@ -119,7 +119,7 @@ def render_sentiment_analysis(filters: dict):
     )
     st.markdown(
         "<p style='color:#9ca3af;font-size:14px;margin-bottom:20px;'>"
-        "Real-time geopolitical, economic & social sentiment signals for UAE automobile demand forecasting.</p>",
+        "Real-time geopolitical, economic & social sentiment signals for US automobile demand forecasting.</p>",
         unsafe_allow_html=True,
     )
 
@@ -384,7 +384,7 @@ def _render_recent_news(colors: dict):
     st.markdown("### Recent News")
     st.markdown(
         "<p style='color:#9ca3af;font-size:13px;margin-bottom:16px;'>"
-        "The newest cached UAE automobile-market articles. This is a local read — "
+        "The newest cached US automobile-market articles. This is a local read — "
         "it always shows something even if the news source is temporarily unreachable.</p>",
         unsafe_allow_html=True,
     )
@@ -681,8 +681,8 @@ def _render_forecast_comparison(filters: dict, colors: dict):
         with fc2:
             target = st.selectbox(
                 "Forecast Target",
-                ["units_sold", "total_revenue_incl_vat"],
-                format_func=lambda x: "Sales Volume (Units)" if x == "units_sold" else "Revenue (AED)",
+                ["units_sold", "total_revenue_incl_tax"],
+                format_func=lambda x: "Sales Volume (Units)" if x == "units_sold" else "Revenue (USD)",
                 key="cmp_target",
             )
         with fc3:
@@ -691,7 +691,7 @@ def _render_forecast_comparison(filters: dict, colors: dict):
             st.markdown("</div>", unsafe_allow_html=True)
 
         category_filter = filters.get("vehicle_category")
-        region_filter   = filters.get("emirate")
+        region_filter   = filters.get("region")
         fuel_filter     = filters.get("fuel_type")
 
         if run_cmp:
@@ -787,7 +787,7 @@ def _render_forecast_comparison(filters: dict, colors: dict):
 
         # ── Overlay forecast chart ────────────────────────────────────────
         st.markdown("#### Forecast Overlay — Baseline vs Sentiment-Enhanced")
-        unit_label = "Units" if _target == "units_sold" else "AED"
+        unit_label = "Units" if _target == "units_sold" else "USD"
 
         base_fc = base_result["forecast"]
         base_fc["ds"] = pd.to_datetime(base_fc["ds"])
@@ -948,7 +948,7 @@ def _render_ai_insights(colors: dict):
         if briefing:
             _glass_card(f"""
                 <div style="color:#a5b4fc;font-size:11px;font-weight:600;letter-spacing:1px;margin-bottom:10px;">
-                  UAE AUTOMOBILE MARKET INTELLIGENCE BRIEFING
+                  US AUTOMOBILE MARKET INTELLIGENCE BRIEFING
                 </div>
                 <div style="color:#f3f4f6;font-size:14px;line-height:1.8;white-space:pre-wrap;">{briefing}</div>
             """)
@@ -996,7 +996,7 @@ def _render_ai_insights(colors: dict):
               </div>
               <div style="color:#9ca3af;font-size:13px;">
                 Click <b>Generate Briefing</b> above to produce a data-driven
-                UAE automobile market intelligence report from current sentiment signals.
+                US automobile market intelligence report from current sentiment signals.
               </div>
             </div>
         """)

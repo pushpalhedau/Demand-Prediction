@@ -20,8 +20,8 @@ def render_forecasting(filters: dict):
     with col1:
         target = st.selectbox(
             "Forecast Target",
-            options=["units_sold", "total_revenue_incl_vat"],
-            format_func=lambda x: "Sales Volume (Units)" if x == "units_sold" else "Revenue (AED)"
+            options=["units_sold", "total_revenue_incl_tax"],
+            format_func=lambda x: "Sales Volume (Units)" if x == "units_sold" else "Revenue (USD)"
         )
     with col2:
         horizon = st.selectbox(
@@ -37,9 +37,9 @@ def render_forecasting(filters: dict):
             st.caption("Select a category in the global filters sidebar.")
     with col4:
         region_opt = st.checkbox("Filter Region for Forecast", value=False)
-        region = filters.get("emirate") if region_opt else None
+        region = filters.get("region") if region_opt else None
         if region_opt and not region:
-            st.caption("Select an Emirate in the global filters sidebar.")
+            st.caption("Select a State in the global filters sidebar.")
     with col5:
         confidence_level = st.slider("Confidence Level (%)", 70, 99, 95, help="Determines the width of the uncertainty interval.")
 
@@ -49,24 +49,23 @@ def render_forecasting(filters: dict):
     # ── Market Driver Adjustments ──────────────────────────────────────────────
     FACTOR_CONFIG = {
         # col_name: (display_label, step, category, is_binary)
-        'petrol_95_price_aed_per_litre': ('Petrol 95 (AED/L)',       0.05,  'fuel',     False),
-        'diesel_price_aed_per_litre':    ('Diesel (AED/L)',           0.05,  'fuel',     False),
-        'crude_oil_price_usd':           ('Crude Oil (USD/bbl)',      0.5,   'fuel',     False),
+        'gasoline_regular_usd_per_gallon': ('Gasoline Regular ($/gal)', 0.05,  'fuel',     False),
+        'diesel_usd_per_gallon':         ('Diesel ($/gal)',            0.05,  'fuel',     False),
+        'wti_crude_price_usd':           ('WTI Crude (USD/bbl)',      0.5,   'fuel',     False),
         'gdp_growth_pct':                ('GDP Growth (%)',           0.1,   'macro',    False),
         'cpi_inflation_pct':             ('CPI Inflation (%)',        0.1,   'macro',    False),
         # 'us_fed_rate_pct':               ('US Fed Rate (%)',          0.05,  'macro',    False),
         # 'consumer_confidence_index':     ('Consumer Confidence',      1.0,   'macro',    False),
         'tourism_index':                 ('Tourism Index',            1.0,   'macro',    False),
         'luxury_demand_index':           ('Luxury Demand Index',      1.0,   'macro',    False),
-        'usd_aed_rate':                  ('USD / AED Rate',           0.01,  'macro',    False),
-        'import_duty_pct':               ('Import Duty (%)',          0.1,   'macro',    False),
-        'ev_charging_stations_uae':      ('EV Charging Stations',     10,    'macro',    False),
+        'tariff_pct':                    ('Tariff (%)',                0.1,   'macro',    False),
+        'ev_charging_stations':          ('EV Charging Stations',     10,    'macro',    False),
         # 'unemployment_rate_pct':         ('Unemployment Rate (%)',    0.1,   'industry', False),
         # 'new_model_launches':            ('New Model Launches',       1,     'industry', False),
-        # 'ramadan_month':                 ('Ramadan Month',            1,     'events',   True),
-        # 'national_day_month':            ('National Day Month',       1,     'events',   True),
-        # 'dubai_motor_show':              ('Dubai Motor Show',         1,     'events',   True),
-        # 'abu_dhabi_motor_show':          ('Abu Dhabi Motor Show',     1,     'events',   True),
+        # 'holiday_season_month':          ('Holiday Season Month',     1,     'events',   True),
+        # 'july_4th_month':                ('July 4th Month',           1,     'events',   True),
+        # 'detroit_auto_show_month':       ('Detroit Auto Show',        1,     'events',   True),
+        # 'la_auto_show_month':            ('LA Auto Show',             1,     'events',   True),
     }
 
     CATEGORY_LABELS = {
@@ -162,24 +161,25 @@ def render_forecasting(filters: dict):
     sentiment_regressors = result.get("sentiment_regressors", [])
 
     # ── Sensitivity multipliers: make market driver overrides visibly move the chart ──
-    # % change in demand per unit change in each driver (UAE auto market elasticities)
+    # % change in demand per unit change in each driver (US auto market elasticities)
     DRIVER_SENSITIVITY = {
-        'petrol_95_price_aed_per_litre': -8.0,    # -8% demand per 1 AED/L increase
-        'diesel_price_aed_per_litre':    -6.0,
-        'crude_oil_price_usd':           -0.15,   # per $1/bbl increase
-        'gdp_growth_pct':                 3.5,    # +3.5% demand per 1% GDP growth
-        'cpi_inflation_pct':             -2.0,    # -2% demand per 1% inflation
-        'us_fed_rate_pct':               -1.5,    # -1.5% demand per 1% rate hike
-        'consumer_confidence_index':      0.5,    # +0.5% per index point
-        'tourism_index':                  0.2,    # +0.2% per index point
-        'luxury_demand_index':            0.4,    # +0.4% per index point
-        'unemployment_rate_pct':         -4.0,    # -4% demand per 1% unemployment rise
-        'new_model_launches':             2.0,    # +2% per additional launch
-        'ev_charging_stations_uae':       0.002,  # per station
-        'ramadan_month':                 -8.0,    # binary: -8% if Ramadan ON
-        'national_day_month':             6.0,    # binary: +6% if National Day ON
-        'dubai_motor_show':               5.0,    # binary
-        'abu_dhabi_motor_show':           4.0,    # binary
+        'gasoline_regular_usd_per_gallon': -8.0,  # -8% demand per $1/gal increase
+        'diesel_usd_per_gallon':          -6.0,
+        'wti_crude_price_usd':            -0.15,  # per $1/bbl increase
+        'gdp_growth_pct':                  3.5,   # +3.5% demand per 1% GDP growth
+        'cpi_inflation_pct':              -2.0,   # -2% demand per 1% inflation
+        'us_fed_rate_pct':                -1.5,   # -1.5% demand per 1% rate hike
+        'consumer_confidence_index':       0.5,   # +0.5% per index point
+        'tourism_index':                   0.2,   # +0.2% per index point
+        'luxury_demand_index':             0.4,   # +0.4% per index point
+        'unemployment_rate_pct':          -4.0,   # -4% demand per 1% unemployment rise
+        'new_model_launches':              2.0,   # +2% per additional launch
+        'ev_charging_stations':            0.002, # per station
+        'tariff_pct':                     -1.0,   # -1% demand per 1pp tariff increase
+        'holiday_season_month':            8.0,   # binary: +8% during Nov/Dec holiday shopping
+        'july_4th_month':                  6.0,   # binary: +6% if July 4th ON
+        'detroit_auto_show_month':         5.0,   # binary
+        'la_auto_show_month':              4.0,   # binary
     }
 
     net_impact_pct = 0.0
@@ -232,7 +232,7 @@ def render_forecasting(filters: dict):
     # st.markdown("### Model Evaluation (Historical Validation)")
     # m_col1, m_col2, m_col3 = st.columns(3)
 
-    unit_label = "Units" if target == "units_sold" else "AED"
+    unit_label = "Units" if target == "units_sold" else "USD"
     # with m_col1:
     #     st.metric(
     #         label="Historical Validation RMSE",
@@ -349,7 +349,7 @@ def render_forecasting(filters: dict):
             annotation_font_color=colors['accent']
         )
 
-    y_title = "Revenue (AED)" if target == "total_revenue_incl_vat" else "Units Sold"
+    y_title = "Revenue (USD)" if target == "total_revenue_incl_tax" else "Units Sold"
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',

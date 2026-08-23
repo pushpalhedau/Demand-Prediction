@@ -5,7 +5,7 @@ from database.connection import get_db_session # This line is already present, n
 import pandas as pd
 from datetime import datetime, date
 
-# Dataset is a 1/17 (~5.9%) sample of the UAE national market.
+# Dataset is a representative sample of the modeled 8-state NA market.
 # Multiply sample unit counts by this factor to get implied national figures.
 NATIONAL_SCALE_FACTOR = 17
 
@@ -17,7 +17,7 @@ def get_executive_kpis(session: Session, filters: dict = None) -> dict:
     """
     query = session.query(
         func.sum(Sale.units_sold).label("total_sales"),
-        func.sum(Sale.total_revenue_incl_vat).label("total_revenue"),
+        func.sum(Sale.total_revenue_incl_tax).label("total_revenue"),
         func.avg(Sale.discount_pct).label("avg_discount"),
         func.avg(Sale.lead_to_close_days).label("avg_lead_close")
     )
@@ -52,7 +52,7 @@ def get_executive_kpis(session: Session, filters: dict = None) -> dict:
 
         prior_year_query = session.query(
             func.sum(Sale.units_sold).label("total_sales"),
-            func.sum(Sale.total_revenue_incl_vat).label("total_revenue"),
+            func.sum(Sale.total_revenue_incl_tax).label("total_revenue"),
             func.avg(Sale.discount_pct).label("avg_discount"),
             func.avg(Sale.lead_to_close_days).label("avg_lead_close")
         )
@@ -76,10 +76,10 @@ def get_executive_kpis(session: Session, filters: dict = None) -> dict:
     top_cat_res = cat_query.group_by(Sale.vehicle_category).order_by(desc("cnt")).first()
     top_cat = top_cat_res[0] if top_cat_res else "N/A"
 
-    # Get worst performing emirate
-    region_query = session.query(Sale.emirate, func.sum(Sale.units_sold).label("cnt"))
+    # Get worst performing state
+    region_query = session.query(Sale.state, func.sum(Sale.units_sold).label("cnt"))
     region_query = _apply_sale_filters(region_query, filters)
-    worst_region_res = region_query.group_by(Sale.emirate).order_by(asc("cnt")).first()
+    worst_region_res = region_query.group_by(Sale.state).order_by(asc("cnt")).first()
     worst_region = worst_region_res[0] if worst_region_res else "N/A"
 
     # Get total customer count
@@ -113,7 +113,7 @@ def get_monthly_revenue_trend(session: Session, filters: dict = None) -> pd.Data
     query = session.query(
         Sale.year,
         Sale.month,
-        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
         func.sum(Sale.units_sold).label("sales")
     )
     query = _apply_sale_filters(query, filters)
@@ -134,7 +134,7 @@ def get_sales_by_category(session: Session, filters: dict = None) -> pd.DataFram
     query = session.query(
         Sale.vehicle_category,
         func.sum(Sale.units_sold).label("sales"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue")
+        func.sum(Sale.total_revenue_incl_tax).label("revenue")
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.vehicle_category).order_by(desc("sales"))
@@ -153,7 +153,7 @@ def get_sales_by_fuel_type(session: Session, filters: dict = None) -> pd.DataFra
     query = session.query(
         Sale.fuel_type,
         func.sum(Sale.units_sold).label("sales"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue")
+        func.sum(Sale.total_revenue_incl_tax).label("revenue")
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.fuel_type).order_by(desc("sales"))
@@ -167,15 +167,15 @@ def get_sales_by_fuel_type(session: Session, filters: dict = None) -> pd.DataFra
 
 def get_sales_by_region(session: Session, filters: dict = None) -> pd.DataFrame:
     """
-    Get sales distribution by emirate (was: region).
+    Get sales distribution by state.
     """
     query = session.query(
-        Sale.emirate,
+        Sale.state,
         func.sum(Sale.units_sold).label("sales"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue")
+        func.sum(Sale.total_revenue_incl_tax).label("revenue")
     )
     query = _apply_sale_filters(query, filters)
-    query = query.group_by(Sale.emirate).order_by(desc("sales"))
+    query = query.group_by(Sale.state).order_by(desc("sales"))
 
     df = pd.read_sql(query.statement, session.bind)
     if not df.empty:
@@ -191,8 +191,8 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
     query = session.query(
         Dealer.dealer_id,
         Dealer.dealer_name,
-        Dealer.area,              # was: city
-        Dealer.emirate,           # was: region
+        Dealer.city,
+        Dealer.state,
         Dealer.performance_score,
         Dealer.tier,
         Dealer.google_rating,
@@ -201,7 +201,7 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
         Dealer.latitude,
         Dealer.longitude,
         func.sum(Sale.units_sold).label("units_sold"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue")
+        func.sum(Sale.total_revenue_incl_tax).label("revenue")
     ).join(Sale, Sale.dealer_id == Dealer.dealer_id)
 
     query = _apply_sale_filters(query, filters)
@@ -209,8 +209,8 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
     query = query.group_by(
         Dealer.dealer_id,
         Dealer.dealer_name,
-        Dealer.area,
-        Dealer.emirate,
+        Dealer.city,
+        Dealer.state,
         Dealer.performance_score,
         Dealer.tier,
         Dealer.google_rating,
@@ -254,7 +254,7 @@ def get_yoy_comparison(session: Session, filters: dict = None) -> pd.DataFrame:
     query = session.query(
         Sale.year,
         Sale.month,
-        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
         func.sum(Sale.units_sold).label("sales")
     )
     query = _apply_sale_filters(query, filters)
@@ -275,8 +275,8 @@ def get_customer_segments_data(session: Session) -> pd.DataFrame:
         Customer.customer_id,
         Customer.age,
         Customer.gender,
-        Customer.nationality,                      # REAL — FCSC 2023 census
-        Customer.estimated_monthly_income_aed,    # was: estimated_annual_income
+        Customer.nationality,
+        Customer.estimated_annual_income_usd,
         Customer.credit_score,
         Customer.number_of_past_purchases,
         Customer.loyalty_score,
@@ -293,8 +293,8 @@ def get_inventory_status(session: Session, filters: dict = None) -> pd.DataFrame
     query = session.query(
         Inventory.inventory_id,
         Inventory.dealer_id,
-        Inventory.area,                       # was: city
-        Inventory.emirate,                    # was: region
+        Inventory.city,
+        Inventory.state,
         Inventory.brand,
         Inventory.model,
         Inventory.vehicle_category,
@@ -307,19 +307,19 @@ def get_inventory_status(session: Session, filters: dict = None) -> pd.DataFrame
         Inventory.reorder_needed,
         Inventory.stockout_risk_score,
         Inventory.overstock_risk_score,
-        Inventory.holding_cost_per_day_aed,   # was: holding_cost_per_day
-        Inventory.estimated_holding_cost_aed, # was: estimated_holding_cost
+        Inventory.holding_cost_per_day_usd,
+        Inventory.estimated_holding_cost_usd,
         Inventory.units_sold_last_30d,
         Inventory.units_ordered,
         Inventory.transit_stock,
-        Inventory.warehouse_zone              # was: warehouse_location
+        Inventory.warehouse_zone
     )
 
     if filters:
         if filters.get("region"):
-            query = query.filter(Inventory.emirate == filters["region"])
+            query = query.filter(Inventory.state == filters["region"])
         if filters.get("city"):
-            query = query.filter(Inventory.area == filters["city"])
+            query = query.filter(Inventory.city == filters["city"])
         if filters.get("vehicle_category"):
             query = query.filter(Inventory.vehicle_category == filters["vehicle_category"])
         if filters.get("fuel_type"):
@@ -337,11 +337,10 @@ def update_inventory_from_csv(session: Session, df: pd.DataFrame):
     pass
 
 
-def get_uae_base_rate_kpi(session: Session, filters: dict = None) -> dict:
+def get_fed_rate_kpi(session: Session, filters: dict = None) -> dict:
     """
-    Returns the UAE base rate (CBUAE OPR) for the selected period and YoY delta.
+    Returns the US Federal Funds Rate for the selected period and YoY delta.
     Uses the period-end rate (last month within the date range).
-    Stored as ExternalFactor.us_fed_rate_pct (renamed during seeding).
     """
     def _period_end_rate(start_date, end_date):
         q = session.query(ExternalFactor.us_fed_rate_pct, ExternalFactor.year, ExternalFactor.month)
@@ -406,11 +405,11 @@ def get_top_brand_kpi(session: Session, filters: dict = None) -> dict:
 
 def get_unique_filter_options(session: Session) -> dict:
     """
-    Gets lists of unique emirates, areas, categories, fuel types, brands and years
+    Gets lists of unique states, cities, categories, fuel types, brands and years
     to populate filters in the Streamlit sidebar.
     """
-    regions = [r[0] for r in session.query(Sale.emirate).distinct().all() if r[0]]
-    cities = [c[0] for c in session.query(Sale.area).distinct().all() if c[0]]
+    regions = [r[0] for r in session.query(Sale.state).distinct().all() if r[0]]
+    cities = [c[0] for c in session.query(Sale.city).distinct().all() if c[0]]
     categories = [cat[0] for cat in session.query(Sale.vehicle_category).distinct().all() if cat[0]]
     fuels = [f[0] for f in session.query(Sale.fuel_type).distinct().all() if f[0]]
     brands = [b[0] for b in session.query(Sale.brand).distinct().all() if b[0]]
@@ -433,11 +432,10 @@ def _apply_sale_filters(query, filters: dict = None):
     if not filters:
         return query
 
-    # UAE schema keys
     if filters.get("region"):
-        query = query.filter(Sale.emirate == filters["region"])
+        query = query.filter(Sale.state == filters["region"])
     if filters.get("city"):
-        query = query.filter(Sale.area == filters["city"])
+        query = query.filter(Sale.city == filters["city"])
 
     if filters.get("vehicle_category"):
         query = query.filter(Sale.vehicle_category == filters["vehicle_category"])
@@ -458,32 +456,32 @@ def _apply_sale_filters(query, filters: dict = None):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Chinese Brand Market Impact — constants & queries
+# Import Tariff Exposure — constants & queries
+# Section 232 auto tariffs (25% on imported vehicles/parts, effective Apr 2025)
+# hit import-heavy brands harder than Big 3 domestic-built brands.
 # ─────────────────────────────────────────────────────────────────────────────
 
-CHINESE_BRANDS = ['MG', 'BYD', 'Jetour', 'Geely']
+IMPORT_BRANDS = ['Toyota', 'Honda', 'Nissan', 'Subaru', 'Lexus', 'Hyundai', 'Kia', 'BMW', 'Mercedes-Benz', 'Volkswagen']
 
 BRAND_ORIGIN = {
-    'Toyota': 'Japanese',      'Nissan': 'Japanese',       'Mitsubishi': 'Japanese',
-    'Honda': 'Japanese',       'Lexus': 'Japanese',
+    'Toyota': 'Japanese',      'Nissan': 'Japanese',
+    'Honda': 'Japanese',       'Lexus': 'Japanese',       'Subaru': 'Japanese',
     'Hyundai': 'Korean',       'Kia': 'Korean',
     'BMW': 'European',         'Mercedes-Benz': 'European', 'Volkswagen': 'European',
-    'Land Rover': 'European',  'Polestar': 'European',
-    'Ford': 'American',        'Chevrolet': 'American',    'Jeep': 'American',
-    'Tesla': 'American',
-    'MG': 'Chinese',           'BYD': 'Chinese',           'Jetour': 'Chinese',
-    'Geely': 'Chinese',
+    'Ford': 'Domestic',        'Chevrolet': 'Domestic',    'Jeep': 'Domestic',
+    'GMC': 'Domestic',         'Ram': 'Domestic',
+    'Tesla': 'Domestic',
 }
 
 
 def _filters_no_brand(filters: dict) -> dict:
-    """Return a copy of filters with brand cleared so Chinese brand queries see all brands."""
+    """Return a copy of filters with brand cleared so import/domestic queries see all brands."""
     if not filters:
         return {}
     return {**filters, 'brand': None}
 
 
-def get_chinese_brand_yearly_share(session: Session, filters: dict = None) -> pd.DataFrame:
+def get_brand_origin_yearly_share(session: Session, filters: dict = None) -> pd.DataFrame:
     """Year-by-year units per brand with origin tag. Brand filter is always ignored."""
     query = session.query(
         Sale.year,
@@ -505,7 +503,7 @@ def get_price_competitiveness(session: Session, filters: dict = None) -> pd.Data
     query = session.query(
         Sale.brand,
         Sale.vehicle_category,
-        func.avg(Sale.selling_price_aed).label("avg_price"),
+        func.avg(Sale.selling_price_usd).label("avg_price"),
         func.sum(Sale.units_sold).label("units")
     )
     query = _apply_sale_filters(query, _filters_no_brand(filters))
