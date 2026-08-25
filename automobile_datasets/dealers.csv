@@ -1,121 +1,121 @@
 dealer_id,dealer_name,brand,state,city,address,zip_code,tier,established_year,monthly_capacity,showroom_area_sqft,service_center,ev_charging_station,num_salespeople,annual_target_units,performance_score,google_rating,latitude,longitude
-DLR0001,Highline Chevrolet Sacramento,Chevrolet,California,Sacramento,720 Market St,37275,Platinum,1990,212,8332,False,True,32,4867,86.5,3.5,38.45916,-121.49445
-DLR0002,Legacy Toyota of Los Angeles,Toyota,California,Los Angeles,8614 Highway 1,84675,Silver,2004,440,9717,True,False,67,1300,77.9,3.5,34.18396,-118.34223
-DLR0003,Legacy Honda of San Francisco,Honda,California,San Francisco,2493 Market St,49355,Silver,2007,530,20852,True,False,61,6821,55.7,4.6,37.67774,-122.43141
-DLR0004,Legacy Nissan of San Diego,Nissan,California,San Diego,4943 Highway 1,69933,Silver,1997,413,34455,True,True,61,2876,76.2,3.8,32.63833,-117.26656
-DLR0005,Highline Honda San Diego,Honda,California,San Diego,4414 Market St,20905,Silver,1995,540,30908,False,False,19,4105,74.1,4.4,32.85363,-117.26951
-DLR0006,Metro Volkswagen Sacramento,Volkswagen,California,Sacramento,1180 Highway 1,43887,Silver,2011,434,20070,True,True,33,3806,84.3,3.7,38.44995,-121.40712
-DLR0007,Metro GMC San Francisco,GMC,California,San Francisco,246 Highway 1,63057,Gold,1987,223,32512,True,False,21,3405,64.7,4.5,37.76414,-122.34579
-DLR0008,Chevrolet of Los Angeles,Chevrolet,California,Los Angeles,7282 Highway 1,30338,Gold,2013,418,40846,True,False,32,2198,85.0,4.0,33.99882,-118.24721
-DLR0009,Metro Nissan San Diego,Nissan,California,San Diego,3238 Highway 1,96489,Silver,1996,138,33061,True,True,6,3486,79.2,3.4,32.71534,-117.24511
-DLR0010,Chevrolet of San Francisco,Chevrolet,California,San Francisco,7952 Market St,67090,Silver,1995,80,11887,True,True,24,6295,60.3,3.9,37.7733,-122.53404
-DLR0011,Highline Chevrolet Sacramento,Chevrolet,California,Sacramento,3453 Market St,53887,Silver,1996,481,37256,True,True,32,3312,67.4,4.6,38.65553,-121.6042
-DLR0012,Los Angeles Auto Group Chevrolet,Chevrolet,California,Los Angeles,2147 Highway 1,32444,Silver,2012,447,44416,True,True,20,1938,70.9,4.3,34.18012,-118.30315
-DLR0013,Chevrolet of Sacramento,Chevrolet,California,Sacramento,4228 Commerce Way,94363,Silver,2009,137,16645,True,True,21,3518,63.1,4.0,38.65511,-121.58764
-DLR0014,Toyota Superstore Los Angeles,Toyota,California,Los Angeles,1787 Market St,63948,Gold,2010,125,42975,True,False,45,1715,90.4,4.5,34.12626,-118.18447
-DLR0015,Highline Subaru San Diego,Subaru,California,San Diego,2980 Commerce Way,69866,Silver,1995,168,20093,True,False,64,2896,73.1,4.7,32.77015,-117.10703
-DLR0016,Dallas Lexus,Lexus,Texas,Dallas,5056 Main St,11045,Gold,1997,98,43163,True,False,59,6125,76.9,4.6,32.75901,-96.84099
-DLR0017,Austin Nissan,Nissan,Texas,Austin,1632 Auto Plaza Dr,37147,Gold,2015,281,20401,True,False,34,1400,96.5,4.7,30.31132,-97.76476
-DLR0018,Ford of Dallas,Ford,Texas,Dallas,5075 Auto Plaza Dr,99477,Platinum,1997,153,42177,True,False,6,5185,61.3,4.2,32.67451,-96.93524
-DLR0019,Highline Tesla San Antonio,Tesla,Texas,San Antonio,8419 Main St,76133,Gold,2005,233,25062,True,False,56,2168,88.6,4.1,29.43477,-98.50644
-DLR0020,Premier Hyundai Houston,Hyundai,Texas,Houston,4657 Main St,49237,Silver,2000,297,16668,True,True,51,2112,96.3,4.5,29.86629,-95.31015
-DLR0021,Chevrolet Superstore San Antonio,Chevrolet,Texas,San Antonio,1161 Auto Plaza Dr,23585,Gold,1998,81,36533,True,True,31,3613,84.1,4.4,29.4916,-98.61202
-DLR0022,Highline Ford Dallas,Ford,Texas,Dallas,8881 Highway 1,94594,Gold,2015,116,33275,True,True,20,5719,94.7,4.3,32.73135,-96.84046
-DLR0023,Dallas Auto Group Hyundai,Hyundai,Texas,Dallas,8898 Main St,89510,Gold,1985,84,13086,False,True,53,6939,58.0,3.9,32.86541,-96.74864
-DLR0024,Toyota Superstore San Antonio,Toyota,Texas,San Antonio,3109 Highway 1,55970,Silver,1999,131,14962,False,False,18,5162,78.0,3.5,29.34511,-98.62469
-DLR0025,Austin Ford,Ford,Texas,Austin,5172 Auto Plaza Dr,40408,Gold,1996,411,38224,True,True,52,5750,78.0,4.1,30.1974,-97.7304
-DLR0026,San Antonio Auto Group Ford,Ford,Texas,San Antonio,6507 Auto Plaza Dr,86796,Silver,1985,152,40843,True,True,23,6078,89.3,4.7,29.42084,-98.39091
-DLR0027,Highline Honda San Antonio,Honda,Texas,San Antonio,5905 Auto Plaza Dr,67347,Gold,2008,463,38773,True,True,52,2993,74.9,4.8,29.55661,-98.35349
-DLR0028,Metro Kia Houston,Kia,Texas,Houston,1655 Auto Plaza Dr,16007,Gold,1985,302,38819,True,True,34,2551,68.9,4.5,29.61211,-95.4508
-DLR0029,Houston Auto Group Mercedes-Benz,Mercedes-Benz,Texas,Houston,3881 Commerce Way,56962,Silver,1991,132,40378,True,False,68,1546,64.3,4.0,29.70974,-95.50148
-DLR0030,Honda Superstore San Antonio,Honda,Texas,San Antonio,4651 Auto Plaza Dr,33821,Gold,1995,461,21942,True,False,59,1784,89.2,4.2,29.41161,-98.4296
-DLR0031,Orlando Auto Group Ram,Ram,Florida,Orlando,2760 Highway 1,77809,Silver,2007,537,13813,True,True,47,2175,60.2,4.0,28.39426,-81.33211
-DLR0032,Jacksonville Auto Group Ram,Ram,Florida,Jacksonville,963 Highway 1,21344,Platinum,2010,381,9330,True,True,46,3502,62.4,4.2,30.28539,-81.60917
-DLR0033,Metro Nissan Jacksonville,Nissan,Florida,Jacksonville,5562 Highway 1,42589,Gold,2007,281,34712,True,False,52,4249,66.7,4.1,30.33748,-81.65037
-DLR0034,Highline Ford Miami,Ford,Florida,Miami,4285 Highway 1,72531,Gold,1998,379,9429,True,True,60,580,97.0,3.8,25.77295,-80.23434
-DLR0035,Premier Toyota Jacksonville,Toyota,Florida,Jacksonville,8495 Main St,23768,Silver,1997,439,21824,True,False,23,5582,87.7,4.4,30.18745,-81.73682
-DLR0036,Metro Nissan Jacksonville,Nissan,Florida,Jacksonville,7010 Commerce Way,60281,Gold,2011,109,8871,True,True,68,6953,64.8,3.5,30.30714,-81.61084
-DLR0037,Tampa Auto Group Ford,Ford,Florida,Tampa,7787 Highway 1,83188,Gold,1990,329,40623,True,False,10,5951,66.0,3.5,27.97644,-82.45749
-DLR0038,Miami Auto Group Honda,Honda,Florida,Miami,1885 Commerce Way,42433,Gold,2000,145,24819,True,True,14,2419,66.4,3.8,25.84655,-80.30759
-DLR0039,Legacy Ford of Tampa,Ford,Florida,Tampa,2867 Auto Plaza Dr,77412,Gold,1996,523,26574,True,False,38,6042,73.5,4.1,27.92531,-82.53552
-DLR0040,Tesla of Orlando,Tesla,Florida,Orlando,6989 Highway 1,95396,Gold,2003,142,18309,False,True,70,4375,58.9,4.7,28.4192,-81.41099
-DLR0041,Premier BMW Tampa,BMW,Florida,Tampa,8744 Market St,95688,Silver,1992,180,9178,True,True,24,6743,55.4,3.9,27.86159,-82.60309
-DLR0042,Nissan of Orlando,Nissan,Florida,Orlando,3420 Highway 1,24725,Silver,1996,249,39137,True,True,20,6006,95.0,4.3,28.49383,-81.25902
-DLR0043,Highline Tesla Jacksonville,Tesla,Florida,Jacksonville,2093 Market St,14934,Platinum,2005,543,16583,True,True,13,6474,69.7,3.7,30.19516,-81.70294
-DLR0044,Miami Lexus,Lexus,Florida,Miami,5028 Market St,28503,Gold,1985,537,18917,True,True,71,6533,90.9,3.6,25.7894,-80.17515
-DLR0045,Highline Kia Orlando,Kia,Florida,Orlando,737 Auto Plaza Dr,98139,Gold,1994,285,14501,False,False,67,2840,84.8,4.1,28.47253,-81.42432
-DLR0046,Highline Volkswagen New York City,Volkswagen,New York,New York City,8161 Market St,55671,Gold,1994,193,37930,True,False,68,5743,91.0,4.9,40.77608,-73.86284
-DLR0047,Legacy Ford of Rochester,Ford,New York,Rochester,3699 Main St,55608,Gold,1998,417,34628,True,True,62,6624,65.6,3.8,43.25632,-77.49054
-DLR0048,Highline Ram Rochester,Ram,New York,Rochester,9725 Market St,75080,Gold,1996,189,37796,True,False,64,6327,71.5,4.5,43.19852,-77.65942
-DLR0049,Legacy Nissan of New York City,Nissan,New York,New York City,8475 Main St,46547,Gold,2015,212,43764,True,False,53,3954,60.4,4.6,40.69269,-73.94204
-DLR0050,Legacy Subaru of Albany,Subaru,New York,Albany,9316 Market St,84578,Platinum,2006,333,41675,True,False,30,6175,70.3,4.0,42.6028,-73.90448
-DLR0051,Highline Ford Buffalo,Ford,New York,Buffalo,4654 Highway 1,64860,Platinum,1998,520,29023,True,True,19,5396,75.2,4.3,42.8632,-78.86129
-DLR0052,Highline Mercedes-Benz Rochester,Mercedes-Benz,New York,Rochester,809 Highway 1,71027,Gold,1987,219,43594,True,True,30,5442,90.1,4.3,43.28145,-77.73213
-DLR0053,Metro Nissan New York City,Nissan,New York,New York City,7053 Highway 1,29931,Silver,2003,168,22364,True,True,29,6382,90.6,4.5,40.83994,-74.13615
-DLR0054,Ram Superstore Buffalo,Ram,New York,Buffalo,7440 Auto Plaza Dr,81211,Silver,1999,383,38509,True,True,24,3675,91.6,3.8,42.98332,-78.95504
-DLR0055,Legacy Chevrolet of Albany,Chevrolet,New York,Albany,5988 Market St,37998,Silver,2012,421,17255,True,True,35,3009,88.4,4.7,42.64636,-73.63137
-DLR0056,Albany Toyota,Toyota,New York,Albany,8829 Auto Plaza Dr,77193,Silver,2003,300,26391,True,False,25,5319,61.2,3.8,42.74278,-73.63253
-DLR0057,Legacy BMW of Albany,BMW,New York,Albany,6311 Commerce Way,87261,Gold,1990,270,26351,True,True,63,2974,57.7,4.1,42.71144,-73.71078
-DLR0058,Premier Volkswagen Buffalo,Volkswagen,New York,Buffalo,1899 Market St,81201,Silver,1998,297,37558,True,False,32,6869,80.7,4.2,42.97259,-78.93469
-DLR0059,Subaru of Rochester,Subaru,New York,Rochester,8888 Main St,24274,Gold,1992,565,42984,True,True,59,4233,85.2,4.6,43.12159,-77.69275
-DLR0060,Subaru of Buffalo,Subaru,New York,Buffalo,5663 Auto Plaza Dr,91396,Platinum,2000,295,42859,True,False,42,3887,84.8,4.3,42.83729,-79.00058
-DLR0061,Naperville Auto Group Ford,Ford,Illinois,Naperville,1566 Highway 1,63473,Silver,1986,324,41330,True,False,21,4364,78.5,4.6,41.78843,-88.10113
-DLR0062,Legacy Ford of Springfield,Ford,Illinois,Springfield,7652 Main St,74541,Gold,1989,414,25752,True,False,39,1295,55.6,4.9,39.72559,-89.64716
-DLR0063,Naperville Ford,Ford,Illinois,Naperville,6451 Highway 1,65673,Gold,1986,593,38980,False,True,37,2840,65.1,3.7,41.6978,-88.048
-DLR0064,Chicago Auto Group Toyota,Toyota,Illinois,Chicago,5842 Main St,21483,Silver,1987,507,35197,True,True,56,6098,64.0,4.0,41.7626,-87.58609
-DLR0065,Chicago Toyota,Toyota,Illinois,Chicago,2335 Commerce Way,79715,Silver,2005,298,35156,True,True,18,5040,60.0,3.8,41.86254,-87.74547
-DLR0066,Metro Toyota Springfield,Toyota,Illinois,Springfield,6878 Auto Plaza Dr,85962,Silver,1997,207,15681,True,False,20,6568,56.7,4.8,39.92889,-89.69621
-DLR0067,Springfield Auto Group Kia,Kia,Illinois,Springfield,4548 Auto Plaza Dr,78849,Silver,2004,528,40445,True,True,18,647,91.3,4.6,39.64551,-89.57636
-DLR0068,Chicago Kia,Kia,Illinois,Chicago,3247 Highway 1,29999,Gold,1995,132,26644,False,True,8,3762,57.8,3.6,41.98333,-87.55702
-DLR0069,Legacy Subaru of Chicago,Subaru,Illinois,Chicago,2780 Commerce Way,34268,Gold,2007,198,20217,True,False,69,4800,64.3,3.4,41.75467,-87.72603
-DLR0070,Metro Subaru Naperville,Subaru,Illinois,Naperville,7595 Commerce Way,85884,Silver,1988,568,25215,False,False,25,4606,71.1,3.6,41.78879,-88.15801
-DLR0071,Highline Chevrolet Springfield,Chevrolet,Illinois,Springfield,657 Auto Plaza Dr,37964,Silver,2002,599,17610,True,True,57,3610,94.9,4.5,39.8526,-89.6983
-DLR0072,Subaru Superstore Naperville,Subaru,Illinois,Naperville,8324 Market St,43767,Silver,2005,351,38764,True,False,42,1311,97.5,4.6,41.64353,-88.23072
-DLR0073,Chicago Auto Group Jeep,Jeep,Illinois,Chicago,5551 Market St,39703,Platinum,1995,401,44814,True,False,17,2857,59.1,3.5,41.91694,-87.54774
-DLR0074,Highline Mercedes-Benz Chicago,Mercedes-Benz,Illinois,Chicago,8356 Auto Plaza Dr,30985,Silver,2014,347,41996,True,False,12,5073,85.2,4.7,41.8891,-87.62777
-DLR0075,Chicago Auto Group Chevrolet,Chevrolet,Illinois,Chicago,516 Main St,70881,Silver,2008,586,18193,True,True,72,4226,67.0,3.8,41.75765,-87.68239
-DLR0076,Ram of Savannah,Ram,Georgia,Savannah,6561 Highway 1,81570,Gold,1986,266,18876,False,False,40,6026,62.3,4.5,32.06616,-81.19001
-DLR0077,Premier Honda Atlanta,Honda,Georgia,Atlanta,7106 Auto Plaza Dr,45548,Silver,1986,284,41320,False,False,65,1964,78.4,4.4,33.74366,-84.43224
-DLR0078,Highline Ford Savannah,Ford,Georgia,Savannah,5719 Auto Plaza Dr,99558,Platinum,2014,247,8299,True,False,13,3130,80.6,3.7,32.13131,-81.02885
-DLR0079,Ram Superstore Savannah,Ram,Georgia,Savannah,6381 Market St,32732,Silver,2002,442,33247,True,False,23,4693,93.5,3.8,32.22561,-81.20957
-DLR0080,Nissan of Savannah,Nissan,Georgia,Savannah,3839 Highway 1,49517,Gold,1987,427,22160,True,False,22,1035,69.5,4.7,32.13697,-81.0302
-DLR0081,Lexus of Atlanta,Lexus,Georgia,Atlanta,3681 Highway 1,87853,Silver,2008,290,34418,True,True,45,5523,81.3,3.8,33.60179,-84.37796
-DLR0082,Metro Toyota Augusta,Toyota,Georgia,Augusta,6406 Market St,83685,Gold,1987,114,26277,True,False,45,4139,65.1,4.8,33.5281,-82.0596
-DLR0083,Subaru Superstore Savannah,Subaru,Georgia,Savannah,1059 Auto Plaza Dr,36539,Silver,2015,93,10311,True,True,5,3255,82.4,3.5,31.99796,-81.20999
-DLR0084,Savannah Ram,Ram,Georgia,Savannah,7841 Auto Plaza Dr,80366,Gold,1992,234,42601,True,False,47,5078,90.3,3.8,31.95448,-81.10103
-DLR0085,Ford of Augusta,Ford,Georgia,Augusta,8734 Highway 1,98094,Silver,1997,264,13048,True,True,51,1632,97.2,4.8,33.60164,-81.91251
-DLR0086,Highline Nissan Savannah,Nissan,Georgia,Savannah,8352 Main St,56029,Silver,2004,398,10444,True,False,27,2727,85.0,4.6,32.18149,-81.05645
-DLR0087,Metro Subaru Augusta,Subaru,Georgia,Augusta,4532 Market St,56714,Silver,1986,348,17902,True,True,68,1649,92.6,3.4,33.37806,-81.93243
-DLR0088,Highline Ford Augusta,Ford,Georgia,Augusta,7974 Highway 1,24012,Silver,1998,377,13039,True,False,44,5642,58.0,4.5,33.43631,-81.94453
-DLR0089,Savannah Chevrolet,Chevrolet,Georgia,Savannah,1391 Auto Plaza Dr,45647,Platinum,2011,468,40975,True,False,37,1765,70.2,4.7,32.22678,-81.10828
-DLR0090,Premier Ram Savannah,Ram,Georgia,Savannah,1996 Auto Plaza Dr,96347,Silver,2005,324,22429,True,False,47,2310,55.8,4.5,32.13969,-80.98902
-DLR0091,Cleveland Ford,Ford,Ohio,Cleveland,9823 Market St,84825,Gold,1999,440,15430,True,False,39,6142,93.7,4.0,41.42799,-81.58323
-DLR0092,Columbus Auto Group GMC,GMC,Ohio,Columbus,1053 Auto Plaza Dr,80102,Gold,1992,333,40212,False,False,52,6184,71.4,4.1,39.98114,-83.08241
-DLR0093,Highline Ford Columbus,Ford,Ohio,Columbus,4209 Commerce Way,10892,Gold,1988,105,36874,True,True,12,4671,60.9,4.0,39.98015,-82.98371
-DLR0094,Cincinnati Auto Group Mercedes-Benz,Mercedes-Benz,Ohio,Cincinnati,7669 Market St,68356,Platinum,2002,423,33092,True,False,34,5049,89.3,4.6,39.01824,-84.41218
-DLR0095,Metro Jeep Cincinnati,Jeep,Ohio,Cincinnati,6001 Commerce Way,92325,Silver,2013,560,40606,True,False,48,3933,62.4,4.5,39.22038,-84.61375
-DLR0096,Metro Ram Cleveland,Ram,Ohio,Cleveland,7094 Market St,84354,Platinum,1999,327,17959,True,False,28,2695,77.1,3.7,41.5314,-81.72523
-DLR0097,Metro GMC Columbus,GMC,Ohio,Columbus,2930 Auto Plaza Dr,49412,Silver,1986,238,40558,False,False,9,6491,85.4,4.3,39.93692,-83.04212
-DLR0098,Cincinnati Honda,Honda,Ohio,Cincinnati,8597 Commerce Way,11437,Gold,1985,344,22563,True,False,20,5776,81.4,4.4,39.13727,-84.58513
-DLR0099,Cincinnati Auto Group Chevrolet,Chevrolet,Ohio,Cincinnati,4512 Main St,35564,Silver,1985,169,43574,False,True,71,5809,80.6,4.8,39.0261,-84.52876
-DLR0100,Cincinnati Hyundai,Hyundai,Ohio,Cincinnati,1018 Auto Plaza Dr,76264,Silver,2007,184,37755,True,False,24,4603,87.5,3.4,38.98694,-84.44855
-DLR0101,Metro Tesla Columbus,Tesla,Ohio,Columbus,4870 Main St,45721,Silver,2012,285,40460,True,True,45,5082,65.5,4.4,40.01948,-82.98683
-DLR0102,Ford of Cincinnati,Ford,Ohio,Cincinnati,2442 Market St,21012,Gold,1991,540,10750,True,True,16,4310,92.7,4.7,39.24372,-84.39672
-DLR0103,Columbus Honda,Honda,Ohio,Columbus,6811 Auto Plaza Dr,40251,Silver,2004,150,17785,True,True,19,3235,64.4,4.7,39.99703,-82.95955
-DLR0104,Cleveland Chevrolet,Chevrolet,Ohio,Cleveland,4325 Highway 1,79100,Silver,2007,476,44894,True,True,30,4462,67.4,4.2,41.4871,-81.67534
-DLR0105,Cleveland Auto Group Tesla,Tesla,Ohio,Cleveland,547 Market St,17814,Gold,2011,161,36637,True,False,68,3697,59.6,3.8,41.54655,-81.73066
-DLR0106,Honda Superstore Grand Rapids,Honda,Michigan,Grand Rapids,789 Main St,71133,Gold,1986,177,32882,True,False,62,6578,81.9,4.6,43.0421,-85.53199
-DLR0107,Toyota Superstore Grand Rapids,Toyota,Michigan,Grand Rapids,9775 Commerce Way,75827,Silver,2014,327,14839,True,False,57,3173,76.9,4.8,42.87923,-85.52764
-DLR0108,Grand Rapids Chevrolet,Chevrolet,Michigan,Grand Rapids,8083 Commerce Way,69246,Gold,1999,438,40785,True,True,47,1493,81.0,4.6,42.95735,-85.63397
-DLR0109,Hyundai of Grand Rapids,Hyundai,Michigan,Grand Rapids,3875 Market St,52490,Gold,1995,520,43025,True,True,44,515,64.4,3.9,42.94519,-85.68395
-DLR0110,Nissan Superstore Ann Arbor,Nissan,Michigan,Ann Arbor,1820 Auto Plaza Dr,61794,Platinum,2014,146,9014,True,True,63,5094,69.3,4.0,42.28583,-83.6201
-DLR0111,Chevrolet of Grand Rapids,Chevrolet,Michigan,Grand Rapids,4532 Market St,93556,Platinum,1994,577,12422,True,False,37,4397,61.5,4.0,42.89335,-85.81313
-DLR0112,Volkswagen Superstore Grand Rapids,Volkswagen,Michigan,Grand Rapids,5448 Market St,88958,Platinum,2015,166,38192,True,True,39,3913,80.1,4.7,43.10357,-85.54498
-DLR0113,Legacy Chevrolet of Ann Arbor,Chevrolet,Michigan,Ann Arbor,5964 Commerce Way,93976,Platinum,1987,304,12117,True,True,37,2512,85.3,3.5,42.16414,-83.6961
-DLR0114,Metro Hyundai Ann Arbor,Hyundai,Michigan,Ann Arbor,4619 Highway 1,45459,Silver,2002,152,35430,True,True,62,5319,63.3,4.2,42.20889,-83.76362
-DLR0115,Metro Subaru Detroit,Subaru,Michigan,Detroit,6545 Auto Plaza Dr,16935,Gold,2009,123,32309,True,False,34,5000,97.2,4.4,42.45137,-83.03068
-DLR0116,Detroit Auto Group Kia,Kia,Michigan,Detroit,7555 Commerce Way,99177,Platinum,2003,573,10137,True,False,68,6585,71.0,4.1,42.45497,-83.07235
-DLR0117,Subaru Superstore Detroit,Subaru,Michigan,Detroit,9063 Auto Plaza Dr,16312,Gold,1991,171,23962,True,False,26,6833,59.2,3.5,42.18252,-82.91618
-DLR0118,Metro Toyota Detroit,Toyota,Michigan,Detroit,4935 Main St,57681,Gold,1992,169,33517,True,False,32,4190,65.1,3.7,42.37782,-83.007
-DLR0119,Highline Chevrolet Detroit,Chevrolet,Michigan,Detroit,8415 Market St,31412,Gold,2001,142,39082,True,True,73,3682,84.3,4.1,42.39919,-83.14118
-DLR0120,Detroit Auto Group Chevrolet,Chevrolet,Michigan,Detroit,5416 Market St,35004,Gold,2014,139,29403,True,False,50,4828,67.5,4.7,42.32622,-83.1787
+DLR0001,Sacramento Auto Group Hyundai,Hyundai,California,Sacramento,7699 Main St,40945,Silver,1991,213,41369,True,True,37,2992,82.5,3.6,38.47301,-121.59228
+DLR0002,San Francisco Auto Group Chevrolet,Chevrolet,California,San Francisco,9619 Main St,26536,Platinum,1997,165,43407,True,True,40,1557,66.6,4.6,37.68012,-122.38426
+DLR0003,Los Angeles Auto Group Honda,Honda,California,Los Angeles,4233 Highway 1,24482,Silver,2003,560,15840,True,True,72,673,80.8,4.6,33.96635,-118.10769
+DLR0004,San Diego BMW,BMW,California,San Diego,1232 Auto Plaza Dr,12919,Gold,2011,512,33168,False,False,73,5460,84.2,4.3,32.85143,-117.12874
+DLR0005,Chevrolet Superstore San Diego,Chevrolet,California,San Diego,5176 Auto Plaza Dr,75170,Platinum,1993,440,30162,False,False,36,1094,58.3,3.6,32.62098,-117.21992
+DLR0006,Legacy Honda of San Francisco,Honda,California,San Francisco,9286 Commerce Way,90871,Gold,2007,433,21998,True,True,69,1094,65.6,3.6,37.86475,-122.3635
+DLR0007,Sacramento Ford,Ford,California,Sacramento,2748 Highway 1,34168,Silver,2007,445,23655,True,True,14,6443,56.5,4.2,38.68559,-121.61908
+DLR0008,Metro Ford San Diego,Ford,California,San Diego,7669 Market St,38151,Silver,2003,407,21601,False,True,39,5164,82.3,4.5,32.67918,-117.09362
+DLR0009,Sacramento Kia,Kia,California,Sacramento,3935 Auto Plaza Dr,96661,Platinum,2002,451,16470,True,True,20,6103,92.0,4.1,38.518,-121.55275
+DLR0010,San Francisco Auto Group Toyota,Toyota,California,San Francisco,2272 Main St,25567,Gold,2006,112,37470,True,False,39,6288,66.7,4.3,37.77692,-122.54687
+DLR0011,Sacramento Auto Group Toyota,Toyota,California,Sacramento,8858 Market St,82414,Gold,1995,114,39205,False,False,49,581,77.4,4.0,38.65961,-121.62243
+DLR0012,Highline Ford Los Angeles,Ford,California,Los Angeles,8144 Market St,50783,Gold,2008,583,44119,True,True,28,581,58.5,4.3,34.18827,-118.21988
+DLR0013,Los Angeles Auto Group Hyundai,Hyundai,California,Los Angeles,3303 Highway 1,77701,Gold,2008,386,10638,True,True,65,3483,76.1,3.6,34.08795,-118.14861
+DLR0014,San Diego Auto Group Toyota,Toyota,California,San Diego,5494 Auto Plaza Dr,46271,Silver,1997,220,36474,True,False,32,1634,59.6,4.6,32.84286,-117.28071
+DLR0015,Metro Ford San Diego,Ford,California,San Diego,1819 Main St,91924,Silver,2006,103,27741,True,True,29,3739,58.0,3.7,32.71181,-117.15389
+DLR0016,Ram Superstore San Antonio,Ram,Texas,San Antonio,4432 Market St,41824,Platinum,2003,590,36210,True,False,61,2199,88.6,3.4,29.53548,-98.59491
+DLR0017,Legacy Honda of Dallas,Honda,Texas,Dallas,6650 Commerce Way,24885,Gold,2000,152,15238,True,True,26,6660,75.0,3.9,32.80275,-96.86274
+DLR0018,Highline Toyota Houston,Toyota,Texas,Houston,3377 Highway 1,33025,Silver,1991,290,23816,True,False,61,3987,68.4,4.5,29.68634,-95.47794
+DLR0019,Highline Honda San Antonio,Honda,Texas,San Antonio,6063 Highway 1,23130,Silver,1997,450,38473,True,False,40,1777,60.5,4.8,29.30503,-98.6158
+DLR0020,Chevrolet of Austin,Chevrolet,Texas,Austin,9384 Auto Plaza Dr,92637,Platinum,1995,398,40180,True,True,10,5943,86.7,4.4,30.41637,-97.8461
+DLR0021,Highline GMC Austin,GMC,Texas,Austin,4169 Highway 1,90259,Silver,1987,595,26041,True,False,24,3734,71.0,4.8,30.23897,-97.78067
+DLR0022,Ram of San Antonio,Ram,Texas,San Antonio,4764 Auto Plaza Dr,44750,Gold,1988,305,35255,True,False,15,784,83.9,4.6,29.34313,-98.57347
+DLR0023,Ford Superstore Austin,Ford,Texas,Austin,3108 Highway 1,43675,Silver,2000,248,19522,True,True,52,6947,87.5,3.8,30.30801,-97.88288
+DLR0024,Premier Honda Austin,Honda,Texas,Austin,5821 Highway 1,41338,Gold,2011,396,35833,True,False,49,1697,96.7,3.7,30.19326,-97.83301
+DLR0025,Legacy Lexus of Houston,Lexus,Texas,Houston,2937 Main St,99156,Silver,1999,574,37250,True,False,8,2313,69.4,3.9,29.61169,-95.50923
+DLR0026,Austin Nissan,Nissan,Texas,Austin,851 Market St,39994,Gold,2002,116,26788,False,True,7,6403,85.5,3.4,30.19071,-97.60488
+DLR0027,Houston Mercedes-Benz,Mercedes-Benz,Texas,Houston,6395 Market St,38624,Platinum,1998,94,39016,True,True,21,4910,59.3,3.6,29.88124,-95.41916
+DLR0028,Austin Chevrolet,Chevrolet,Texas,Austin,956 Commerce Way,70873,Silver,1988,364,32869,True,True,51,2004,95.9,4.6,30.30942,-97.73745
+DLR0029,Toyota of Austin,Toyota,Texas,Austin,8917 Main St,21617,Platinum,1996,440,37815,True,False,65,4708,56.5,4.7,30.41051,-97.81986
+DLR0030,Premier BMW Houston,BMW,Texas,Houston,4084 Auto Plaza Dr,55463,Gold,1996,84,34571,True,False,38,5039,92.4,4.7,29.70543,-95.43568
+DLR0031,Tesla Superstore Tampa,Tesla,Florida,Tampa,5089 Main St,14129,Platinum,1997,595,34161,True,True,48,1243,73.7,4.8,28.08523,-82.56971
+DLR0032,Highline Ford Tampa,Ford,Florida,Tampa,4133 Market St,66137,Silver,2014,459,40332,True,False,48,3194,85.0,3.7,27.94193,-82.31466
+DLR0033,Highline Nissan Miami,Nissan,Florida,Miami,663 Main St,69423,Gold,1995,109,27803,True,True,23,5247,76.7,3.8,25.80874,-80.28987
+DLR0034,Orlando Mercedes-Benz,Mercedes-Benz,Florida,Orlando,9603 Highway 1,51884,Gold,2005,527,35408,True,True,26,5386,69.4,4.3,28.66606,-81.5129
+DLR0035,Metro GMC Tampa,GMC,Florida,Tampa,5463 Market St,41524,Gold,2010,116,27747,True,True,24,4268,96.4,4.9,28.06737,-82.36522
+DLR0036,Tampa Ford,Ford,Florida,Tampa,9703 Highway 1,88213,Gold,1993,536,10384,True,True,51,821,67.5,3.6,27.83906,-82.36685
+DLR0037,Metro Tesla Tampa,Tesla,Florida,Tampa,1504 Auto Plaza Dr,33726,Platinum,2008,149,43820,True,True,19,1245,63.8,4.4,27.88745,-82.48746
+DLR0038,Metro Honda Orlando,Honda,Florida,Orlando,9052 Commerce Way,74679,Gold,1997,240,30929,True,False,72,2515,83.9,3.5,28.42935,-81.23198
+DLR0039,Metro Toyota Jacksonville,Toyota,Florida,Jacksonville,3078 Commerce Way,11359,Silver,2006,163,19914,True,False,21,4087,68.7,3.6,30.42549,-81.56436
+DLR0040,Jeep Superstore Tampa,Jeep,Florida,Tampa,1463 Main St,66656,Gold,1994,302,41204,True,False,69,5289,79.2,4.5,28.01998,-82.53011
+DLR0041,Legacy Lexus of Miami,Lexus,Florida,Miami,7226 Market St,47341,Gold,2012,485,27925,True,False,18,6962,92.5,4.1,25.75117,-80.2564
+DLR0042,Tampa Auto Group Mercedes-Benz,Mercedes-Benz,Florida,Tampa,3230 Market St,46841,Silver,2004,566,41800,True,False,76,3206,58.2,4.1,27.81544,-82.44253
+DLR0043,Legacy Ford of Tampa,Ford,Florida,Tampa,3742 Market St,64198,Gold,1990,507,31846,True,True,75,3321,71.0,4.8,27.83625,-82.34625
+DLR0044,Highline Hyundai Miami,Hyundai,Florida,Miami,3009 Market St,36035,Silver,1994,545,44063,True,False,11,4313,61.3,4.2,25.70079,-80.17701
+DLR0045,Ram of Orlando,Ram,Florida,Orlando,8581 Market St,63311,Platinum,1992,591,9245,True,True,39,2396,80.0,4.7,28.62444,-81.26843
+DLR0046,Toyota of Rochester,Toyota,New York,Rochester,7182 Auto Plaza Dr,33922,Gold,2012,248,32062,True,False,49,6452,63.3,3.9,43.252,-77.59383
+DLR0047,Premier Nissan New York City,Nissan,New York,New York City,7625 Highway 1,36086,Silver,2007,125,11463,False,True,39,4032,73.9,4.0,40.73753,-73.97986
+DLR0048,Legacy Tesla of New York City,Tesla,New York,New York City,3446 Auto Plaza Dr,65215,Gold,2012,540,14173,True,False,57,1180,96.4,3.8,40.60102,-73.90688
+DLR0049,Highline Chevrolet Buffalo,Chevrolet,New York,Buffalo,8488 Commerce Way,55805,Silver,2010,125,18534,True,False,63,5636,68.0,3.6,43.0021,-78.88444
+DLR0050,Toyota Superstore Rochester,Toyota,New York,Rochester,5034 Market St,46704,Gold,1986,412,30391,True,True,73,4680,76.2,4.9,43.03267,-77.60557
+DLR0051,Buffalo Mercedes-Benz,Mercedes-Benz,New York,Buffalo,4048 Market St,60033,Gold,2000,246,12659,True,True,74,5274,85.6,3.8,43.00645,-78.76031
+DLR0052,New York City Tesla,Tesla,New York,New York City,2635 Auto Plaza Dr,44884,Platinum,2012,580,20652,True,False,62,5087,96.6,4.5,40.8217,-73.90349
+DLR0053,Premier Chevrolet Rochester,Chevrolet,New York,Rochester,1080 Highway 1,22322,Silver,2006,279,37435,True,True,79,5973,67.2,4.9,43.28019,-77.64963
+DLR0054,Rochester Auto Group Chevrolet,Chevrolet,New York,Rochester,1352 Auto Plaza Dr,26722,Silver,1992,84,36131,True,True,71,5055,56.8,3.5,43.15655,-77.74372
+DLR0055,Nissan of Albany,Nissan,New York,Albany,7389 Market St,65497,Silver,2006,104,28180,False,True,22,6912,57.2,4.8,42.55407,-73.78319
+DLR0056,Metro Nissan Albany,Nissan,New York,Albany,7213 Commerce Way,76271,Silver,2011,260,39730,True,False,10,3241,88.3,3.7,42.64059,-73.74941
+DLR0057,Jeep Superstore New York City,Jeep,New York,New York City,9895 Highway 1,45314,Silver,2004,451,25812,True,False,40,1112,67.1,3.8,40.60734,-74.02393
+DLR0058,Buffalo Auto Group Chevrolet,Chevrolet,New York,Buffalo,8384 Main St,40948,Silver,2012,401,14334,True,True,72,4309,83.0,4.8,42.77799,-78.73878
+DLR0059,Highline Hyundai Buffalo,Hyundai,New York,Buffalo,7978 Auto Plaza Dr,88327,Silver,2006,249,37245,True,True,58,2298,63.6,3.5,42.97368,-78.78572
+DLR0060,Albany Hyundai,Hyundai,New York,Albany,3281 Commerce Way,17549,Silver,1993,424,37532,True,True,48,3614,86.2,4.1,42.72621,-73.79695
+DLR0061,Chicago Toyota,Toyota,Illinois,Chicago,5469 Auto Plaza Dr,92959,Silver,2005,541,8174,True,True,9,4370,71.3,3.9,41.87459,-87.62064
+DLR0062,Kia of Springfield,Kia,Illinois,Springfield,6414 Market St,44566,Silver,1988,432,20245,True,True,30,2959,55.8,4.1,39.69769,-89.68436
+DLR0063,Premier Toyota Naperville,Toyota,Illinois,Naperville,6602 Highway 1,41913,Silver,1985,134,19628,True,False,51,2403,70.6,4.1,41.63616,-88.20788
+DLR0064,Highline Ford Chicago,Ford,Illinois,Chicago,7160 Commerce Way,79434,Silver,2009,424,13192,True,True,26,2373,90.3,4.5,41.7683,-87.69208
+DLR0065,Premier GMC Chicago,GMC,Illinois,Chicago,2568 Market St,73574,Silver,2015,490,35400,True,True,54,2907,81.8,4.8,41.81865,-87.66124
+DLR0066,Metro Toyota Chicago,Toyota,Illinois,Chicago,9379 Highway 1,20037,Gold,1992,215,32406,True,False,32,1725,72.3,4.5,41.78486,-87.75279
+DLR0067,Springfield Honda,Honda,Illinois,Springfield,6033 Market St,17884,Silver,2014,499,39071,True,True,73,5849,86.3,4.5,39.84093,-89.55109
+DLR0068,Metro Chevrolet Naperville,Chevrolet,Illinois,Naperville,6684 Auto Plaza Dr,25346,Gold,1995,514,13752,True,True,79,3239,91.6,4.4,41.80487,-88.00829
+DLR0069,Legacy Ford of Chicago,Ford,Illinois,Chicago,215 Auto Plaza Dr,13164,Platinum,2014,490,11179,True,False,58,3808,89.3,4.1,41.83411,-87.62808
+DLR0070,Highline Ford Naperville,Ford,Illinois,Naperville,3085 Market St,44877,Gold,1995,285,16468,False,True,6,6777,91.7,4.4,41.72914,-88.24433
+DLR0071,Toyota of Springfield,Toyota,Illinois,Springfield,9941 Commerce Way,22730,Gold,2013,366,27840,False,False,39,1450,78.8,3.6,39.64346,-89.51696
+DLR0072,Springfield Chevrolet,Chevrolet,Illinois,Springfield,7374 Highway 1,36510,Platinum,1999,326,8432,True,True,38,5573,76.0,4.2,39.76886,-89.59731
+DLR0073,Naperville Auto Group Lexus,Lexus,Illinois,Naperville,4415 Commerce Way,47694,Platinum,1992,187,11788,True,True,37,6738,87.0,4.7,41.81045,-88.2088
+DLR0074,Chevrolet Superstore Naperville,Chevrolet,Illinois,Naperville,1594 Commerce Way,10222,Gold,2008,358,10801,True,True,45,4895,82.8,4.5,41.63238,-88.24927
+DLR0075,Highline Chevrolet Springfield,Chevrolet,Illinois,Springfield,9404 Market St,16383,Silver,2006,530,9222,True,False,14,6508,80.6,3.9,39.73824,-89.61007
+DLR0076,Highline BMW Atlanta,BMW,Georgia,Atlanta,8845 Main St,10808,Gold,1989,399,39493,True,False,76,951,70.7,4.6,33.79736,-84.518
+DLR0077,Metro Honda Atlanta,Honda,Georgia,Atlanta,5156 Commerce Way,18994,Silver,1990,529,43739,True,False,53,3976,58.5,3.8,33.61791,-84.48077
+DLR0078,Ford Superstore Savannah,Ford,Georgia,Savannah,3444 Auto Plaza Dr,67346,Gold,2010,270,8790,True,False,20,3970,73.9,3.8,32.0936,-81.17473
+DLR0079,Savannah Auto Group Subaru,Subaru,Georgia,Savannah,8546 Main St,22557,Gold,2012,492,19050,True,False,79,5689,92.1,4.1,32.18359,-81.10285
+DLR0080,Ford Superstore Savannah,Ford,Georgia,Savannah,6407 Highway 1,76433,Gold,2010,211,13223,True,True,58,3511,96.1,4.8,32.22101,-81.02227
+DLR0081,Highline Hyundai Augusta,Hyundai,Georgia,Augusta,760 Main St,48467,Gold,2010,289,18215,True,True,38,2600,86.1,3.4,33.3925,-81.89156
+DLR0082,Metro Subaru Atlanta,Subaru,Georgia,Atlanta,5265 Auto Plaza Dr,19152,Gold,2012,459,36146,True,True,50,1902,71.3,3.9,33.61732,-84.41609
+DLR0083,Highline Honda Atlanta,Honda,Georgia,Atlanta,2720 Auto Plaza Dr,75952,Gold,1996,160,30904,True,True,15,5669,77.1,4.1,33.813,-84.31236
+DLR0084,Augusta Auto Group Subaru,Subaru,Georgia,Augusta,7558 Highway 1,89141,Silver,1989,421,33872,True,True,49,1280,72.1,3.4,33.52059,-81.93607
+DLR0085,Savannah Ram,Ram,Georgia,Savannah,1347 Market St,62106,Silver,1986,491,15154,True,False,31,1619,78.2,3.9,32.12743,-81.0818
+DLR0086,Augusta Kia,Kia,Georgia,Augusta,3684 Highway 1,44818,Silver,2007,316,10532,False,True,62,2270,73.7,4.2,33.47883,-82.08611
+DLR0087,Highline Ford Savannah,Ford,Georgia,Savannah,6977 Commerce Way,61750,Silver,1986,292,24731,True,True,78,6850,67.6,4.2,32.03836,-81.22518
+DLR0088,Premier Mercedes-Benz Atlanta,Mercedes-Benz,Georgia,Atlanta,1614 Commerce Way,72261,Gold,1996,460,14187,True,False,35,5438,84.0,3.4,33.66788,-84.38362
+DLR0089,Kia Superstore Atlanta,Kia,Georgia,Atlanta,5630 Market St,15107,Gold,1985,542,17937,True,False,74,1978,57.0,4.0,33.79386,-84.49197
+DLR0090,Augusta Subaru,Subaru,Georgia,Augusta,8150 Main St,53099,Silver,2012,378,15448,True,False,54,2157,59.0,4.3,33.47321,-82.0167
+DLR0091,GMC Superstore Cincinnati,GMC,Ohio,Cincinnati,3667 Commerce Way,21279,Gold,1999,106,23011,True,True,72,2221,65.7,4.6,38.98731,-84.60037
+DLR0092,Highline Nissan Cincinnati,Nissan,Ohio,Cincinnati,7514 Auto Plaza Dr,86704,Gold,2000,492,32950,False,False,66,3294,74.4,4.0,39.02478,-84.37647
+DLR0093,Cincinnati Toyota,Toyota,Ohio,Cincinnati,9492 Commerce Way,20833,Silver,1993,221,42667,True,False,28,1091,93.3,3.6,39.07131,-84.39633
+DLR0094,Premier Tesla Columbus,Tesla,Ohio,Columbus,9524 Auto Plaza Dr,27362,Silver,1985,473,24716,True,False,10,553,69.0,3.7,39.81531,-82.99908
+DLR0095,Premier Toyota Columbus,Toyota,Ohio,Columbus,1719 Auto Plaza Dr,39354,Silver,2011,287,37483,True,False,74,6541,81.7,3.9,40.08138,-82.86594
+DLR0096,Chevrolet of Cincinnati,Chevrolet,Ohio,Cincinnati,642 Highway 1,90221,Silver,1992,442,28976,True,False,12,2723,63.4,3.5,39.05586,-84.36517
+DLR0097,Ford Superstore Cincinnati,Ford,Ohio,Cincinnati,2135 Main St,89225,Silver,1994,246,38383,True,False,5,5924,61.2,4.3,39.11975,-84.45389
+DLR0098,Chevrolet Superstore Cleveland,Chevrolet,Ohio,Cleveland,9794 Auto Plaza Dr,45609,Gold,1990,107,41462,False,True,41,5005,76.1,3.8,41.45418,-81.55485
+DLR0099,Legacy Chevrolet of Columbus,Chevrolet,Ohio,Columbus,5123 Auto Plaza Dr,29609,Silver,2010,103,12220,True,False,25,5943,96.9,4.5,40.10436,-83.06529
+DLR0100,Columbus Nissan,Nissan,Ohio,Columbus,5116 Commerce Way,68388,Platinum,2007,150,36802,True,False,34,2107,67.6,4.6,40.07946,-82.92787
+DLR0101,Chevrolet Superstore Columbus,Chevrolet,Ohio,Columbus,7258 Auto Plaza Dr,28924,Silver,2009,308,36934,True,False,8,2999,87.2,4.4,39.91058,-82.98926
+DLR0102,Legacy Jeep of Cleveland,Jeep,Ohio,Cleveland,4119 Market St,32945,Platinum,2014,81,9386,False,False,14,1317,90.3,4.0,41.56326,-81.59623
+DLR0103,Nissan of Cleveland,Nissan,Ohio,Cleveland,8302 Highway 1,53793,Silver,2013,136,17995,True,False,28,2807,72.6,3.9,41.35102,-81.77493
+DLR0104,Chevrolet of Cleveland,Chevrolet,Ohio,Cleveland,6134 Commerce Way,86153,Silver,2002,399,18530,True,False,48,3553,80.7,4.0,41.51641,-81.57519
+DLR0105,Legacy Ford of Columbus,Ford,Ohio,Columbus,6812 Main St,34199,Silver,2014,173,26454,True,False,36,5801,82.1,4.8,39.83787,-82.99052
+DLR0106,Premier Ram Grand Rapids,Ram,Michigan,Grand Rapids,2292 Highway 1,25304,Silver,1997,304,29149,True,False,79,5876,86.7,4.8,42.83325,-85.58721
+DLR0107,Grand Rapids Auto Group Honda,Honda,Michigan,Grand Rapids,7932 Commerce Way,62538,Gold,2010,228,9301,True,False,70,6034,66.6,4.6,42.88676,-85.72715
+DLR0108,Metro Nissan Detroit,Nissan,Michigan,Detroit,3179 Market St,69110,Silver,1992,248,35587,True,True,46,5544,93.6,4.1,42.45623,-83.15751
+DLR0109,Ann Arbor Auto Group Ford,Ford,Michigan,Ann Arbor,7490 Commerce Way,48127,Gold,2000,88,13394,True,False,58,1443,66.2,4.6,42.40447,-83.63197
+DLR0110,Highline Nissan Grand Rapids,Nissan,Michigan,Grand Rapids,8597 Main St,42890,Gold,2000,226,16542,True,True,61,915,75.2,4.4,43.00882,-85.52552
+DLR0111,Metro BMW Grand Rapids,BMW,Michigan,Grand Rapids,7931 Commerce Way,47723,Silver,2009,165,18525,True,False,72,4392,76.8,4.6,42.90711,-85.56879
+DLR0112,Ann Arbor Toyota,Toyota,Michigan,Ann Arbor,1670 Auto Plaza Dr,94057,Gold,2014,423,8884,True,False,70,5070,88.3,4.0,42.19685,-83.63729
+DLR0113,Toyota of Ann Arbor,Toyota,Michigan,Ann Arbor,9052 Commerce Way,47220,Gold,2014,318,34967,True,False,37,5007,81.9,3.9,42.15862,-83.83272
+DLR0114,Metro GMC Grand Rapids,GMC,Michigan,Grand Rapids,5981 Main St,52280,Silver,2012,325,22143,False,False,36,4057,90.2,4.3,43.01577,-85.77082
+DLR0115,Highline Jeep Ann Arbor,Jeep,Michigan,Ann Arbor,7198 Main St,67929,Platinum,1999,408,17712,True,True,36,589,97.9,3.9,42.28374,-83.82999
+DLR0116,Ford Superstore Ann Arbor,Ford,Michigan,Ann Arbor,6223 Main St,98938,Silver,2010,239,44639,True,True,24,2020,62.9,3.9,42.3863,-83.89202
+DLR0117,Metro GMC Detroit,GMC,Michigan,Detroit,1363 Main St,84026,Platinum,2007,147,32907,True,False,27,1866,73.4,3.6,42.37511,-83.16969
+DLR0118,Detroit Auto Group Ford,Ford,Michigan,Detroit,7767 Highway 1,47814,Gold,2007,90,30442,True,True,77,1253,66.6,4.1,42.21573,-83.164
+DLR0119,Metro Hyundai Ann Arbor,Hyundai,Michigan,Ann Arbor,8455 Auto Plaza Dr,32014,Gold,1991,347,27300,True,False,7,763,94.1,4.9,42.23469,-83.67526
+DLR0120,Metro Subaru Detroit,Subaru,Michigan,Detroit,7672 Highway 1,87673,Gold,2012,525,11960,True,True,20,5992,88.5,3.5,42.40514,-82.98833

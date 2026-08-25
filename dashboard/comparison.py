@@ -37,6 +37,20 @@ def _wt_avg_price(df: pd.DataFrame) -> float:
     return float((df['avg_price'] * df['units']).sum() / total) if total else 0.0
 
 
+def _sequential_shades(n: int, base_hex: str) -> list:
+    """n hex shades of base_hex running light -> dark, for ordered categories
+    (e.g. oldest -> newest year) where color should read as one hue's intensity."""
+    base = tuple(int(base_hex[i:i + 2], 16) for i in (1, 3, 5))
+    light = tuple(int(c + (255 - c) * 0.75) for c in base)
+    dark = tuple(int(c * 0.45) for c in base)
+    shades = []
+    for i in range(n):
+        t = i / (n - 1) if n > 1 else 1.0
+        rgb = tuple(int(light[j] + (dark[j] - light[j]) * t) for j in range(3))
+        shades.append('#{:02x}{:02x}{:02x}'.format(*rgb))
+    return shades
+
+
 def render_comparison(filters: dict):
     session = get_db_session()
     colors  = get_color_palette()
@@ -68,11 +82,16 @@ def render_comparison(filters: dict):
                 horizontal=True,
             )
 
+            years_sorted = sorted(df_yoy['year'].unique())
+            year_shades = dict(zip(
+                years_sorted, _sequential_shades(len(years_sorted), colors['primary'])
+            ))
+
             fig_yoy = px.line(
                 df_yoy, x='month_name', y=target_metric, color='year',
                 markers=True,
-                category_orders={'month_name': months_order},
-                color_discrete_sequence=colors['colors_seq'],
+                category_orders={'month_name': months_order, 'year': years_sorted},
+                color_discrete_map=year_shades,
                 labels={'month_name': 'Month', 'revenue': 'Revenue (USD)',
                         'sales': 'Sales Volume', 'year': 'Year'},
             )

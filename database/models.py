@@ -62,6 +62,10 @@ class Vehicle(Base):
     service_contract_available = Column(Boolean, nullable=True)
     ev_incentive_eligible = Column(Boolean, nullable=True)            # was: gcc_spec (repurposed: federal EV tax credit eligibility)
 
+    # Share of MSRP retained at 36-month lease maturity (ALG-style residual).
+    # Drives lease residual pricing and the return-equity model.
+    residual_value_36mo = Column(Float, nullable=True)
+
     # Relationships
     sales = relationship("Sale", back_populates="vehicle")
     inventories = relationship("Inventory", back_populates="vehicle")
@@ -136,6 +140,31 @@ class Sale(Base):
     salesperson_id = Column(String(50), nullable=True)
     marketing_channel = Column(String(100), nullable=True)
     season_multiplier = Column(Float, nullable=True)
+
+    # ── Lease contract terms (populated only when financing_type == "Lease") ──
+    # A signed lease is a near-deterministic forward supply commitment: it tells
+    # us which unit returns to which dealer in which month. This is the basis of
+    # the lease-return pipeline in Inventory Intelligence.
+    lease_term_months = Column(Integer, nullable=True)
+    lease_maturity_date = Column(Date, nullable=True, index=True)
+    residual_value_pct = Column(Float, nullable=True)        # share of MSRP at maturity
+    residual_value_usd = Column(Integer, nullable=True)      # contractual buyout price
+    contract_mileage_allowance = Column(Integer, nullable=True)  # total miles over the term
+    lease_monthly_payment_usd = Column(Integer, nullable=True)
+
+    # ── Trade-in activity ────────────────────────────────────────────────────
+    # Trade-ins are the largest inbound source of used inventory and hide real
+    # margin: the gap between appraised value and the allowance actually
+    # credited is a discount that never shows up in discount_pct.
+    trade_in_flag = Column(Boolean, nullable=True)
+    trade_in_brand = Column(String(100), nullable=True)
+    trade_in_model = Column(String(100), nullable=True)
+    trade_in_year = Column(Integer, nullable=True)
+    trade_in_mileage = Column(Integer, nullable=True)
+    trade_in_appraised_value_usd = Column(Integer, nullable=True)
+    trade_in_allowance_usd = Column(Integer, nullable=True)
+    trade_in_over_allowance_usd = Column(Integer, nullable=True)  # allowance - appraised
+    trade_bonus_usd = Column(Integer, nullable=True)              # promotional incentive
 
     # Relationships
     customer = relationship("Customer", back_populates="sales")

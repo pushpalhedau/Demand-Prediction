@@ -35,7 +35,6 @@ def train_xgboost_pipeline():
             Sale.test_drive_converted,
             Sale.base_price_usd.label('base_price'),
             Sale.discount_pct,
-            Sale.financing_type,
             Sale.marketing_channel,
             Sale.vehicle_category,
             Sale.fuel_type,
@@ -57,7 +56,17 @@ def train_xgboost_pipeline():
         df['test_drive_converted'] = df['test_drive_converted'].fillna(False).astype(int)
 
         # Features to use
-        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'gender', 'occupation']
+        # financing_type is deliberately NOT a feature.
+        #
+        # How a deal is paid for is an outcome of the negotiation, not a driver
+        # of whether the customer buys: it is agreed late in the process, so
+        # including it lets the model partly predict the close from the close.
+        # Left in, it drew a large SHAP attribution and produced advice to
+        # "switch the customer to a Bank Loan", which is an artifact of that
+        # leakage rather than a lever anyone can pull. Financing is still
+        # captured on the deal record and drives the lease-return pipeline in
+        # Inventory Intelligence, where it genuinely is predictive.
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'gender', 'occupation']
         num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_usd', 'credit_score', 'loyalty_score']
         
         # Handle missing values
@@ -155,12 +164,12 @@ def predict_deal_probability(input_data: dict) -> dict:
             feature_names = pickle.load(f)
             
         # Compile input into record
-        cat_features = ['financing_type', 'marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'gender', 'occupation']
+        # Must mirror the training feature set exactly (financing_type excluded).
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'gender', 'occupation']
         num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_usd', 'credit_score', 'loyalty_score']
 
         record = {}
         # Assign values with fallbacks
-        record['financing_type'] = input_data.get('financing_type', 'Bank Loan')
         record['marketing_channel'] = input_data.get('marketing_channel', 'Referral')
         record['vehicle_category'] = input_data.get('vehicle_category', 'SUV')
         record['fuel_type'] = input_data.get('fuel_type', 'Gasoline')

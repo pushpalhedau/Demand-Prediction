@@ -1,71 +1,183 @@
-vehicle_id,brand,model,variant,category,fuel_type,price_usd,engine_cc,horsepower,mpg,range_miles,seating_capacity,transmission,drive_type,body_color_options,safety_rating,launch_year,is_active,warranty_years,service_contract_available,ev_incentive_eligible
-VH0001,Toyota,RAV4,Base,SUV,Gasoline,32000,1857.0,358,27.9,,7,Automatic,RWD,4,5,2019,True,3,False,False
-VH0002,Toyota,Camry,Base,Sedan,Gasoline,27000,4443.0,355,34.1,,5,Automatic,FWD,8,4,2021,True,3,False,False
-VH0003,Toyota,Corolla,Base,Sedan,Gasoline,23000,4626.0,323,34.8,,5,Automatic,AWD,6,4,2018,True,5,True,False
-VH0004,Toyota,Highlander,Base,SUV,Gasoline,40000,4933.0,373,31.4,,7,Automatic,4WD,7,4,2018,True,5,False,False
-VH0005,Toyota,Tacoma,Base,Pickup,Gasoline,35000,4211.0,360,23.5,,5,Automatic,AWD,6,4,2021,True,3,False,False
-VH0006,Toyota,Prius,Base,Hatchback,Hybrid,28000,5190.0,351,37.4,,5,Automatic,FWD,8,4,2018,True,3,True,False
-VH0007,Toyota,bZ4X,Base,SUV,Electric,45000,,274,,234.0,7,Single-Speed,AWD,5,4,2021,True,8,True,True
-VH0008,Ford,F-150,Base,Pickup,Gasoline,45000,2142.0,374,32.6,,5,Automatic,FWD,7,5,2021,True,5,True,False
-VH0009,Ford,Explorer,Base,SUV,Gasoline,39000,5092.0,227,32.3,,7,Automatic,FWD,8,4,2023,True,3,False,False
-VH0010,Ford,Escape,Base,SUV,Gasoline,29000,4621.0,329,32.7,,7,Automatic,4WD,6,4,2021,True,5,True,False
-VH0011,Ford,Mustang,Base,Coupe,Gasoline,32000,2481.0,180,32.0,,5,Automatic,AWD,8,5,2018,True,5,False,False
-VH0012,Ford,Edge,Base,SUV,Gasoline,38000,3761.0,299,30.1,,7,Automatic,FWD,7,4,2020,True,3,True,False
-VH0013,Ford,Bronco,Base,SUV,Gasoline,42000,2606.0,260,35.4,,7,Automatic,FWD,8,4,2023,True,3,True,False
-VH0014,Ford,Mustang Mach-E,Base,SUV,Electric,48000,,267,,292.0,7,Single-Speed,AWD,6,5,2024,True,5,True,True
-VH0015,Chevrolet,Silverado,Base,Pickup,Gasoline,42000,3171.0,369,23.0,,5,Automatic,FWD,4,4,2023,True,5,True,False
-VH0016,Chevrolet,Equinox,Base,SUV,Gasoline,29000,4368.0,193,29.0,,7,Automatic,FWD,6,5,2021,True,3,True,False
-VH0017,Chevrolet,Malibu,Base,Sedan,Gasoline,25000,2455.0,231,31.3,,5,Automatic,AWD,8,4,2020,True,3,False,False
-VH0018,Chevrolet,Traverse,Base,SUV,Gasoline,37000,2965.0,395,32.6,,7,Automatic,FWD,7,5,2019,True,5,False,False
-VH0019,Chevrolet,Tahoe,Base,SUV,Gasoline,55000,4656.0,271,24.9,,7,Automatic,FWD,6,5,2018,True,3,True,False
-VH0020,Chevrolet,Bolt EV,Base,Hatchback,Electric,29000,,344,,253.0,5,Single-Speed,AWD,6,4,2021,True,8,False,True
-VH0021,Honda,CR-V,Base,SUV,Gasoline,30000,3471.0,344,27.8,,7,Automatic,AWD,4,5,2018,True,5,True,False
-VH0022,Honda,Civic,Base,Sedan,Gasoline,24000,4529.0,262,20.7,,5,Automatic,AWD,4,4,2022,True,3,True,False
-VH0023,Honda,Accord,Base,Sedan,Gasoline,28000,2200.0,308,23.1,,5,Automatic,RWD,8,5,2021,True,3,True,False
-VH0024,Honda,Pilot,Base,SUV,Gasoline,40000,2679.0,156,37.3,,7,Automatic,AWD,6,5,2018,True,3,True,False
-VH0025,Honda,HR-V,Base,SUV,Gasoline,26000,4184.0,282,36.9,,7,Automatic,AWD,6,4,2023,True,3,True,False
-VH0026,Honda,Odyssey,Base,Minivan,Gasoline,36000,3680.0,290,27.9,,7,Automatic,FWD,5,5,2018,True,5,True,False
-VH0027,Nissan,Rogue,Base,SUV,Gasoline,29000,2708.0,299,22.0,,7,Automatic,AWD,4,4,2019,True,5,False,False
-VH0028,Nissan,Altima,Base,Sedan,Gasoline,26000,5255.0,357,21.9,,5,Automatic,RWD,8,4,2019,True,3,True,False
-VH0029,Nissan,Sentra,Base,Sedan,Gasoline,21000,3687.0,250,34.9,,5,Automatic,4WD,8,4,2019,True,5,True,False
-VH0030,Nissan,Pathfinder,Base,SUV,Gasoline,38000,3987.0,289,24.6,,7,Automatic,RWD,4,4,2021,True,3,True,False
-VH0031,Nissan,Frontier,Base,Pickup,Gasoline,32000,5377.0,417,36.1,,5,Automatic,4WD,8,5,2019,True,5,True,False
-VH0032,Nissan,Ariya,Base,SUV,Electric,44000,,276,,254.0,7,Single-Speed,4WD,5,5,2020,True,5,True,True
-VH0033,Jeep,Grand Cherokee,Base,SUV,Gasoline,40000,4446.0,351,24.7,,7,Automatic,RWD,8,4,2018,True,3,False,False
-VH0034,Jeep,Wrangler,Base,SUV,Gasoline,38000,5067.0,191,23.2,,7,Automatic,AWD,7,5,2018,True,3,True,False
-VH0035,Jeep,Compass,Base,SUV,Gasoline,28000,5492.0,359,37.5,,7,Automatic,AWD,6,4,2024,True,3,True,False
-VH0036,Jeep,Cherokee,Base,SUV,Gasoline,30000,2617.0,185,32.2,,7,Automatic,FWD,5,5,2024,True,5,True,False
-VH0037,Hyundai,Tucson,Base,SUV,Gasoline,29000,3168.0,203,34.5,,7,Automatic,4WD,4,5,2023,True,3,True,False
-VH0038,Hyundai,Elantra,Base,Sedan,Gasoline,22000,3769.0,400,27.2,,5,Automatic,FWD,4,4,2021,True,5,False,False
-VH0039,Hyundai,Santa Fe,Base,SUV,Gasoline,33000,3584.0,227,36.6,,7,Automatic,FWD,6,5,2019,True,5,True,False
-VH0040,Hyundai,Sonata,Base,Sedan,Gasoline,26000,4393.0,187,27.5,,5,Automatic,RWD,4,5,2019,True,5,False,False
-VH0041,Hyundai,Ioniq 5,Base,SUV,Electric,44000,,266,,271.0,7,Single-Speed,4WD,8,4,2022,True,3,False,True
-VH0042,Kia,Sportage,Base,SUV,Gasoline,28000,2502.0,365,24.2,,7,Automatic,AWD,7,5,2024,True,5,False,False
-VH0043,Kia,Forte,Base,Sedan,Gasoline,21000,2659.0,261,26.7,,5,Automatic,AWD,4,5,2024,True,5,True,False
-VH0044,Kia,Telluride,Base,SUV,Gasoline,38000,3624.0,216,24.3,,7,Automatic,4WD,8,5,2024,True,3,True,False
-VH0045,Kia,Carnival,Base,Minivan,Gasoline,34000,3401.0,310,22.6,,7,Automatic,4WD,5,4,2024,True,3,False,False
-VH0046,Kia,EV6,Base,SUV,Electric,44000,,311,,238.0,7,Single-Speed,FWD,6,4,2021,True,3,True,True
-VH0047,Ram,1500,Base,Pickup,Gasoline,44000,4336.0,164,23.1,,5,Automatic,FWD,6,5,2021,True,5,True,False
-VH0048,Ram,2500,Base,Pickup,Diesel,56000,4812.0,235,29.1,,5,Automatic,RWD,7,5,2021,True,3,True,False
-VH0049,GMC,Sierra,Base,Pickup,Gasoline,43000,5056.0,213,24.5,,5,Automatic,AWD,8,4,2019,True,3,True,False
-VH0050,GMC,Terrain,Base,SUV,Gasoline,31000,5203.0,291,21.8,,7,Automatic,4WD,4,4,2020,True,5,True,False
-VH0051,GMC,Yukon,Base,SUV,Gasoline,56000,4848.0,377,36.2,,7,Automatic,RWD,5,5,2022,True,5,False,False
-VH0052,Subaru,Outback,Base,SUV,Gasoline,30000,3965.0,360,22.4,,7,Automatic,AWD,5,5,2024,True,5,True,False
-VH0053,Subaru,Forester,Base,SUV,Gasoline,28000,4636.0,253,31.5,,7,Automatic,FWD,4,4,2021,True,3,True,False
-VH0054,Subaru,Crosstrek,Base,SUV,Gasoline,25000,3916.0,212,26.6,,7,Automatic,AWD,7,4,2021,True,3,False,False
-VH0055,BMW,X5,Base,Luxury,Gasoline,65000,2441.0,230,37.1,,5,Automatic,RWD,8,4,2023,True,3,True,False
-VH0056,BMW,3 Series,Base,Luxury,Gasoline,45000,5341.0,379,31.7,,5,Automatic,4WD,6,5,2023,True,5,True,False
-VH0057,BMW,X3,Base,Luxury,Gasoline,47000,2206.0,348,23.6,,5,Automatic,AWD,6,5,2024,True,3,False,False
-VH0058,Mercedes-Benz,C-Class,Base,Luxury,Gasoline,45000,4044.0,175,33.1,,5,Automatic,FWD,6,5,2023,True,3,False,False
-VH0059,Mercedes-Benz,GLC,Base,Luxury,Gasoline,48000,2177.0,366,30.7,,5,Automatic,4WD,8,5,2024,True,5,True,False
-VH0060,Mercedes-Benz,E-Class,Base,Luxury,Gasoline,58000,4387.0,309,21.7,,5,Automatic,AWD,4,4,2018,True,5,True,False
-VH0061,Tesla,Model Y,Base,SUV,Electric,47000,,278,,271.0,7,Single-Speed,AWD,7,5,2024,True,8,True,True
-VH0062,Tesla,Model 3,Base,Sedan,Electric,40000,,213,,285.0,5,Single-Speed,RWD,8,4,2023,True,3,True,True
-VH0063,Tesla,Model S,Base,Luxury,Electric,75000,,281,,292.0,5,Single-Speed,AWD,8,5,2019,True,8,True,False
-VH0064,Tesla,Model X,Base,Luxury,Electric,80000,,349,,318.0,5,Single-Speed,4WD,7,4,2023,True,5,True,False
-VH0065,Volkswagen,Tiguan,Base,SUV,Gasoline,28000,2752.0,192,22.7,,7,Automatic,RWD,6,4,2023,True,3,False,False
-VH0066,Volkswagen,Jetta,Base,Sedan,Gasoline,22000,2203.0,299,36.9,,5,Automatic,4WD,7,4,2018,True,3,False,False
-VH0067,Volkswagen,Atlas,Base,SUV,Gasoline,36000,1519.0,343,37.1,,7,Automatic,FWD,5,5,2024,True,5,True,False
-VH0068,Lexus,RX,Base,Luxury,Gasoline,48000,3412.0,308,32.3,,5,Automatic,FWD,4,4,2023,True,5,True,False
-VH0069,Lexus,ES,Base,Luxury,Gasoline,42000,5373.0,273,28.0,,5,Automatic,FWD,6,5,2023,True,5,True,False
-VH0070,Lexus,NX,Base,Luxury,Gasoline,40000,3063.0,419,35.8,,5,Automatic,FWD,7,5,2018,True,3,False,False
+vehicle_id,brand,model,variant,category,fuel_type,price_usd,engine_cc,horsepower,mpg,range_miles,seating_capacity,transmission,drive_type,body_color_options,safety_rating,launch_year,is_active,warranty_years,service_contract_available,ev_incentive_eligible,residual_value_36mo
+VH0001,Toyota,RAV4,LE,SUV,Gasoline,29000,2487.0,203,30.0,,5,Automatic,AWD,5,5,2019,True,3,True,False,0.62
+VH0002,Toyota,RAV4,XLE,SUV,Gasoline,31600,2487.0,203,29.0,,5,Automatic,AWD,8,5,2019,True,3,False,False,0.62
+VH0003,Toyota,Camry,LE,Sedan,Gasoline,28400,2487.0,225,32.0,,5,Automatic,FWD,5,5,2018,True,3,True,False,0.57
+VH0004,Toyota,Camry,XLE,Sedan,Gasoline,31000,2487.0,225,31.0,,5,Automatic,FWD,7,5,2018,True,3,False,False,0.57
+VH0005,Toyota,Corolla,LE,Sedan,Gasoline,22300,1987.0,169,35.0,,5,Automatic,FWD,7,5,2020,True,3,False,False,0.58
+VH0006,Toyota,Corolla,XLE,Sedan,Gasoline,24300,1987.0,169,34.0,,5,Automatic,FWD,8,5,2020,True,3,True,False,0.58
+VH0007,Toyota,Highlander,LE,SUV,Gasoline,39500,2393.0,265,24.0,,8,Automatic,AWD,8,5,2020,True,3,True,False,0.6
+VH0008,Toyota,Highlander,XLE,SUV,Gasoline,43100,2393.0,265,23.0,,8,Automatic,AWD,6,5,2020,True,3,False,False,0.6
+VH0009,Toyota,Tacoma,LE,Pickup,Gasoline,32000,2393.0,278,21.0,,5,Automatic,4WD,8,5,2024,True,3,False,False,0.72
+VH0010,Toyota,Tacoma,XLE,Pickup,Gasoline,34900,2393.0,278,20.0,,5,Automatic,4WD,7,5,2024,True,3,True,False,0.72
+VH0011,Toyota,Tundra,LE,Pickup,Gasoline,41000,3445.0,389,20.0,,5,Automatic,4WD,6,5,2022,True,3,True,False,0.65
+VH0012,Toyota,Tundra,XLE,Pickup,Gasoline,44700,3445.0,389,19.0,,5,Automatic,4WD,5,5,2022,True,3,True,False,0.65
+VH0013,Toyota,4Runner,LE,SUV,Gasoline,42000,2393.0,278,21.0,,7,Automatic,4WD,8,5,2025,True,3,False,False,0.7
+VH0014,Toyota,4Runner,XLE,SUV,Gasoline,45800,2393.0,278,20.0,,7,Automatic,4WD,8,5,2025,True,3,False,False,0.7
+VH0015,Toyota,Prius,LE,Hatchback,Hybrid,28400,1987.0,194,57.0,,5,Automatic,FWD,7,5,2023,True,3,False,False,0.6
+VH0016,Toyota,Prius,XLE,Hatchback,Hybrid,30900,1987.0,194,56.0,,5,Automatic,FWD,6,5,2023,True,3,False,False,0.6
+VH0017,Toyota,Sienna,LE,Minivan,Hybrid,39000,2487.0,245,36.0,,8,Automatic,FWD,7,5,2021,True,3,True,False,0.61
+VH0018,Toyota,Sienna,XLE,Minivan,Hybrid,42500,2487.0,245,35.0,,8,Automatic,FWD,8,5,2021,True,3,True,False,0.61
+VH0019,Toyota,bZ4X,LE,SUV,Electric,37000,,214,,252.0,5,Single-Speed,FWD,6,4,2023,True,3,False,True,0.42
+VH0020,Toyota,bZ4X,XLE,SUV,Electric,40300,,214,,247.0,5,Single-Speed,FWD,5,5,2023,True,3,False,True,0.42
+VH0021,Ford,F-150,XL,Pickup,Gasoline,38000,3500.0,400,20.0,,5,Automatic,4WD,6,5,2021,True,3,True,False,0.6
+VH0022,Ford,F-150,XLT,Pickup,Gasoline,41400,3500.0,400,19.0,,5,Automatic,4WD,6,5,2021,True,3,True,False,0.6
+VH0023,Ford,Explorer,XL,SUV,Gasoline,38500,2264.0,300,24.0,,7,Automatic,AWD,8,5,2020,True,3,True,False,0.55
+VH0024,Ford,Explorer,XLT,SUV,Gasoline,42000,2264.0,300,23.0,,7,Automatic,AWD,5,5,2020,True,3,True,False,0.55
+VH0025,Ford,Escape,XL,SUV,Gasoline,29500,1497.0,180,30.0,,5,Automatic,FWD,6,5,2020,True,3,True,False,0.53
+VH0026,Ford,Escape,XLT,SUV,Gasoline,32200,1497.0,180,29.0,,5,Automatic,FWD,5,5,2020,True,3,False,False,0.53
+VH0027,Ford,Mustang,XL,Coupe,Gasoline,32000,2264.0,315,25.0,,4,Automatic,RWD,5,5,2024,True,3,False,False,0.58
+VH0028,Ford,Mustang,XLT,Coupe,Gasoline,34900,2264.0,315,24.0,,4,Automatic,RWD,6,5,2024,True,3,False,False,0.58
+VH0029,Ford,Bronco,XL,SUV,Gasoline,39000,2264.0,300,20.0,,5,Automatic,4WD,8,5,2021,True,3,True,False,0.7
+VH0030,Ford,Bronco,XLT,SUV,Gasoline,42500,2264.0,300,19.0,,5,Automatic,4WD,6,5,2021,True,3,False,False,0.7
+VH0031,Ford,Ranger,XL,Pickup,Gasoline,33000,2264.0,270,22.0,,5,Automatic,4WD,7,5,2024,True,3,True,False,0.62
+VH0032,Ford,Ranger,XLT,Pickup,Gasoline,36000,2264.0,270,21.0,,5,Automatic,4WD,5,5,2024,True,3,True,False,0.62
+VH0033,Ford,Expedition,XL,SUV,Gasoline,58000,3500.0,400,19.0,,8,Automatic,4WD,8,5,2022,True,3,False,False,0.58
+VH0034,Ford,Expedition,XLT,SUV,Gasoline,63200,3500.0,400,18.0,,8,Automatic,4WD,8,5,2022,True,3,False,False,0.58
+VH0035,Ford,Maverick,XL,Pickup,Hybrid,26000,2500.0,191,37.0,,5,Automatic,FWD,6,5,2022,True,3,True,False,0.72
+VH0036,Ford,Maverick,XLT,Pickup,Hybrid,28300,2500.0,191,36.0,,5,Automatic,FWD,8,5,2022,True,3,True,False,0.72
+VH0037,Ford,Mustang Mach-E,XL,SUV,Electric,43000,,266,,250.0,5,Single-Speed,RWD,5,4,2021,True,3,False,True,0.44
+VH0038,Ford,Mustang Mach-E,XLT,SUV,Electric,46900,,266,,245.0,5,Single-Speed,RWD,5,5,2021,True,3,True,True,0.44
+VH0039,Chevrolet,Silverado,LS,Pickup,Gasoline,37000,5300.0,355,19.0,,5,Automatic,4WD,5,5,2019,True,3,False,False,0.57
+VH0040,Chevrolet,Silverado,LT,Pickup,Gasoline,40300,5300.0,355,18.0,,5,Automatic,4WD,8,5,2019,True,3,True,False,0.57
+VH0041,Chevrolet,Equinox,LS,SUV,Gasoline,28500,1500.0,175,28.0,,5,Automatic,FWD,5,4,2022,True,3,True,False,0.52
+VH0042,Chevrolet,Equinox,LT,SUV,Gasoline,31100,1500.0,175,27.0,,5,Automatic,FWD,7,5,2022,True,3,True,False,0.52
+VH0043,Chevrolet,Malibu,LS,Sedan,Gasoline,26000,1500.0,160,32.0,,5,Automatic,FWD,6,5,2019,True,3,True,False,0.48
+VH0044,Chevrolet,Malibu,LT,Sedan,Gasoline,28300,1500.0,160,31.0,,5,Automatic,FWD,6,4,2019,True,3,True,False,0.48
+VH0045,Chevrolet,Traverse,LS,SUV,Gasoline,38000,2700.0,328,22.0,,8,Automatic,AWD,8,5,2024,True,3,True,False,0.54
+VH0046,Chevrolet,Traverse,LT,SUV,Gasoline,41400,2700.0,328,21.0,,8,Automatic,AWD,6,5,2024,True,3,False,False,0.54
+VH0047,Chevrolet,Tahoe,LS,SUV,Gasoline,58000,5300.0,355,18.0,,8,Automatic,4WD,6,5,2021,True,3,False,False,0.6
+VH0048,Chevrolet,Tahoe,LT,SUV,Gasoline,63200,5300.0,355,17.0,,8,Automatic,4WD,6,5,2021,True,3,True,False,0.6
+VH0049,Chevrolet,Colorado,LS,Pickup,Gasoline,31000,2700.0,237,20.0,,5,Automatic,4WD,6,5,2023,True,3,True,False,0.58
+VH0050,Chevrolet,Colorado,LT,Pickup,Gasoline,33800,2700.0,237,19.0,,5,Automatic,4WD,5,5,2023,True,3,False,False,0.58
+VH0051,Chevrolet,Blazer,LS,SUV,Gasoline,36000,2000.0,228,25.0,,5,Automatic,AWD,7,4,2019,True,3,True,False,0.52
+VH0052,Chevrolet,Blazer,LT,SUV,Gasoline,39200,2000.0,228,24.0,,5,Automatic,AWD,6,4,2019,True,3,False,False,0.52
+VH0053,Chevrolet,Bolt EUV,LS,Hatchback,Electric,28000,,200,,247.0,5,Single-Speed,FWD,6,5,2022,True,3,True,True,0.4
+VH0054,Chevrolet,Bolt EUV,LT,Hatchback,Electric,30500,,200,,242.0,5,Single-Speed,FWD,6,5,2022,True,3,True,True,0.4
+VH0055,Honda,CR-V,LX,SUV,Gasoline,30000,1498.0,190,30.0,,5,Automatic,AWD,8,5,2023,True,3,True,False,0.63
+VH0056,Honda,CR-V,Sport,SUV,Gasoline,32700,1498.0,190,29.0,,5,Automatic,AWD,5,5,2023,True,3,False,False,0.63
+VH0057,Honda,Civic,LX,Sedan,Gasoline,24500,1996.0,158,36.0,,5,Automatic,FWD,6,5,2022,True,3,False,False,0.62
+VH0058,Honda,Civic,Sport,Sedan,Gasoline,26700,1996.0,158,35.0,,5,Automatic,FWD,8,5,2022,True,3,True,False,0.62
+VH0059,Honda,Accord,LX,Sedan,Gasoline,28000,1498.0,192,32.0,,5,Automatic,FWD,8,5,2023,True,3,False,False,0.58
+VH0060,Honda,Accord,Sport,Sedan,Gasoline,30500,1498.0,192,31.0,,5,Automatic,FWD,8,5,2023,True,3,False,False,0.58
+VH0061,Honda,Pilot,LX,SUV,Gasoline,40000,3500.0,285,22.0,,8,Automatic,AWD,8,5,2023,True,3,True,False,0.6
+VH0062,Honda,Pilot,Sport,SUV,Gasoline,43600,3500.0,285,21.0,,8,Automatic,AWD,6,5,2023,True,3,True,False,0.6
+VH0063,Honda,HR-V,LX,SUV,Gasoline,26500,1996.0,158,28.0,,5,Automatic,AWD,6,5,2023,True,3,True,False,0.58
+VH0064,Honda,HR-V,Sport,SUV,Gasoline,28900,1996.0,158,27.0,,5,Automatic,AWD,8,5,2023,True,3,True,False,0.58
+VH0065,Honda,Passport,LX,SUV,Gasoline,42000,3500.0,280,21.0,,5,Automatic,AWD,7,5,2022,True,3,True,False,0.56
+VH0066,Honda,Passport,Sport,SUV,Gasoline,45800,3500.0,280,20.0,,5,Automatic,AWD,6,5,2022,True,3,True,False,0.56
+VH0067,Honda,Ridgeline,LX,Pickup,Gasoline,40000,3500.0,280,21.0,,5,Automatic,AWD,6,5,2021,True,3,False,False,0.6
+VH0068,Honda,Ridgeline,Sport,Pickup,Gasoline,43600,3500.0,280,20.0,,5,Automatic,AWD,8,5,2021,True,3,False,False,0.6
+VH0069,Honda,Odyssey,LX,Minivan,Gasoline,38500,3500.0,280,22.0,,8,Automatic,FWD,7,5,2021,True,3,False,False,0.57
+VH0070,Honda,Odyssey,Sport,Minivan,Gasoline,42000,3500.0,280,21.0,,8,Automatic,FWD,6,5,2021,True,3,True,False,0.57
+VH0071,Nissan,Rogue,S,SUV,Gasoline,28500,1497.0,201,31.0,,5,Automatic,AWD,5,4,2021,True,3,True,False,0.52
+VH0072,Nissan,Rogue,SV,SUV,Gasoline,31100,1497.0,201,30.0,,5,Automatic,AWD,7,4,2021,True,3,True,False,0.52
+VH0073,Nissan,Altima,S,Sedan,Gasoline,26000,2488.0,188,32.0,,5,Automatic,FWD,5,4,2019,True,3,True,False,0.47
+VH0074,Nissan,Altima,SV,Sedan,Gasoline,28300,2488.0,188,31.0,,5,Automatic,FWD,6,5,2019,True,3,True,False,0.47
+VH0075,Nissan,Sentra,S,Sedan,Gasoline,21500,1998.0,149,33.0,,5,Automatic,FWD,6,5,2020,True,3,True,False,0.5
+VH0076,Nissan,Sentra,SV,Sedan,Gasoline,23400,1998.0,149,32.0,,5,Automatic,FWD,8,5,2020,True,3,True,False,0.5
+VH0077,Nissan,Pathfinder,S,SUV,Gasoline,37000,3498.0,284,23.0,,8,Automatic,AWD,5,5,2022,True,3,False,False,0.52
+VH0078,Nissan,Pathfinder,SV,SUV,Gasoline,40300,3498.0,284,22.0,,8,Automatic,AWD,8,4,2022,True,3,True,False,0.52
+VH0079,Nissan,Murano,S,SUV,Gasoline,35500,3498.0,260,23.0,,5,Automatic,AWD,7,5,2025,True,3,True,False,0.48
+VH0080,Nissan,Murano,SV,SUV,Gasoline,38700,3498.0,260,22.0,,5,Automatic,AWD,6,5,2025,True,3,True,False,0.48
+VH0081,Nissan,Frontier,S,Pickup,Gasoline,31000,3800.0,310,20.0,,5,Automatic,4WD,8,5,2022,True,3,True,False,0.58
+VH0082,Nissan,Frontier,SV,Pickup,Gasoline,33800,3800.0,310,19.0,,5,Automatic,4WD,6,5,2022,True,3,True,False,0.58
+VH0083,Nissan,Ariya,S,SUV,Electric,40000,,238,,289.0,5,Single-Speed,FWD,6,5,2023,True,3,False,True,0.4
+VH0084,Nissan,Ariya,SV,SUV,Electric,43600,,238,,283.0,5,Single-Speed,FWD,5,4,2023,True,3,True,True,0.4
+VH0085,Jeep,Grand Cherokee,Sport,SUV,Gasoline,39000,3600.0,293,22.0,,5,Automatic,4WD,6,5,2022,True,3,False,False,0.55
+VH0086,Jeep,Grand Cherokee,Latitude,SUV,Gasoline,42500,3600.0,293,21.0,,5,Automatic,4WD,5,5,2022,True,3,True,False,0.55
+VH0087,Jeep,Wrangler,Sport,SUV,Gasoline,33000,3600.0,285,20.0,,5,Automatic,4WD,5,5,2018,True,3,False,False,0.68
+VH0088,Jeep,Wrangler,Latitude,SUV,Gasoline,36000,3600.0,285,19.0,,5,Automatic,4WD,7,5,2018,True,3,False,False,0.68
+VH0089,Jeep,Compass,Sport,SUV,Gasoline,27000,1300.0,200,27.0,,5,Automatic,AWD,6,5,2022,True,3,True,False,0.5
+VH0090,Jeep,Compass,Latitude,SUV,Gasoline,29400,1300.0,200,26.0,,5,Automatic,AWD,5,4,2022,True,3,True,False,0.5
+VH0091,Jeep,Gladiator,Sport,Pickup,Gasoline,39000,3600.0,285,19.0,,5,Automatic,4WD,7,5,2020,True,3,False,False,0.62
+VH0092,Jeep,Gladiator,Latitude,Pickup,Gasoline,42500,3600.0,285,18.0,,5,Automatic,4WD,6,5,2020,True,3,False,False,0.62
+VH0093,Jeep,Wagoneer,Sport,SUV,Gasoline,60000,5700.0,420,18.0,,8,Automatic,4WD,8,5,2022,True,3,True,False,0.52
+VH0094,Jeep,Wagoneer,Latitude,SUV,Gasoline,65400,5700.0,420,17.0,,8,Automatic,4WD,6,5,2022,True,3,True,False,0.52
+VH0095,Hyundai,Tucson,SE,SUV,Gasoline,28000,2497.0,187,29.0,,5,Automatic,AWD,8,5,2022,True,5,True,False,0.55
+VH0096,Hyundai,Tucson,SEL,SUV,Gasoline,30500,2497.0,187,28.0,,5,Automatic,AWD,8,5,2022,True,5,True,False,0.55
+VH0097,Hyundai,Elantra,SE,Sedan,Gasoline,22000,1999.0,147,36.0,,5,Automatic,FWD,6,5,2021,True,5,False,False,0.52
+VH0098,Hyundai,Elantra,SEL,Sedan,Gasoline,24000,1999.0,147,35.0,,5,Automatic,FWD,6,5,2021,True,5,False,False,0.52
+VH0099,Hyundai,Santa Fe,SE,SUV,Gasoline,34000,2497.0,277,25.0,,7,Automatic,AWD,5,5,2024,True,5,True,False,0.54
+VH0100,Hyundai,Santa Fe,SEL,SUV,Gasoline,37100,2497.0,277,24.0,,7,Automatic,AWD,8,5,2024,True,5,False,False,0.54
+VH0101,Hyundai,Sonata,SE,Sedan,Gasoline,27000,2497.0,191,31.0,,5,Automatic,FWD,6,4,2020,True,5,False,False,0.49
+VH0102,Hyundai,Sonata,SEL,Sedan,Gasoline,29400,2497.0,191,30.0,,5,Automatic,FWD,6,4,2020,True,5,False,False,0.49
+VH0103,Hyundai,Palisade,SE,SUV,Gasoline,38000,3800.0,291,22.0,,8,Automatic,AWD,8,5,2023,True,5,True,False,0.57
+VH0104,Hyundai,Palisade,SEL,SUV,Gasoline,41400,3800.0,291,21.0,,8,Automatic,AWD,5,5,2023,True,5,False,False,0.57
+VH0105,Hyundai,Ioniq 5,SE,SUV,Electric,42000,,225,,303.0,5,Single-Speed,RWD,8,4,2022,True,5,True,True,0.45
+VH0106,Hyundai,Ioniq 5,SEL,SUV,Electric,45800,,225,,297.0,5,Single-Speed,RWD,5,5,2022,True,5,True,True,0.45
+VH0107,Kia,Sportage,LX,SUV,Gasoline,27500,2497.0,187,28.0,,5,Automatic,AWD,6,5,2023,True,5,False,False,0.54
+VH0108,Kia,Sportage,EX,SUV,Gasoline,30000,2497.0,187,27.0,,5,Automatic,AWD,6,5,2023,True,5,True,False,0.54
+VH0109,Kia,Forte,LX,Sedan,Gasoline,21000,1999.0,147,35.0,,5,Automatic,FWD,8,4,2022,True,5,True,False,0.51
+VH0110,Kia,Forte,EX,Sedan,Gasoline,22900,1999.0,147,34.0,,5,Automatic,FWD,5,5,2022,True,5,True,False,0.51
+VH0111,Kia,Telluride,LX,SUV,Gasoline,37000,3800.0,291,23.0,,8,Automatic,AWD,6,5,2020,True,5,False,False,0.64
+VH0112,Kia,Telluride,EX,SUV,Gasoline,40300,3800.0,291,22.0,,8,Automatic,AWD,7,5,2020,True,5,True,False,0.64
+VH0113,Kia,Sorento,LX,SUV,Gasoline,32000,2497.0,191,26.0,,7,Automatic,AWD,6,5,2021,True,5,False,False,0.54
+VH0114,Kia,Sorento,EX,SUV,Gasoline,34900,2497.0,191,25.0,,7,Automatic,AWD,5,5,2021,True,5,True,False,0.54
+VH0115,Kia,Carnival,LX,Minivan,Gasoline,35000,3500.0,287,22.0,,8,Automatic,FWD,6,5,2022,True,5,False,False,0.55
+VH0116,Kia,Carnival,EX,Minivan,Gasoline,38200,3500.0,287,21.0,,8,Automatic,FWD,5,5,2022,True,5,True,False,0.55
+VH0117,Kia,EV6,LX,SUV,Electric,43000,,225,,310.0,5,Single-Speed,RWD,8,5,2022,True,5,False,True,0.44
+VH0118,Kia,EV6,EX,SUV,Electric,46900,,225,,304.0,5,Single-Speed,RWD,6,5,2022,True,5,True,True,0.44
+VH0119,Ram,1500,Tradesman,Pickup,Gasoline,40000,5700.0,395,20.0,,5,Automatic,4WD,8,5,2019,True,3,True,False,0.58
+VH0120,Ram,1500,Big Horn,Pickup,Gasoline,43600,5700.0,395,19.0,,5,Automatic,4WD,8,5,2019,True,3,True,False,0.58
+VH0121,Ram,2500,Tradesman,Pickup,Diesel,55000,6700.0,370,17.0,,5,Automatic,4WD,5,5,2019,True,3,True,False,0.63
+VH0122,Ram,2500,Big Horn,Pickup,Diesel,60000,6700.0,370,16.0,,5,Automatic,4WD,7,5,2019,True,3,True,False,0.63
+VH0123,GMC,Sierra,Elevation,Pickup,Gasoline,40000,5300.0,355,19.0,,5,Automatic,4WD,7,5,2019,True,3,False,False,0.6
+VH0124,GMC,Sierra,SLE,Pickup,Gasoline,43600,5300.0,355,18.0,,5,Automatic,4WD,6,5,2019,True,3,True,False,0.6
+VH0125,GMC,Terrain,Elevation,SUV,Gasoline,30500,1500.0,175,28.0,,5,Automatic,AWD,5,5,2022,True,3,True,False,0.51
+VH0126,GMC,Terrain,SLE,SUV,Gasoline,33200,1500.0,175,27.0,,5,Automatic,AWD,8,5,2022,True,3,True,False,0.51
+VH0127,GMC,Acadia,Elevation,SUV,Gasoline,38000,2500.0,328,23.0,,7,Automatic,AWD,7,5,2024,True,3,False,False,0.53
+VH0128,GMC,Acadia,SLE,SUV,Gasoline,41400,2500.0,328,22.0,,7,Automatic,AWD,5,4,2024,True,3,True,False,0.53
+VH0129,GMC,Yukon,Elevation,SUV,Gasoline,61000,5300.0,355,18.0,,8,Automatic,4WD,8,5,2021,True,3,False,False,0.6
+VH0130,GMC,Yukon,SLE,SUV,Gasoline,66500,5300.0,355,17.0,,8,Automatic,4WD,7,5,2021,True,3,False,False,0.6
+VH0131,Subaru,Outback,Base,SUV,Gasoline,30000,2498.0,182,28.0,,5,Automatic,AWD,6,5,2020,True,3,True,False,0.6
+VH0132,Subaru,Outback,Premium,SUV,Gasoline,32700,2498.0,182,27.0,,5,Automatic,AWD,6,5,2020,True,3,True,False,0.6
+VH0133,Subaru,Forester,Base,SUV,Gasoline,28000,2498.0,182,29.0,,5,Automatic,AWD,5,5,2019,True,3,False,False,0.61
+VH0134,Subaru,Forester,Premium,SUV,Gasoline,30500,2498.0,182,28.0,,5,Automatic,AWD,7,5,2019,True,3,True,False,0.61
+VH0135,Subaru,Crosstrek,Base,SUV,Gasoline,25500,2000.0,152,29.0,,5,Automatic,AWD,7,5,2024,True,3,True,False,0.63
+VH0136,Subaru,Crosstrek,Premium,SUV,Gasoline,27800,2000.0,152,28.0,,5,Automatic,AWD,5,5,2024,True,3,False,False,0.63
+VH0137,Subaru,Ascent,Base,SUV,Gasoline,35500,2400.0,260,23.0,,8,Automatic,AWD,8,5,2019,True,3,True,False,0.55
+VH0138,Subaru,Ascent,Premium,SUV,Gasoline,38700,2400.0,260,22.0,,8,Automatic,AWD,8,5,2019,True,3,True,False,0.55
+VH0139,BMW,3 Series,sDrive,Luxury,Gasoline,45000,1998.0,255,30.0,,5,Automatic,RWD,6,4,2019,True,3,False,False,0.5
+VH0140,BMW,3 Series,xDrive,Luxury,Gasoline,49000,1998.0,255,29.0,,5,Automatic,RWD,7,4,2019,True,3,True,False,0.5
+VH0141,BMW,X3,sDrive,Luxury,Gasoline,47000,1998.0,248,27.0,,5,Automatic,AWD,8,4,2018,True,3,True,False,0.52
+VH0142,BMW,X3,xDrive,Luxury,Gasoline,51200,1998.0,248,26.0,,5,Automatic,AWD,8,4,2018,True,3,True,False,0.52
+VH0143,BMW,i4,sDrive,Luxury,Electric,53000,,335,,301.0,5,Single-Speed,RWD,7,4,2022,True,3,True,True,0.42
+VH0144,BMW,i4,xDrive,Luxury,Electric,57800,,335,,295.0,5,Single-Speed,RWD,5,4,2022,True,3,True,False,0.42
+VH0145,BMW,5 Series,sDrive,Luxury,Gasoline,58000,2998.0,375,28.0,,5,Automatic,RWD,7,5,2024,True,3,True,False,0.48
+VH0146,BMW,5 Series,xDrive,Luxury,Gasoline,63200,2998.0,375,27.0,,5,Automatic,RWD,7,5,2024,True,3,False,False,0.48
+VH0147,BMW,X5,sDrive,Luxury,Gasoline,66000,2998.0,375,24.0,,5,Automatic,AWD,8,4,2019,True,3,True,False,0.53
+VH0148,BMW,X5,xDrive,Luxury,Gasoline,71900,2998.0,375,23.0,,5,Automatic,AWD,8,4,2019,True,3,True,False,0.53
+VH0149,Mercedes-Benz,C-Class,Base,Luxury,Gasoline,47000,1999.0,255,28.0,,5,Automatic,RWD,7,5,2022,True,3,True,False,0.49
+VH0150,Mercedes-Benz,C-Class,4MATIC,Luxury,Gasoline,51200,1999.0,255,27.0,,5,Automatic,RWD,7,5,2022,True,3,True,False,0.49
+VH0151,Mercedes-Benz,GLC,Base,Luxury,Gasoline,49000,1999.0,255,25.0,,5,Automatic,AWD,8,5,2023,True,3,True,False,0.52
+VH0152,Mercedes-Benz,GLC,4MATIC,Luxury,Gasoline,53400,1999.0,255,24.0,,5,Automatic,AWD,5,5,2023,True,3,True,False,0.52
+VH0153,Mercedes-Benz,E-Class,Base,Luxury,Gasoline,62000,1999.0,255,27.0,,5,Automatic,AWD,8,5,2024,True,3,False,False,0.46
+VH0154,Mercedes-Benz,E-Class,4MATIC,Luxury,Gasoline,67600,1999.0,255,26.0,,5,Automatic,AWD,8,5,2024,True,3,False,False,0.46
+VH0155,Mercedes-Benz,GLE,Base,Luxury,Gasoline,63000,2999.0,375,22.0,,5,Automatic,AWD,7,5,2020,True,3,True,False,0.5
+VH0156,Mercedes-Benz,GLE,4MATIC,Luxury,Gasoline,68700,2999.0,375,21.0,,5,Automatic,AWD,7,5,2020,True,3,True,False,0.5
+VH0157,Mercedes-Benz,EQE,Base,Luxury,Electric,75000,,288,,305.0,5,Single-Speed,RWD,8,5,2023,True,3,True,False,0.38
+VH0158,Mercedes-Benz,EQE,4MATIC,Luxury,Electric,81800,,288,,299.0,5,Single-Speed,RWD,8,5,2023,True,3,True,False,0.38
+VH0159,Tesla,Model 3,RWD,Sedan,Electric,39000,,283,,272.0,5,Single-Speed,RWD,5,5,2018,True,3,True,True,0.47
+VH0160,Tesla,Model 3,Long Range,Sedan,Electric,42500,,283,,267.0,5,Single-Speed,RWD,5,4,2018,True,3,True,True,0.47
+VH0161,Tesla,Model Y,RWD,SUV,Electric,45000,,384,,320.0,5,Single-Speed,AWD,7,4,2020,True,3,True,True,0.48
+VH0162,Tesla,Model Y,Long Range,SUV,Electric,49000,,384,,314.0,5,Single-Speed,AWD,6,5,2020,True,3,True,True,0.48
+VH0163,Tesla,Model S,RWD,Luxury,Electric,75000,,670,,405.0,5,Single-Speed,AWD,8,5,2021,True,3,True,False,0.42
+VH0164,Tesla,Model S,Long Range,Luxury,Electric,81800,,670,,397.0,5,Single-Speed,AWD,8,4,2021,True,3,True,False,0.42
+VH0165,Tesla,Model X,RWD,Luxury,Electric,81000,,670,,335.0,7,Single-Speed,AWD,8,5,2021,True,3,False,False,0.41
+VH0166,Tesla,Model X,Long Range,Luxury,Electric,88300,,670,,328.0,7,Single-Speed,AWD,8,5,2021,True,3,False,False,0.41
+VH0167,Volkswagen,Jetta,S,Sedan,Gasoline,22000,1498.0,158,34.0,,5,Automatic,FWD,5,5,2022,True,3,True,False,0.5
+VH0168,Volkswagen,Jetta,SE,Sedan,Gasoline,24000,1498.0,158,33.0,,5,Automatic,FWD,6,5,2022,True,3,False,False,0.5
+VH0169,Volkswagen,Tiguan,S,SUV,Gasoline,28500,1984.0,184,26.0,,7,Automatic,AWD,8,5,2022,True,3,True,False,0.5
+VH0170,Volkswagen,Tiguan,SE,SUV,Gasoline,31100,1984.0,184,25.0,,7,Automatic,AWD,5,5,2022,True,3,True,False,0.5
+VH0171,Volkswagen,Atlas,S,SUV,Gasoline,38000,1984.0,269,23.0,,7,Automatic,AWD,7,4,2021,True,3,False,False,0.51
+VH0172,Volkswagen,Atlas,SE,SUV,Gasoline,41400,1984.0,269,22.0,,7,Automatic,AWD,8,5,2021,True,3,True,False,0.51
+VH0173,Volkswagen,ID.4,S,SUV,Electric,40000,,282,,275.0,5,Single-Speed,AWD,6,5,2021,True,3,False,True,0.4
+VH0174,Volkswagen,ID.4,SE,SUV,Electric,43600,,282,,270.0,5,Single-Speed,AWD,8,4,2021,True,3,True,True,0.4
+VH0175,Lexus,ES,Base,Luxury,Gasoline,43000,2487.0,203,30.0,,5,Automatic,FWD,5,5,2019,True,3,False,False,0.55
+VH0176,Lexus,ES,Premium,Luxury,Gasoline,46900,2487.0,203,29.0,,5,Automatic,FWD,5,5,2019,True,3,True,False,0.55
+VH0177,Lexus,NX,Base,Luxury,Gasoline,41000,2393.0,275,27.0,,5,Automatic,AWD,5,5,2022,True,3,True,False,0.57
+VH0178,Lexus,NX,Premium,Luxury,Gasoline,44700,2393.0,275,26.0,,5,Automatic,AWD,7,5,2022,True,3,True,False,0.57
+VH0179,Lexus,RX,Base,Luxury,Gasoline,49000,2393.0,275,25.0,,5,Automatic,AWD,7,5,2023,True,3,False,False,0.58
+VH0180,Lexus,RX,Premium,Luxury,Gasoline,53400,2393.0,275,24.0,,5,Automatic,AWD,7,5,2023,True,3,False,False,0.58
+VH0181,Lexus,GX,Base,Luxury,Gasoline,65000,3445.0,349,19.0,,7,Automatic,4WD,7,5,2024,True,3,True,False,0.62
+VH0182,Lexus,GX,Premium,Luxury,Gasoline,70800,3445.0,349,18.0,,7,Automatic,4WD,6,5,2024,True,3,False,False,0.62

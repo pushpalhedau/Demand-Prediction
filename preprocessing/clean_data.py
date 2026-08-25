@@ -80,6 +80,13 @@ def clean_vehicles(filepath):
     df['service_contract_available'] = df['service_contract_available'].fillna(False).astype(bool)
     df['ev_incentive_eligible'] = df['ev_incentive_eligible'].fillna(False).astype(bool)
 
+    # Residual curve. Falls back to the market-average 36-month residual so a
+    # catalog without the column still prices leases sanely.
+    if 'residual_value_36mo' in df.columns:
+        df['residual_value_36mo'] = df['residual_value_36mo'].fillna(0.55).astype(float)
+    else:
+        df['residual_value_36mo'] = 0.55
+
     return df
 
 
@@ -160,6 +167,39 @@ def clean_sales(filepath):
     df['test_drive_converted'] = df['test_drive_converted'].fillna(False).astype(bool)
     df['lead_to_close_days'] = df['lead_to_close_days'].fillna(0).astype(int)
     df['season_multiplier'] = df['season_multiplier'].fillna(1.0)
+
+    # ── Lease contract terms ─────────────────────────────────────────────────
+    # These stay NULL on non-lease rows on purpose: a cash deal has no maturity
+    # date, and filling one in would invent lease returns that never happen.
+    if 'lease_maturity_date' in df.columns:
+        df['lease_maturity_date'] = pd.to_datetime(
+            df['lease_maturity_date'], errors='coerce'
+        ).dt.date
+        df['lease_maturity_date'] = df['lease_maturity_date'].where(
+            pd.notnull(df['lease_maturity_date']), None
+        )
+    for col in ['lease_term_months', 'residual_value_usd',
+                'contract_mileage_allowance', 'lease_monthly_payment_usd']:
+        if col in df.columns:
+            df[col] = df[col].apply(lambda x: int(x) if pd.notnull(x) else None)
+    if 'residual_value_pct' in df.columns:
+        df['residual_value_pct'] = df['residual_value_pct'].apply(
+            lambda x: float(x) if pd.notnull(x) else None
+        )
+
+    # ── Trade-in activity ────────────────────────────────────────────────────
+    if 'trade_in_flag' in df.columns:
+        df['trade_in_flag'] = df['trade_in_flag'].fillna(False).astype(bool)
+    for col in ['trade_in_brand', 'trade_in_model']:
+        if col in df.columns:
+            df[col] = df[col].where(pd.notnull(df[col]), None)
+    for col in ['trade_in_year', 'trade_in_mileage', 'trade_in_appraised_value_usd',
+                'trade_in_allowance_usd', 'trade_in_over_allowance_usd']:
+        if col in df.columns:
+            df[col] = df[col].apply(lambda x: int(x) if pd.notnull(x) else None)
+    # A deal with no trade simply had no bonus, so zero is the honest value.
+    if 'trade_bonus_usd' in df.columns:
+        df['trade_bonus_usd'] = df['trade_bonus_usd'].fillna(0).astype(int)
 
     return df
 

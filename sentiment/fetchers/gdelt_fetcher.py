@@ -34,6 +34,28 @@ from sqlalchemy.orm import joinedload
 
 logger = logging.getLogger(__name__)
 
+
+class GdeltUnavailableError(RuntimeError):
+    """
+    Raised when GDELT could not be reached after all retries (rate limiting,
+    timeouts, network errors). Distinct from GdeltQueryError: the query is
+    fine, the API just would not serve it right now. Surfaced rather than
+    swallowed so a rate-limited refresh doesn't look identical to "no news".
+    """
+
+
+class GdeltQueryError(RuntimeError):
+    """
+    Raised when GDELT rejects a query outright.
+
+    GDELT signals a malformed query with HTTP 200 and a plain-text body (e.g.
+    "Parentheses may only be used around OR'd statements.") rather than an
+    error status. Without this, resp.json() just raises ValueError, the retry
+    loop swallows it, and the caller sees an empty article list that is
+    indistinguishable from "no news matched" — which is how a hard syntax
+    error silently surfaced as "0 articles fetched".
+    """
+
 # ─────────────────────────────────────────────────────────────────────────────
 # GDELT API endpoint
 # ─────────────────────────────────────────────────────────────────────────────
@@ -47,47 +69,70 @@ NA_AUTO_QUERIES: List[Dict] = [
     {
         "name": "na_auto_demand",
         "label": "US Auto Demand",
-        # Keep query short: GDELT works best with 2-3 keywords or one short phrase
-        "query": "US automobile car sales dealership",
+        # GDELT syntax notes:
+        #   - Space-separated words are an implicit AND, so a bare list of 5
+        #     words matches almost nothing. Use explicit OR of short phrases.
+        #   - Parentheses are ONLY legal around OR'd statements. Putting an
+        #     implicit-AND group in parens makes GDELT reject the whole query
+        #     with "Parentheses may only be used around OR'd statements."
+        #   - Scope to the US with sourcecountry: rather than a "US" keyword.
+        # "keywords" is used by _infer_theme() for bucketing combined-query
+        # results; it must stay plain words (no quotes/OR) for that matching.
+        "query": '("car sales" OR "auto sales" OR "vehicle sales" OR dealership) sourcecountry:US',
+        "keywords": ["car", "sales", "auto", "vehicle", "dealership"],
         "theme": "auto_demand",
         "affected_category": "All",
     },
     {
         "name": "ev_market_na",
         "label": "EV Market US",
-        "query": "electric vehicle US EV tax credit",
+        "query": '("electric vehicle" OR "EV tax credit" OR "electric car") sourcecountry:US',
+        "keywords": ["electric", "vehicle", "credit"],
         "theme": "ev_market",
         "affected_category": "EV",
     },
     {
         "name": "tariff_trade",
         "label": "Auto Tariffs & Trade",
-        "query": "auto tariff import vehicle trade",
+        "query": '("auto tariff" OR "car tariffs" OR "vehicle imports") sourcecountry:US',
+        "keywords": ["tariff", "tariffs", "import", "imports", "trade"],
         "theme": "tariff_trade",
         "affected_category": "All",
     },
     {
         "name": "fuel_oil_prices",
         "label": "Fuel & Oil Prices",
-        "query": "gas price oil US crude",
+        "query": '("gas prices" OR "oil prices" OR "crude oil" OR "fuel prices") sourcecountry:US',
+        "keywords": ["gas", "oil", "crude", "fuel", "prices"],
         "theme": "fuel_economic",
         "affected_category": "All",
     },
     {
         "name": "us_macro_economy",
         "label": "US Economy",
-        "query": "US economy inflation Fed interest rate",
+        "query": '("interest rates" OR inflation OR "Federal Reserve") sourcecountry:US',
+        "keywords": ["interest", "rates", "inflation", "federal", "reserve", "economy"],
         "theme": "macro_economic",
         "affected_category": "All",
     },
     {
         "name": "luxury_suv_na",
         "label": "Luxury & SUV US",
-        "query": "luxury SUV truck US Mercedes BMW",
+        "query": '("luxury SUV" OR "pickup truck" OR "luxury car") sourcecountry:US',
+        "keywords": ["luxury", "truck", "pickup", "mercedes"],
         "theme": "luxury_suv",
         "affected_category": "Luxury",
     },
 ]
+
+# Flat OR-list covering every theme above, used by fetch_all_themes(combine_queries=True).
+# Kept flat (no nested parens) because GDELT rejects nested/AND-grouped parentheses.
+COMBINED_QUERY = (
+    '("car sales" OR "auto sales" OR dealership OR "electric vehicle" '
+    'OR "auto tariff" OR "gas prices" OR inflation OR "luxury SUV" '
+    'OR "pickup truck") sourcecountry:US'
+)
+
 
 # GDELT seendate format
 _GDELT_DATE_FMT = "%Y%m%dT%H%M%SZ"
@@ -113,8 +158,10 @@ def _parse_gdelt_date(raw: str) -> Optional[date]:
 
 
 # GDELT requires at least 1 request per 5 seconds (free tier policy).
-# We use 6s as the minimum gap to stay comfortably under the limit.
-_GDELT_MIN_INTERVAL = 6.0
+# The documented limit is one request per 5 seconds, but in practice GDELT
+# still returns 429 at much wider gaps for large (250-record) responses, so
+# 10s is the floor here — a multi-slice refresh needs the headroom.
+_GDELT_MIN_INTERVAL = 10.0
 _last_request_time: float = 0.0
 
 # GDELT's limit is global (per source IP), not per-thread. Two concurrent
@@ -169,6 +216,12 @@ def _get(url: str, params: Dict, retries: int = 3):
             except requests.exceptions.HTTPError as e:
                 logger.warning("GDELT HTTP error %s (attempt %d/%d)", e, attempt + 1, retries)
             except ValueError:
+                # A 200 that isn't JSON means GDELT rejected the query itself.
+                # Retrying is pointless — the query will be rejected identically
+                # every time — so fail loudly with the API's own message.
+                body = (resp.text or "").strip()
+                if resp.status_code == 200 and body:
+                    raise GdeltQueryError(body[:300])
                 logger.warning("GDELT non-JSON response (attempt %d/%d)", attempt + 1, retries)
             except requests.exceptions.RequestException as e:
                 logger.warning("GDELT request error: %s (attempt %d/%d)", e, attempt + 1, retries)
@@ -176,7 +229,10 @@ def _get(url: str, params: Dict, retries: int = 3):
             if attempt < retries - 1:
                 time.sleep(base_wait * (2 ** attempt))
 
-    return None
+    raise GdeltUnavailableError(
+        f"GDELT did not return data after {retries} attempts "
+        "(rate limited, timed out, or unreachable)"
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -187,26 +243,36 @@ def fetch_articles_for_query(
     query: str,
     timespan: str = "30d",
     max_records: int = 75,
+    start: Optional[datetime] = None,
+    end: Optional[datetime] = None,
 ) -> List[Dict]:
     """
     Fetch English-language news articles from GDELT Doc v2 ArtList for one query.
 
     Args:
         query:       GDELT query string (supports OR, AND, quoted phrases).
-        timespan:    e.g. "7d", "30d", "90d".
-        max_records: 1–250 (GDELT hard cap is 250).
+        timespan:    e.g. "7d", "30d", "90d". Ignored when start/end are given.
+        max_records: 1-250 (GDELT hard cap is 250).
+        start, end:  Explicit window. Used instead of `timespan` so callers can
+            walk backwards in slices — see fetch_all_themes(slice_days=...).
 
     Returns:
         List of raw article dicts from GDELT, English only.
     """
-    data = _get(GDELT_DOC_API, {
+    params = {
         "query": query,
         "mode": "ArtList",
         "maxrecords": min(max_records, 250),
         "format": "json",
-        "timespan": timespan,
         "sort": "DateDesc",
-    })
+    }
+    if start and end:
+        params["startdatetime"] = start.strftime("%Y%m%d%H%M%S")
+        params["enddatetime"] = end.strftime("%Y%m%d%H%M%S")
+    else:
+        params["timespan"] = timespan
+
+    data = _get(GDELT_DOC_API, params)
 
     if not data:
         return []
@@ -214,6 +280,14 @@ def fetch_articles_for_query(
     articles = data.get("articles") or []
     # Keep English articles only (GDELT returns multi-language results)
     return [a for a in articles if (a.get("language") or "").lower() == "english"]
+
+
+def _timespan_days(timespan: str) -> int:
+    """'30d' -> 30. Falls back to 30 for anything unparseable."""
+    try:
+        return int("".join(ch for ch in timespan if ch.isdigit())) or 30
+    except Exception:
+        return 30
 
 
 def _infer_theme(article: Dict) -> Dict:
@@ -225,8 +299,10 @@ def _infer_theme(article: Dict) -> Dict:
     title = (article.get("title") or "").lower()
     best, best_score = NA_AUTO_QUERIES[0], -1
     for q in NA_AUTO_QUERIES:
-        keywords = [w.lower() for w in q["query"].split() if len(w) > 3]
-        score = sum(1 for w in keywords if w in title)
+        # Match against the curated "keywords" list, NOT q["query"] — the query
+        # string now contains GDELT syntax (quotes, OR, sourcecountry:) that
+        # would otherwise be treated as matchable words.
+        score = sum(1 for w in q["keywords"] if w in title)
         if score > best_score:
             best, best_score = q, score
     return best
@@ -238,6 +314,7 @@ def fetch_all_themes(
     delay_between_queries: float = 5.0,
     one_per_day: bool = True,
     combine_queries: bool = True,
+    slice_days: int = 0,
 ) -> List[Dict]:
     """
     Fetch articles for all NA auto-market themes and return a deduplicated list.
@@ -264,6 +341,16 @@ def fetch_all_themes(
             its best-matching theme afterward via keyword overlap against the
             title (see _infer_theme). Set False to fall back to the slower,
             more precisely-bucketed per-theme querying.
+        slice_days:             Window size, in days, for walking the timespan
+            backwards. GDELT returns at most 250 DateDesc records per call, so
+            one call to a busy query only reaches ~2 days back regardless of
+            timespan. Slicing is OFF by default (0 = one call, ~2 days back)
+            because GDELT's free tier rate-limits a multi-slice refresh hard:
+            a 30d/2d run is 15 calls and most get 429'd, so it is slow AND
+            returns less than the single call. Since articles are persisted
+            and deduplicated by URL, coverage accumulates across daily
+            refreshes anyway. Set slice_days=2 for a deliberate backfill when
+            you can tolerate several minutes and partial results.
 
     Returns:
         Flat, deduplicated list of article dicts.
@@ -273,12 +360,61 @@ def fetch_all_themes(
     all_articles: List[Dict] = []
 
     if combine_queries:
-        combined_query = " OR ".join(f'({q["query"]})' for q in NA_AUTO_QUERIES)
-        raw = fetch_articles_for_query(
-            query=combined_query,
-            timespan=timespan,
-            max_records=min(max_records_per_query * len(NA_AUTO_QUERIES), 250),
-        )
+        # GDELT caps every response at 250 records and sorts DateDesc, so for a
+        # high-volume query a single 30d call only ever reaches ~2 days back --
+        # the timespan selector was effectively cosmetic. Walk backwards in
+        # slice_days-sized windows instead so each window's 250 records cover
+        # its own days. Costs one request per slice, which the _gdelt_lock
+        # throttle serializes.
+        raw: List[Dict] = []
+        if slice_days and slice_days > 0:
+            total_days = _timespan_days(timespan)
+            window_end = datetime.utcnow()
+            slices = max(1, -(-total_days // slice_days))  # ceil
+            failed_slices = 0
+            for i in range(slices):
+                window_start = window_end - timedelta(days=slice_days)
+                try:
+                    chunk = fetch_articles_for_query(
+                        query=COMBINED_QUERY,
+                        max_records=250,
+                        start=window_start,
+                        end=window_end,
+                    )
+                except GdeltUnavailableError as e:
+                    # A refresh spanning many slices will sometimes lose one to
+                    # rate limiting. Partial coverage beats losing the whole
+                    # run, so record it and keep going; only a total wipeout
+                    # (below) is treated as a failure.
+                    failed_slices += 1
+                    logger.warning(
+                        "GDELT | slice %d/%d (%s..%s) failed: %s",
+                        i + 1, slices, window_start.date(), window_end.date(), e,
+                    )
+                    window_end = window_start
+                    continue
+                logger.info(
+                    "GDELT | slice %d/%d | %s..%s | %d articles",
+                    i + 1, slices, window_start.date(), window_end.date(), len(chunk),
+                )
+                raw.extend(chunk)
+                window_end = window_start
+
+            if failed_slices == slices:
+                raise GdeltUnavailableError(
+                    f"all {slices} GDELT slices failed (rate limited or unreachable)"
+                )
+            if failed_slices:
+                logger.warning(
+                    "GDELT | %d/%d slices failed - coverage is partial",
+                    failed_slices, slices,
+                )
+        else:
+            raw = fetch_articles_for_query(
+                query=COMBINED_QUERY,
+                timespan=timespan,
+                max_records=min(max_records_per_query * len(NA_AUTO_QUERIES), 250),
+            )
 
         for article in raw:
             url = (article.get("url") or "").strip()
@@ -420,12 +556,18 @@ def fetch_tone_timeline(
     Returns:
         List of {"date": date, "tone": float} sorted ascending by date.
     """
-    data = _get(GDELT_DOC_API, {
-        "query": query,
-        "mode": "TimelineTone",
-        "format": "json",
-        "timespan": timespan,
-    })
+    try:
+        data = _get(GDELT_DOC_API, {
+            "query": query,
+            "mode": "TimelineTone",
+            "format": "json",
+            "timespan": timespan,
+        })
+    except (GdeltUnavailableError, GdeltQueryError) as e:
+        # Timelines only feed trend charts — a missing one shouldn't abort a
+        # refresh the way a failed article fetch should.
+        logger.warning("Tone timeline unavailable for '%s': %s", query, e)
+        return []
 
     if not data:
         return []

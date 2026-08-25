@@ -77,6 +77,64 @@ Day / Memorial Day / July 4th / Labor Day / Black Friday / Year-End Clearance sa
 events), `season_multiplier`. Monthly volume follows a 2020 COVID dip, 2021–2024 recovery,
 and mild seasonal swing (spring/fall peaks).
 
+### Financing mix
+
+`financing_type` is **segment-driven rather than uniform**, matching real US new-retail
+behaviour: luxury leases roughly half its volume, pickups barely a tenth, and EVs lease
+heavily. The blended lease rate lands near the ~24% national figure.
+
+| Segment | Lease share | Segment | Lease share |
+|---|---|---|---|
+| Luxury | ~57% | SUV | ~26% |
+| Hatchback | ~29% | Minivan | ~20% |
+| Sedan | ~28% | Pickup | ~11% |
+| Coupe | ~28% | *(Electric adds +15pts)* | |
+
+### Lease contract terms (populated only on `financing_type == "Lease"`)
+
+These columns are **NULL on non-lease rows on purpose** — a cash deal has no maturity date,
+and filling one in would invent lease returns that never happen.
+
+| Column | Description |
+|---|---|
+| `lease_term_months` | 24 / 36 / 39 / 48, weighted 12/62/14/12% (36 dominant, as in market) |
+| `lease_maturity_date` | `sale_date` + term, exact month arithmetic |
+| `residual_value_pct` | Share of MSRP retained at maturity |
+| `residual_value_usd` | Contractual buyout price (`price_usd` × residual pct) |
+| `contract_mileage_allowance` | Total miles over the term (10k/12k/15k per year) |
+| `lease_monthly_payment_usd` | Depreciation + rent charge; money factor tracks the Fed path |
+
+Residuals start from the vehicle's own `residual_value_36mo` curve, then adjust for term
+(+10pts at 24mo, −10pts at 48mo) and mileage allowance (±2pts). Mean residual ≈ 53%, mean
+payment ≈ $696/mo (p10 $389, p90 $1,124). Because payments are priced off the Fed path,
+they climb through the 2022–23 hiking cycle exactly as they did in the real market.
+
+### Trade-in activity
+
+Attach rate ≈ 55% of deals (cash buyers trade less, financed buyers more), matching the
+real US rate of roughly 50–55%.
+
+| Column | Description |
+|---|---|
+| `trade_in_flag` | Whether the deal carried a trade |
+| `trade_in_brand` / `trade_in_model` / `trade_in_year` | The traded vehicle (3–10 years old) |
+| `trade_in_mileage` | ~13,500 miles/year with noise |
+| `trade_in_appraised_value_usd` | Depreciated value: −20% year one, −12%/yr compounding, adjusted for mileage |
+| `trade_in_allowance_usd` | What the dealer actually credited |
+| `trade_in_over_allowance_usd` | `allowance − appraised` — **a real discount that never appears in `discount_pct`** |
+| `trade_bonus_usd` | Promotional incentive, concentrated in Nov/Dec retail events |
+
+Two deliberate signals are modelled here for the Inventory Intelligence dashboard:
+
+- **Over-allowance runs higher on slow-turning segments** (Sedan ~$1,024, Hatchback ~$994,
+  Pickup ~$524) — that is where the store has to buy the deal to move the unit.
+- **Trade bonus measurably shortens time-to-close** (30.0 days at $0 → 23.4 days at
+  $1,001–2,000), which makes the incentive-elasticity read a real signal rather than noise.
+
+Combined, true concession per unit averages **$2,358 (5.8% of MSRP)** against a reported
+`discount_pct` of 4.5% — a ~1.3pt gap that only surfaces when over-allowance and trade
+bonus are counted.
+
 ## 2. customers.csv — Customer Master (~42,000 rows)
 
 `nationality` models a rough US demographic mix (American ~68%, Mexican-American ~11%,
@@ -92,7 +150,34 @@ anchored to real city coordinates with small jitter. `zip_code` and `address` ar
 synthetic. `tier` (Platinum/Gold/Silver), `google_rating`, `performance_score` are
 randomly generated, not sourced.
 
-## 4. inventory.csv — Stock Intelligence (~16,000 rows)
+## 4. inventory.csv — Stock Intelligence (~24,120 rows)
+
+**Month-end snapshots**, not scattered observations: one row per (dealer, vehicle,
+month-end) for the trailing 36 months, covering every vehicle a dealer actually franchises.
+One physical car therefore appears once per month it sat on the lot.
+
+> This structure matters. Summing `current_stock` across the whole table double-counts each
+> car once per month of its life. Any present-day figure must reduce to the **latest
+> snapshot per (dealer, vehicle)** first — which is exactly what
+> `database.queries.get_inventory_snapshot()` does.
+
+Stock behaviour is **derived rather than randomly drawn**:
+
+- **Turn rate follows the model's residual strength.** Desirable metal moves; the fastest
+  turners are Wrangler, Maverick, Bronco, 4Runner and Tacoma (22–29 days), the slowest are
+  EVs — Bolt EUV, i4, Model X, Ioniq 5, EQE (90–102 days). This mirrors the real EV
+  inventory glut.
+- **Holding cost is floorplan interest on the actual MSRP** (~7.5% APR ÷ 365) plus fixed lot
+  overhead, so it scales with the vehicle: ~$8.75/day under $30k, ~$17.38/day above $60k.
+- **Lead times split domestic vs. ocean-freighted imports**: ~16 days domestic, ~54 days
+  import.
+- **Reorder point** is a textbook 90%-service-level calculation (lead-time demand + safety
+  stock), capped at 65% of the target stocking level.
+- **Days of supply** targets 28 days for the most desirable models up to 95 for the slowest,
+  with stock drifting around that target between deliveries.
+
+Resulting current-snapshot health: mean 59 days in stock (industry norm is 60–70), ~2%
+stockout lines, ~33% below reorder point, ~12% over 90 days supply.
 
 `port_of_entry` is populated for import-brand vehicles only (Port of Long Beach, Port of
 Baltimore, Port of Jacksonville, Port of Brunswick); domestic-brand rows show
@@ -106,11 +191,39 @@ each series approximates. `avg_sales_tax_pct` is a constant per state (see geogr
 (Nov/Dec), `july_4th_month`, `detroit_auto_show_month` (NAIAS, January), and
 `la_auto_show_month` (November) are binary seasonal/event flags.
 
-## 6. vehicles.csv — Product Catalog (70 rows)
+## 6. vehicles.csv — Product Catalog (182 rows = 91 models × 2 trims)
+
+**Every model carries its real published specification** rather than a random draw. This
+was a deliberate correction: the earlier catalog randomised `horsepower` uniformly over
+150–420 and `mpg` over 20–38, which meant a Corolla could ship with 420 hp and an F-150
+could return 38 mpg. Since the Placement Assistant matches substitutes on these attributes,
+random specs produced nonsense recommendations.
 
 `price_usd` is MSRP in USD. `mpg` (miles per gallon) and `range_miles` replace the old
-km/L and km fields. `ev_incentive_eligible` flags vehicles that would have qualified for
-the federal EV tax credit while it was active (Electric fuel type, MSRP ≤ $55,000).
+km/L and km fields. `ev_incentive_eligible` applies the real federal EV credit rules:
+battery-electric with an MSRP cap of $55k for cars and $80k for SUVs/trucks.
+
+`variant` values are real per-brand trim names from each brand's actual ladder — Toyota
+LE/XLE, Ford XL/XLT, Honda LX/Sport, Jeep Sport/Latitude, Ram Tradesman/Big Horn, BMW
+sDrive/xDrive, and so on. Trim steps add +9% price and reduce mpg by 1 (bigger wheels,
+more mass). Warranty is brand-accurate: Hyundai and Kia carry 5 years against the 3-year
+industry standard.
+
+### `residual_value_36mo` — the residual curve
+
+Share of MSRP the vehicle retains at 36-month lease maturity, following real ALG /
+Black Book style behaviour. **This single column drives the entire lease-return equity
+model**, so it is set per model rather than generated:
+
+| Band | Range | Examples |
+|---|---|---|
+| Strong | 0.60–0.72 | Tacoma 0.72, Maverick 0.72, 4Runner 0.70, Bronco 0.70, Wrangler 0.68 |
+| Mid | 0.47–0.58 | RAV4 0.62, CR-V 0.63, Civic 0.62, Camry 0.57, Silverado 0.57 |
+| Weak | 0.38–0.50 | EQE 0.38, Ariya 0.40, Bolt EUV 0.40, i4 0.42, Model X 0.41 |
+
+Body-on-frame trucks and Toyota/Subaru hold value; luxury sedans and EVs depreciate
+hardest. This is also what makes inventory turn rates fall out realistically, since
+desirability and residual strength are the same underlying property.
 
 ---
 

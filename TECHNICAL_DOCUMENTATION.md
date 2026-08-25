@@ -55,6 +55,7 @@ forecasting/
 ml_models/
   customer_segmentation.py  KMeans clustering (writes segments back to DB)
   xgboost_model.py          Lead-conversion classifier + SHAP explainability
+  vehicle_placement.py      Alternative-vehicle recommender (no training step)
 
 sentiment/
   fetchers/gdelt_fetcher.py     GDELT news client (rate-limited)
@@ -264,9 +265,20 @@ erDiagram
         bool test_drive_converted
         int lead_to_close_days
         string marketing_channel
+        int lease_term_months
+        date lease_maturity_date
+        float residual_value_pct
+        int residual_value_usd
+        int lease_monthly_payment_usd
+        bool trade_in_flag
+        int trade_in_appraised_value_usd
+        int trade_in_allowance_usd
+        int trade_in_over_allowance_usd
+        int trade_bonus_usd
     }
     INVENTORY {
         int inventory_id PK
+        date record_date "month-end snapshot"
         int dealer_id FK
         int vehicle_id FK
         int current_stock
@@ -418,7 +430,8 @@ flowchart LR
 ### 8.2 Lead Conversion Scoring (`ml_models/xgboost_model.py`)
 
 - Predicts `Sale.test_drive_converted` (binary) via `XGBClassifier(n_estimators=100, max_depth=5, learning_rate=0.08, random_state=42, eval_metric="logloss")`.
-- Features: 7 categorical (LabelEncoded: financing type, marketing channel, vehicle category, fuel type, state, gender, occupation) + 6 numeric (StandardScaler-scaled: base price, discount %, age, income, credit score, loyalty score).
+- Features: 6 categorical (LabelEncoded: marketing channel, vehicle category, fuel type, state, gender, occupation) + 6 numeric (StandardScaler-scaled: base price, discount %, age, income, credit score, loyalty score).
+- **`financing_type` is deliberately excluded.** It is agreed late in the deal, so it is leakage-adjacent: the model was partly predicting the close from the close. It previously drew a large SHAP attribution and drove a recommendation to "shift financing to Bank Loan", which was an artifact rather than an actionable lever. The field is still selectable on the lead form (it is recorded on the deal and drives lease-return forecasting) but is not passed to the model — `predict_deal_probability()` accepts and ignores it, so older callers do not break.
 - 80/20 stratified train/test split. Requires ≥100 rows to train.
 - Persists `scaler.pkl`, `encoders.pkl`, `xgboost_model.pkl`, `feature_names.pkl` to `models/xgboost/{test|real}/` — **trained offline** (via `train_models.py`), loaded from pickle at inference time.
 
@@ -438,7 +451,24 @@ flowchart LR
 
 The SHAP path is real per-instance SHAP (`TreeExplainer`) when the `shap` package is importable and succeeds. If it throws for any reason, the UI silently switches to a hard-coded heuristic using only 3 fields — this is a **fallback that looks identical in the UI** but is not actually model-derived. Worth knowing before quoting the "explainability" feature as fully SHAP-backed in all cases.
 
-### 8.3 `train_models.py` — what it actually trains
+### 8.3 Alternative Vehicle Placement (`ml_models/vehicle_placement.py`)
+
+Not a trained model — a deterministic scoring function computed on demand, because it must reflect the stock position as it stands right now. No pickles, nothing to retrain.
+
+Final score is a weighted blend of three components (`SCORE_WEIGHTS` = similarity 0.55 / availability 0.30 / business 0.15):
+
+**1. Similarity** (`compute_similarity`) — weighted across 8 attributes (`SIMILARITY_WEIGHTS`): category 0.26, price 0.24, fuel 0.14, seats 0.10, power 0.09, drive 0.07, brand 0.05, market 0.05.
+- `CATEGORY_AFFINITY` / `FUEL_AFFINITY` are hand-set cross-shopping matrices — segments are not equidistant (Minivan↔SUV 0.60, Minivan↔Coupe 0.05; Gasoline↔Hybrid 0.80, Gasoline↔Electric 0.30).
+- Price and power similarity decay **exponentially** (`exp(-gap / tolerance)`), since a shopper stretches a few thousand dollars, not tens of thousands.
+- `market_share` optionally injects revealed cross-shop demand from `get_substitution_history()`.
+
+**2. Availability** (`attach_availability`) — four tiers resolved in order, best hit kept per vehicle (`AVAILABILITY_TIERS`): `in_stock_here` 1.00 → `in_stock_nearby` 0.78 → `in_transit` 0.55 → `lease_return_soon` 0.42 → `unavailable` 0.00. Nearby stores are filtered by haversine distance against `max_miles`. The fourth tier exists only because the lease book is modelled.
+
+**3. Business priority** (`compute_business_priority`) — `0.65 × aging + 0.35 × depth`, where aging is `days_in_stock / 120` clipped to 1. Given two equally good substitutes, this surfaces the one that has been sitting longest.
+
+Two distinct percentages are returned and both are shown in the UI, because they answer different questions: `placement_score_pct` drives the ranking (it accounts for delivery speed), while `match_pct` is pure spec similarity. Showing only the latter makes the ordering look broken when a perfect spec match sits 100 miles away. `_explain()` and `_tradeoffs()` generate the plain-language reasoning attached to each card.
+
+### 8.4 `train_models.py` — what it actually trains
 
 Run manually or at Docker build time (`Dockerfile` runs it during image build). It does 4 things, **all against the test-mode engine only**:
 1. `preprocessing.seed_database.main()` — seeds `automobile_demand.db` from `automobile_datasets/`.
@@ -520,11 +550,26 @@ The dashboard's "live" KPI variants (`compute_live_overall_stats`, etc.) recompu
 | `comparison.py` | `get_yoy_comparison`, plus Import Tariff Exposure queries (`get_brand_origin_yearly_share`, `get_price_competitiveness`, `get_ev_segment_by_brand_year`, `get_market_share_shift`) | YoY overlap, category/region growth, Import Tariff Exposure section — Domestic vs. Import brands under the 2025 Section 232 tariffs (brand filter deliberately ignored, 2027 projection via `np.polyfit`) |
 | `regional.py` | `get_dealer_performance_leaderboard` | Plotly Mapbox bubble map (lat/lon, size=units, color=revenue) with scatter fallback if coordinates missing; leaderboard table, mode-dependent columns |
 | `customers.py` | `get_customer_segments_data`, `ml_models.customer_segmentation`, `ml_models.xgboost_model` | Tab 1: segmentation charts. Tab 2: live lead form → `predict_deal_probability()` → gauge + SHAP/heuristic bars + rule-based recommendation |
-| `inventory.py` | `get_inventory_status` | KPI cards, urgent-restock table sorted by `stockout_risk_score`, stock-vs-forecast bar, slow-moving inventory, warehouse-zone pie |
+| `inventory.py` | `get_inventory_snapshot`, `get_inventory_trend`, `get_aging_buckets`, `get_lease_return_pipeline`, `get_lease_maturity_recapture`, `get_trade_in_activity`, `get_trade_replacement_flow`, `get_vehicle_catalog`, `get_substitution_history`, `get_dealer_directory`, `ml_models.vehicle_placement` | Four sub-tabs — see §8.3 and §10.1. All present-day figures route through `get_inventory_snapshot()`, which reduces the month-end snapshot table to the latest row per (dealer, vehicle) before aggregating |
 | `sentiment_analysis.py` | `sentiment.signal_processor`, `sentiment.analyzers.grok_analyzer` | See §9. 4 active sub-tabs; a 5th ("Recent News") is written but commented out of the tab list |
 | `ai_insights.py` (dead) | — | Scenario simulator (gasoline price shift, EV incentive checkbox, supply-chain constraint selector, marketing spend multiplier) — fully written, not wired into `app.py` |
 | `upload_data.py` (dead) | — | CSV drag-and-drop, schema auto-detection, validation checklist — fully written, not wired into `app.py` |
 | `metrics.py` (dead) | — | XGBoost hyperparameters + feature importances viewer, reads pickles directly — fully written, not wired into `app.py` |
+
+---
+
+### 10.1 Inventory Intelligence sub-tabs
+
+The module is organised around inventory **flow** rather than a static stock count.
+
+| Sub-tab | Contents | Key derivations |
+|---|---|---|
+| **Stock Health** | KPI row, aging ladder, stock-vs-demand quadrant, 36-month network trend, reorder priority table | Network days-of-supply is `total stock / total daily demand`, **not** the mean of per-line ratios (one dead SKU would otherwise dominate). Reorder urgency blends `stockout_risk_score` (0.6) with normalised lead time (0.4), so an equal deficit on a 54-day import line outranks a 16-day domestic one |
+| **Inventory Flow & Lease Returns** | Return calendar by maturity month, equity split, net order gap, remarketing lanes, 90-day re-capture pipeline | **Net order gap** = pipeline demand − on-hand − in-transit − scheduled returns. Returns are matched on **(dealer, vehicle)**, not vehicle alone: a unit returning to Dallas is not supply for Detroit. Equity = estimated market value at return − contractual buyout |
+| **Trade-In & Acquisition** | True-concession waterfall, incentive elasticity, over-allowance by segment, used-supply intake, trade→replacement Sankey | **True concession** = sticker discount + over-allowance + trade bonus. Only the first appears in `discount_pct`, so reported discount understates actual giveaway by roughly 1.3pts |
+| **Placement Assistant** | Request form, ranked recommendation cards, spec comparison table | See §8.3 |
+
+**Caching:** every loader in this module is wrapped in `@st.cache_data(ttl=600)` keyed on the filter dict, opening its own session inside. The trade-in view reads the full sales table, and Streamlit reruns the whole script on every widget change, so uncached this would re-query 100k rows per interaction.
 
 ---
 
@@ -574,7 +619,7 @@ No `pyproject.toml` in the repo — `requirements.txt` is the single source of t
 
 These aren't bugs blocking the demo, but a new engineer should know about them before treating this as production-ready:
 
-1. **No caching anywhere.** Prophet retrains twice per interaction on the Forecasting page and every DB query re-runs on every rerun. Adding `@st.cache_data` (for queries) and `@st.cache_resource` (for trained models, keyed by filter combination) would be the highest-leverage performance fix.
+1. **Caching is applied in Inventory Intelligence only.** That module wraps every loader in `@st.cache_data(ttl=600)` (see §10.1). Everywhere else, Prophet still retrains twice per interaction on the Forecasting page and every DB query re-runs on every rerun. Extending the same pattern to the other modules is the highest-leverage remaining performance fix.
 2. **Real-mode ML artifacts have no training script.** `train_models.py` only seeds/trains test mode. Retraining on updated real data currently requires manual intervention.
 3. **Three dashboard modules are dead code** (`ai_insights.py`, `upload_data.py`, `metrics.py`) — fully written but not routed in `app.py`. Confirm with product whether these should be re-enabled, finished, or deleted.
 4. **SHAP has a silent heuristic fallback.** If the `shap` import/computation fails, `xgboost_model.py` falls back to a 3-feature hard-coded heuristic that renders identically to real SHAP output in the UI — there's no visible indicator distinguishing the two. Worth surfacing a debug flag or log line if this matters for demo integrity.
@@ -582,6 +627,8 @@ These aren't bugs blocking the demo, but a new engineer should know about them b
 6. **`SERPER_API_KEY` is unused** — likely safe to remove from `.env.example`/docs unless there's a planned integration.
 7. **Real/Test mode switch is UI-disabled** but the full plumbing exists end-to-end — trivial to re-enable if a test-mode demo is ever needed again.
 8. **`real_estate_demand.db`** at repo root is an unrelated/legacy file not referenced by any code — safe to delete after confirming with the team.
+9. **Stale model pickles at `models/xgboost/*.pkl` (repo root of that folder).** `_model_dir()` resolves to `models/xgboost/{test|real}/`, so the four pickles sitting directly in `models/xgboost/` are dead. They are also pre-migration artifacts — their `feature_names.pkl` still lists `emirate` and `estimated_monthly_income_aed` from the UAE-era schema. Safe to delete.
+10. **`use_container_width` is deprecated** across every dashboard module. Streamlit's notice says it is removed after 2025-12-31; it still functions on 1.60.0 but emits a warning on every chart. Migrating to `width='stretch'` is a mechanical repo-wide change.
 
 ---
 

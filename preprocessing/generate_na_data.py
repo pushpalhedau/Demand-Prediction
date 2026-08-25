@@ -63,80 +63,188 @@ STATE_WEIGHTS = np.array([s["weight"] for s in STATES], dtype=float)
 STATE_WEIGHTS = STATE_WEIGHTS / STATE_WEIGHTS.sum()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Vehicle catalog: brand -> (share%, [(model, category, fuel_type, base_price)])
+# Vehicle catalog — real US-market model specs
+#
+# Each model carries its actual published specification rather than a random
+# draw, because the Placement Assistant matches substitutes on these attributes
+# (a shopper cross-shops a RAV4 against a CR-V because the specs genuinely line
+# up, not because a random number generator put them near each other).
+#
+# Tuple layout:
+#   (model, category, fuel, base_msrp, hp, engine_cc, mpg_combined,
+#    range_miles, seats, drive_type, residual_36mo, model_year_intro)
+#
+# residual_36mo = share of MSRP the vehicle is worth at 36-month lease
+# maturity. These follow real ALG / Black Book style residual behaviour:
+# body-on-frame trucks and Toyota/Subaru hold value (0.60-0.72), mainstream
+# sedans sit mid-pack (0.47-0.58), and luxury sedans and EVs depreciate hardest
+# (0.38-0.50). This single column drives the entire lease-return equity model.
 # ─────────────────────────────────────────────────────────────────────────────
 BRAND_CATALOG = {
     "Toyota": (15, [
-        ("RAV4", "SUV", "Gasoline", 32000), ("Camry", "Sedan", "Gasoline", 27000),
-        ("Corolla", "Sedan", "Gasoline", 23000), ("Highlander", "SUV", "Gasoline", 40000),
-        ("Tacoma", "Pickup", "Gasoline", 35000), ("Prius", "Hatchback", "Hybrid", 28000),
-        ("bZ4X", "SUV", "Electric", 45000),
+        ("RAV4",        "SUV",       "Gasoline", 29000, 203, 2487, 30,  None, 5, "AWD", 0.62, 2019),
+        ("Camry",       "Sedan",     "Gasoline", 28400, 225, 2487, 32,  None, 5, "FWD", 0.57, 2018),
+        ("Corolla",     "Sedan",     "Gasoline", 22300, 169, 1987, 35,  None, 5, "FWD", 0.58, 2020),
+        ("Highlander",  "SUV",       "Gasoline", 39500, 265, 2393, 24,  None, 8, "AWD", 0.60, 2020),
+        ("Tacoma",      "Pickup",    "Gasoline", 32000, 278, 2393, 21,  None, 5, "4WD", 0.72, 2024),
+        ("Tundra",      "Pickup",    "Gasoline", 41000, 389, 3445, 20,  None, 5, "4WD", 0.65, 2022),
+        ("4Runner",     "SUV",       "Gasoline", 42000, 278, 2393, 21,  None, 7, "4WD", 0.70, 2025),
+        ("Prius",       "Hatchback", "Hybrid",   28350, 194, 1987, 57,  None, 5, "FWD", 0.60, 2023),
+        ("Sienna",      "Minivan",   "Hybrid",   39000, 245, 2487, 36,  None, 8, "FWD", 0.61, 2021),
+        ("bZ4X",        "SUV",       "Electric", 37000, 214, None, None, 252, 5, "FWD", 0.42, 2023),
     ]),
     "Ford": (13, [
-        ("F-150", "Pickup", "Gasoline", 45000), ("Explorer", "SUV", "Gasoline", 39000),
-        ("Escape", "SUV", "Gasoline", 29000), ("Mustang", "Coupe", "Gasoline", 32000),
-        ("Edge", "SUV", "Gasoline", 38000), ("Bronco", "SUV", "Gasoline", 42000),
-        ("Mustang Mach-E", "SUV", "Electric", 48000),
+        ("F-150",          "Pickup", "Gasoline", 38000, 400, 3500, 20,  None, 5, "4WD", 0.60, 2021),
+        ("Explorer",       "SUV",    "Gasoline", 38500, 300, 2264, 24,  None, 7, "AWD", 0.55, 2020),
+        ("Escape",         "SUV",    "Gasoline", 29500, 180, 1497, 30,  None, 5, "FWD", 0.53, 2020),
+        ("Mustang",        "Coupe",  "Gasoline", 32000, 315, 2264, 25,  None, 4, "RWD", 0.58, 2024),
+        ("Bronco",         "SUV",    "Gasoline", 39000, 300, 2264, 20,  None, 5, "4WD", 0.70, 2021),
+        ("Ranger",         "Pickup", "Gasoline", 33000, 270, 2264, 22,  None, 5, "4WD", 0.62, 2024),
+        ("Expedition",     "SUV",    "Gasoline", 58000, 400, 3500, 19,  None, 8, "4WD", 0.58, 2022),
+        ("Maverick",       "Pickup", "Hybrid",   26000, 191, 2500, 37,  None, 5, "FWD", 0.72, 2022),
+        ("Mustang Mach-E", "SUV",    "Electric", 43000, 266, None, None, 250, 5, "RWD", 0.44, 2021),
     ]),
     "Chevrolet": (12, [
-        ("Silverado", "Pickup", "Gasoline", 42000), ("Equinox", "SUV", "Gasoline", 29000),
-        ("Malibu", "Sedan", "Gasoline", 25000), ("Traverse", "SUV", "Gasoline", 37000),
-        ("Tahoe", "SUV", "Gasoline", 55000), ("Bolt EV", "Hatchback", "Electric", 29000),
+        ("Silverado", "Pickup",    "Gasoline", 37000, 355, 5300, 19,  None, 5, "4WD", 0.57, 2019),
+        ("Equinox",   "SUV",       "Gasoline", 28500, 175, 1500, 28,  None, 5, "FWD", 0.52, 2022),
+        ("Malibu",    "Sedan",     "Gasoline", 26000, 160, 1500, 32,  None, 5, "FWD", 0.48, 2019),
+        ("Traverse",  "SUV",       "Gasoline", 38000, 328, 2700, 22,  None, 8, "AWD", 0.54, 2024),
+        ("Tahoe",     "SUV",       "Gasoline", 58000, 355, 5300, 18,  None, 8, "4WD", 0.60, 2021),
+        ("Colorado",  "Pickup",    "Gasoline", 31000, 237, 2700, 20,  None, 5, "4WD", 0.58, 2023),
+        ("Blazer",    "SUV",       "Gasoline", 36000, 228, 2000, 25,  None, 5, "AWD", 0.52, 2019),
+        ("Bolt EUV",  "Hatchback", "Electric", 28000, 200, None, None, 247, 5, "FWD", 0.40, 2022),
     ]),
     "Honda": (9, [
-        ("CR-V", "SUV", "Gasoline", 30000), ("Civic", "Sedan", "Gasoline", 24000),
-        ("Accord", "Sedan", "Gasoline", 28000), ("Pilot", "SUV", "Gasoline", 40000),
-        ("HR-V", "SUV", "Gasoline", 26000), ("Odyssey", "Minivan", "Gasoline", 36000),
+        ("CR-V",      "SUV",     "Gasoline", 30000, 190, 1498, 30, None, 5, "AWD", 0.63, 2023),
+        ("Civic",     "Sedan",   "Gasoline", 24500, 158, 1996, 36, None, 5, "FWD", 0.62, 2022),
+        ("Accord",    "Sedan",   "Gasoline", 28000, 192, 1498, 32, None, 5, "FWD", 0.58, 2023),
+        ("Pilot",     "SUV",     "Gasoline", 40000, 285, 3500, 22, None, 8, "AWD", 0.60, 2023),
+        ("HR-V",      "SUV",     "Gasoline", 26500, 158, 1996, 28, None, 5, "AWD", 0.58, 2023),
+        ("Passport",  "SUV",     "Gasoline", 42000, 280, 3500, 21, None, 5, "AWD", 0.56, 2022),
+        ("Ridgeline", "Pickup",  "Gasoline", 40000, 280, 3500, 21, None, 5, "AWD", 0.60, 2021),
+        ("Odyssey",   "Minivan", "Gasoline", 38500, 280, 3500, 22, None, 8, "FWD", 0.57, 2021),
     ]),
     "Nissan": (7, [
-        ("Rogue", "SUV", "Gasoline", 29000), ("Altima", "Sedan", "Gasoline", 26000),
-        ("Sentra", "Sedan", "Gasoline", 21000), ("Pathfinder", "SUV", "Gasoline", 38000),
-        ("Frontier", "Pickup", "Gasoline", 32000), ("Ariya", "SUV", "Electric", 44000),
+        ("Rogue",      "SUV",    "Gasoline", 28500, 201, 1497, 31,  None, 5, "AWD", 0.52, 2021),
+        ("Altima",     "Sedan",  "Gasoline", 26000, 188, 2488, 32,  None, 5, "FWD", 0.47, 2019),
+        ("Sentra",     "Sedan",  "Gasoline", 21500, 149, 1998, 33,  None, 5, "FWD", 0.50, 2020),
+        ("Pathfinder", "SUV",    "Gasoline", 37000, 284, 3498, 23,  None, 8, "AWD", 0.52, 2022),
+        ("Murano",     "SUV",    "Gasoline", 35500, 260, 3498, 23,  None, 5, "AWD", 0.48, 2025),
+        ("Frontier",   "Pickup", "Gasoline", 31000, 310, 3800, 20,  None, 5, "4WD", 0.58, 2022),
+        ("Ariya",      "SUV",    "Electric", 40000, 238, None, None, 289, 5, "FWD", 0.40, 2023),
     ]),
     "Jeep": (6, [
-        ("Grand Cherokee", "SUV", "Gasoline", 40000), ("Wrangler", "SUV", "Gasoline", 38000),
-        ("Compass", "SUV", "Gasoline", 28000), ("Cherokee", "SUV", "Gasoline", 30000),
+        ("Grand Cherokee", "SUV",    "Gasoline", 39000, 293, 3600, 22, None, 5, "4WD", 0.55, 2022),
+        ("Wrangler",       "SUV",    "Gasoline", 33000, 285, 3600, 20, None, 5, "4WD", 0.68, 2018),
+        ("Compass",        "SUV",    "Gasoline", 27000, 200, 1300, 27, None, 5, "AWD", 0.50, 2022),
+        ("Gladiator",      "Pickup", "Gasoline", 39000, 285, 3600, 19, None, 5, "4WD", 0.62, 2020),
+        ("Wagoneer",       "SUV",    "Gasoline", 60000, 420, 5700, 18, None, 8, "4WD", 0.52, 2022),
     ]),
     "Hyundai": (6, [
-        ("Tucson", "SUV", "Gasoline", 29000), ("Elantra", "Sedan", "Gasoline", 22000),
-        ("Santa Fe", "SUV", "Gasoline", 33000), ("Sonata", "Sedan", "Gasoline", 26000),
-        ("Ioniq 5", "SUV", "Electric", 44000),
+        ("Tucson",   "SUV",   "Gasoline", 28000, 187, 2497, 29,  None, 5, "AWD", 0.55, 2022),
+        ("Elantra",  "Sedan", "Gasoline", 22000, 147, 1999, 36,  None, 5, "FWD", 0.52, 2021),
+        ("Santa Fe", "SUV",   "Gasoline", 34000, 277, 2497, 25,  None, 7, "AWD", 0.54, 2024),
+        ("Sonata",   "Sedan", "Gasoline", 27000, 191, 2497, 31,  None, 5, "FWD", 0.49, 2020),
+        ("Palisade", "SUV",   "Gasoline", 38000, 291, 3800, 22,  None, 8, "AWD", 0.57, 2023),
+        ("Ioniq 5",  "SUV",   "Electric", 42000, 225, None, None, 303, 5, "RWD", 0.45, 2022),
     ]),
     "Kia": (5, [
-        ("Sportage", "SUV", "Gasoline", 28000), ("Forte", "Sedan", "Gasoline", 21000),
-        ("Telluride", "SUV", "Gasoline", 38000), ("Carnival", "Minivan", "Gasoline", 34000),
-        ("EV6", "SUV", "Electric", 44000),
+        ("Sportage",  "SUV",     "Gasoline", 27500, 187, 2497, 28,  None, 5, "AWD", 0.54, 2023),
+        ("Forte",     "Sedan",   "Gasoline", 21000, 147, 1999, 35,  None, 5, "FWD", 0.51, 2022),
+        ("Telluride", "SUV",     "Gasoline", 37000, 291, 3800, 23,  None, 8, "AWD", 0.64, 2020),
+        ("Sorento",   "SUV",     "Gasoline", 32000, 191, 2497, 26,  None, 7, "AWD", 0.54, 2021),
+        ("Carnival",  "Minivan", "Gasoline", 35000, 287, 3500, 22,  None, 8, "FWD", 0.55, 2022),
+        ("EV6",       "SUV",     "Electric", 43000, 225, None, None, 310, 5, "RWD", 0.44, 2022),
     ]),
-    "Ram": (5, [("1500", "Pickup", "Gasoline", 44000), ("2500", "Pickup", "Diesel", 56000)]),
+    "Ram": (5, [
+        ("1500", "Pickup", "Gasoline", 40000, 395, 5700, 20, None, 5, "4WD", 0.58, 2019),
+        ("2500", "Pickup", "Diesel",   55000, 370, 6700, 17, None, 5, "4WD", 0.63, 2019),
+    ]),
     "GMC": (4, [
-        ("Sierra", "Pickup", "Gasoline", 43000), ("Terrain", "SUV", "Gasoline", 31000),
-        ("Yukon", "SUV", "Gasoline", 56000),
+        ("Sierra",  "Pickup", "Gasoline", 40000, 355, 5300, 19, None, 5, "4WD", 0.60, 2019),
+        ("Terrain", "SUV",    "Gasoline", 30500, 175, 1500, 28, None, 5, "AWD", 0.51, 2022),
+        ("Acadia",  "SUV",    "Gasoline", 38000, 328, 2500, 23, None, 7, "AWD", 0.53, 2024),
+        ("Yukon",   "SUV",    "Gasoline", 61000, 355, 5300, 18, None, 8, "4WD", 0.60, 2021),
     ]),
     "Subaru": (4, [
-        ("Outback", "SUV", "Gasoline", 30000), ("Forester", "SUV", "Gasoline", 28000),
-        ("Crosstrek", "SUV", "Gasoline", 25000),
+        ("Outback",   "SUV", "Gasoline", 30000, 182, 2498, 28, None, 5, "AWD", 0.60, 2020),
+        ("Forester",  "SUV", "Gasoline", 28000, 182, 2498, 29, None, 5, "AWD", 0.61, 2019),
+        ("Crosstrek", "SUV", "Gasoline", 25500, 152, 2000, 29, None, 5, "AWD", 0.63, 2024),
+        ("Ascent",    "SUV", "Gasoline", 35500, 260, 2400, 23, None, 8, "AWD", 0.55, 2019),
     ]),
     "BMW": (3, [
-        ("X5", "Luxury", "Gasoline", 65000), ("3 Series", "Luxury", "Gasoline", 45000),
-        ("X3", "Luxury", "Gasoline", 47000),
+        ("3 Series", "Luxury", "Gasoline", 45000, 255, 1998, 30,  None, 5, "RWD", 0.50, 2019),
+        ("X3",       "Luxury", "Gasoline", 47000, 248, 1998, 27,  None, 5, "AWD", 0.52, 2018),
+        ("i4",       "Luxury", "Electric", 53000, 335, None, None, 301, 5, "RWD", 0.42, 2022),
+        ("5 Series", "Luxury", "Gasoline", 58000, 375, 2998, 28,  None, 5, "RWD", 0.48, 2024),
+        ("X5",       "Luxury", "Gasoline", 66000, 375, 2998, 24,  None, 5, "AWD", 0.53, 2019),
     ]),
     "Mercedes-Benz": (3, [
-        ("C-Class", "Luxury", "Gasoline", 45000), ("GLC", "Luxury", "Gasoline", 48000),
-        ("E-Class", "Luxury", "Gasoline", 58000),
+        ("C-Class", "Luxury", "Gasoline", 47000, 255, 1999, 28,  None, 5, "RWD", 0.49, 2022),
+        ("GLC",     "Luxury", "Gasoline", 49000, 255, 1999, 25,  None, 5, "AWD", 0.52, 2023),
+        ("E-Class", "Luxury", "Gasoline", 62000, 255, 1999, 27,  None, 5, "AWD", 0.46, 2024),
+        ("GLE",     "Luxury", "Gasoline", 63000, 375, 2999, 22,  None, 5, "AWD", 0.50, 2020),
+        ("EQE",     "Luxury", "Electric", 75000, 288, None, None, 305, 5, "RWD", 0.38, 2023),
     ]),
     "Tesla": (4, [
-        ("Model Y", "SUV", "Electric", 47000), ("Model 3", "Sedan", "Electric", 40000),
-        ("Model S", "Luxury", "Electric", 75000), ("Model X", "Luxury", "Electric", 80000),
+        ("Model 3", "Sedan",  "Electric", 39000, 283, None, None, 272, 5, "RWD", 0.47, 2018),
+        ("Model Y", "SUV",    "Electric", 45000, 384, None, None, 320, 5, "AWD", 0.48, 2020),
+        ("Model S", "Luxury", "Electric", 75000, 670, None, None, 405, 5, "AWD", 0.42, 2021),
+        ("Model X", "Luxury", "Electric", 81000, 670, None, None, 335, 7, "AWD", 0.41, 2021),
     ]),
     "Volkswagen": (2, [
-        ("Tiguan", "SUV", "Gasoline", 28000), ("Jetta", "Sedan", "Gasoline", 22000),
-        ("Atlas", "SUV", "Gasoline", 36000),
+        ("Jetta",  "Sedan", "Gasoline", 22000, 158, 1498, 34,  None, 5, "FWD", 0.50, 2022),
+        ("Tiguan", "SUV",   "Gasoline", 28500, 184, 1984, 26,  None, 7, "AWD", 0.50, 2022),
+        ("Atlas",  "SUV",   "Gasoline", 38000, 269, 1984, 23,  None, 7, "AWD", 0.51, 2021),
+        ("ID.4",   "SUV",   "Electric", 40000, 282, None, None, 275, 5, "AWD", 0.40, 2021),
     ]),
     "Lexus": (2, [
-        ("RX", "Luxury", "Gasoline", 48000), ("ES", "Luxury", "Gasoline", 42000),
-        ("NX", "Luxury", "Gasoline", 40000),
+        ("ES", "Luxury", "Gasoline", 43000, 203, 2487, 30, None, 5, "FWD", 0.55, 2019),
+        ("NX", "Luxury", "Gasoline", 41000, 275, 2393, 27, None, 5, "AWD", 0.57, 2022),
+        ("RX", "Luxury", "Gasoline", 49000, 275, 2393, 25, None, 5, "AWD", 0.58, 2023),
+        ("GX", "Luxury", "Gasoline", 65000, 349, 3445, 19, None, 7, "4WD", 0.62, 2024),
     ]),
 }
+
+# Real trim ladders per brand, cheapest -> most expensive. The Placement
+# Assistant surfaces these by name ("the customer wanted a Limited"), so
+# generic Base/Sport/Limited labels would read as fake to anyone who sells cars.
+BRAND_TRIMS = {
+    "Toyota":        ["LE", "XLE", "Limited", "TRD Pro"],
+    "Ford":          ["XL", "XLT", "Lariat", "Platinum"],
+    "Chevrolet":     ["LS", "LT", "RS", "Premier"],
+    "Honda":         ["LX", "Sport", "EX-L", "Touring"],
+    "Nissan":        ["S", "SV", "SL", "Platinum"],
+    "Jeep":          ["Sport", "Latitude", "Limited", "Trailhawk"],
+    "Hyundai":       ["SE", "SEL", "N Line", "Limited"],
+    "Kia":           ["LX", "EX", "GT-Line", "SX Prestige"],
+    "Ram":           ["Tradesman", "Big Horn", "Laramie", "Limited"],
+    "GMC":           ["Elevation", "SLE", "SLT", "Denali"],
+    "Subaru":        ["Base", "Premium", "Limited", "Touring"],
+    "BMW":           ["sDrive", "xDrive", "M Sport", "M Sport Pro"],
+    "Mercedes-Benz": ["Base", "4MATIC", "AMG Line", "AMG Line Premium"],
+    "Tesla":         ["RWD", "Long Range", "Performance", "Plaid"],
+    "Volkswagen":    ["S", "SE", "SEL", "SEL Premium"],
+    "Lexus":         ["Base", "Premium", "F Sport", "Luxury"],
+}
+
+# Trim ladder economics: price multiplier, hp uplift, mpg penalty (bigger
+# wheels / heavier equipment), applied by position on the ladder.
+TRIM_PRICE_MULT = [1.00, 1.09, 1.19, 1.31]
+TRIM_HP_MULT = [1.00, 1.00, 1.06, 1.14]
+TRIM_MPG_DELTA = [0, -1, -1, -2]
+
+# The Hyundai/Kia 5yr-60k basic warranty is a genuine market differentiator,
+# so it is modelled rather than randomised.
+BRAND_WARRANTY_YEARS = {"Hyundai": 5, "Kia": 5}
+
+# Real exterior paint names, used by the Placement Assistant so a shopper
+# request reads like a real one ("white Grand Cherokee Limited").
+PAINT_COLORS = [
+    "Super White", "Midnight Black", "Magnetic Gray", "Silver Metallic",
+    "Blueprint Blue", "Barcelona Red", "Deep Forest Green", "Ruby Flare Pearl",
+]
+
 IMPORT_BRANDS = {"Toyota", "Honda", "Nissan", "Subaru", "Lexus", "Hyundai", "Kia", "BMW", "Mercedes-Benz", "Volkswagen"}
 BRAND_NAMES = list(BRAND_CATALOG.keys())
 BRAND_WEIGHTS = np.array([BRAND_CATALOG[b][0] for b in BRAND_NAMES], dtype=float)
@@ -233,36 +341,84 @@ LA_SHOW = np.where(MONTH_OF == 11, 1, 0)
 NEW_MODEL_LAUNCHES = np.where(np.isin(MONTH_OF, [1, 9, 10]), 3, 1)
 
 
-def build_vehicle_catalog(rng, with_variants=False):
+def build_vehicle_catalog(rng, n_trims=2):
+    """
+    Expand BRAND_CATALOG into one row per (model, trim).
+
+    Specs come from the catalog table rather than random draws, so a Corolla
+    cannot end up with 420 hp and an F-150 cannot end up returning 38 mpg.
+    Only genuinely variable attributes (paint count, service contract) are
+    randomised.
+    """
     rows = []
     vid = 1
     for brand, (_share, models) in BRAND_CATALOG.items():
-        for model, category, fuel, price in models:
-            variants = ["Base"] if not with_variants else ["Base", "Sport", "Limited"]
-            for variant in variants:
-                vprice = price if variant == "Base" else int(price * (1.12 if variant == "Sport" else 1.22))
-                is_ev = fuel == "Electric"
+        trims = BRAND_TRIMS[brand][:n_trims]
+        for (model, category, fuel, msrp, hp, cc, mpg, rng_mi,
+             seats, drive, resid36, intro_year) in models:
+            is_ev = fuel == "Electric"
+            for ti, trim in enumerate(trims):
+                trim_price = int(round(msrp * TRIM_PRICE_MULT[ti] / 100.0) * 100)
+                trim_hp = int(round(hp * TRIM_HP_MULT[ti]))
+                trim_mpg = None if is_ev else max(12, mpg + TRIM_MPG_DELTA[ti])
+                # Higher trims carry bigger wheels and more mass, which costs
+                # a little real-world range on an EV.
+                trim_range = None if not is_ev else int(round(rng_mi * (1.0 - 0.02 * ti)))
                 rows.append({
                     "vehicle_id": f"VH{vid:04d}",
-                    "brand": brand, "model": model, "variant": variant, "category": category,
-                    "fuel_type": fuel, "price_usd": vprice,
-                    "engine_cc": None if is_ev else int(rng.integers(1500, 5500)),
-                    "horsepower": int(rng.integers(150, 420)),
-                    "mpg": None if is_ev else round(float(rng.uniform(20, 38)), 1),
-                    "range_miles": int(rng.integers(220, 330)) if is_ev else None,
-                    "seating_capacity": 7 if category in ("SUV", "Minivan") and model not in ("Bolt EV",) else 5,
-                    "transmission": "Automatic" if not is_ev else "Single-Speed",
-                    "drive_type": rng.choice(["FWD", "AWD", "4WD", "RWD"], p=[0.35, 0.35, 0.15, 0.15]),
-                    "body_color_options": int(rng.integers(4, 9)),
-                    "safety_rating": int(rng.integers(4, 6)),
-                    "launch_year": int(rng.integers(2018, 2025)),
+                    "brand": brand,
+                    "model": model,
+                    "variant": trim,
+                    "category": category,
+                    "fuel_type": fuel,
+                    "price_usd": trim_price,
+                    "engine_cc": None if is_ev else cc,
+                    "horsepower": trim_hp,
+                    "mpg": trim_mpg,
+                    "range_miles": trim_range,
+                    "seating_capacity": seats,
+                    "transmission": "Single-Speed" if is_ev else "Automatic",
+                    "drive_type": drive,
+                    "body_color_options": int(rng.integers(5, 9)),
+                    "safety_rating": 5 if resid36 >= 0.55 else int(rng.choice([4, 5], p=[0.35, 0.65])),
+                    "launch_year": intro_year,
                     "is_active": True,
-                    "warranty_years": int(rng.choice([3, 5, 8])) if is_ev else int(rng.choice([3, 5])),
+                    "warranty_years": BRAND_WARRANTY_YEARS.get(brand, 3),
                     "service_contract_available": bool(rng.random() < 0.6),
-                    "ev_incentive_eligible": bool(is_ev and vprice <= 55000),
+                    # Federal EV credit rules: battery-electric, MSRP cap of
+                    # $55k for cars / $80k for SUVs and trucks.
+                    "ev_incentive_eligible": bool(
+                        is_ev and trim_price <= (80000 if category in ("SUV", "Pickup") else 55000)
+                    ),
+                    # Not persisted to the DB — carried through generation so
+                    # the lease book can price residuals per trim.
+                    "_residual_36mo": resid36,
                 })
                 vid += 1
     return pd.DataFrame(rows)
+
+
+# Residual curves are quoted at 36 months; shorter terms leave more value on
+# the car, longer terms less. Real lease residual tables behave this way.
+LEASE_TERM_RESIDUAL_ADJ = {24: +0.10, 36: 0.00, 39: -0.02, 48: -0.10}
+LEASE_TERMS = [24, 36, 39, 48]
+LEASE_TERM_WEIGHTS = [0.12, 0.62, 0.14, 0.12]
+LEASE_ANNUAL_MILES = [10000, 12000, 15000]
+LEASE_MILEAGE_WEIGHTS = [0.22, 0.56, 0.22]
+
+# Lease penetration by segment. Real US new-retail behaviour: luxury leases
+# around half its volume, pickups roughly a tenth. Blends to ~24% nationally.
+LEASE_RATE_BY_CATEGORY = {
+    "Luxury": 0.52, "Coupe": 0.28, "Sedan": 0.26, "SUV": 0.24,
+    "Hatchback": 0.22, "Minivan": 0.20, "Pickup": 0.11,
+}
+
+# Slow-turning segments attract larger over-allowances, because that is where
+# the store has to buy the deal to move the unit.
+TRADE_OVER_ALLOWANCE_MULT = {
+    "Sedan": 1.45, "Hatchback": 1.40, "Coupe": 1.25, "Minivan": 1.15,
+    "SUV": 1.00, "Luxury": 1.10, "Pickup": 0.75,
+}
 
 
 DEALER_TEMPLATES = [
@@ -468,11 +624,121 @@ def build_sales(rng, n, vehicles_df, dealers_df, customers_df, start, end):
     sales_tax_amount = (selling_price * tax_rate).round(0)
     total_incl_tax = (total_excl_tax + sales_tax_amount).round(0)
 
-    financing_type = rng.choice(["Cash", "Bank Loan", "Dealer Financing", "Lease"], size=n, p=[0.24, 0.38, 0.22, 0.16])
+    # ── Financing mix ────────────────────────────────────────────────────────
+    # Lease penetration is segment-driven in the real US market, not uniform:
+    # luxury leases around half of all units, pickups barely a tenth. EVs lease
+    # heavily because the federal credit was easiest to capture through a lease.
+    # Blended, this lands near the ~24% national new-retail lease rate.
+    veh_category = veh_df_sel["category"].values
+    veh_fuel = veh_df_sel["fuel_type"].values
+    lease_p = np.array([LEASE_RATE_BY_CATEGORY.get(c, 0.22) for c in veh_category])
+    lease_p = np.clip(lease_p + np.where(veh_fuel == "Electric", 0.15, 0.0), 0.05, 0.75)
+    is_lease = rng.random(n) < lease_p
+    non_lease = rng.choice(["Cash", "Bank Loan", "Dealer Financing"], size=n, p=[0.30, 0.47, 0.23])
+    financing_type = np.where(is_lease, "Lease", non_lease)
     loan_amount = np.where(financing_type == "Cash", 0, (selling_price * rng.uniform(0.6, 0.95, n)).round(0))
 
+    # ── Lease contract terms ─────────────────────────────────────────────────
+    msrp = veh_df_sel["price_usd"].values.astype(float)
+    lease_term = rng.choice(LEASE_TERMS, size=n, p=LEASE_TERM_WEIGHTS)
+    annual_miles = rng.choice(LEASE_ANNUAL_MILES, size=n, p=LEASE_MILEAGE_WEIGHTS)
+
+    # Residual starts from the model's own 36-month curve, then moves with the
+    # term and the mileage allowance the way a real residual table does.
+    resid_pct = veh_df_sel["_residual_36mo"].values.astype(float)
+    resid_pct = resid_pct + np.array([LEASE_TERM_RESIDUAL_ADJ[t] for t in lease_term])
+    resid_pct = resid_pct + np.select(
+        [annual_miles == 10000, annual_miles == 15000], [0.02, -0.02], default=0.0
+    )
+    resid_pct = np.clip(resid_pct + rng.normal(0, 0.012, n), 0.25, 0.85)
+    residual_usd = (msrp * resid_pct).round(0)
+
+    # Standard lease payment: monthly depreciation plus the rent charge.
+    # Money factor tracks the Fed path with a lender spread, so payments climb
+    # through the 2022-23 hiking cycle exactly as they did in the market.
+    lease_apr = np.clip(FED_RATE[sale_month_idx] + rng.normal(3.2, 0.8, n), 1.0, 12.0)
+    money_factor = lease_apr / 2400.0
+    lease_payment = ((selling_price - residual_usd) / lease_term
+                     + (selling_price + residual_usd) * money_factor).round(0)
+
+    # Exact month arithmetic so the return calendar buckets cleanly by month.
+    _sd = pd.to_datetime(sale_date)
+    _tot = _sd.year * 12 + (_sd.month - 1) + lease_term
+    maturity = pd.to_datetime(dict(year=_tot // 12, month=_tot % 12 + 1,
+                                   day=np.minimum(_sd.day, 28)))
+
+    _no_lease = ~is_lease
+    lease_term_col = np.where(_no_lease, np.nan, lease_term)
+    resid_pct_col = np.where(_no_lease, np.nan, resid_pct.round(4))
+    resid_usd_col = np.where(_no_lease, np.nan, residual_usd)
+    lease_payment_col = np.where(_no_lease, np.nan, lease_payment)
+    mileage_allow_col = np.where(_no_lease, np.nan, annual_miles * lease_term / 12.0)
+    maturity_col = pd.Series(maturity).where(is_lease)
+
+    # ── Trade-in activity ────────────────────────────────────────────────────
+    # Around half of US new-vehicle deals carry a trade. Cash buyers trade less
+    # (often an additional-car purchase); financed buyers trade more.
+    trade_base = np.where(financing_type == "Cash", 0.42, 0.58)
+    has_trade = rng.random(n) < trade_base
+
+    trade_age = rng.choice([3, 4, 5, 6, 7, 8, 9, 10], size=n,
+                           p=[0.13, 0.17, 0.17, 0.15, 0.13, 0.10, 0.08, 0.07])
+    trade_year = YEAR_OF[sale_month_idx].astype(int) - trade_age
+    trade_mileage = np.clip(
+        (trade_age * rng.normal(13500, 2600, n)).round(-2), 8000, 220000
+    ).astype(int)
+
+    # Trades are sampled from the same catalog (an older car of the same market)
+    trade_pick = rng.integers(0, len(vehicles_df), n)
+    trade_brand = vehicles_df["brand"].values[trade_pick]
+    trade_model = vehicles_df["model"].values[trade_pick]
+    trade_orig_msrp = vehicles_df["price_usd"].values[trade_pick].astype(float)
+
+    # Depreciation: ~20% off in year one, ~12%/yr compounding after. A 5-year-old
+    # car lands near 48% of original MSRP, which matches real used-market values.
+    dep_factor = 0.80 * np.power(0.88, np.maximum(trade_age - 1, 0))
+    expected_miles = np.maximum(trade_age * 13500, 1)
+    excess_ratio = (trade_mileage - expected_miles) / expected_miles
+    mileage_factor = np.clip(1.0 - 0.20 * excess_ratio, 0.70, 1.20)
+    appraised = np.maximum(trade_orig_msrp * dep_factor * mileage_factor, 800).round(0)
+
+    # Over-allowance: the amount credited above appraised value. This is a real
+    # discount that never appears in discount_pct, and it runs higher on the
+    # slow-turning segments where the store needs help closing.
+    over_mult = np.array([TRADE_OVER_ALLOWANCE_MULT.get(c, 1.0) for c in veh_category])
+    over_allow = np.maximum(rng.normal(900, 700, n) * over_mult, 0).round(0)
+    over_allow = np.where(rng.random(n) < 0.25, 0.0, over_allow)
+
+    # Trade bonus: a promotional incentive, concentrated in the big retail
+    # events and on the segments that need the push.
+    is_event = np.isin(MONTH_OF[sale_month_idx], [11, 12])
+    bonus_p = np.clip(0.18 + 0.22 * is_event + 0.12 * (over_mult > 1.0), 0, 0.75)
+    trade_bonus = np.where(
+        rng.random(n) < bonus_p,
+        rng.choice([500, 750, 1000, 1500, 2000], size=n, p=[0.32, 0.26, 0.22, 0.13, 0.07]),
+        0,
+    ).astype(float)
+
+    allowance = appraised + over_allow
+
+    trade_flag_col = has_trade
+    trade_brand_col = np.where(has_trade, trade_brand, None)
+    trade_model_col = np.where(has_trade, trade_model, None)
+    trade_year_col = np.where(has_trade, trade_year, np.nan)
+    trade_mileage_col = np.where(has_trade, trade_mileage, np.nan)
+    appraised_col = np.where(has_trade, appraised, np.nan)
+    allowance_col = np.where(has_trade, allowance, np.nan)
+    over_allow_col = np.where(has_trade, over_allow, np.nan)
+    trade_bonus_col = np.where(has_trade, trade_bonus, 0.0)
+
     test_drive_converted = rng.random(n) < 0.62
-    lead_to_close_days = rng.integers(1, 60, n)
+
+    # Deal velocity: incentive money measurably shortens time-to-close, which is
+    # what makes the trade-bonus elasticity read on the dashboard a real signal
+    # rather than noise.
+    lead_to_close_days = np.clip(
+        rng.integers(1, 60, n) - (trade_bonus_col / 250.0).round(0), 1, 60
+    ).astype(int)
     salesperson_id = [f"SP{int(x):04d}" for x in rng.integers(1, 400, n)]
     marketing_channel = rng.choice(["Online Ad", "Referral", "Showroom Walk-in", "Search Engine",
                                      "Social Media", "Email Campaign", "TV/Radio"], size=n)
@@ -498,76 +764,215 @@ def build_sales(rng, n, vehicles_df, dealers_df, customers_df, start, end):
         "loan_amount_usd": loan_amount.astype(int), "units_sold": 1, "test_drive_converted": test_drive_converted,
         "lead_to_close_days": lead_to_close_days, "salesperson_id": salesperson_id,
         "marketing_channel": marketing_channel, "season_multiplier": season_multiplier.round(3),
+        # Lease contract terms (Lease rows only)
+        "lease_term_months": lease_term_col,
+        "lease_maturity_date": maturity_col.dt.date,
+        "residual_value_pct": resid_pct_col,
+        "residual_value_usd": resid_usd_col,
+        "contract_mileage_allowance": mileage_allow_col,
+        "lease_monthly_payment_usd": lease_payment_col,
+        # Trade-in activity
+        "trade_in_flag": trade_flag_col,
+        "trade_in_brand": trade_brand_col,
+        "trade_in_model": trade_model_col,
+        "trade_in_year": trade_year_col,
+        "trade_in_mileage": trade_mileage_col,
+        "trade_in_appraised_value_usd": appraised_col,
+        "trade_in_allowance_usd": allowance_col,
+        "trade_in_over_allowance_usd": over_allow_col,
+        "trade_bonus_usd": trade_bonus_col,
     })
     return df
 
 
 WAREHOUSE_ZONES = ["Zone A", "Zone B", "Zone C", "Zone D"]
 
-
-def build_inventory(rng, n, vehicles_df, dealers_df, start, end):
-    days_range = (end - start).days
-    dealer_sel = dealers_df.sample(n, replace=True, random_state=int(rng.integers(0, 1e9))).reset_index(drop=True)
-    veh_by_brand = {b: vehicles_df[vehicles_df["brand"] == b].reset_index(drop=True) for b in BRAND_NAMES}
-    vehicle_rows = []
-    for b in dealer_sel["brand"]:
-        pool = veh_by_brand[b]
-        vehicle_rows.append(pool.iloc[rng.integers(0, len(pool))])
-    veh_sel = pd.DataFrame(vehicle_rows).reset_index(drop=True)
-
-    record_offset = rng.integers(0, days_range, n)
-    record_date = [start + pd.Timedelta(days=int(o)) for o in record_offset]
-
-    current_stock = rng.integers(0, 120, n)
-    demand_forecast = np.clip((current_stock * rng.uniform(0.6, 1.3, n)), 0, None).astype(int)
-    reorder_point = (current_stock.astype(float) * rng.uniform(0.2, 0.4, n)).astype(int)
-    days_in_stock = rng.integers(1, 90, n)
-    stockout_flag = current_stock == 0
-    overstock_flag = current_stock > (reorder_point * 4)
-    reorder_needed = current_stock <= reorder_point
-    stockout_risk = np.clip(rng.beta(2, 6, n), 0, 1)
-    overstock_risk = np.clip(rng.beta(2, 6, n), 0, 1)
-    holding_cost_per_day = np.clip(rng.normal(18, 6, n), 3, None)
-    estimated_holding_cost = (holding_cost_per_day * days_in_stock).round(2)
-    units_sold_30d = rng.integers(0, 60, n)
-    units_ordered = rng.integers(0, 40, n)
-    transit_stock = rng.integers(0, 25, n)
-    warehouse_zone = rng.choice(WAREHOUSE_ZONES, size=n)
-    is_import = veh_sel["brand"].isin(IMPORT_BRANDS).values
-    port_of_entry = np.where(is_import, rng.choice(IMPORT_PORTS, size=n), "N/A (Domestic)")
-    customs_cleared = np.where(is_import, rng.random(n) < 0.96, True)
-    last_replenishment = [rd - pd.Timedelta(days=int(rng.integers(1, 45))) for rd in record_date]
-    supplier_lead_time = rng.integers(3, 60, n)
-
-    return pd.DataFrame({
-        "inventory_id": [f"INV{i:07d}" for i in range(1, n + 1)],
-        "record_date": [d.date() if hasattr(d, "date") else d for d in record_date],
-        "dealer_id": dealer_sel["dealer_id"].values, "vehicle_id": veh_sel["vehicle_id"].values,
-        "brand": veh_sel["brand"].values, "model": veh_sel["model"].values,
-        "vehicle_category": veh_sel["category"].values, "fuel_type": veh_sel["fuel_type"].values,
-        "state": dealer_sel["state"].values, "city": dealer_sel["city"].values,
-        "current_stock": current_stock, "demand_forecast_30d": demand_forecast,
-        "reorder_point": reorder_point, "days_in_stock": days_in_stock,
-        "stockout_flag": stockout_flag, "overstock_flag": overstock_flag, "reorder_needed": reorder_needed,
-        "stockout_risk_score": stockout_risk.round(3), "overstock_risk_score": overstock_risk.round(3),
-        "holding_cost_per_day_usd": holding_cost_per_day.round(2), "estimated_holding_cost_usd": estimated_holding_cost,
-        "units_sold_last_30d": units_sold_30d, "units_ordered": units_ordered, "transit_stock": transit_stock,
-        "port_of_entry": port_of_entry, "warehouse_zone": warehouse_zone,
-        "last_replenishment_date": [d.date() if hasattr(d, "date") else d for d in last_replenishment],
-        "supplier_lead_time_days": supplier_lead_time, "customs_cleared": customs_cleared,
-    })
+# Months of stock history to snapshot. Dealer management systems keep a rolling
+# operational window, not a decade, and 36 months is plenty of trend for the
+# dashboard.
+INVENTORY_HISTORY_MONTHS = 36
 
 
-def generate_dataset(out_dir, seed, n_customers, dealers_per_state, n_sales, n_inventory, with_variants):
+def build_inventory(rng, vehicles_df, dealers_df, sales_df):
+    """
+    Month-end stock snapshots for every (dealer, vehicle) the dealer actually
+    franchises.
+
+    The previous version scattered rows across ~2,800 random dates, which made
+    "current stock" impossible to read: summing the table double-counted the
+    same car across every snapshot it appeared in. Regular month-end snapshots
+    give an unambiguous current position and a clean trend line.
+
+    Stock behaviour is derived rather than drawn at random:
+      - turn rate follows the model's residual strength (desirable metal moves)
+      - holding cost is floorplan interest on the actual MSRP
+      - lead times split domestic vs. ocean-freighted imports
+    """
+    months = MONTHS[-INVENTORY_HISTORY_MONTHS:]
+
+    # Observed 30-day sales rate per (dealer, vehicle) anchors the forecast, so
+    # demand_forecast_30d reflects the sales table instead of a random number.
+    obs = (sales_df.groupby(["dealer_id", "vehicle_id"]).size()
+           .rename("total_units").reset_index())
+    span_months = max(len(MONTHS), 1)
+    obs["monthly_rate"] = obs["total_units"] / span_months
+    rate_lookup = dict(zip(zip(obs["dealer_id"], obs["vehicle_id"]), obs["monthly_rate"]))
+
+    veh_by_brand = {b: vehicles_df[vehicles_df["brand"] == b] for b in BRAND_NAMES}
+
+    rows = []
+    inv_id = 1
+    for _, dealer in dealers_df.iterrows():
+        pool = veh_by_brand.get(dealer["brand"])
+        if pool is None or len(pool) == 0:
+            continue
+        # Capacity is shared across the franchise's line-up.
+        per_model_capacity = max(dealer["monthly_capacity"] / max(len(pool), 1), 2.0)
+
+        for _, veh in pool.iterrows():
+            is_import = veh["brand"] in IMPORT_BRANDS
+            resid = float(veh["_residual_36mo"])
+
+            # Desirability: 0 = hardest to move, 1 = fastest turning.
+            desirability = np.clip((resid - 0.38) / (0.72 - 0.38), 0.0, 1.0)
+            # US dealer average lands near 60-70 days supply; fast Toyota metal
+            # turns in under a month, slow luxury EVs sit past 100 days.
+            base_days = 25.0 + (1.0 - desirability) * 85.0
+
+            # Ocean freight vs. a domestic plant is the dominant lead-time split.
+            lead_time = int(rng.integers(38, 70)) if is_import else int(rng.integers(8, 26))
+
+            # Floorplan interest on the unit plus fixed lot overhead. A $40k
+            # unit at ~8% floorplan costs roughly $9/day to hold, and that is
+            # what the holding-cost KPI should reflect.
+            floorplan_apr = 0.075
+            holding_per_day = round(
+                veh["price_usd"] * floorplan_apr / 365.0 + rng.uniform(2.0, 4.5), 2
+            )
+
+            observed_rate = rate_lookup.get((dealer["dealer_id"], veh["vehicle_id"]), 0.0)
+            # Blend observed history with capacity so thinly-sold trims still
+            # carry a sane baseline.
+            base_rate = max(observed_rate, per_model_capacity * 0.06)
+
+            zone = WAREHOUSE_ZONES[inv_id % len(WAREHOUSE_ZONES)]
+            port = rng.choice(IMPORT_PORTS) if is_import else "N/A (Domestic)"
+
+            for mi, month_start in enumerate(months):
+                month_no = month_start.month
+                global_mi = len(MONTHS) - INVENTORY_HISTORY_MONTHS + mi
+
+                # Spring and early-autumn selling seasons.
+                seasonal = 1.0 + 0.18 * np.sin((month_no - 3) / 12 * 2 * np.pi)
+                monthly_demand = max(base_rate * seasonal * rng.uniform(0.75, 1.3), 0.4)
+
+                sold_30d = int(np.clip(rng.poisson(monthly_demand), 0, None))
+                daily_demand = monthly_demand / 30.0
+
+                # Textbook reorder point: demand over the replenishment lead
+                # time plus safety stock sized on demand variability. Import
+                # brands carry higher reorder points purely because ocean
+                # freight makes their pipeline longer.
+                # Target days of supply is the number a dealer principal
+                # actually manages to. Desirable metal runs lean because it
+                # keeps selling (~30 days); slow metal piles up (~95 days).
+                # The industry healthy band is 45-75 days.
+                days_supply_target = 28.0 + (1.0 - desirability) * 67.0
+
+                # Actual stock drifts around that target between deliveries.
+                fluctuation = float(np.clip(rng.normal(1.0, 0.30), 0.12, 2.1))
+                stock = int(np.clip(round(daily_demand * days_supply_target * fluctuation), 0, 400))
+
+                # Reorder point at a 90% service level, but never above 65% of
+                # the target stocking level. The cap matters: at trim level a
+                # store sells only a few units a month, so an uncapped Poisson
+                # safety stock would set the trigger above the target itself and
+                # flag most of the line-up as permanently urgent.
+                safety = 1.28 * np.sqrt(max(daily_demand, 0.01) * lead_time)
+                reorder_pt = max(int(round(min(daily_demand * lead_time + safety,
+                                               daily_demand * days_supply_target * 0.65))), 1)
+
+                # Occasional genuine stockouts on fast-moving, allocation-
+                # constrained models.
+                if desirability > 0.6 and rng.random() < 0.06:
+                    stock = 0
+
+                forecast_30d = int(max(round(monthly_demand * rng.uniform(0.9, 1.15)), 0))
+
+                in_transit = int(rng.poisson(max(monthly_demand * 0.5, 0.3))) if rng.random() < 0.55 else 0
+                units_ordered = int(rng.poisson(max(monthly_demand * 0.8, 0.5)))
+
+                # Days of supply on hand — the number a dealer principal
+                # actually manages to. Industry healthy band is 45-75 days.
+                days_supply = float(np.clip(stock / max(daily_demand, 0.001), 0, 260))
+                days_in_stock = int(np.clip(rng.normal(days_supply, 8), 1, 260))
+
+                stockout = stock == 0
+                overstock = days_supply > 90
+                reorder_needed = (not stockout) and stock <= reorder_pt
+
+                # Risk scores are read off the actual position rather than drawn
+                # from an unrelated beta distribution.
+                cover_ratio = stock / reorder_pt
+                stockout_risk = float(np.clip(1.0 - cover_ratio / 2.0, 0.0, 1.0))
+                overstock_risk = float(np.clip((days_supply - 60.0) / 90.0, 0.0, 1.0))
+
+                record_date = (month_start + pd.offsets.MonthEnd(0)).date()
+                last_replen = (month_start - pd.Timedelta(days=int(rng.integers(5, 50)))).date()
+
+                rows.append({
+                    "inventory_id": f"INV{inv_id:07d}",
+                    "record_date": record_date,
+                    "dealer_id": dealer["dealer_id"],
+                    "vehicle_id": veh["vehicle_id"],
+                    "brand": veh["brand"],
+                    "model": veh["model"],
+                    "vehicle_category": veh["category"],
+                    "fuel_type": veh["fuel_type"],
+                    "state": dealer["state"],
+                    "city": dealer["city"],
+                    "current_stock": stock,
+                    "demand_forecast_30d": forecast_30d,
+                    "reorder_point": reorder_pt,
+                    "days_in_stock": days_in_stock,
+                    "stockout_flag": bool(stockout),
+                    "overstock_flag": bool(overstock),
+                    "reorder_needed": bool(reorder_needed),
+                    "stockout_risk_score": round(stockout_risk, 3),
+                    "overstock_risk_score": round(overstock_risk, 3),
+                    "holding_cost_per_day_usd": holding_per_day,
+                    # Cost of floorplanning the units on hand for 30 days.
+                    "estimated_holding_cost_usd": round(holding_per_day * stock * 30.0, 2),
+                    "units_sold_last_30d": sold_30d,
+                    "units_ordered": units_ordered,
+                    "transit_stock": in_transit,
+                    "port_of_entry": port,
+                    "warehouse_zone": zone,
+                    "last_replenishment_date": last_replen,
+                    "supplier_lead_time_days": lead_time,
+                    "customs_cleared": bool(rng.random() < 0.96) if is_import else True,
+                })
+                inv_id += 1
+
+    return pd.DataFrame(rows)
+
+
+def generate_dataset(out_dir, seed, n_customers, dealers_per_state, n_sales, n_trims):
     rng = np.random.default_rng(seed)
     os.makedirs(out_dir, exist_ok=True)
 
-    vehicles = build_vehicle_catalog(rng, with_variants=with_variants)
+    vehicles = build_vehicle_catalog(rng, n_trims=n_trims)
     dealers = build_dealers(rng, dealers_per_state)
     customers = build_customers(rng, n_customers, START, END)
     external_factors = build_external_factors(rng)
     sales = build_sales(rng, n_sales, vehicles, dealers, customers, START, END)
-    inventory = build_inventory(rng, n_inventory, vehicles, dealers, START, END)
+    # Inventory is derived from the sales history, so it is built last and
+    # sized by the dealer network rather than by a row count.
+    inventory = build_inventory(rng, vehicles, dealers, sales)
+
+    # _residual_36mo is an internal generation field; persist it under its
+    # public column name so the lease-equity model can read it back.
+    vehicles = vehicles.rename(columns={"_residual_36mo": "residual_value_36mo"})
 
     vehicles.to_csv(os.path.join(out_dir, "vehicles.csv"), index=False)
     dealers.to_csv(os.path.join(out_dir, "dealers.csv"), index=False)
@@ -584,14 +989,12 @@ def main():
     # realdata-datasets: primary "real" mode dataset
     generate_dataset(
         os.path.join(ROOT, "realdata-datasets"), seed=42,
-        n_customers=42000, dealers_per_state=6, n_sales=100000, n_inventory=16000,
-        with_variants=False,
+        n_customers=42000, dealers_per_state=6, n_sales=100000, n_trims=2,
     )
     # automobile_datasets: larger "test" mode dataset
     generate_dataset(
         os.path.join(ROOT, "automobile_datasets"), seed=7,
-        n_customers=56000, dealers_per_state=15, n_sales=140000, n_inventory=26000,
-        with_variants=True,
+        n_customers=56000, dealers_per_state=15, n_sales=140000, n_trims=3,
     )
 
 

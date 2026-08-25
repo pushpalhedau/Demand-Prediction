@@ -17,14 +17,16 @@ run with different parameters.
 |---|---|---|
 | customers.csv | 56,000 rows | 42,000 rows |
 | dealers.csv | 120 rows (15 per state) | 48 rows (6 per state) |
-| vehicles.csv | 210 rows (3 trims per model: Base/Sport/Limited) | 70 rows (1 trim per model) |
+| vehicles.csv | 273 rows (3 trims per model) | 182 rows (2 trims per model) |
 | sales.csv | 140,000 rows | 100,000 rows |
-| inventory.csv | 26,000 rows | 16,000 rows |
+| inventory.csv | 90,072 rows (120 dealers x 36 month-ends) | 24,120 rows (48 dealers x 36 month-ends) |
 | external_factors.csv | 736 rows (8 states × 92 months) | 736 rows (8 states × 92 months) |
 | generator seed | 7 | 42 |
 
-Vehicle `variant` values are "Base", "Sport" (+12% over base price), or "Limited" (+22%)
-in this dataset; `realdata-datasets/vehicles.csv` only has "Base" trims.
+Vehicle `variant` values are real per-brand trim names taken from the brand's actual trim
+ladder (Toyota LE/XLE/Limited, Ford XL/XLT/Lariat, Honda LX/Sport/EX-L, and so on). This
+dataset carries the first three rungs of each ladder; `realdata-datasets/` carries the
+first two. Trim pricing steps +9% and +19% over the base trim.
 
 ## Regeneration
 

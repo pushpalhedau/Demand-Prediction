@@ -249,7 +249,11 @@ def render_customers(filters: dict):
 
             with form_col3:
                 discount_pct      = st.slider("Applied Discount (%)", min_value=0.0, max_value=25.0, value=6.5, step=0.5)
-                financing_type    = st.selectbox("Financing Type", options=["Bank Loan", "Cash", "Dealer Finance", "Lease"])
+                # Recorded on the deal (it drives the lease-return pipeline in
+                # Inventory Intelligence) but deliberately not scored — see the
+                # note in ml_models/xgboost_model.py.
+                financing_type    = st.selectbox("Financing Type", options=["Bank Loan", "Cash", "Dealer Finance", "Lease"],
+                                                 help="Recorded on the deal record and used for lease-return forecasting. Not a conversion-model input: financing is chosen late in the deal, so it reflects the close rather than predicting it.")
                 marketing_channel = st.selectbox("Lead Source Channel", options=["Referral", "Digital", "Showroom Walk-in", "Auto Expo", "TV"])
                 base_price        = st.number_input("Vehicle Base Price (USD)", min_value=15000, max_value=250000, value=42000, step=1000)
 
@@ -333,7 +337,7 @@ def render_customers(filters: dict):
                 if prob >= 0.75:
                     st.success("**Smart Action Recommendation:** This is a **High-Conversion Lead**. Fast track scheduling showroom VIP visit, offer finance approvals immediately, and secure downpayment within 48 hours.")
                 elif prob >= 0.4:
-                    st.warning("**Smart Action Recommendation:** Moderate Close Probability. **Action:** Consider offering an additional **1.5% to 2% discount** or shifting financing to Bank Loan to increase closing prospects to over 80%.")
+                    st.warning("**Smart Action Recommendation:** Moderate Close Probability. **Action:** Consider an additional **1.5% to 2% concession** — applied as a discount or as trade-in allowance, whichever the customer values more — and book a second test drive within the week.")
                 else:
                     st.error("**Smart Action Recommendation:** High risk of lead drop. **Action:** Low conversion score. Target a different vehicle category that matches their budget profile, or contact customer to review downpayment capacity.")
 

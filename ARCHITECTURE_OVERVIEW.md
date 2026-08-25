@@ -97,9 +97,11 @@ erDiagram
     }
     SALES {
         string transaction "date, revenue, discount, financing, outcome"
+        string lease "term, maturity date, residual value, monthly payment"
+        string tradein "traded vehicle, appraised value, allowance, bonus"
     }
     INVENTORY {
-        string stock "current stock, forecasted demand, reorder status"
+        string stock "month-end snapshot: stock, forecast demand, reorder status"
     }
     EXTERNAL_FACTORS {
         string conditions "fuel prices, GDP, inflation, tariffs"
@@ -201,9 +203,9 @@ The same forecasting model, optionally combined with sentiment data from Section
 
 ---
 
-## 7. Customer & Lead Intelligence
+## 7. Customer, Lead & Placement Intelligence
 
-Two separate models work together in the Customer module.
+Three models sit in this layer: two in the Customer module, and the placement recommender that powers Inventory Intelligence.
 
 ### Customer segmentation
 
@@ -211,7 +213,7 @@ Every customer is grouped into one of five behavioral segments — such as Premi
 
 ### Lead conversion scoring
 
-The interactive lead-scoring tool takes a hypothetical customer's details (income, credit score, offer terms, financing type, and so on) and returns a likelihood that they will actually convert into a sale. Alongside the score, it shows which specific factors pushed the likelihood up or down — this explanation is produced by inspecting the trained model's actual decision process (not a separate guess), so it reflects what the model really weighed.
+The interactive lead-scoring tool takes a hypothetical customer's details (income, credit score, offer terms, lead source, and so on) and returns a likelihood that they will actually convert into a sale. Alongside the score, it shows which specific factors pushed the likelihood up or down — this explanation is produced by inspecting the trained model's actual decision process (not a separate guess), so it reflects what the model really weighed.
 
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {
@@ -233,7 +235,41 @@ flowchart LR
     class C,D,E output
 ```
 
-Both models are trained ahead of time on historical data rather than learning live from each interaction — using them in the dashboard is fast because it's just applying an already-trained model, not retraining one.
+**Financing method is deliberately excluded from this model.** How a deal is paid for is an outcome of the negotiation rather than a driver of whether the customer buys — it is agreed late in the process, so including it let the model partly predict the close from the close. Left in, it attracted a large explanatory weight and generated advice to "switch the customer to a bank loan", which was an artifact of that leakage rather than a lever anyone can actually pull. Financing is still captured on every deal record, where it does real work: it drives the lease-return pipeline described below.
+
+### Alternative vehicle placement
+
+When the exact vehicle a customer asked for is unavailable, this recommends what the network can actually deliver instead. A usable recommendation has to satisfy three constraints at once, and scoring only the first is what makes most "similar vehicles" widgets useless on a showroom floor:
+
+1. **Similarity** — is it the same car to this shopper? Scored on body style, price, powertrain, seating, power, drivetrain and brand, using cross-shopping affinity weights (a minivan shopper will consider a three-row SUV but never a coupe).
+2. **Availability** — how soon can they take delivery? Four tiers, best first: on this lot, at a nearby store within the search radius, inbound in transit, or returning off lease within 45 days.
+3. **Business value** — does placing it help the store? Weighted toward aged units, since a car at 90+ days is burning floorplan every day it stays.
+
+The fourth availability tier only exists because the lease book is modelled — it is supply the network already owns. Each recommendation carries its reasoning: what matches, what the customer gives up, and where the car physically is.
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {
+  'primaryColor':'#EEF2FF','primaryTextColor':'#1E293B','primaryBorderColor':'#6366F1',
+  'lineColor':'#64748B','fontFamily':'Segoe UI, Helvetica, Arial, sans-serif','fontSize':'16px'
+}}}%%
+flowchart LR
+    A["Requested vehicle<br/>brand · model · trim"] --> B["Similarity scoring<br/>specs & cross-shop affinity"]
+    C["Current stock snapshot<br/>+ lease-return book"] --> D["Availability tiers<br/>lot · nearby · transit · returning"]
+    E["Aging & depth<br/>of each candidate"] --> F["Business priority"]
+    B --> G["Blended placement score"]
+    D --> G
+    F --> G
+    G --> H["Ranked alternatives<br/>with reasoning & trade-offs"]
+
+    classDef inputs fill:#F1F5F9,stroke:#64748B,color:#1E293B
+    classDef model fill:#EEF2FF,stroke:#6366F1,color:#1E293B
+    classDef output fill:#ECFDF5,stroke:#10B981,color:#064E3B
+    class A,C,E inputs
+    class B,D,F,G model
+    class H output
+```
+
+The segmentation and lead-scoring models are trained ahead of time on historical data rather than learning live from each interaction — using them in the dashboard is fast because it's just applying an already-trained model. The placement recommender is computed on demand instead, because it has to reflect the stock position as it stands right now.
 
 ---
 
@@ -280,7 +316,7 @@ The daily risk score itself reflects both **how negative** the day's news was an
 | Comparative Analytics | Year-over-year queries, plus a dedicated Import Tariff Exposure analysis comparing domestic and import auto brands under the 2025 Section 232 tariffs |
 | Regional Intelligence | Dealer performance queries, mapped geographically |
 | Customer Intelligence | Segmentation + lead-scoring models (Section 7) |
-| Inventory Intelligence | Stock-level and reorder queries, compared against forecasted demand |
+| Inventory Intelligence | Four sub-modules built on inventory *flow*: **Stock Health** (current position, aging ladder, reorder priorities), **Inventory Flow & Lease Returns** (forward lease-return book, net order gap, remarketing lanes, re-capture pipeline), **Trade-In & Acquisition** (used-supply intake, true-concession waterfall, incentive elasticity), and the **Placement Assistant** (Section 7) |
 | Sentiment Analysis | News and sentiment pipeline (Section 8) |
 
 Three additional modules — a broader scenario simulator, a CSV data-upload tool, and a model-performance viewer — are already built but not currently switched on in the navigation menu. They're straightforward to enable if the roadmap calls for them.

@@ -101,10 +101,21 @@ def run_full_pipeline(
         if unanalyzed:
             signals = analyze_articles(unanalyzed)
             analyze_result = save_signals_to_db(unanalyzed, signals)
+            # is_live_mode() only checks that a key is *set*. If the key is
+            # rejected, the analyzer silently falls back to mock scoring while
+            # the UI still claims "LIVE". Report what actually happened.
+            used_mock = any(sig.get("_mock") for sig in signals)
             status["analyze"] = {
                 "articles_found": len(unanalyzed),
+                "used_mock_fallback": used_mock,
                 **analyze_result,
             }
+            if used_mock and is_live_mode():
+                status["mode"] = "mock (Grok call failed - check XAI_API_KEY)"
+                status["errors"].append(
+                    "Grok API rejected the request; sentiment scores are "
+                    "keyword-based mock values, not AI analysis."
+                )
             logger.info("Pipeline | analyze done: %s", analyze_result)
         else:
             status["analyze"] = {"articles_found": 0, "inserted": 0, "skipped": 0, "errors": 0}
