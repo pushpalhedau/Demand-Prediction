@@ -36,10 +36,10 @@ dashboard/                 One render_*(filters) function per page
   overview.py               Executive Overview        [active]
   forecasting.py            Demand Forecasting         [active]
   comparison.py             Comparative Analytics      [active]
-  regional.py                Regional Intelligence      [active]
+  regional.py                Store Performance          [active]
   customers.py               Customer Intelligence      [active]
   inventory.py                Inventory Intelligence     [active]
-  sentiment_analysis.py       Sentiment / Geo Risk        [active]
+  sentiment_analysis.py       Sentiment / demand advisory [active]
   ai_insights.py              Scenario Simulator          [written, NOT routed]
   upload_data.py              CSV upload + retrain UI      [written, NOT routed]
   metrics.py                  Model metrics viewer         [written, NOT routed]
@@ -170,7 +170,7 @@ flowchart TB
 7. Routing is a plain `if/elif` chain on the selected menu string → `dashboard.<module>.render_*(filters)`.
 
 ### Session state keys in use
-`data_mode`, `market_overrides`, `sentiment_pipeline_running`, `sentiment_pipeline_status`, `sentiment_briefing`, `sentiment_briefing_stats`, `fc_cmp_base`, `fc_cmp_sent`, `fc_cmp_target`, `fc_cmp_horizon`.
+`data_mode`, `market_overrides`, `sentiment_pipeline_running`, `sentiment_pipeline_status`, `sentiment_timespan`, `sentiment_briefing`, `fc_v` (the sentiment tab's baseline-vs-news-aware result tuple).
 
 ---
 
@@ -185,7 +185,7 @@ flowchart TB
 | `real` (default, only reachable mode via UI) | `real_demand.db` | `REAL_DATABASE_URL` |
 | `test` | `automobile_demand.db` | `DATABASE_URL` |
 
-`set_data_mode(mode)` / `get_data_mode()` flip a module-level global; `get_db_session()` returns a session from whichever engine is active. This single switch also controls which model-pickle subfolder (`models/{clustering,xgboost}/{test,real}/`) each ML module loads from, and several dashboard branches (Overview, Customers, Regional) that show different KPI columns per mode.
+`set_data_mode(mode)` / `get_data_mode()` flip a module-level global; `get_db_session()` returns a session from whichever engine is active. This single switch also controls which model-pickle subfolder (`models/{clustering,xgboost}/{test,real}/`) each ML module loads from, and a couple of dashboard branches (Overview, Customers) that show different KPI columns per mode. (Store Performance dropped its `get_data_mode` branch in the 2026-08-29 repositioning — it is real-mode only.)
 
 ### 5.2 Writable-path fallback
 
@@ -218,7 +218,7 @@ erDiagram
         int customer_id PK
         int age
         string gender
-        string nationality
+        string nationality "DEPRECATED - never populated (fair-lending)"
         string state
         string city
         string occupation
@@ -293,10 +293,11 @@ erDiagram
         date date PK
         string state
         float gasoline_regular_usd_per_gallon
-        float wti_crude_price_usd
-        float gdp_growth_pct
-        float cpi_inflation_pct
+        float auto_loan_apr_pct
+        float incentive_pct_of_atp
+        float inventory_days_supply
         float us_fed_rate_pct
+        float wti_crude_price_usd
         float tariff_pct
         int ev_charging_stations
     }
@@ -332,8 +333,11 @@ erDiagram
 
 - Every function takes a SQLAlchemy `Session` and returns a `dict` (KPI functions) or a `pd.DataFrame` (via `pd.read_sql`).
 - `_apply_sale_filters` is a shared helper applying region/city/category/fuel/brand/financing/date filters — used by nearly every `Sale`-based query.
-- **National scaling**: the dataset is a documented representative sample of the modeled 8-state NA market. `NATIONAL_SCALE_FACTOR = 17` is applied to sales/revenue KPIs so displayed numbers represent estimated national totals, not raw row counts.
-- The "Import Tariff Exposure" queries (`get_brand_origin_yearly_share`, `get_price_competitiveness`, `get_ev_segment_by_brand_year`, `get_market_share_shift`) intentionally **ignore the sidebar brand filter** so the competitive-analysis section always shows the full market. The 2027 share projection uses `np.polyfit` (simple linear regression) on year-over-year share.
+- **No market extrapolation**: the dataset models a single **regional dealer group** (24 rooftops). Every unit/revenue figure in `queries.py` is the group's own booked retail volume — one row per deal. (A prior build multiplied every figure by `NATIONAL_SCALE_FACTOR = 17` to imply national totals; that was an OEM/market-analyst framing and was removed when the product was repositioned as dealer-facing.)
+- **Comparative Analytics** (`get_period_trend`, `get_yoy_drivers`, `get_tariff_exposure`, `get_tariff_cost_monthly`, `get_price_gap_by_segment`, `get_franchise_footprint`): all read the group's own booked deals. `get_period_trend` returns the selected window and the same window a year earlier, aligned by calendar month. The tariff queries scope to `sale_date >= 2025-04-01` (the Section 232 step) and read the per-deal `Sale.tariff_cost_usd` column; they clear the single-brand filter (via `_filters_no_brand`) so the import-vs-domestic split always holds, but honour location/segment/fuel.
+- The older share-of-market queries (`get_brand_origin_yearly_share`, `get_ev_segment_by_brand_year`, `get_market_share_shift`) computed "% of the US market" and a 2027 `np.polyfit` projection from the group's own 24-rooftop book — an OEM / equity-analyst frame. **Deprecated 2026-08-28**; still defined (with deprecation docstrings) but no longer wired into any tab. `get_yoy_comparison` is superseded by `get_period_trend` for the same reason but kept generic.
+- **Customer Intelligence** (repositioned 2026-08-29): `get_customer_book` returns one row per CRM customer — first/last deal, lifetime deals & revenue, most-recent store & vehicle, the customer's own purchase cadence, and the nearest upcoming lease maturity — shaped in pandas from one `Sale`+`Dealer` pull (~1.7 s). `get_repeat_contribution` returns the share of booked deals that went to a prior customer. `get_customer_segments_data` (the segment-detail expander) adds the KMeans label + a per-customer sales aggregate. **None select `nationality`** (fair-lending). `filters['region']` scopes by home / store state. Customer counts are raw — no extrapolation.
+- **Store Performance** (`get_dealer_performance_leaderboard`, repositioned 2026-08-29): returns **every** rooftop (the `.limit(20)` cap is gone) with window units/revenue plus trailing-12-month framing for the rest — `ttm_units` / `prior_ttm_units` / `yoy_units_pct` and `attainment_pct` (ttm ÷ `Dealer.annual_target_units`, same framing as `get_target_attainment`), plus `close_rate` (`test_drive_converted`) and `avg_days_to_close` (`lead_to_close_days`) for the window. The synthetic OEM fields `Dealer.tier` / `Dealer.performance_score` are no longer selected here (still on the model; `get_dealer_directory` still reads them for Inventory Intelligence).
 
 ---
 
@@ -370,49 +374,56 @@ sequenceDiagram
     Dash-->>U: Plotly chart
 ```
 
-The sentiment pipeline is a separate, user-triggered flow (see §8) — it doesn't run on page load, only on the "Refresh Data" button or lazily via `ensure_recent_articles_analyzed()` (mock-only, on tab open).
+The sentiment pipeline is a separate, user-triggered flow (see §8) — it doesn't run on page load, only on the "Refresh news" button or lazily via `ensure_recent_articles_analyzed()` (mock-only, on tab open).
 
 ---
 
 ## 7. Forecasting Engine (`forecasting/prophet_forecasting.py`)
 
-Single entry point: `train_prophet_model(category, region, fuel_type, target, horizon_days=90, interval_width=0.95, use_sentiment=False, market_overrides=None)` — called fresh on every UI interaction, no caching.
+Single entry point: `train_prophet_model(category, region, fuel_type, brand, target, horizon_days=90, interval_width=0.95, use_sentiment=False, market_overrides=None)` — called fresh on every UI interaction, no caching. Dealer-facing since the 2026-08-27 pass (`docs/changelog/2026-08-27-demand-forecasting-dealer-positioning.md`): it forecasts **the group's own booked `Sale` units / revenue** — no market extrapolation, no `NATIONAL_SCALE_FACTOR`.
 
 **Pipeline:**
-1. Pull daily `Sale.units_sold` or `Sale.total_revenue_incl_tax`, filtered by category/region/fuel_type, reindexed to fill missing dates with 0.
-2. Pull `ExternalFactor` columns (monthly), resample to daily via `.resample('D').ffill()`, merge onto sales by date.
-3. If `use_sentiment=True`, merge `avg_sentiment_score` and `geopolitical_risk_score` from `signal_processor.get_daily_summaries()` (wrapped in try/except — a missing sentiment table fails silently, forecast just proceeds without those regressors).
-4. **Model config**: `Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False, interval_width=interval_width)`. Growth type and changepoint settings are left at Prophet defaults — not tuned anywhere.
-5. **Regressors**: iterates a fixed candidate list of ~18 external-factor/sentiment columns; each is added via `model.add_regressor(reg)` only if present **and** has more than one distinct value (constant columns auto-excluded).
-6. **Validation split**: last 30 rows held out; reports RMSE, MAE, and a custom `accuracy = max(0, min(1, 1 - mae/mean_y)) * 100`.
-7. **Retrains on the full dataset** for the actual forecast — i.e. every call trains Prophet twice.
-8. `future = full_model.make_future_dataframe(periods=horizon_days)`; historical regressor values are back-filled, then **user market-driver overrides are applied only to future-dated rows**.
-9. `forecast = full_model.predict(future)`; negative `yhat`/bounds are clipped to 0.
+1. Pull daily `Sale.units_sold` or `Sale.total_revenue_incl_tax`, filtered by category/region/fuel_type/**brand**, reindexed to fill missing dates with 0.
+2. Pull the dealer-lever `ExternalFactor` columns — `gasoline_regular_usd_per_gallon`, `auto_loan_apr_pct`, `incentive_pct_of_atp`, `inventory_days_supply`, `holiday_season_month` — monthly, resample to daily via `.resample('D').ffill()`, merge onto sales by date.
+3. If `use_sentiment=True`, merge `avg_sentiment_score` and `geopolitical_risk_score` from `signal_processor.get_daily_summaries()` (try/except — a missing sentiment table fails silently).
+4. **Model config**: `Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False, interval_width=interval_width)`. Weekly seasonality is meaningful because the generator now assigns weekday-weighted sale dates (Saturday-heavy). Growth/changepoint left at Prophet defaults.
+5. **Regressors**: the 5 candidate columns from step 2 (+ sentiment when on); each added only if present **and** non-constant.
+6. **Validation split**: last 30 rows held out; RMSE/MAE/custom accuracy computed (not shown in the tab).
+7. **Retrains on the full dataset** for the actual forecast — every call trains Prophet twice.
+8. `future = make_future_dataframe(periods=horizon_days)`; regressors back-filled. **The Demand Forecasting tab passes `market_overrides=None`** — the what-if is applied downstream (see §7.1). The `market_overrides` param still exists for other callers.
+9. `forecast = predict(future)`; negative `yhat`/bounds clipped to 0.
 
-### 7.1 What-if slider → forecast chart, full path
+### 7.1 What-if lever → forecast chart, full path
+
+The tab exposes **4 dealer levers** — pump price, auto-loan APR, incentive spend,
+inventory days' supply — each backed by a real `external_factors` column, so the
+baseline forecast already reflects their history (the generator bakes in real
+gas/rate/incentive covariation).
 
 ```mermaid
 flowchart LR
-    Slider["User moves e.g. Gasoline Price slider"] --> Form["st.form('market_drivers_form')"]
-    Form --> Session["st.session_state.market_overrides"]
-    Session --> Train["train_prophet_model(market_overrides=...)"]
-    Train --> Future["future dataframe rows after last_hist_date"]
-    Future --> Regressor["future.loc[future_mask, 'gasoline_regular_usd_per_gallon'] = value"]
-    Regressor --> Predict["full_model.predict(future)"]
-    Predict --> RawYhat["Prophet native yhat / yhat_lower / yhat_upper"]
-    RawYhat --> Sensitivity["DRIVER_SENSITIVITY elasticity table<br/>(hand-authored, dashboard/forecasting.py)"]
-    Sensitivity --> NetImpact["net_impact_pct = Σ (driver delta × sensitivity)"]
-    NetImpact --> Scale["yhat_x *= clamp(1 + net_impact_pct/100, 0.3, 3.0)"]
-    Scale --> Chart["Bear / Base / Bull chart"]
+    Slider["User moves e.g. Pump price slider"] --> Form["st.form('fc_levers')"]
+    Form --> Session["st.session_state.fc_overrides"]
+    Session --> Net["_net_response_pct(overrides, factor_stats)"]
+    Net --> Table["GROUP_DEMAND_RESPONSE<br/>(-4%/$1 gas · -3%/+1pt APR · +2%/+1pt incentive ·<br/>-1.1%/day below 55 days' supply)"]
+    Table --> NetImpact["net_pct = Σ (lever delta × response)"]
+    NetImpact --> Scale["future yhat / lower / upper<br/>*= clamp(1 + net_pct/100, 0.4, 2.5)"]
+    Scale --> Chart["Conservative / Expected / Optimistic chart"]
+    Baseline["train_prophet_model(market_overrides=None)"] --> Scale
 ```
 
-**Important nuance:** the visible chart movement when a slider is dragged is **not purely Prophet's regressor fit**. Two mechanisms stack:
-1. The override value genuinely changes what Prophet sees as input (`future[col] = value`), so Prophet's own fitted regressor coefficient has a real (usually small) effect.
-2. A separate, hand-authored `DRIVER_SENSITIVITY` dict in `dashboard/forecasting.py` (e.g. "−8% demand per +$1/gal gasoline", "+3.5% per +1pt GDP growth") computes a `net_impact_pct` from the override deltas and **multiplies** all three future-period lines by `1 + net_impact_pct/100`, clamped to `[0.3, 3.0]`. This static elasticity table is what dominates the visible chart delta and the "Market Driver Impact" summary banner — worth knowing if the forecast ever needs to be defended as "purely ML-driven."
+**Single mechanism now.** The old build stacked two effects (Prophet future-row
+override *and* a hand table). The rewrite passes `market_overrides=None` to Prophet
+and applies **only** `GROUP_DEMAND_RESPONSE` (`dashboard/forecasting.py`), a
+documented table calibrated to published US auto-retail elasticities (sources in
+the changelog). One legible knob, defensible on its own terms.
 
-**Bear/Base/Bull** = `yhat_lower` / `yhat` / `yhat_upper` — Prophet's native uncertainty interval at the chosen confidence-slider width, after the sensitivity scaling above is applied.
+**Conservative / Expected / Optimistic** = `yhat_lower` / `yhat` / `yhat_upper` —
+Prophet's native uncertainty interval at the confidence-slider width, after the
+response scaling. Labelled in the UI as a **model confidence range**, not scenarios.
 
-**Seasonality charts** are read directly off Prophet's own `forecast['weekly']` / `forecast['yearly']` component columns, grouped by day-name/month-name.
+**Seasonality charts** are read off Prophet's own `forecast['weekly']` /
+`forecast['yearly']` component columns, grouped by day-name / month-name.
 
 ---
 
@@ -421,19 +432,22 @@ flowchart LR
 ### 8.1 Customer Segmentation (`ml_models/customer_segmentation.py`)
 
 - Algorithm: scikit-learn **KMeans**, `n_clusters=5`, `random_state=42`, `n_init=10`.
-- Features (6, median-imputed then `StandardScaler`-normalized): `age`, `estimated_annual_income_usd`, `credit_score`, `number_of_past_purchases`, `loyalty_score`, `churn_risk_score`.
-- Cluster → label mapping is **rule-based on centroid ranking**, not learned: highest-income cluster → "Premium Buyer"; lowest-income of the rest → "Budget Buyer"; highest past-purchases of the rest → "High Repeat"; highest loyalty of the rest → "EV Enthusiast"; leftover → "Fleet Buyer"/"Regular Buyer".
-- **Side effect to know about**: training this model writes `customer_segment` back into the live `customers` table via `bulk_update_mappings` — it's not a pure read-only artifact-producing step.
-- Persists `scaler.pkl`, `kmeans.pkl`, `cluster_mapping.pkl` to `models/clustering/{test|real}/`.
-- Inference: `predict_customer_segment(customer_data: dict)` loads the pickles; falls back to `"Regular Buyer"` on any exception.
+- Features (6, in `FEATURES`; median-imputed then `StandardScaler`-normalized): `age`, `estimated_annual_income_usd`, `credit_score`, `number_of_past_purchases`, `recency_days`, `avg_deal_value`. **`nationality` was removed** (fair-lending / ECOA liability) along with the two decorative score fields (`loyalty_score`, `churn_risk_score`) in the 2026-08-29 dealer-positioning pass. `recency_days` and `avg_deal_value` are joined from each customer's real `sales` history by `load_customer_features(session)`.
+- Cluster → label mapping is **rule-based on centroid ranking** (`_assign_labels`), not learned: highest-`recency_days` cluster → "Lapsed / At-Risk"; highest past-purchases of the rest → "Loyal Repeat"; highest income of the rest → "High-Value / Prime"; smallest avg deal value of the rest → "Value Buyers"; leftover → "Core Mainstream".
+- **Side effect to know about**: training this model writes `customer_segment` back into the live `customers` table via `bulk_update_mappings` — it's not a pure read-only artifact-producing step. After any reseed you must retrain this (real mode) or the tab shows stale/blank segments.
+- Persists `scaler.pkl`, `kmeans.pkl`, `cluster_mapping.pkl`, `feature_names.pkl` to `models/clustering/{test|real}/`.
+- Inference: `predict_customer_segment(customer_data: dict)` loads the pickles; falls back to `"Core Mainstream"` on any exception. Not currently wired to any UI control.
 
 ### 8.2 Lead Conversion Scoring (`ml_models/xgboost_model.py`)
 
 - Predicts `Sale.test_drive_converted` (binary) via `XGBClassifier(n_estimators=100, max_depth=5, learning_rate=0.08, random_state=42, eval_metric="logloss")`.
-- Features: 6 categorical (LabelEncoded: marketing channel, vehicle category, fuel type, state, gender, occupation) + 6 numeric (StandardScaler-scaled: base price, discount %, age, income, credit score, loyalty score).
-- **`financing_type` is deliberately excluded.** It is agreed late in the deal, so it is leakage-adjacent: the model was partly predicting the close from the close. It previously drew a large SHAP attribution and drove a recommendation to "shift financing to Bank Loan", which was an artifact rather than an actionable lever. The field is still selectable on the lead form (it is recorded on the deal and drives lease-return forecasting) but is not passed to the model — `predict_deal_probability()` accepts and ignores it, so older callers do not break.
+- Features (11): 5 categorical (LabelEncoded: marketing channel, vehicle category, fuel type, state, occupation) + 6 numeric (StandardScaler-scaled: base price, discount %, age, income, credit score, loyalty score).
+- **`gender` was removed** from the feature set in the 2026-08-29 dealer-positioning pass and the model retrained. ECOA prohibits considering the sex of an applicant; a live lead-prioritisation score weighted on customer gender is a disparate-treatment risk and has no legitimate predictive role. `age` is kept (standard CRM signal, not a credit decision here) with the risk logged in the changelog.
+- **`financing_type` is deliberately excluded.** It is agreed late in the deal, so it is leakage-adjacent: the model was partly predicting the close from the close. It previously drew a large SHAP attribution and drove a recommendation to "shift financing to Bank Loan", which was an artifact rather than an actionable lever. `predict_deal_probability()` accepts and ignores it, so older callers do not break. The lead form no longer collects it.
+- Since the 2026-08-29 reseed, `test_drive_converted` responds to real drivers (channel, discount vs incentive, credit, payment stress, trade, store effectiveness), mean-normalised to hold the ~62% group close rate. Test accuracy ≈ **0.648** vs the 0.62 base rate; top importances `credit_score` 0.40, `marketing_channel` 0.13, `state` 0.09. Before the reseed the target was independent of every feature and the model was no better than the base rate.
 - 80/20 stratified train/test split. Requires ≥100 rows to train.
-- Persists `scaler.pkl`, `encoders.pkl`, `xgboost_model.pkl`, `feature_names.pkl` to `models/xgboost/{test|real}/` — **trained offline** (via `train_models.py`), loaded from pickle at inference time.
+- Persists `scaler.pkl`, `encoders.pkl`, `xgboost_model.pkl`, `feature_names.pkl` to `models/xgboost/{test|real}/` — **trained offline** (`train_models.py` for test mode; real mode is a manual `train_xgboost_pipeline()` run against the real engine), loaded from pickle at inference time.
+- `predict_deal_probability()` returns `explainer_used` ∈ `{"shap", "heuristic", "none"}` so the UI can label the attribution honestly (see below).
 
 ```mermaid
 flowchart LR
@@ -449,7 +463,7 @@ flowchart LR
     Prob --> Recommend["Rule-based Smart Action Recommendation<br/>(thresholds: ≥0.75 / ≥0.4 / below)"]
 ```
 
-The SHAP path is real per-instance SHAP (`TreeExplainer`) when the `shap` package is importable and succeeds. If it throws for any reason, the UI silently switches to a hard-coded heuristic using only 3 fields — this is a **fallback that looks identical in the UI** but is not actually model-derived. Worth knowing before quoting the "explainability" feature as fully SHAP-backed in all cases.
+The SHAP path is real per-instance SHAP (`TreeExplainer`) when the `shap` package is importable and succeeds. If it throws for any reason, the code falls back to a hard-coded heuristic using only 3 fields — not model-derived. Since 2026-08-29 the return dict carries `explainer_used`, and the Customer Intelligence tab surfaces it as a caption under the driver chart ("Per-lead SHAP attribution" vs "Quick estimate — SHAP unavailable, three fields only"), so the two are no longer indistinguishable in the UI.
 
 ### 8.3 Alternative Vehicle Placement (`ml_models/vehicle_placement.py`)
 
@@ -480,15 +494,23 @@ Run manually or at Docker build time (`Dockerfile` runs it during image build). 
 
 ---
 
-## 9. Sentiment & Geopolitical Risk Pipeline
+## 9. Sentiment & Demand-Signal Pipeline
+
+Framing (repositioned 2026-08-29): this is a **demand advisory for the dealer group**, not a
+geopolitical-risk desk. The question it answers is *what's in the news that will move showroom
+traffic, vehicle cost and financing over the next few weeks, and what should the group do about
+it.* The persisted column `daily_sentiment_summary.geopolitical_risk_score` keeps its legacy
+name (Prophet regressor) but is surfaced in the UI as a **demand-pressure** read. See
+`docs/changelog/2026-08-29-sentiment-analysis-dealer-positioning.md`.
 
 ### 9.1 News ingestion (`sentiment/fetchers/gdelt_fetcher.py`)
 
 - Endpoint: `https://api.gdeltproject.org/api/v2/doc/doc` (GDELT Doc 2.0, free, no key). Uses both `mode=ArtList` (article search) and `mode=TimelineTone` (daily tone series).
-- 6 themed queries (`NA_AUTO_QUERIES`): `na_auto_demand`, `ev_market_na`, `tariff_trade`, `fuel_oil_prices`, `us_macro_economy`, `luxury_suv_na`.
+- 8 themed queries (`NA_AUTO_QUERIES`): `na_auto_demand`, `ev_market_na`, `tariff_trade`, `fuel_oil_prices`, `us_macro_economy`, `luxury_suv_na`, `auto_financing`, `incentives_rebates` (the last two added in the 2026-08-29 pass — financing cost and OEM incentives are direct dealer levers). All national in scope; footprint-aware (group's-states) scoping is a deferred follow-up.
 - **Rate limiting**: client-enforced minimum 6-second gap between requests (GDELT's real limit is ~1 req/5s), serialized process-wide via a `threading.Lock` so concurrent Streamlit sessions can't both slip past the check. On HTTP 429: exponential backoff from 10s, up to 3 retries.
-- `combine_queries=True` (default): issues **one** combined OR'd query instead of 6 separate calls, then re-tags each result to its best-matching theme by keyword overlap — a 6x reduction in request volume.
+- `combine_queries=True` (default): issues **one** combined OR'd query (`COMBINED_QUERY`, kept to ~10 phrases — GDELT rejects an over-long query) instead of one call per theme, then re-tags each result to its best-matching theme by keyword overlap.
 - `one_per_day=True` (default): keeps only the most recent article per `(theme, day)`.
+- **Relevance gate** (`_is_relevant`, added 2026-08-29): a headline is kept only if it hits an auto/retail/finance term and does not look like markets-wire ("short interest", "OTCMKTS") or crime/accident noise. The combined OR-query otherwise drags in a lot of off-topic content.
 - Persistence dedupes by URL (unique constraint + in-memory check) — idempotent inserts.
 
 ### 9.2 Sentiment scoring — LIVE vs MOCK (`sentiment/analyzers/grok_analyzer.py`)
@@ -503,7 +525,7 @@ def is_live_mode() -> bool:
 
 ```mermaid
 flowchart TB
-    Start["User clicks 'Refresh Data'"] --> Fetch["gdelt_fetcher.py"]
+    Start["User clicks 'Refresh news'"] --> Fetch["gdelt_fetcher.py"]
     Fetch -->|"combined OR query, ≥6s between requests"| GDELT[("GDELT Doc 2.0 API")]
     GDELT --> Dedup["Dedupe by URL"] --> Save[("news_articles")]
     Save --> Check{"XAI_API_KEY set?"}
@@ -516,28 +538,30 @@ flowchart TB
     Agg --> Formula["geo_risk = avg_impact_score × (negative_signals / total_signals)"]
     Formula --> Summary[("daily_sentiment_summary")]
     Summary --> Prophet["Prophet use_sentiment=True regressors"]
-    Summary --> Tabs["Geopolitical Risk / Economic Signals tabs"]
+    Summary --> Tabs["Demand Watch tab (headline + signals)"]
 ```
 
-- **LIVE mode**: `openai.OpenAI(api_key=XAI_API_KEY, base_url="https://api.x.ai/v1")` — the `openai` SDK is only used as a generic OpenAI-compatible client pointed at xAI, not OpenAI itself. Model defaults to `grok-3-mini` (overridable via `GROK_MODEL` env var). System prompt instructs a fixed JSON schema per article: `sentiment_score` (−1..1), `impact_score` (0..1), `affected_vehicle_category`, `economic_risk`, `demand_direction`, `estimated_demand_change_pct`, `confidence`, `summary`. If the returned count mismatches the batch, or parsing/the API call fails, that batch **silently falls back to mock scoring**.
-- **MOCK mode**: fully deterministic — `hashlib.md5(title)` seeds a `random.Random`, so the same headline always scores identically. Uses hand-curated word lists for sentiment, impact, category, and risk.
-- **Cost-control detail worth knowing**: `ensure_recent_articles_analyzed()` runs automatically every time the Geopolitical Risk / Economic Signals / AI Insights sub-tabs are opened, but it **always uses mock scoring regardless of `XAI_API_KEY`** — this is deliberate, to avoid firing billed Grok calls just from a tab click. Only the explicit "Refresh Data" button (`run_full_pipeline()`) uses real Grok analysis when the key is set.
+- **LIVE mode**: `openai.OpenAI(api_key=XAI_API_KEY, base_url="https://api.x.ai/v1")` — the `openai` SDK is only used as a generic OpenAI-compatible client pointed at xAI, not OpenAI itself. Model defaults to `grok-3-mini` (overridable via `GROK_MODEL` env var). System prompt (reframed 2026-08-29: *advisor to a 24-rooftop dealer group*, not a "market intelligence analyst") instructs a **fixed** JSON schema per article — do not change it, Prophet + `daily_sentiment_summary` depend on it: `sentiment_score` (−1..1), `impact_score` (0..1), `affected_vehicle_category` (enum now includes `Pickup`, the group's #2 segment), `economic_risk`, `demand_direction`, `estimated_demand_change_pct` (guided to ±6 outside genuine shocks), `confidence`, `summary` (now must name the segment + the desk action). If the returned count mismatches the batch, or parsing/the API call fails, that batch **silently falls back to mock scoring**.
+- **MOCK mode**: fully deterministic — `hashlib.md5(title)` seeds a `random.Random`, so the same headline always scores identically. Two-layer scoring (2026-08-29/31): (1) a **theme-aware directional read** (`_theme_directional_read`) — for fuel-price / financing-cost / tariff / incentive headlines it reads whether the lever moved up or down and maps that to a demand direction + segment using the established mechanism (dearer fuel → SUV/pickup headwind, rate cut → broad tailwind, duty on → import headwind); (2) a **conservative generic keyword lean** for everything else — pruned word lists, an "event not signal" gate (crash/lawsuit/theft → flat), direction only when sentiment *and* impact both clear a bar. Most non-mechanism headlines score `neutral`, and the UI says so rather than inventing movement.
+- **Cost-control detail worth knowing**: `ensure_recent_articles_analyzed()` runs automatically every time the Sentiment Analysis tab is opened, but it **always uses mock scoring regardless of `XAI_API_KEY`** — this is deliberate, to avoid firing billed Grok calls just from a tab click. Only the explicit "Refresh news" button (`run_full_pipeline()`) uses real Grok analysis when the key is set.
 
 ### 9.3 Formulas (`sentiment/signal_processor.py`)
 
 Per day (and per vehicle category, plus an "All" aggregate row):
 - `positive_signals` = count where `sentiment_score > 0.15`; `negative_signals` = count where `< -0.15`; rest = neutral.
 - `avg_sentiment_score`, `avg_impact_score`, `avg_demand_change_pct` = plain (NaN-safe) means.
-- **Geopolitical risk index**: `geo_risk = avg_impact_score × (negative_signals / total_signals)` — impact scaled by the *proportion* of negative-sentiment articles that day, not raw sentiment magnitude.
+- **`geopolitical_risk_score`** (legacy column name; a **demand-pressure** read in the UI): `avg_impact_score × (negative_signals / total_signals)` — impact scaled by the *proportion* of headwind articles that day. Still populated so the Prophet `use_sentiment=True` path has its regressor.
 - `dominant_demand_direction` = plurality vote across the day's signals.
 
-The dashboard's "live" KPI variants (`compute_live_overall_stats`, etc.) recompute these same formulas directly from just-analyzed articles in memory, so the Geopolitical Risk tab updates instantly without waiting for the full `daily_sentiment_summary` table rebuild.
+**`net_demand_signal_pct`** (added 2026-08-29, `_net_demand_signal()`): the group's **sales-mix-weighted** read of `estimated_demand_change_pct` — each segment contributes at its own news-driven change (or the overall read where it has no segment-specific news), and whole-book (`All`) headlines are blended in at face value. `_group_segment_mix()` reads the group's own unit mix from the `sales` table (cached; static fallback SUV 49 / Pickup 23 / Sedan 16 / Luxury 9 / EV 3). This signed number, not `geopolitical_risk_score`, drives the tab's headline indicator.
 
-**Fallback values**: when there's no analyzed data yet, `dashboard/sentiment_analysis.py::_geo_risk_fallback()` generates plausible numbers seeded by `date.today().toordinal()` — stable within a day, varies day to day — instead of showing hard zeros. This is the mechanism behind the recent "Randomize Geopolitical Risk fallback values" commits.
+The dashboard's "live" KPI variants (`compute_live_overall_stats`, etc.) recompute these formulas directly from just-analyzed articles in memory, so the tab updates instantly without waiting for the full `daily_sentiment_summary` table rebuild.
 
-### 9.4 Forecast Comparison (sentiment-enhanced forecasting)
+**Empty state**: when there's no analyzed data, the tab shows an honest "no recent signals — click Refresh" message. (The old `_geo_risk_fallback()`, which fabricated a risk score seeded by `date.today().toordinal()`, was **removed** in the 2026-08-29 pass — a dealer product must not invent a number.)
 
-`_render_forecast_comparison()` trains **two independent Prophet models**: `train_prophet_model(..., use_sentiment=False)` and `train_prophet_model(..., use_sentiment=True)`, then overlays both `yhat` lines + confidence bands and diffs RMSE/MAE/accuracy. There is no separate blending/ensemble logic — "enhancement" simply means Prophet gets two extra regressor columns (`avg_sentiment_score`, `geopolitical_risk_score`) and fits its own coefficients for them.
+### 9.4 "Does news improve our forecast?" (`_render_forecast_verdict`)
+
+The tab's second sub-tab trains **two independent Prophet models** — `train_prophet_model(..., use_sentiment=False)` and `use_sentiment=True` — and overlays them on one **monthly** chart (actuals · standard forecast · news-aware forecast, resampled from Prophet's daily output to match the Demand Forecasting tab) with a "forecast starts" marker; the reader compares the two forecast lines directly. No RMSE/MAE/accuracy grid, no "active regressors" badges, and (after a 2026-08-31 copy trim) no verdict sentence or RMSE caption either. "News-aware" just means Prophet gets the two extra regressor columns (`avg_sentiment_score`, `geopolitical_risk_score`) and fits its own coefficients; a near-constant signal barely moves the line.
 
 ---
 
@@ -545,13 +569,13 @@ The dashboard's "live" KPI variants (`compute_live_overall_stats`, etc.) recompu
 
 | Module | Queries / models used | Core logic |
 |---|---|---|
-| `overview.py` | `get_executive_kpis`, `get_monthly_revenue_trend`, `get_sales_by_category`, `get_sales_by_fuel_type`, `get_sales_by_region` | KPI cards 3–4 swap content by data mode (Real: US Fed Funds Rate + top brand share; Test: avg discount + lead-close velocity) |
-| `forecasting.py` | `forecasting.prophet_forecasting` | See §7 |
-| `comparison.py` | `get_yoy_comparison`, plus Import Tariff Exposure queries (`get_brand_origin_yearly_share`, `get_price_competitiveness`, `get_ev_segment_by_brand_year`, `get_market_share_shift`) | YoY overlap, category/region growth, Import Tariff Exposure section — Domestic vs. Import brands under the 2025 Section 232 tariffs (brand filter deliberately ignored, 2027 projection via `np.polyfit`) |
-| `regional.py` | `get_dealer_performance_leaderboard` | Plotly Mapbox bubble map (lat/lon, size=units, color=revenue) with scatter fallback if coordinates missing; leaderboard table, mode-dependent columns |
-| `customers.py` | `get_customer_segments_data`, `ml_models.customer_segmentation`, `ml_models.xgboost_model` | Tab 1: segmentation charts. Tab 2: live lead form → `predict_deal_probability()` → gauge + SHAP/heuristic bars + rule-based recommendation |
+| `overview.py` | `get_executive_kpis`, `get_target_attainment`, `get_monthly_revenue_trend`, `get_sales_by_category`, `get_sales_by_fuel_type`, `get_sales_by_store`, `get_top_models` | Dealer-group framing. KPI row: New Units · Total Revenue · Target Attainment (TTM units vs sum of stores' `annual_target_units`) · Finance & Lease Penetration (non-cash share). Charts: revenue/unit trend, category & fuel mix, **Sales by Store**, Top-Selling Models. No `NATIONAL_SCALE_FACTOR`, no market-share / worst-region / Fed-rate KPI. See `docs/changelog/2026-08-27-executive-overview-dealer-positioning.md` |
+| `forecasting.py` | `forecasting.prophet_forecasting` | Dealer-facing. Forecasts the group's own booked units/revenue, monthly grain + per-brand selector. 4 what-if levers (pump price, auto-loan APR, incentive spend, inventory days'-supply) via `GROUP_DEMAND_RESPONSE`. One chart: booked history → Expected line with a Conservative/Optimistic fan (the confidence band, honestly labelled), direct-labelled with window totals, headline + vs-last-year in-chart. Window snaps to whole calendar months. Shared helpers from `utils/helpers.py`. See §7 and `docs/changelog/2026-08-27-demand-forecasting-dealer-positioning.md` |
+| `comparison.py` | `get_period_trend`, `get_tariff_exposure`, `get_tariff_cost_monthly`, `get_price_gap_by_segment`, `get_franchise_footprint`; **`analytics/yoy_attribution.py`** (`summary`, `build_bridge`, `driver_split`, `movement_sentences`) | Dealer-facing (repositioned 2026-08-28; §1 attribution layer 2026-08-30). **§1 "How we're tracking vs last year":** Units/Revenue toggle; **trailing-12-months vs the prior 12** (anchored to the sidebar *end* date — the *start* date does not affect §1). KPIs: total YoY + **Controllable YoY** (same-store, selling-day-adjusted; revenue also ex-`tariff_cost_usd` and ex-price/mix). A **YoY bridge** waterfall (Prior → selling days → rooftop count → [tariff → price/mix] → comp volume → Last). "What moved it" = a **shift-share split** by store / franchise / segment (each entity's change vs what the group's same-store rate would give; shows the entity-specific residual), with **significance** flags (z-score of the entity's YoY move vs its own history) and generated plain-language sentences. **§2 "Tariff Exposure by Franchise":** the group's own Section 232 cost (`Sale.tariff_cost_usd`) on its import rooftops — KPI row, monthly tariff-$ bar with the April-2025 step, and avg price-with-duty-slice vs the domestic alternative for the volume cross-shop segments (≥150 units both sides). No share-of-market, no 2027 projection. Shared helpers from `utils/helpers.py`. See `docs/changelog/2026-08-28-comparative-analytics-dealer-positioning.md` and `docs/changelog/2026-08-30-comparative-analytics-yoy-attribution.md` |
+| `regional.py` | `get_dealer_performance_leaderboard` | Dealer-facing (repositioned 2026-08-29, "Regional Intelligence" → **Store Performance**). Every rooftop (24), not a top-N leaderboard. `px.scatter_map` (MapLibre, `carto-darkmatter`) auto-fit to the group's footprint — size = units this window, colour = pace vs the store's own `annual_target_units` (RdYlGn, midpoint 95%). Sorted units bar with the same colour. 24-row sortable scorecard: units, revenue, YoY (trailing-12 vs prior-12), pace vs target, est. gross (benchmark front-end + F&I gross/unit × volume), close rate (`test_drive_converted`), avg days to close (`lead_to_close_days`), top segment. Two-sided strongest/weakest callout. Synthetic `Dealer.tier` / `performance_score` dropped from the query (still on the model). Shared helpers from `utils/helpers.py`. See `docs/changelog/2026-08-29-store-performance-dealer-positioning.md` |
+| `customers.py` | `get_customer_book`, `get_repeat_contribution`, `get_customer_segments_data`, `get_dealer_directory`, `ml_models.customer_segmentation`, `ml_models.xgboost_model` | Dealer-facing (repositioned 2026-08-29). **The group's own CRM**, not "the market". `nationality` removed everywhere (fair-lending). **Tab 1 "Retention & Actions":** headline row (buyers on file / repeat rate / repeat share of sales / flagged for outreach); **retention action queue** (`_build_action_queue` — one row per customer to contact now, reason ∈ {lease maturing, overdue for next vehicle, lapsed high-value, churn-risk spike}, store, play, identified gross, store/reason filters, CSV export); **"where the book stands"** (`_book_state` — every lifetime buyer into Active / In cycle / Going quiet / Likely lost bands by recency, with lifetime revenue per band); segment-detail expander (the per-segment value panel). Equity-mining reason deferred — see `docs/next-pass-customer-intelligence-equity-mining.md`. **Tab 2 "Lead Close Score":** store selector (24 rooftops → sets `state`) → lead form (no `gender`) → `predict_deal_probability()` → gauge with zone band + signed SHAP tornado + SHAP/heuristic badge + store-and-cadence recommendation. Shared helpers from `utils/helpers.py`. See `docs/changelog/2026-08-29-customer-intelligence-dealer-positioning.md` |
 | `inventory.py` | `get_inventory_snapshot`, `get_inventory_trend`, `get_aging_buckets`, `get_lease_return_pipeline`, `get_lease_maturity_recapture`, `get_trade_in_activity`, `get_trade_replacement_flow`, `get_vehicle_catalog`, `get_substitution_history`, `get_dealer_directory`, `ml_models.vehicle_placement` | Four sub-tabs — see §8.3 and §10.1. All present-day figures route through `get_inventory_snapshot()`, which reduces the month-end snapshot table to the latest row per (dealer, vehicle) before aggregating |
-| `sentiment_analysis.py` | `sentiment.signal_processor`, `sentiment.analyzers.grok_analyzer` | See §9. 4 active sub-tabs; a 5th ("Recent News") is written but commented out of the tab list |
+| `sentiment_analysis.py` | `sentiment.signal_processor`, `sentiment.analyzers.grok_analyzer`, `forecasting.prophet_forecasting` | Dealer-facing (repositioned 2026-08-29). A **demand advisory**, not a geopolitical-risk dashboard — see §9. Headline: signed **"expected demand impact, next ~30 days"** (`net_demand_signal_pct`, sales-mix weighted) + a 3-zone headwind/flat/tailwind gauge, then an always-visible deterministic **Bottom line** conclusion (`_bottom_line()` — direction, leading driver, exposed segments, the week's call). Two sub-tabs: **Demand Watch** (driver bar by news theme, mix-weighted by-segment bar, scannable signal list where each card carries source · date · affected segment · the group's exposure · a desk action, plus a "this week's read" briefing) and **Does news improve our forecast?** (§9.4). Honest empty state, no `_geo_risk_fallback`. Mock-vs-live scorer status is shown in the post-refresh pipeline-status line (the header badge for it was removed on request, with the header caption and most section sub-captions). Shared helpers from `utils/helpers.py`; `get_color_palette` / local layout dicts dropped. Dead `_render_sentiment_intelligence` / `_render_recent_news` removed. See `docs/changelog/2026-08-29-sentiment-analysis-dealer-positioning.md` |
 | `ai_insights.py` (dead) | — | Scenario simulator (gasoline price shift, EV incentive checkbox, supply-chain constraint selector, marketing spend multiplier) — fully written, not wired into `app.py` |
 | `upload_data.py` (dead) | — | CSV drag-and-drop, schema auto-detection, validation checklist — fully written, not wired into `app.py` |
 | `metrics.py` (dead) | — | XGBoost hyperparameters + feature importances viewer, reads pickles directly — fully written, not wired into `app.py` |
@@ -622,13 +646,16 @@ These aren't bugs blocking the demo, but a new engineer should know about them b
 1. **Caching is applied in Inventory Intelligence only.** That module wraps every loader in `@st.cache_data(ttl=600)` (see §10.1). Everywhere else, Prophet still retrains twice per interaction on the Forecasting page and every DB query re-runs on every rerun. Extending the same pattern to the other modules is the highest-leverage remaining performance fix.
 2. **Real-mode ML artifacts have no training script.** `train_models.py` only seeds/trains test mode. Retraining on updated real data currently requires manual intervention.
 3. **Three dashboard modules are dead code** (`ai_insights.py`, `upload_data.py`, `metrics.py`) — fully written but not routed in `app.py`. Confirm with product whether these should be re-enabled, finished, or deleted.
-4. **SHAP has a silent heuristic fallback.** If the `shap` import/computation fails, `xgboost_model.py` falls back to a 3-feature hard-coded heuristic that renders identically to real SHAP output in the UI — there's no visible indicator distinguishing the two. Worth surfacing a debug flag or log line if this matters for demo integrity.
+4. **SHAP heuristic fallback — now surfaced.** If the `shap` import/computation fails, `xgboost_model.py` falls back to a 3-feature hard-coded heuristic. Since 2026-08-29 `predict_deal_probability()` returns `explainer_used` and the Customer Intelligence tab shows which path ran as a caption, so the two are no longer indistinguishable. Other callers of the function (if any are added) should read the flag too.
 5. **The "Market Driver Impact" chart movement is dominated by a static elasticity table** (`DRIVER_SENSITIVITY`), not purely by Prophet's fitted regressor coefficients. Fine for a compelling demo; be precise about this if asked "is this a real ML prediction" in a technical review.
 6. **`SERPER_API_KEY` is unused** — likely safe to remove from `.env.example`/docs unless there's a planned integration.
 7. **Real/Test mode switch is UI-disabled** but the full plumbing exists end-to-end — trivial to re-enable if a test-mode demo is ever needed again.
 8. **`real_estate_demand.db`** at repo root is an unrelated/legacy file not referenced by any code — safe to delete after confirming with the team.
 9. **Stale model pickles at `models/xgboost/*.pkl` (repo root of that folder).** `_model_dir()` resolves to `models/xgboost/{test|real}/`, so the four pickles sitting directly in `models/xgboost/` are dead. They are also pre-migration artifacts — their `feature_names.pkl` still lists `emirate` and `estimated_monthly_income_aed` from the UAE-era schema. Safe to delete.
 10. **`use_container_width` is deprecated** across every dashboard module. Streamlit's notice says it is removed after 2025-12-31; it still functions on 1.60.0 but emits a warning on every chart. Migrating to `width='stretch'` is a mechanical repo-wide change.
+11. **OEM / market-analyst content in Comparative Analytics is resolved** (2026-08-28 pass). The tab no longer computes "% of the US market", a national EV-segment share, or an `np.polyfit` 2027 share projection from the group's own book. `get_brand_origin_yearly_share` / `get_ev_segment_by_brand_year` / `get_market_share_shift` are deprecated-but-defined (docstring-flagged) in case another module has a legitimate use — do not re-wire them into a dealer view. `get_price_competitiveness` is unused by the tab now but kept (generic brand/category price aggregate).
+12. **`GROUP_DEMAND_RESPONSE` / "Market Driver Impact"** — item 5 above was written against the pre-2026-08-27 Forecasting tab (`DRIVER_SENSITIVITY`). That tab now applies a single documented response table; the caveat ("calibrated assumption, not a per-group regression") still stands but the double-counting is gone.
+13. **OEM / geopolitical-analyst framing in Sentiment Analysis is resolved** (2026-08-29 pass) — reframed as a demand advisory (§9). Residual caveats: (a) **the MOCK keyword scorer is conservative, not smart** — it calls "neutral" on anything ambiguous (including context it can't parse, like "Fed *cuts* rates"), so a quiet day reads honestly as "no clear signal"; LIVE Grok is the real fix, and its status shows in the post-refresh pipeline-status line. (b) **GDELT source quality** — `_is_relevant()` filters markets-wire / crime noise, but listicle/opinion content can still pass; a domain allowlist is the stronger follow-up. (c) `run_full_pipeline()` reports `mode: "mock (Grok call failed - check XAI_API_KEY)"` when a set key is rejected, so a bad `.env` key does not silently masquerade as live. `ARCHITECTURE_OVERVIEW.md` §8 still carries the "Geopolitical Risk" framing — folded into the deferred repo-wide positioning-copy sweep.
 
 ---
 

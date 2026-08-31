@@ -1,5 +1,5 @@
 """
-GDELT Doc v2 API fetcher for North American automobile market intelligence.
+GDELT Doc v2 API fetcher for demand-relevant US auto news (dealer-group demand advisory).
 
 GDELT (Global Database of Events, Language, and Tone) is a free, real-time
 global news database with no API key required.
@@ -117,20 +117,42 @@ NA_AUTO_QUERIES: List[Dict] = [
     },
     {
         "name": "luxury_suv_na",
-        "label": "Luxury & SUV US",
-        "query": '("luxury SUV" OR "pickup truck" OR "luxury car") sourcecountry:US',
-        "keywords": ["luxury", "truck", "pickup", "mercedes"],
+        "label": "Luxury, SUV & Pickup US",
+        "query": '("luxury SUV" OR "pickup truck" OR "luxury car" OR "full-size SUV") sourcecountry:US',
+        "keywords": ["luxury", "truck", "pickup", "suv"],
         "theme": "luxury_suv",
-        "affected_category": "Luxury",
+        # Query spans luxury AND pickup — let the analyzer classify per headline
+        # rather than force every hit to "Luxury".
+        "affected_category": "All",
+    },
+    {
+        "name": "auto_financing",
+        "label": "Auto Loans & Financing",
+        "query": '("auto loan rates" OR "car loan" OR "auto financing" OR "subprime auto") sourcecountry:US',
+        "keywords": ["loan", "financing", "apr", "rate", "credit", "subprime"],
+        "theme": "auto_financing",
+        "affected_category": "All",
+    },
+    {
+        "name": "incentives_rebates",
+        "label": "Incentives & Rebates",
+        "query": '("auto incentives" OR "car rebates" OR "0% financing" OR "lease deals") sourcecountry:US',
+        "keywords": ["incentive", "incentives", "rebate", "rebates", "lease", "deals"],
+        "theme": "incentives_rebates",
+        "affected_category": "All",
     },
 ]
 
 # Flat OR-list covering every theme above, used by fetch_all_themes(combine_queries=True).
 # Kept flat (no nested parens) because GDELT rejects nested/AND-grouped parentheses.
+# GDELT rejects an over-long Doc-API query ("Your query was too short or too
+# long"), so this stays close to the original ~10-phrase length. "auto loan"
+# and "car incentives" cover the two financing/incentive themes; per-article
+# bucketing back to a theme is by keyword overlap (see _infer_theme).
 COMBINED_QUERY = (
     '("car sales" OR "auto sales" OR dealership OR "electric vehicle" '
-    'OR "auto tariff" OR "gas prices" OR inflation OR "luxury SUV" '
-    'OR "pickup truck") sourcecountry:US'
+    'OR "auto tariff" OR "gas prices" OR "auto loan" OR "car incentives" '
+    'OR "luxury SUV" OR "pickup truck") sourcecountry:US'
 )
 
 
@@ -290,6 +312,52 @@ def _timespan_days(timespan: str) -> int:
         return 30
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Relevance gate. GDELT's combined OR-query drags in a lot of noise that is not
+# US retail-vehicle-demand news — micro-cap "short interest" filings, generic
+# personal-finance listicles, local crime/accident reports that merely mention
+# a "truck". A headline must hit at least one demand-relevant term AND not look
+# like pure off-topic noise to be kept and scored.
+# ─────────────────────────────────────────────────────────────────────────────
+_RELEVANCE_TERMS = (
+    "car", "cars", "auto", "autos", "vehicle", "vehicles", "truck", "suv", "sedan",
+    "pickup", "ev ", "electric vehicle", "dealer", "dealership", "showroom",
+    "new-vehicle", "new vehicle", "used car", "car sales", "auto sales", "car buyer",
+    "car prices", "auto loan", "car loan", "auto financing", "car payment", "lease",
+    "tariff", "incentive", "rebate", "gas price", "gasoline price", "fuel price",
+    "interest rate", "fed ", "federal reserve", "inflation", "consumer confidence",
+    "toyota", "honda", "ford", "chevrolet", "chevy", "nissan", "hyundai", "kia",
+    "tesla", "jeep", "ram ", "gmc", "subaru", "lexus", "bmw", "mercedes", "volkswagen",
+)
+_NOISE_TERMS = (
+    "short interest", "otcmkts", "nasdaq:", "nyse:", "price target", "hedge fund",
+    "13f", "sec filing", "earnings per share", "dividend", "market cap",
+    "tsla", "stock forecast", "should you buy", "buy the dip", "motley fool",
+    "room to run", "stock in 20", "shares of", "analyst rating", "moving average",
+    "dead", "killed", "fatal", "collision", "crash on", "arrested", "charged with",
+    "obituary", "sentenced", "pleads guilty", "lawsuit against", "shooting",
+    "horoscope", "recipe", "celebrity", "box office",
+    "advantages of", "disadvantages of", "reasons to", "things to know",
+    "best cars", "worst cars", "ranked", "vs.",
+)
+
+
+def _is_relevant(article: Dict) -> bool:
+    t = (article.get("title") or "").lower()
+    if not t:
+        return False
+    if any(n in t for n in _NOISE_TERMS):
+        return False
+    return any(term in t for term in _RELEVANCE_TERMS)
+
+
+def _title_key(article: Dict) -> str:
+    """Normalised title for near-duplicate detection — GDELT returns the same
+    wire story under many domains/URLs."""
+    t = (article.get("title") or "").lower()
+    return "".join(ch for ch in t if ch.isalnum() or ch == " ").split(" - ")[0].strip()[:70]
+
+
 def _infer_theme(article: Dict) -> Dict:
     """
     Best-effort mapping of a combined-query article back to one of our
@@ -357,6 +425,7 @@ def fetch_all_themes(
     """
     seen_urls: set = set()
     seen_days: set = set()
+    seen_titles: set = set()
     all_articles: List[Dict] = []
 
     if combine_queries:
@@ -416,9 +485,16 @@ def fetch_all_themes(
                 max_records=min(max_records_per_query * len(NA_AUTO_QUERIES), 250),
             )
 
+        dropped_noise = 0
         for article in raw:
             url = (article.get("url") or "").strip()
             if not url or url in seen_urls:
+                continue
+            if not _is_relevant(article):
+                dropped_noise += 1
+                continue
+            tkey = _title_key(article)
+            if tkey and tkey in seen_titles:
                 continue
 
             q = _infer_theme(article)
@@ -430,6 +506,8 @@ def fetch_all_themes(
                 seen_days.add(day_key)
 
             seen_urls.add(url)
+            if tkey:
+                seen_titles.add(tkey)
             article["_theme"] = q["theme"]
             article["_query_name"] = q["name"]
             article["_query_label"] = q["label"]
@@ -437,8 +515,8 @@ def fetch_all_themes(
             all_articles.append(article)
 
         logger.info(
-            "GDELT | combined query | fetched=%d | unique=%d",
-            len(raw), len(all_articles),
+            "GDELT | combined query | fetched=%d | off-topic dropped=%d | kept=%d",
+            len(raw), dropped_noise, len(all_articles),
         )
         return all_articles
 
@@ -456,6 +534,8 @@ def fetch_all_themes(
         for article in raw:
             url = (article.get("url") or "").strip()
             if not url or url in seen_urls:
+                continue
+            if not _is_relevant(article):
                 continue
 
             if one_per_day:

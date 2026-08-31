@@ -42,33 +42,34 @@ _BATCH_SIZE: int = 10  # articles per Grok API call
 # Grok system prompt
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You are a financial and automotive market intelligence analyst specializing in the North American (US) automobile market.
+_SYSTEM_PROMPT = """You advise a US automobile dealer group — 24 rooftops across California, Texas, Florida, New York, Illinois, Georgia, Ohio and Michigan. About 56% of the group's units are import franchises (Toyota, Honda, Hyundai, Kia, Subaru, Nissan, VW, BMW, Mercedes-Benz, Lexus); the rest are domestic (Chevrolet, Ford, Ram, GMC, Jeep, Tesla). Segment mix is roughly SUV 49%, Pickup 23%, Sedan 16%, Luxury 9%.
 
-For each news article title provided, extract structured demand forecasting signals relevant to the US auto market.
+For each news headline, score its effect on RETAIL new-vehicle demand at the group's showrooms and on day-to-day dealership operations (what to stock, how to price, whether to pull forward or hold incentives, and financing / F&I talk-tracks).
 
 Return a JSON object with this exact schema:
 {
   "signals": [
     {
       "article_index": <integer, 0-based index matching the input list>,
-      "sentiment_score": <float -1.0 to 1.0, where -1=very negative, 0=neutral, 1=very positive>,
-      "impact_score": <float 0.0 to 1.0, how much this news could impact US auto demand>,
-      "affected_vehicle_category": <one of: "EV", "Luxury", "SUV", "Sedan", "Commercial", "All">,
+      "sentiment_score": <float -1.0 to 1.0, where -1=very negative for retail demand, 0=neutral, 1=very positive>,
+      "impact_score": <float 0.0 to 1.0, how much this news could move the group's showroom demand over the next ~30 days>,
+      "affected_vehicle_category": <one of: "EV", "Luxury", "SUV", "Sedan", "Pickup", "Commercial", "All">,
       "economic_risk": <one of: "low", "medium", "high">,
       "demand_direction": <one of: "up", "down", "neutral">,
-      "estimated_demand_change_pct": <float, estimated % change in demand, e.g. 3.5 or -2.1>,
+      "estimated_demand_change_pct": <float, estimated % change in the group's retail demand, typically between -6 and +6; reserve larger values for genuine shocks>,
       "confidence": <float 0.0 to 1.0, your confidence in this analysis>,
-      "summary": <string, one concise sentence explaining the demand impact>
+      "summary": <string, one sentence — name the affected segment and the dealership action it implies>
     }
   ]
 }
 
 Rules:
-- Consider context: US auto tariffs and Fed rate policy strongly affect financing-led demand; EV adoption growth has slowed since the federal EV tax credit expired in Oct 2025; trucks and SUVs remain the dominant segments.
-- Import tariffs (Section 232) raise costs for Japanese/Korean/European brands more than domestic (Big 3 + Tesla) brands → mixed impact by brand origin.
-- EV policy/incentive news → positive for EV category when incentives expand, negative when they are cut.
-- Gas price drops → positive for gasoline/truck demand, neutral for EV.
-- Economic growth / Fed rate cuts → positive for luxury, SUV, and financed purchases.
+- Financing cost is the strongest single lever: a higher auto-loan APR or Fed rate raises monthly payments and cuts financed demand within weeks (~-3% units per +1 point of APR); rate cuts help luxury, SUV and financed purchases.
+- Pump price: a higher gas price shifts mix away from SUV/Pickup toward Sedan (~-4% truck/SUV per +$1/gal) with a smaller drag on total volume; a gas price drop does the reverse.
+- Section 232 import tariffs raise vehicle cost for the group's import rooftops much more than its domestic ones (~+$5,000+ per imported unit vs ~+$1,800 domestic) — treat tariff news mainly as a cost / margin / pricing signal with a modest demand tilt against import segments.
+- OEM incentive / rebate / lease-deal news → supports demand when programs expand, drags when they are cut (~+2% per +1 point of incentive spend).
+- EV: adoption growth slowed after the federal EV tax credit expired Oct 2025; state rebates and charging buildout are the remaining tailwinds.
+- Consumer-sentiment / confidence news is a leading, low-magnitude signal (cap around ±2%).
 - Return exactly one signal per input article in the same order.
 - Only return valid JSON, nothing else."""
 
@@ -76,45 +77,108 @@ Rules:
 # Mock mode: keyword-based signal generator
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Deliberately conservative — tokens that are ambiguous in a headline ("rally
+# allies" vs "stocks rally", "interest rate", "new bill", "record deaths") are
+# left out. The keyword scorer only leans when the wording is unambiguous.
 _POSITIVE_WORDS = {
-    "rise", "rose", "risen", "growth", "grew", "grow", "surge", "surged", "boost",
-    "record", "strong", "strength", "high", "positive", "launch", "new", "demand",
-    "popular", "expand", "investment", "recovery", "increase", "improve", "gain",
-    "profit", "optimistic", "confident", "rally", "rebounded", "upgrade", "interest",
-    "sales", "double", "triple", "peak", "exceed", "outperform", "accelerate",
+    "rose", "risen", "growth", "grew", "surge", "surged", "boost", "boosted",
+    "strong", "strength", "rebound", "rebounded", "recovery", "improve", "improved",
+    "gains", "optimistic", "upbeat", "affordable", "cheaper", "discount", "incentives",
+    "rebate", "rebates", "0%", "outperform", "accelerating",
 }
 
+# "cut" is left out on purpose — "rate cut" is good for auto demand, "job cuts"
+# is bad; the token alone tells us nothing.
 _NEGATIVE_WORDS = {
-    "fall", "fell", "fallen", "decline", "declined", "drop", "dropped", "weak",
-    "weakness", "low", "cut", "concern", "risk", "crisis", "conflict", "sanction",
-    "slow", "slowdown", "shortage", "recession", "inflation", "volatile", "volatility",
-    "uncertainty", "war", "attack", "disruption", "protest", "loss", "crash",
-    "deteriorate", "slump", "shrink", "contraction", "layoff", "bankrupt",
+    "falls", "fell", "declines", "declined", "slump", "slumped", "weak", "weakness",
+    "concern", "concerns", "crisis", "recession", "downturn", "shortage",
+    "unaffordable", "pricey", "expensive", "hike", "hikes", "surcharge",
+    "slowdown", "slowing", "plunge", "plunged", "layoffs", "bankruptcy",
+    "delinquencies", "repossessions", "pullback",
 }
 
 _HIGH_IMPACT_WORDS = {
-    "opec", "oil", "war", "sanctions", "sanction", "regulation", "policy",
-    "crisis", "emergency", "historic", "government", "ban", "tariff", "embargo",
+    "tariff", "interest rate", "rate cut", "rate hike", "apr", "fed", "federal reserve",
+    "incentive", "incentives", "rebate", "financing", "recall", "strike", "gas price",
+    "gasoline", "affordability", "auto loan", "policy", "ban", "crisis",
 }
 
 _MEDIUM_IMPACT_WORDS = {
-    "concern", "uncertainty", "risk", "slowdown", "inflation", "interest rate",
-    "gdp", "economy", "market", "trade",
+    "concern", "uncertainty", "risk", "slowdown", "inflation", "economy",
+    "demand", "inventory", "prices", "trade", "consumer", "confidence", "lease",
 }
 
 _CATEGORY_KEYWORDS = {
-    "EV":         {"electric", "ev", "tesla", "byd", "charging", "battery", "hybrid", "zero-emission"},
-    "Luxury":     {"luxury", "mercedes", "bmw", "porsche", "lexus", "rolls", "ferrari", "lamborghini", "premium", "audi"},
-    "SUV":        {"suv", "4x4", "land rover", "range rover", "jeep", "pickup", "off-road", "crossover"},
-    "Sedan":      {"sedan", "compact", "hatchback", "saloon"},
-    "Commercial": {"truck", "van", "commercial", "fleet", "cargo", "logistics"},
+    "EV":         {"electric", "ev", "tesla", "charging", "battery", "hybrid", "zero-emission", "plug-in"},
+    "Luxury":     {"luxury", "mercedes", "bmw", "porsche", "lexus", "premium", "audi", "cadillac"},
+    "Pickup":     {"pickup", "truck", "f-150", "silverado", "ram 1500", "sierra", "full-size"},
+    "SUV":        {"suv", "4x4", "crossover", "off-road", "jeep", "grand cherokee"},
+    "Sedan":      {"sedan", "compact car", "hatchback", "camry", "civic", "corolla"},
+    "Commercial": {"van", "commercial", "fleet", "cargo", "logistics"},
 }
 
 _HIGH_RISK_WORDS  = {"war", "conflict", "sanction", "crisis", "recession", "crash", "emergency", "attack"}
 _MED_RISK_WORDS   = {"concern", "uncertainty", "volatility", "slowdown", "risk", "tension", "threat"}
 
+# Headlines that are events, not demand signals — a fatal crash that mentions a
+# "truck" is not a truck-demand story. Force these to a neutral, low-impact read
+# rather than letting a stray positive/negative keyword set a direction.
+_NON_SIGNAL_WORDS = {
+    "dead", "killed", "fatal", "collision", "crash", "injured", "wreck",
+    "arrested", "charged", "sentenced", "lawsuit", "stolen", "theft", "fire",
+    "obituary", "died", "death",
+}
 
-def _mock_signal_for_title(title: str, article_index: int) -> Dict:
+# "the number went up" / "the number went down" — used only inside the
+# theme-aware read below, where the direction of a price/rate/tariff move has a
+# known effect on retail demand.
+_RISE_WORDS = {
+    "soar", "soared", "surge", "surged", "surging", "jump", "jumps", "jumped",
+    "spike", "spiked", "spiking", "climb", "climbs", "climbing", "climbed",
+    "rise", "rises", "rising", "rose", "higher", "elevated", "hike", "hikes",
+    "hiked", "increase", "increased", "increases", "record", "up", "raise", "raised",
+}
+_FALL_WORDS = {
+    "fall", "falls", "falling", "fell", "drop", "drops", "dropped", "plunge",
+    "plunged", "tumble", "tumbled", "slide", "slid", "ease", "eased", "easing",
+    "lower", "lowered", "cheaper", "decline", "declined", "declines", "relief",
+    "cool", "cools", "cooled", "cooling", "down", "cut", "cuts", "slashed", "drops",
+}
+
+
+def _theme_directional_read(theme, tl: str, words: set):
+    """
+    For themes whose demand mechanism is well established (fuel price, financing
+    cost, tariffs, incentives), read whether the headline is about that lever
+    moving up or down and translate it to a demand direction + affected segment.
+    Returns (direction, category) or None to fall back to the generic path.
+    """
+    rise, fall = bool(words & _RISE_WORDS), bool(words & _FALL_WORDS)
+    if rise == fall:  # neither, or ambiguous (both) → no call
+        return None
+
+    if theme == "fuel_oil_prices" and any(k in tl for k in ("gas", "fuel", "oil", "pump", "gasoline", "diesel")):
+        seg = "Pickup" if any(k in tl for k in ("truck", "pickup", "f-150", "silverado", "ram")) else "SUV"
+        return ("down", seg) if rise else ("up", seg)   # dearer fuel = truck/SUV headwind
+
+    if theme in ("auto_financing", "us_macro_economy") and any(k in tl for k in ("rate", "apr", "loan", "financ", "fed", "borrow", "mortgage")):
+        return ("down", "All") if rise else ("up", "All")   # dearer credit = demand headwind
+
+    if theme == "tariff_trade" and any(k in tl for k in ("tariff", "duty", "duties", "import", "232")):
+        relief = fall or any(k in tl for k in ("refund", "exempt", "pause", "remove", "repeal", "roll back", "rollback", "relief"))
+        return ("up", "All") if relief else ("down", "All")   # duty on = cost headwind on imports
+
+    if theme == "incentives_rebates":
+        expand = any(k in tl for k in ("expand", "boost", "return", "0%", "zero percent", "add")) or (rise and any(k in tl for k in ("incentive", "rebate", "deal")))
+        cut = fall or any(k in tl for k in ("end", "reduce", "pull", "expire", "scale back"))
+        if expand and not cut:
+            return ("up", "All")
+        if cut and not expand:
+            return ("down", "All")
+    return None
+
+
+def _mock_signal_for_title(title: str, article_index: int, theme: Optional[str] = None) -> Dict:
     """
     Generate a plausible deterministic signal from article title keywords.
     Uses a title-seeded RNG so the same title always produces the same output.
@@ -126,28 +190,38 @@ def _mock_signal_for_title(title: str, article_index: int) -> Dict:
     seed = int(hashlib.md5(title.encode()).hexdigest(), 16) % (2 ** 32)
     rng = random.Random(seed)
 
-    # Sentiment score: count positive vs negative keyword hits
+    # An "event, not a signal" headline (fatal crash, lawsuit, theft) gets a
+    # flat, low-impact read — the keyword scorer has no business calling a
+    # direction on it.
+    non_signal = bool(words & _NON_SIGNAL_WORDS)
+
+    # Sentiment score: count positive vs negative keyword hits. Default is a
+    # true 0 (neutral) — the keyword heuristic is unreliable on a bare
+    # headline, so it should not lean unless the words clearly do.
     pos_hits = len(words & _POSITIVE_WORDS)
     neg_hits = len(words & _NEGATIVE_WORDS)
     total_hits = pos_hits + neg_hits
-    if total_hits == 0:
-        base_sentiment = rng.uniform(-0.1, 0.2)          # slight positive bias for neutral news
+    if total_hits == 0 or non_signal:
+        base_sentiment = 0.0
     else:
         base_sentiment = (pos_hits - neg_hits) / total_hits
-    sentiment_score = round(max(-1.0, min(1.0, base_sentiment + rng.uniform(-0.1, 0.1))), 3)
+    sentiment_score = round(max(-1.0, min(1.0, base_sentiment + rng.uniform(-0.05, 0.05))), 3)
 
     # Impact score
-    if words & _HIGH_IMPACT_WORDS or any(w in title_lower for w in _HIGH_IMPACT_WORDS):
-        impact_score = round(rng.uniform(0.55, 0.90), 3)
+    if non_signal:
+        impact_score = round(rng.uniform(0.05, 0.20), 3)
+    elif words & _HIGH_IMPACT_WORDS or any(w in title_lower for w in _HIGH_IMPACT_WORDS):
+        impact_score = round(rng.uniform(0.50, 0.85), 3)
     elif words & _MEDIUM_IMPACT_WORDS:
-        impact_score = round(rng.uniform(0.30, 0.60), 3)
+        impact_score = round(rng.uniform(0.25, 0.55), 3)
     else:
-        impact_score = round(rng.uniform(0.10, 0.40), 3)
+        impact_score = round(rng.uniform(0.08, 0.30), 3)
 
-    # Affected vehicle category
+    # Affected vehicle category. Single-word keywords must match a whole token
+    # (so "ev" doesn't fire on "elEVated"); multi-word keywords match as a phrase.
     affected_category = "All"
     for cat, kw_set in _CATEGORY_KEYWORDS.items():
-        if words & kw_set or any(k in title_lower for k in kw_set):
+        if (words & kw_set) or any(" " in k and k in title_lower for k in kw_set):
             affected_category = cat
             break
 
@@ -159,22 +233,45 @@ def _mock_signal_for_title(title: str, article_index: int) -> Dict:
     else:
         economic_risk = "low"
 
-    # Demand direction
-    if sentiment_score > 0.15:
+    # Demand direction.
+    #  1. Theme-aware read first: for fuel / financing / tariff / incentive
+    #     headlines the demand mechanism is known, so the direction of the move
+    #     (prices soar / rates cut / tariff refunded) maps straight to a demand
+    #     direction. This is deterministic and grounded, not sentiment-guessing.
+    #  2. Otherwise the generic keyword lean, which only fires on an unambiguous
+    #     positive/negative word + real impact — most headlines stay "neutral".
+    directional = None if non_signal else _theme_directional_read(theme, title_lower, words)
+    if directional:
+        demand_direction, forced_cat = directional
+        if affected_category == "All" and forced_cat != "All":
+            affected_category = forced_cat
+        sentiment_score = round((0.45 if demand_direction == "up" else -0.45) + rng.uniform(-0.08, 0.08), 3)
+        impact_score = max(impact_score, round(rng.uniform(0.45, 0.65), 3))
+    elif not non_signal and sentiment_score >= 0.30 and impact_score >= 0.40:
         demand_direction = "up"
-    elif sentiment_score < -0.15:
+    elif not non_signal and sentiment_score <= -0.30 and impact_score >= 0.40:
         demand_direction = "down"
     else:
         demand_direction = "neutral"
 
-    # Estimated demand change %
-    change_magnitude = impact_score * abs(sentiment_score) * rng.uniform(3.0, 8.0)
-    estimated_demand_change_pct = round(
-        change_magnitude if demand_direction == "up" else -change_magnitude, 2
-    )
+    # Estimated demand change %. Zero unless a direction was called. Calibrated
+    # so a single headline moves demand by at most a couple of points —
+    # published US auto-retail elasticities put a +1pt APR move at ~-3% units
+    # and a +$1/gal gas move at ~-4% on truck/SUV mix, and those are sustained
+    # shifts, not one news item. (Fed FEDS Notes 2024; Resources for the Future
+    # WP 23-33 / Brandeis WP94 — see the sentiment-analysis changelog.)
+    if demand_direction == "neutral":
+        estimated_demand_change_pct = 0.0
+    else:
+        change_magnitude = impact_score * abs(sentiment_score) * rng.uniform(1.5, 3.5)
+        change_magnitude = min(change_magnitude, 5.0)
+        estimated_demand_change_pct = round(
+            change_magnitude if demand_direction == "up" else -change_magnitude, 2
+        )
 
-    # Confidence
-    confidence = round(rng.uniform(0.55, 0.80), 3)
+    # Confidence — the mock is a keyword heuristic, so it never claims high
+    # certainty; the UI badges the view as "demo model" regardless.
+    confidence = round(rng.uniform(0.45, 0.68), 3)
 
     return {
         "article_index":            article_index,
@@ -185,14 +282,36 @@ def _mock_signal_for_title(title: str, article_index: int) -> Dict:
         "demand_direction":         demand_direction,
         "estimated_demand_change_pct": estimated_demand_change_pct,
         "confidence":               confidence,
-        "summary":                  f"[MOCK] {demand_direction.capitalize()} signal for {affected_category} — sentiment {sentiment_score:+.2f}",
+        "summary":                  _mock_summary(demand_direction, affected_category, estimated_demand_change_pct),
         "_mock": True,
     }
 
 
+_SEGMENT_PHRASE = {
+    "EV": "EV demand", "Luxury": "luxury demand", "Pickup": "pickup demand",
+    "SUV": "SUV demand", "Sedan": "sedan demand", "Commercial": "commercial demand",
+    "All": "showroom traffic across segments",
+}
+
+
+def _mock_summary(direction: str, category: str, change_pct: float) -> str:
+    """One plain dealer-facing sentence — no model internals on the card."""
+    seg = _SEGMENT_PHRASE.get(category, "showroom demand")
+    if direction != "neutral" and abs(change_pct) < 0.5:
+        return f"Some read on {seg}, but too small to act on — monitor."
+    if direction == "up":
+        return f"Supports {seg} (~{change_pct:+.1f}%) — hold stock and protect margin on that segment."
+    if direction == "down":
+        return f"Headwind for {seg} (~{change_pct:+.1f}%) — watch days'-supply and be ready to lean on incentives or trade allowance."
+    return f"No clear demand read for {seg} — monitor, no action yet."
+
+
 def _analyze_mock(articles: List[Dict]) -> List[Dict]:
     """Generate mock signals for all articles (no API call)."""
-    return [_mock_signal_for_title(art.get("title", ""), i) for i, art in enumerate(articles)]
+    return [
+        _mock_signal_for_title(art.get("title", ""), i, art.get("theme") or art.get("_theme"))
+        for i, art in enumerate(articles)
+    ]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -418,19 +537,19 @@ def get_unanalyzed_articles(limit: int = 100) -> List[Dict]:
 # Market Briefing Generator
 # ─────────────────────────────────────────────────────────────────────────────
 
-_BRIEFING_SYSTEM_PROMPT = """You are a senior North American automobile market intelligence analyst.
-Write a concise, data-driven market briefing for automobile dealership executives.
-Use the signal data provided. Be specific, actionable, and professional.
+_BRIEFING_SYSTEM_PROMPT = """You advise the leadership of a US automobile dealer group (24 rooftops, ~56% import franchises, segment mix SUV 49% / Pickup 23% / Sedan 16% / Luxury 9%).
+Write a short weekly read for the group's GMs and the F&I / used-car desks, using only the signal data provided.
+Talk about the group's own showroom demand, stocking, pricing, incentives and financing — not "the market".
 Structure your response with exactly three clearly labeled sections:
 
-MARKET SENTIMENT OVERVIEW
-[2–3 sentences summarising current market mood and the main drivers]
+WHAT'S MOVING DEMAND
+[2–3 sentences: the net direction over the next ~30 days and the one or two drivers behind it]
 
-KEY RISK FACTORS & OPPORTUNITIES
-[4–6 bullet points covering the most important risks and opportunities]
+WHERE THE GROUP IS EXPOSED
+[4–6 bullet points: which segments / rooftops the current signals help or hurt, and by roughly how much]
 
-RECOMMENDED DEALER ACTIONS
-[3 specific, numbered, actionable recommendations]
+WHAT TO DO THIS WEEK
+[3 specific, numbered actions — stocking, pricing, incentive timing, or a financing talk-track]
 
 Use plain text. Do not use markdown formatting."""
 
@@ -467,16 +586,18 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
             lines.append(f"  {cat}: sentiment {sent:+.2f}, demand change {chg:+.1f}%")
         cat_summary = "\n".join(lines)
 
+    net_signal = stats.get("net_demand_signal_pct", demand_change)
+
     if is_live_mode():
         # ── Live: call Grok ──────────────────────────────────────────────
         user_msg = (
-            f"US Automobile Market Signal Data (last 30 days):\n"
+            f"Dealer-group demand signal data (news, last 30 days):\n"
+            f"- Net demand signal, next ~30 days: {net_signal:+.1f}% (sales-mix weighted)\n"
             f"- Average sentiment score: {avg_sentiment:+.3f} (scale: -1 to +1)\n"
             f"- Dominant demand direction: {direction}\n"
-            f"- Estimated demand change: {demand_change:+.1f}%\n"
-            f"- Geopolitical risk score: {geo_risk:.3f} (scale: 0 to 1)\n"
+            f"- Demand-pressure score: {geo_risk:.3f} (0 = calm, 1 = heavy)\n"
             f"- Average news impact score: {avg_impact:.3f}\n"
-            f"- Articles analysed: {total_articles} ({positive_pct:.0f}% positive, {negative_pct:.0f}% negative)\n"
+            f"- Headlines analysed: {total_articles} ({positive_pct:.0f}% supportive, {negative_pct:.0f}% headwind)\n"
             f"- 7-day sentiment trend: {trend_7d:+.3f}\n"
         )
         if cat_summary:
@@ -499,31 +620,50 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
             # Fall through to mock template
 
     # ── Mock / fallback template ─────────────────────────────────────────
-    mood = "positive" if avg_sentiment > 0.1 else ("cautious" if avg_sentiment > -0.1 else "negative")
-    risk_level = "elevated" if geo_risk > 0.4 else ("moderate" if geo_risk > 0.2 else "low")
-    trend_word = "improving" if trend_7d > 0.05 else ("softening" if trend_7d < -0.05 else "stable")
+    net_word = (
+        "a tailwind" if net_signal > 0.75
+        else ("a headwind" if net_signal < -0.75 else "roughly flat")
+    )
+    trend_word = "improving" if trend_7d > 0.05 else ("softening" if trend_7d < -0.05 else "steady")
+    pressure_word = "heavy" if geo_risk > 0.35 else ("some" if geo_risk > 0.18 else "light")
 
-    top_cat = "EV"
+    # Rank segments by their own demand-change signal
+    seg_up, seg_down = [], []
     if category_rows:
-        sorted_cats = sorted(category_rows, key=lambda x: abs(x.get("avg_sentiment") or 0), reverse=True)
-        top_cat = sorted_cats[0].get("category", "EV") if sorted_cats else "EV"
+        for row in sorted(category_rows, key=lambda x: x.get("avg_demand_change") or 0, reverse=True):
+            chg = row.get("avg_demand_change") or 0.0
+            cat = row.get("category", "All")
+            if chg >= 0.3:
+                seg_up.append((cat, chg))
+            elif chg <= -0.3:
+                seg_down.append((cat, chg))
+    top_up = seg_up[0][0] if seg_up else "SUV"
+    top_down = seg_down[0][0] if seg_down else None
 
-    briefing = f"""MARKET SENTIMENT OVERVIEW
-The US automobile market is displaying {mood} sentiment over the past 30 days, with an average signal score of {avg_sentiment:+.2f} across {total_articles} analysed news sources. Demand signals are {trend_word} week-over-week (7-day trend: {trend_7d:+.3f}), with {positive_pct:.0f}% of coverage carrying constructive signals and {negative_pct:.0f}% flagging headwinds. The dominant demand direction across categories is {direction.upper()}, with an estimated aggregate demand shift of {demand_change:+.1f}%.
+    exposure_lines = []
+    for cat, chg in (seg_up[:2] + seg_down[:2]):
+        exposure_lines.append(f"- {cat}: news is running {chg:+.1f}% — {'stock and hold margin' if chg > 0 else 'watch days-supply, be ready with incentives'}.")
+    if not exposure_lines:
+        exposure_lines = ["- No segment is showing a clear news-driven move this period — nothing to act on yet."]
 
-KEY RISK FACTORS & OPPORTUNITIES
-- Tariff & Trade Risk: {risk_level.upper()} ({geo_risk:.2f}/1.0) — Section 232 auto tariff developments continue to be monitored as a cost and demand moderator, particularly for import-heavy brands.
-- Fuel Prices: Gasoline price volatility directly affects consumer spending capacity in truck- and SUV-heavy segments.
-- EV Adoption Headwind: The federal EV tax credit's Oct 2025 expiration has cooled EV momentum; charging infrastructure buildout is the remaining structural tailwind.
-- Luxury Segment: Resilient high-income consumer spending continues to support Luxury and premium segment performance.
-- {top_cat} Category Signal: The {top_cat} segment is showing the strongest news-driven demand signal in the current period.
-- Interest Rate Sensitivity: Fed funds rate trajectory directly affects loan APRs, which may dampen financing-led demand in mid-range segments.
+    action_2 = (
+        f"Pull forward incentive spend on {top_down} — the news is against that segment and moving the metal matters more than holding gross right now."
+        if top_down else
+        f"Hold incentive spend where it is; no segment needs a defensive push this week."
+    )
 
-RECOMMENDED DEALER ACTIONS
-1. Prioritise {top_cat} inventory replenishment at Tier-1 dealerships in California and Texas to capture positive demand momentum before it peaks.
-2. {'Offer targeted EV test-drive incentives and highlight remaining state-level EV rebates in marketing campaigns to accelerate conversion in the EV segment.' if direction == 'up' else 'Review current discount strategy in underperforming segments and redirect marketing spend to higher-signal categories.'}
-3. Hedge against tariff risk by maintaining a 15–20 day safety stock buffer for import-heavy brands, where supply chain lead times and landed costs are most exposed.
+    briefing = f"""WHAT'S MOVING DEMAND
+Over the next ~30 days the group's news signal is {net_word} ({net_signal:+.1f}%, sales-mix weighted) across {total_articles} headlines, {trend_word} week-over-week. {positive_pct:.0f}% of coverage is supportive, {negative_pct:.0f}% is a headwind, and demand pressure from cost/financing news is {pressure_word}. Dominant read across segments: {direction.upper()}.
 
+WHERE THE GROUP IS EXPOSED
+{chr(10).join(exposure_lines)}
+- Import franchises carry ~56% of the group's units, so tariff and exchange-rate headlines hit cost and price on more than half the book.
+- Financing news moves faster than anything else — a rate change shows up in showroom traffic within a few weeks.
+
+WHAT TO DO THIS WEEK
+1. Keep {top_up} stock full at the higher-volume rooftops; that is where the supportive signal is concentrated.
+2. {action_2}
+3. Brief the desk on the current financing talk-track: lead with monthly payment and trade equity, not sticker discount, while rate news is the dominant driver.
 """
 
     return briefing

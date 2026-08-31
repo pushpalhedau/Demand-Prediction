@@ -23,10 +23,13 @@ def get_external_factor_stats(region: str = None) -> dict:
         if df.empty:
             return {}
         numeric_cols = [
-            'gasoline_regular_usd_per_gallon', 'diesel_usd_per_gallon',
-            'wti_crude_price_usd', 'gdp_growth_pct', 'cpi_inflation_pct',
-            'us_fed_rate_pct', 'consumer_confidence_index', 'tourism_index',
-            'luxury_demand_index', 'tariff_pct',
+            # Dealer-facing what-if levers (what the group's customers actually feel)
+            'gasoline_regular_usd_per_gallon', 'auto_loan_apr_pct',
+            'incentive_pct_of_atp', 'inventory_days_supply',
+            # Retained for other consumers / backward compatibility
+            'diesel_usd_per_gallon', 'wti_crude_price_usd', 'gdp_growth_pct',
+            'cpi_inflation_pct', 'us_fed_rate_pct', 'consumer_confidence_index',
+            'tourism_index', 'luxury_demand_index', 'tariff_pct',
             'unemployment_rate_pct', 'new_model_launches', 'ev_charging_stations',
         ]
         binary_cols = [
@@ -52,6 +55,7 @@ def train_prophet_model(
     category: str = None,
     region: str = None,
     fuel_type: str = None,
+    brand: str = None,
     target: str = "units_sold",
     horizon_days: int = 90,
     interval_width: float = 0.95,
@@ -81,6 +85,8 @@ def train_prophet_model(
             sale_query = sale_query.filter(Sale.state == region)
         if fuel_type:
             sale_query = sale_query.filter(Sale.fuel_type == fuel_type)
+        if brand:
+            sale_query = sale_query.filter(Sale.brand == brand)
 
         sales_df = pd.read_sql(sale_query.statement, session.bind)
         if sales_df.empty:
@@ -103,14 +109,16 @@ def train_prophet_model(
         daily_series.columns = ['ds', 'y']
         
         # 2. Fetch external factors
+        # Only the conditions a dealer group actually reasons about: pump price,
+        # what its customers finance at, how hard it is discounting, how much
+        # stock it has to sell from, and the year-end holiday selling season.
         ext_query = session.query(
             ExternalFactor.date,
             ExternalFactor.gasoline_regular_usd_per_gallon,
-            ExternalFactor.diesel_usd_per_gallon,
-            ExternalFactor.gdp_growth_pct,
-            ExternalFactor.cpi_inflation_pct,
-            ExternalFactor.consumer_confidence_index,
-            ExternalFactor.holiday_season_month
+            ExternalFactor.auto_loan_apr_pct,
+            ExternalFactor.incentive_pct_of_atp,
+            ExternalFactor.inventory_days_supply,
+            ExternalFactor.holiday_season_month,
         )
         if region:
             ext_query = ext_query.filter(ExternalFactor.state == region)
@@ -172,12 +180,9 @@ def train_prophet_model(
         
         # Add external regressors if they exist in dataframe
         regressors = [
-            'gasoline_regular_usd_per_gallon', 'diesel_usd_per_gallon',
-            'wti_crude_price_usd', 'gdp_growth_pct', 'cpi_inflation_pct',
-            'us_fed_rate_pct', 'consumer_confidence_index', 'tourism_index',
-            'luxury_demand_index', 'tariff_pct',
-            'unemployment_rate_pct', 'new_model_launches', 'ev_charging_stations',
-            'holiday_season_month', 'july_4th_month', 'detroit_auto_show_month', 'la_auto_show_month',
+            'gasoline_regular_usd_per_gallon', 'auto_loan_apr_pct',
+            'incentive_pct_of_atp', 'inventory_days_supply',
+            'holiday_season_month',
         ] + sentiment_regressor_candidates  # appended when use_sentiment=True
 
         active_regressors = []

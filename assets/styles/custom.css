@@ -145,3 +145,67 @@ div[data-testid="stMetric"]:hover {
 ::-webkit-scrollbar-thumb:hover {
     background: #374151;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   No text-insertion caret on non-editable UI.
+   Clicking a heading / label / card was dropping a blinking
+   caret there (the content is selectable but not editable).
+   Hide it everywhere, then restore it for real input fields.
+   ───────────────────────────────────────────────────────────── */
+html, body, .stApp, [data-testid="stAppViewContainer"],
+[data-testid="stMain"], .main, .block-container,
+[data-testid="stMarkdown"], [data-testid="stMarkdownContainer"],
+[data-testid="stHeading"], [data-testid="stMetric"], [data-testid="stExpander"],
+[data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"],
+[data-baseweb="tab-list"], [role="tab"], [role="tabpanel"],
+h1, h2, h3, h4, h5, h6, p, span, div, li, label, a, td, th {
+    caret-color: transparent !important;
+}
+
+input, textarea, select,
+[contenteditable="true"], [contenteditable=""],
+[data-testid="stTextInput"] input, [data-testid="stNumberInput"] input,
+[data-testid="stTextArea"] textarea, [data-testid="stChatInput"] textarea,
+[data-baseweb="input"] input, [data-baseweb="textarea"] textarea {
+    caret-color: auto !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Compact sidebar so the nav + Global Filters fit without a
+   long scroll. Filters are laid out two-per-row in app.py;
+   this just tightens the vertical rhythm around them.
+   ───────────────────────────────────────────────────────────── */
+section[data-testid="stSidebar"] .block-container,
+section[data-testid="stSidebar"] > div:first-child {
+    padding-top: 0.6rem !important;
+}
+/* logo: cap its height instead of full-width */
+section[data-testid="stSidebar"] [data-testid="stImage"] img {
+    max-height: 46px !important;
+    width: auto !important;
+    margin: 0 auto 4px !important;
+}
+/* squeeze the gap between stacked sidebar widgets */
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    gap: 0.45rem !important;
+}
+section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
+    gap: 0.5rem !important;
+}
+/* labels: smaller and tighter to their control */
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
+    font-size: 11.5px !important;
+    margin-bottom: 1px !important;
+}
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] {
+    margin-bottom: 2px !important;
+}
+/* selectbox / date field: shorter rows */
+section[data-testid="stSidebar"] [data-baseweb="select"] > div,
+section[data-testid="stSidebar"] [data-testid="stDateInput"] input {
+    min-height: 34px !important;
+    font-size: 12.5px !important;
+}
+section[data-testid="stSidebar"] hr {
+    margin: 10px 0 !important;
+}

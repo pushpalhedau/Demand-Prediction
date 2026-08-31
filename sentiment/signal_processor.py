@@ -24,6 +24,7 @@ from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional
 
 import pandas as pd
+from sqlalchemy import func
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -256,6 +257,73 @@ def _safe_mean(series: pd.Series) -> Optional[float]:
     return float(valid.mean()) if not valid.empty else None
 
 
+# Fallback so the mix-weighting still works if the sales table can't be read
+# (e.g. sentiment pipeline run standalone against an empty DB). Group's own
+# booked mix as of the 2026-08 reseed — see the dealer-positioning changelogs.
+_DEFAULT_SEGMENT_MIX = {"SUV": 0.49, "Pickup": 0.23, "Sedan": 0.16, "Luxury": 0.09, "EV": 0.03}
+
+_segment_mix_cache: Optional[Dict[str, float]] = None
+
+
+def _group_segment_mix() -> Dict[str, float]:
+    """
+    The group's own unit mix by vehicle category, normalised to sum to 1.
+    Used to weight per-segment news signals into one 'net demand signal' that
+    reflects what the group actually sells rather than an unweighted average
+    across headlines. Cached for the process; falls back to a static mix.
+    """
+    global _segment_mix_cache
+    if _segment_mix_cache is not None:
+        return _segment_mix_cache
+    try:
+        from database.models import Sale
+        session = get_db_session()
+        try:
+            rows = (
+                session.query(Sale.vehicle_category, func.sum(Sale.units_sold))
+                .group_by(Sale.vehicle_category)
+                .all()
+            )
+        finally:
+            session.close()
+        total = sum(n for _, n in rows) or 0
+        if total:
+            _segment_mix_cache = {c: n / total for c, n in rows if c}
+            return _segment_mix_cache
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning("segment-mix query failed, using default mix: %s", e)
+    _segment_mix_cache = dict(_DEFAULT_SEGMENT_MIX)
+    return _segment_mix_cache
+
+
+def _net_demand_signal(df: pd.DataFrame) -> tuple:
+    """
+    Collapse a frame of analyzed articles (needs demand_change_pct +
+    affected_category) into (net_demand_signal_pct, {segment: mean_change}).
+
+    net_demand_signal_pct is the group's sales-mix-weighted read: each segment
+    contributes at its own news-driven change (or the overall read if no
+    segment-specific news), and 'All'-tagged whole-book headlines are blended
+    in at face value.
+    """
+    if df.empty or "demand_change_pct" not in df:
+        return 0.0, {}
+    overall = _safe_mean(df["demand_change_pct"]) or 0.0
+    per_cat = (
+        df.dropna(subset=["demand_change_pct"])
+        .groupby("affected_category")["demand_change_pct"].mean().to_dict()
+    )
+    mix = _group_segment_mix()
+    if not mix:
+        return round(overall, 3), {k: round(v, 3) for k, v in per_cat.items()}
+
+    weighted = sum(w * per_cat.get(seg, overall) for seg, w in mix.items())
+    weighted /= sum(mix.values()) or 1.0
+    if "All" in per_cat:
+        weighted = 0.6 * weighted + 0.4 * per_cat["All"]
+    return round(weighted, 3), {k: round(v, 3) for k, v in per_cat.items()}
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Read helpers for dashboard & Prophet
 # ─────────────────────────────────────────────────────────────────────────────
@@ -455,10 +523,20 @@ def compute_live_overall_stats(days_back: int = 30) -> Dict:
     avg_impact = _safe_mean(df["impact_score"]) or 0.0
     neg_ratio = total_neg / total_articles if total_articles else 0.0
 
+    if "affected_category" not in df.columns:
+        df["affected_category"] = "All"
+    df["affected_category"] = df["affected_category"].fillna("All")
+    net_signal, segment_changes = _net_demand_signal(df)
+
     return {
         "avg_sentiment":     round(_safe_mean(df["sentiment_score"]) or 0.0, 3),
         "avg_impact":        round(avg_impact, 3),
         "avg_demand_change": round(_safe_mean(df["demand_change_pct"]) or 0.0, 3),
+        "net_demand_signal_pct": net_signal,
+        "segment_changes":   segment_changes,
+        # legacy key name kept for the Prophet regressor column; this is a
+        # demand-pressure read (impact scaled by the share of headwind news),
+        # not a geopolitical measure — the UI labels it "demand pressure".
         "geopolitical_risk": round(avg_impact * neg_ratio, 3),
         "total_articles":    total_articles,
         "positive_pct":      round(total_pos / total_articles * 100, 1) if total_articles else 0.0,
@@ -532,6 +610,8 @@ def get_overall_sentiment_stats() -> Dict:
             "avg_sentiment":    round(float(df["sentiment"].mean()), 3),
             "avg_impact":       round(float(df["impact"].mean()), 3),
             "avg_demand_change": round(float(df["demand_change"].mean()), 3),
+            "net_demand_signal_pct": round(float(df["demand_change"].mean()), 3),
+            "segment_changes":  {},
             "geopolitical_risk": round(float(df["geo_risk"].mean()), 3),
             "total_articles":   total_articles,
             "positive_pct":     round(total_pos / total_articles * 100, 1) if total_articles else 0.0,
@@ -584,6 +664,7 @@ def get_category_sentiment_summary(days_back: int = 30) -> pd.DataFrame:
 def _empty_stats() -> Dict:
     return {
         "avg_sentiment": 0.0, "avg_impact": 0.0, "avg_demand_change": 0.0,
+        "net_demand_signal_pct": 0.0, "segment_changes": {},
         "geopolitical_risk": 0.0, "total_articles": 0, "positive_pct": 0.0,
         "negative_pct": 0.0, "dominant_direction": "neutral",
         "trend_7d": 0.0, "last_updated": None, "mode": "mock",

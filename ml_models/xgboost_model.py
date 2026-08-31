@@ -40,7 +40,6 @@ def train_xgboost_pipeline():
             Sale.fuel_type,
             Sale.state,
             Customer.age,
-            Customer.gender,
             Customer.occupation,
             Customer.estimated_annual_income_usd,
             Customer.credit_score,
@@ -56,6 +55,15 @@ def train_xgboost_pipeline():
         df['test_drive_converted'] = df['test_drive_converted'].fillna(False).astype(int)
 
         # Features to use
+        #
+        # `gender` is deliberately NOT a feature. ECOA prohibits considering the
+        # sex of an applicant; a lead-prioritisation score that weights customer
+        # gender is a disparate-treatment risk and has no legitimate predictive
+        # role in "will this test-drive convert". Removed 2026-08-29 (the model
+        # was retrained without it). `age` is kept — it is a standard,
+        # behaviourally-grounded CRM signal and not used here for a credit
+        # decision — but is flagged in the changelog as a considered risk.
+        #
         # financing_type is deliberately NOT a feature.
         #
         # How a deal is paid for is an outcome of the negotiation, not a driver
@@ -66,9 +74,9 @@ def train_xgboost_pipeline():
         # leakage rather than a lever anyone can pull. Financing is still
         # captured on the deal record and drives the lease-return pipeline in
         # Inventory Intelligence, where it genuinely is predictive.
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'gender', 'occupation']
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'occupation']
         num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_usd', 'credit_score', 'loyalty_score']
-        
+
         # Handle missing values
         for cat in cat_features:
             df[cat] = df[cat].fillna("Unknown")
@@ -165,7 +173,7 @@ def predict_deal_probability(input_data: dict) -> dict:
             
         # Compile input into record
         # Must mirror the training feature set exactly (financing_type excluded).
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'gender', 'occupation']
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'occupation']
         num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_usd', 'credit_score', 'loyalty_score']
 
         record = {}
@@ -174,7 +182,6 @@ def predict_deal_probability(input_data: dict) -> dict:
         record['vehicle_category'] = input_data.get('vehicle_category', 'SUV')
         record['fuel_type'] = input_data.get('fuel_type', 'Gasoline')
         record['state'] = input_data.get('state', 'California')
-        record['gender'] = input_data.get('gender', 'Male')
         record['occupation'] = input_data.get('occupation', 'Salaried')
 
         record['base_price'] = float(input_data.get('base_price', 38000))
@@ -205,13 +212,17 @@ def predict_deal_probability(input_data: dict) -> dict:
         prob = float(model.predict_proba(df_encoded_scaled)[0, 1])
         
         # Dynamic Explainability (SHAP fallback or linear attribution)
-        # We can extract shap values if shap is available and imported
+        # `explainer_used` tells the caller which path actually ran so the UI can
+        # label it honestly: "shap" = real per-instance TreeExplainer values,
+        # "heuristic" = the 3-field rough estimate below (shap unavailable).
         shap_explanations = []
+        explainer_used = "heuristic"
         try:
             import shap
             explainer = shap.TreeExplainer(model)
             shap_values = explainer.shap_values(df_encoded_scaled)
-            
+            explainer_used = "shap"
+
             # Attributions
             attribs = {}
             for name, val in zip(feature_names, shap_values[0]):
@@ -264,11 +275,13 @@ def predict_deal_probability(input_data: dict) -> dict:
             
         return {
             "close_probability": prob,
-            "explanations": shap_explanations
+            "explanations": shap_explanations,
+            "explainer_used": explainer_used,
         }
     except Exception as e:
         print(f"Prediction error: {e}")
         return {
             "close_probability": 0.5,
+            "explainer_used": "none",
             "explanations": []
         }

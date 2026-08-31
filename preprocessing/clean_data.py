@@ -12,7 +12,10 @@ def clean_customers(filepath):
     df['name'] = df['name'].fillna("Unknown Customer")
     df['age'] = df['age'].fillna(df['age'].median())
     df['gender'] = df['gender'].fillna("Other")
-    df['nationality'] = df['nationality'].fillna("Unknown")
+    # `nationality` is deprecated (fair-lending risk) and no longer generated;
+    # guarded so a legacy CSV that still carries the column is not rejected.
+    if 'nationality' in df.columns:
+        df['nationality'] = df['nationality'].fillna("Unknown")
     df['state'] = df['state'].fillna("California")
     df['city'] = df['city'].fillna("Unknown")
     df['occupation'] = df['occupation'].fillna("Self-Employed")
@@ -149,6 +152,8 @@ def clean_sales(filepath):
 
     # Pricing (USD)
     df['base_price_usd'] = df['base_price_usd'].fillna(0).astype(int)
+    if 'tariff_cost_usd' in df.columns:
+        df['tariff_cost_usd'] = df['tariff_cost_usd'].fillna(0).astype(int)
     df['discount_pct'] = df['discount_pct'].fillna(0.0)
     df['selling_price_usd'] = df['selling_price_usd'].fillna(df['base_price_usd']).astype(int)
     df['sales_tax_amount_usd'] = df['sales_tax_amount_usd'].fillna(0).astype(int)
@@ -273,6 +278,9 @@ def clean_external_factors(filepath):
     df['gdp_growth_pct'] = df['gdp_growth_pct'].fillna(df['gdp_growth_pct'].median())
     df['cpi_inflation_pct'] = df['cpi_inflation_pct'].fillna(df['cpi_inflation_pct'].median())
     df['us_fed_rate_pct'] = df['us_fed_rate_pct'].fillna(df['us_fed_rate_pct'].median())
+    for _col in ('auto_loan_apr_pct', 'incentive_pct_of_atp', 'inventory_days_supply'):
+        if _col in df.columns:
+            df[_col] = df[_col].fillna(df[_col].median())
     df['consumer_confidence_index'] = df['consumer_confidence_index'].fillna(
         df['consumer_confidence_index'].median()
     )

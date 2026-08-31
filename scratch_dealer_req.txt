@@ -1,0 +1,1108 @@
+
+PredictaX
+Automobile Demand Intelligence Platform
+Dealer Integration Requirements Document
+Data, Technical, Security and Onboarding Requirements for Connecting a Dealer / Dealer Group to PredictaX
+
+1. Introduction & Purpose
+PredictaX is an AI-powered automobile demand intelligence platform that turns a dealer's historical sales, inventory, and customer data into forward-looking forecasts, stocking recommendations, and customer insight. Value from the platform is directly proportional to the completeness, accuracy, and timeliness of the data it receives from the dealer.
+This document defines everything a dealer (or dealer group) needs to prepare, provide, and configure in order to be integrated with PredictaX. It is intended for the dealer's IT, data, and dealership operations stakeholders, and is used jointly with the PredictaX integration team as the basis for onboarding planning, data mapping, and go-live sign-off.
+1.1 Objectives of this Document
+Define the data the dealer must supply (entities, fields, formats, volumes, and history).
+Define the technical prerequisites for connecting to, hosting, or exchanging data with PredictaX.
+Define security, privacy, and compliance obligations for handling dealer and customer data.
+Define roles, responsibilities, and the onboarding timeline so both parties know who does what, and by when.
+Define acceptance criteria used to sign off a dealer as successfully integrated.
+1.2 Intended Audience
+Dealer / dealer group IT and data management teams
+Dealer Management System (DMS) or CRM administrators
+Dealership operations and general management sponsors
+PredictaX implementation and customer success team
+2. Scope
+This document covers:
+The data entities required for PredictaX forecasting, inventory, and customer-intelligence modules to operate.
+The supported data intake methods (file-based bulk load, in-app upload, and direct integration with a dealer's CRM, ERP, or DMS).
+File, format, and data-quality standards for every entity.
+Infrastructure, environment, and security prerequisites for both PredictaX-hosted and dealer-hosted deployment models.
+The end-to-end onboarding process, from kickoff to go-live and ongoing data refresh.
+Out of scope for this document:
+Internal PredictaX model design, training pipelines, and algorithm internals.
+Commercial terms, pricing, and licensing (covered under the separate commercial agreement / SOW).
+Market and macroeconomic data (fuel prices, GDP, tariffs, consumer confidence, etc.) — this is sourced and maintained centrally by PredictaX and is not a dealer input.
+3. Platform Overview
+PredictaX ingests a dealer's transactional and operational data into a relational, star-schema data model, then applies a suite of machine learning models on top of it:
+Demand forecasting — Our time-series models projecting unit demand, using macro-economic and seasonal signals as external regressors.
+Inventory intelligence — Stockout / overstock risk scoring, reorder point calculation, and 30-day demand forecasts per dealer and vehicle.
+Customer segmentation — KMeans clustering into behavioral cohorts (e.g., Budget Buyers, Premium Buyers, EV Enthusiasts, Fleet Buyers).
+Lead scoring — A classifier model estimating close probability per lead, with SHAP-based explainability.
+Market sentiment — Automated news and sentiment monitoring (independent of dealer data) used as an additional forecasting signal.
+Scenario simulation — What-if analysis for macro shocks (fuel price shifts, interest rate changes, EV incentive changes, supply constraints).
+All of these outputs are only as good as the dealer data behind them, the remainder of this document defines exactly what that data needs to look like.
+3.1 Current Deployment Model
+PredictaX is delivered as a single web application backed by a relational database. Data can reach that database either as files exchanged with the dealer (Sections 4.1–4.2) or through a direct connection to the dealer's own CRM, ERP, or DMS (Section 4.3) where that system exposes a usable API, webhook, or database link. Exact connector scope and method are confirmed per dealer during onboarding; a dealer whose systems don't support any direct method can still integrate fully through file exchange.
+4. Integration Model
+PredictaX supports three complementary data intake paths. Dealers typically use Path A for the initial historical backfill, then either Path B or Path C — or a mix of both — for ongoing refreshes, depending on what their source systems support.
+4.1 Path A — Structured Bulk Load (Initial / Historical Data)
+The dealer (or PredictaX, on the dealer's behalf) delivers one CSV file per data entity — Dealers, Vehicles, Inventory, Sales, and Customers — matching the exact schema in Section 7. These are loaded into PredictaX's relational database as the authoritative historical dataset used to train forecasting, segmentation, and lead-scoring models. This path is used for the initial go-live load and for periodic full-history refreshes.
+4.2 Path B — Dynamic Ingestion Engine (Ongoing Refresh)
+PredictaX's in-app “Dynamic Ingestion Engine” (Data Upload & Schema Mapping screen) lets an authorized dealer user upload a CSV directly through the dashboard. The engine auto-detects column types (date / numeric / categorical), runs completeness and shape validation, and — on confirmation — triggers retraining of the customer segmentation and lead-scoring models against the refreshed data. This path is intended for periodic incremental updates (e.g., new sales, updated inventory snapshots) between full bulk loads, and requires the uploaded file's columns to align with the relational schema in Section 7 for the platform to map it correctly.
+4.3 Path C — Direct System Integration (CRM / ERP / DMS Connectors)
+For dealers who would rather not manage manual file exports, PredictaX can connect directly to the dealer's own CRM, ERP, or Dealer Management System (DMS) instead of receiving CSV files. Depending on what the source system supports, this happens through one of the following:
+Native API integration — PredictaX calls the source system's REST/OData API on a scheduled basis (e.g., hourly or daily) to pull new and changed records, authenticated via OAuth 2.0 or an API key issued by the dealer.
+Webhook / event push — the source system (or a middleware layer in front of it) pushes new and changed records to a PredictaX ingestion endpoint in near real time as they occur.
+Middleware / iPaaS — for source systems without a directly usable API, an integration-platform-as-a-service sits between the dealer's system and PredictaX, handling extraction, transformation, and scheduled delivery.
+Direct database connection — for dealers able to expose a secure, read-only reporting replica of their database, PredictaX can connect via a database link (ODBC/JDBC) over a private network or VPN.
+In all four cases, the data delivered still has to conform to the entities and fields defined in Section 7 — the connector is simply a different transport mechanism for the same schema, not a different data model.
+Choosing between the three paths:
+Path
+Best Fit
+Setup Effort
+Ongoing Dealer Effort
+Latency
+A — Bulk Load (CSV)
+Initial go-live; dealers without spare integration capacity
+Low — no development needed
+Manual export required per refresh
+Batch, per agreed cadence
+B — Dynamic Ingestion Engine
+Ad hoc or incremental updates between bulk loads
+Low — uses the existing dashboard
+A named user uploads a file each time
+Batch, on demand
+C — Direct System Integration
+Dealers with an API-capable CRM/ERP/DMS wanting minimal manual effort
+Higher — connector build & testing per source system
+Low after setup — mainly credential upkeep
+Near real-time to daily, by method
+4.4 Supported Source Systems & Connector Catalog
+The table below summarizes the categories of source systems PredictaX can connect to under Path C, common example platforms, and how each is typically integrated. Exact connector availability, authentication method, and supported entities are confirmed per dealer during technical discovery (Section 12, Phase 2) — this list illustrates platform categories, not a certification guarantee for every version or edition of every product named.
+Category
+Example Platforms
+Typical Integration Method
+Entities Typically Sourced
+Typical Sync Mode
+Dealer Management System (DMS)
+CDK Global, Reynolds & Reynolds, Dealertrack, Tekion, PBS Systems
+API where available; otherwise scheduled flat-file export (SFTP)
+Sales, Inventory, Service history
+Daily batch (real-time on newer platforms)
+CRM
+Salesforce, Microsoft Dynamics 365, HubSpot, VinSolutions, DealerSocket, Zoho
+REST API (OAuth 2.0) or webhook
+Customers, Leads, Sales / Opportunities
+Real-time (webhook) or hourly poll
+ERP
+SAP, Oracle NetSuite, Microsoft Dynamics 365 Finance & Operations, Infor
+REST/OData API or scheduled export
+Vehicles (product master), Inventory, Financial roll-ups
+Scheduled batch (daily/nightly)
+Marketing Automation (optional)
+Mailchimp, Marketo, Klaviyo
+REST API
+Customer engagement/response signals
+Scheduled batch
+4.5 Future Capabilities
+Two further capabilities are candidates for a follow-on phase, subject to separate technical scoping and not part of the current platform:
+Bi-directional write-back — pushing PredictaX outputs (e.g., reorder recommendations, at-risk-lead alerts) back into the dealer's DMS/ERP purchasing workflow or CRM, rather than the dealer acting on them manually inside the dashboard.
+Fully managed real-time pipelines — a persistent, monitored connector in place of a scheduled pull, for dealers with very high transaction volume or many integrated locations.
+5. Roles & Responsibilities
+RACI summary for the integration workstream:
+Activity
+Dealer
+PredictaX Team
+Nominate integration contact & business sponsor
+R / A
+C
+Extract data from DMS / CRM / DWH into required schema
+R / A
+C
+Provide data dictionary mapping (source field → PredictaX field)
+R
+A / C
+Validate and cleanse source data prior to transfer
+R / A
+C
+Provision secure transfer channel / storage location
+C
+R / A
+Grant API/OAuth access & scopes on source CRM/ERP/DMS (Path C only)
+R / A
+C
+Build, configure, and test the connector or middleware integration (Path C)
+C
+R / A
+Monitor connector/sync-job health and resolve failures (Path C)
+I
+R / A
+Renew and rotate API credentials / tokens (Path C)
+R / A
+C
+Load data into PredictaX (bulk load)
+C
+R / A
+Configure Dynamic Ingestion Engine access for dealer users
+C
+R / A
+Data quality validation & error triage
+C
+R / A
+User Acceptance Testing (UAT) of dashboards & forecasts
+R / A
+C
+Sign-off for go-live
+A
+C
+Ongoing data refresh (per agreed cadence)
+R / A
+C
+Platform hosting, uptime, and application support
+I
+R / A
+Data privacy / compliance review of transferred data
+R / A
+C
+R = Responsible, A = Accountable, C = Consulted, I = Informed
+6. Data Requirements Overview
+PredictaX's data model is a star schema with one fact table (Sales) and four dimension tables (Customers, Vehicles, Dealers, Inventory), plus a market-data table that PredictaX maintains independently of the dealer.
+6.1 Entities the Dealer Must Provide
+Entity
+Role in Model
+Grain
+Typical Source System
+Dealers
+Dimension — showroom / branch network
+One row per dealer location
+Dealer master file / ERP / DMS location module
+Vehicles
+Dimension — product catalog
+One row per model + trim/variant
+OEM catalog / DMS inventory master / ERP product master
+Sales
+Fact — every completed transaction
+One row per sale (or per unit sold)
+DMS / CRM opportunity-to-close / F&I system
+Inventory
+Dimension — stock position over time
+One row per dealer + vehicle + snapshot date
+DMS inventory module / ERP stock ledger
+Customers
+Dimension — CRM / buyer profile
+One row per customer
+CRM / DMS customer master
+6.2 Data PredictaX Provides (Not a Dealer Input)
+The External Factors dataset — fuel prices, GDP growth, inflation, interest rates, consumer confidence, seasonal/holiday flags, tariffs, and regional population/EV-infrastructure data — is sourced and maintained centrally by PredictaX per state/market and used as forecasting regressors. Likewise, news and social sentiment signals are collected and scored automatically by PredictaX. The dealer's only responsibility here is to confirm which state(s)/market(s) their locations operate in, so PredictaX aligns the correct macro data series.
+6.3 Minimum Viable Data Set
+At minimum, forecasting and inventory features require Sales and Inventory history joined to the Vehicles and Dealers dimensions. Customer segmentation and lead scoring require the Customers entity. A dealer may go live with a reduced field set (see “Required” column in Section 7) and backfill optional fields later — reduced fields will reduce forecast and segmentation accuracy but will not block onboarding.
+7. Detailed Data Dictionary
+The tables below define every field in each entity's CSV file. “Source” indicates who populates the field: Dealer = the dealer supplies this from their own systems; System = PredictaX computes/derives this after ingestion and it should be left blank or omitted by the dealer; Either = the dealer may supply it, otherwise PredictaX will derive/default it.
+7.1 Dealers
+Primary key: dealer_id. One row per physical dealership / showroom location.
+Field
+Type
+Required
+Source
+Description
+dealer_id
+String
+Yes
+Dealer
+Unique dealer/location identifier (primary key).
+dealer_name
+String
+Yes
+Dealer
+Legal or trading name of the dealership.
+brand
+String
+Yes
+Dealer
+Primary OEM brand represented (e.g., Toyota, Ford).
+state
+String
+Yes
+Dealer
+State/province of the dealership.
+city
+String
+Yes
+Dealer
+City of the dealership.
+address
+String
+No
+Dealer
+Street address.
+zip_code
+String
+No
+Dealer
+Postal / ZIP code.
+tier
+String
+No
+Dealer
+Dealer tier/classification (e.g., Platinum, Gold, Silver).
+established_year
+Integer
+No
+Dealer
+Year the dealership was established.
+monthly_capacity
+Integer
+No
+Dealer
+Maximum units the dealer can process/sell per month.
+showroom_area_sqft
+Integer
+No
+Dealer
+Showroom floor area in square feet.
+service_center
+Boolean
+No
+Dealer
+Whether an on-site service center exists.
+ev_charging_station
+Boolean
+No
+Dealer
+Whether EV charging is available on-site.
+num_salespeople
+Integer
+No
+Dealer
+Headcount of sales staff.
+annual_target_units
+Integer
+No
+Dealer
+Annual sales target in units.
+performance_score
+Float
+No
+Either
+Internal performance score (0–100); PredictaX can derive if omitted.
+google_rating
+Float
+No
+Dealer
+Public review rating, if tracked.
+latitude
+Float
+Yes
+Dealer
+Geolocation latitude (used for regional/map views).
+longitude
+Float
+Yes
+Dealer
+Geolocation longitude (used for regional/map views).
+7.2 Vehicles
+Primary key: vehicle_id. One row per model + trim/variant combination sold or stocked.
+Field
+Type
+Required
+Source
+Description
+vehicle_id
+String
+Yes
+Dealer
+Unique vehicle/trim SKU identifier (primary key).
+brand
+String
+Yes
+Dealer
+OEM brand.
+model
+String
+Yes
+Dealer
+Model name.
+variant
+String
+No
+Dealer
+Trim/variant name (e.g., LE, XLE, Limited).
+category
+String
+Yes
+Dealer
+Body style / segment (SUV, Sedan, Truck, Coupe, etc.).
+fuel_type
+String
+Yes
+Dealer
+Gasoline, Diesel, Hybrid, EV, etc.
+price_usd
+Integer
+Yes
+Dealer
+MSRP / base price in USD.
+engine_cc
+Float
+No
+Dealer
+Engine displacement (cc); blank for EVs.
+horsepower
+Integer
+No
+Dealer
+Engine/motor horsepower.
+mpg
+Float
+No
+Dealer
+Fuel economy (combined MPG or MPGe).
+range_miles
+Integer
+No
+Dealer
+EV/PHEV driving range in miles; blank for ICE vehicles.
+seating_capacity
+Integer
+No
+Dealer
+Number of seats.
+transmission
+String
+No
+Dealer
+Automatic, Manual, CVT, etc.
+drive_type
+String
+No
+Dealer
+FWD, RWD, AWD, 4WD.
+body_color_options
+Integer
+No
+Dealer
+Number of exterior color options offered.
+safety_rating
+Integer
+No
+Dealer
+Safety rating (e.g., NHTSA 1–5 stars).
+launch_year
+Integer
+No
+Dealer
+Model year / launch year.
+is_active
+Boolean
+Yes
+Dealer
+Whether the SKU is currently sold/active.
+warranty_years
+Integer
+No
+Dealer
+Manufacturer warranty length in years.
+service_contract_available
+Boolean
+No
+Dealer
+Whether an extended service contract is offered.
+ev_incentive_eligible
+Boolean
+No
+Dealer
+Eligible for federal/state EV incentive.
+residual_value_36mo
+Float
+No
+Either
+Projected 36-month lease residual as a share of MSRP; PredictaX can estimate if omitted.
+7.3 Sales
+Primary key: sale_id. Fact table — one row per completed sale (or per unit, if a transaction includes multiple units). This is the single most important feed for forecast accuracy; provide the deepest history available (see Section 9).
+Field
+Type
+Required
+Source
+Description
+sale_id
+String
+Yes
+Dealer
+Unique transaction identifier (primary key).
+sale_date
+Date (YYYY-MM-DD)
+Yes
+Dealer
+Date the sale was completed.
+year / month / quarter / day_of_week
+Integer / String
+No
+System
+Calendar attributes; PredictaX derives these from sale_date if omitted.
+holiday_period
+String
+No
+Either
+Named holiday/seasonal promotion window active at time of sale, if any.
+customer_id
+String
+Yes
+Dealer
+Foreign key to Customers.
+dealer_id
+String
+Yes
+Dealer
+Foreign key to Dealers.
+vehicle_id
+String
+Yes
+Dealer
+Foreign key to Vehicles.
+brand / model / vehicle_category / fuel_type / state / city
+String
+No
+Either
+Denormalized attributes for fast analytics; PredictaX will populate via lookups if omitted.
+base_price_usd
+Integer
+Yes
+Dealer
+List/base price before discount.
+discount_pct
+Float
+No
+Dealer
+Discount applied, as a percentage.
+selling_price_usd
+Integer
+Yes
+Dealer
+Final negotiated selling price.
+sales_tax_amount_usd
+Integer
+No
+Dealer
+Sales tax collected.
+accessories_revenue_usd / insurance_revenue_usd / extended_warranty_usd
+Integer
+No
+Dealer
+F&I / accessory attach revenue, if tracked.
+total_revenue_excl_tax / total_revenue_incl_tax
+Integer
+No
+Either
+Revenue roll-ups; PredictaX can compute if omitted.
+financing_type
+String
+No
+Dealer
+Cash, Loan, or Lease.
+loan_amount_usd
+Integer
+No
+Dealer
+Financed amount, if applicable.
+units_sold
+Integer
+Yes
+Dealer
+Number of units on this line (typically 1).
+test_drive_converted
+Boolean
+No
+Dealer
+Whether the sale followed a test drive.
+lead_to_close_days
+Integer
+No
+Dealer
+Days from first lead contact to close.
+salesperson_id
+String
+No
+Dealer
+Internal salesperson identifier.
+marketing_channel
+String
+No
+Dealer
+Attributed lead source/channel.
+season_multiplier
+Float
+No
+System
+Seasonality adjustment factor; computed by PredictaX.
+lease_term_months / lease_maturity_date / residual_value_pct / residual_value_usd / contract_mileage_allowance / lease_monthly_payment_usd
+Mixed
+Conditional
+Dealer
+Required only when financing_type = “Lease”; drives the lease-return forecasting pipeline.
+trade_in_flag
+Boolean
+No
+Dealer
+Whether a trade-in was part of the deal.
+trade_in_brand / trade_in_model / trade_in_year / trade_in_mileage
+Mixed
+Conditional
+Dealer
+Required only when trade_in_flag = True.
+trade_in_appraised_value_usd / trade_in_allowance_usd / trade_in_over_allowance_usd / trade_bonus_usd
+Integer
+No
+Dealer
+Trade-in valuation detail, if tracked.
+7.4 Inventory
+Primary key: inventory_id. One row per dealer + vehicle + snapshot date (a periodic stock position, typically month-end).
+Field
+Type
+Required
+Source
+Description
+inventory_id
+String
+Yes
+Dealer
+Unique snapshot record identifier (primary key).
+record_date
+Date (YYYY-MM-DD)
+Yes
+Dealer
+Snapshot date of the stock position.
+dealer_id
+String
+Yes
+Dealer
+Foreign key to Dealers.
+vehicle_id
+String
+Yes
+Dealer
+Foreign key to Vehicles.
+brand / model / vehicle_category / fuel_type / state / city
+String
+No
+Either
+Denormalized attributes; PredictaX populates via lookups if omitted.
+current_stock
+Integer
+Yes
+Dealer
+Units physically in stock at the dealer on record_date.
+days_in_stock
+Integer
+No
+Dealer
+Average age of current stock, in days.
+units_sold_last_30d
+Integer
+No
+Dealer
+Trailing 30-day unit sales for this SKU at this dealer.
+units_ordered
+Integer
+No
+Dealer
+Units on order from the OEM/distributor, not yet received.
+transit_stock
+Integer
+No
+Dealer
+Units in transit (shipped, not yet arrived).
+port_of_entry
+String
+No
+Dealer
+Import port, if applicable.
+warehouse_zone
+String
+No
+Dealer
+Internal warehouse/lot zone code.
+last_replenishment_date
+Date
+No
+Dealer
+Date stock was last replenished.
+supplier_lead_time_days
+Integer
+No
+Dealer
+Typical lead time from order to delivery.
+customs_cleared
+Boolean
+No
+Dealer
+Customs clearance status, if applicable.
+holding_cost_per_day_usd
+Float
+No
+Dealer
+Daily carrying cost per unit, if tracked internally.
+demand_forecast_30d
+Integer
+No
+System
+PredictaX-generated 30-day demand forecast — do not populate.
+reorder_point
+Integer
+No
+System
+PredictaX-calculated reorder threshold — do not populate.
+stockout_flag / overstock_flag / reorder_needed
+Boolean
+No
+System
+PredictaX-generated risk flags — do not populate.
+stockout_risk_score / overstock_risk_score
+Float
+No
+System
+PredictaX-generated risk scores — do not populate.
+estimated_holding_cost_usd
+Float
+No
+System
+Derived from holding_cost_per_day_usd × days_in_stock — do not populate.
+7.5 Customers
+Primary key: customer_id. One row per known buyer/lead. This entity carries Personally Identifiable Information (PII) — see Section 10 before transferring this file.
+Field
+Type
+Required
+Source
+Description
+customer_id
+String
+Yes
+Dealer
+Unique customer identifier (primary key).
+name
+String
+No (PII)
+Dealer
+Customer full name — recommend hashing/pseudonymizing before transfer (Section 10).
+age / gender / nationality
+Mixed
+No (PII)
+Dealer
+Demographic attributes used for segmentation.
+state / city
+String
+Yes
+Dealer
+Customer's home market.
+occupation
+String
+No
+Dealer
+Occupation category.
+income_bracket / estimated_annual_income_usd
+Mixed
+No
+Dealer
+Income banding used for segmentation and affordability modeling.
+credit_score
+Integer
+No (Sensitive)
+Dealer
+Credit score, if available and permitted for use under applicable credit-reporting law.
+years_at_address
+Integer
+No
+Dealer
+Tenure at current address.
+number_of_past_purchases
+Integer
+No
+Dealer
+Count of prior purchases with this dealer/group.
+preferred_fuel_type / preferred_vehicle_category
+String
+No
+Dealer
+Stated or inferred preferences.
+email_opt_in
+Boolean
+No
+Dealer
+Marketing consent flag — must reflect actual consent on file.
+test_drive_taken
+Boolean
+No
+Dealer
+Whether a test drive occurred.
+emi_preferred
+Boolean
+No
+Dealer
+Preference for financed/installment payment.
+down_payment_capacity_usd
+Integer
+No
+Dealer
+Estimated available down payment.
+registration_date
+Date
+Yes
+Dealer
+Date the customer record was created.
+last_activity_date
+Date
+No
+Dealer
+Date of most recent interaction.
+lead_source
+String
+No
+Dealer
+Origin channel of the lead.
+customer_segment
+String
+No
+System
+PredictaX-generated behavioral segment — do not populate.
+loyalty_score / marketing_response_score / churn_risk_score
+Float
+No
+System
+PredictaX-generated scores — do not populate.
+7.6 Referential Integrity Requirements
+Every dealer_id referenced in Sales or Inventory must exist in Dealers.
+Every vehicle_id referenced in Sales or Inventory must exist in Vehicles.
+Every customer_id referenced in Sales must exist in Customers.
+Primary key columns (dealer_id, vehicle_id, sale_id, inventory_id, customer_id) must be unique within their own file.
+8. File & Format Standards
+8.1 File-Based (CSV) Standards — Paths A & B
+File format: UTF-8 encoded CSV, comma-delimited, with a single header row matching the exact field names in Section 7.
+One file per entity: dealers.csv, vehicles.csv, sales.csv, inventory.csv, customers.csv.
+Dates: ISO 8601 (YYYY-MM-DD). Do not use locale-specific date formats (e.g., DD/MM/YYYY or MM/DD/YYYY).
+Booleans: True / False (or 1 / 0, consistently applied within a file).
+Currency fields: Plain numeric values in USD, no currency symbols, thousands separators, or parentheses for negatives.
+Null / unknown values: Leave the cell empty. Do not use placeholder text such as “N/A”, “NULL”, or “-”.
+Identifiers: Stable, unique, and consistent across files and across refreshes (a given dealer_id, vehicle_id, or customer_id must not be reused for a different real-world entity).
+File naming: <entity>_<YYYYMMDD>.csv for bulk loads (e.g., sales_20260827.csv), so each delivery is traceable.
+Maximum file size (interactive upload): Files uploaded via the Dynamic Ingestion Engine should stay within the per-file limit configured for the dealer's environment (default limit is 200 MB); larger historical extracts should use Path A (bulk load, Section 4.1).
+8.2 API / System-Integration Data Standards — Path C
+When data is delivered through direct system integration (Section 4.3) rather than as a CSV file, the following standards apply in place of Section 8.1:
+Payload format: JSON (preferred) or XML, with source fields mapped to the entity schema in Section 7 during connector setup via a field-mapping workbook completed jointly during onboarding (Section 12).
+Incremental sync: each pull or push is scoped by a “modified since” timestamp or change-data-capture marker so only new/changed records transfer, rather than a full re-extract every cycle.
+Idempotency: repeated delivery of the same record (e.g., a retried webhook) must not create duplicate rows — records are matched and upserted on their primary key (Section 7).
+Pagination & rate limits: API pulls respect the source system's documented page size and rate-limit headers; the connector backs off and retries rather than exceeding published limits.
+Time zone: all timestamps are normalized to UTC (or a single agreed time zone) at the point of transfer, to avoid date-boundary mismatches with file-based feeds.
+Error handling: failed records are logged with the source system's native identifier and reason, and do not block the rest of the batch from loading.
+9. Data Volume & History Requirements
+Entity
+Minimum History
+Recommended History
+Refresh Cadence
+Sales
+36 months
+60 - 72 months
+Monthly (minimum); weekly preferred post go-live
+Inventory
+36 months of month-end snapshots
+60 - 72 months
+Monthly (matching sales cadence)
+Customers
+Current full customer master
+Full history since CRM inception
+Monthly, or on significant change volume
+Dealers
+Current full dealer network
+N/A (slow-changing)
+On change (new/closed location, attribute update)
+Vehicles
+Current + discontinued models sold in the history window
+Full catalog history
+On change (new model year, new trim, discontinued SKU)
+Forecast quality improves materially with more history: Prophet-based forecasting needs enough history to learn yearly seasonality, and customer segmentation / lead scoring need enough sales volume per segment to be statistically meaningful. Dealers with less than 36 months of history can still onboard, but should expect wider forecast uncertainty bands until more data accrues.
+10. Data Quality, PII, Security & Compliance
+10.1 Data Quality Checks Applied on Ingestion
+Primary key presence and uniqueness per file.
+Referential integrity across dealer_id / vehicle_id / customer_id (Section 7.6).
+Required-field completeness (Section 7 “Required” column).
+Type/format conformance (dates parse as dates, numerics parse as numbers, booleans are True/False).
+Row-count and shape validation against the previous successful load, to catch truncated or partial files.
+Duplicate transaction detection on sale_id.
+Files that fail validation are rejected with a detailed error report (row/column/reason) returned to the dealer contact for correction and re-submission; the previous good dataset remains active until a corrected file is accepted.
+10.2 Personally Identifiable Information (PII)
+The Customers entity contains PII (name, demographic data) and sensitive attributes (income, credit score). Before transferring this file, the dealer should:
+Confirm a lawful basis / consent exists for using this data for analytics and marketing-response modeling (e.g., email_opt_in must reflect actual, current consent).
+Where the receiving environment or contract requires it, pseudonymize direct identifiers (e.g., replace name with customer_id only, and hash any additional identifiers such as email/phone before they are added to the file).
+Restrict internal access to the raw file on the dealer's side to authorized personnel only, consistent with the dealer's own data protection policy and applicable regional privacy law.
+Notify the PredictaX team of any data subject deletion/erasure requests so the corresponding records can be removed from PredictaX systems.
+10.3 Data Transfer & Storage Security
+Files must be transferred over an encrypted channel (SFTP, HTTPS upload, or a shared encrypted storage location agreed during onboarding) — plain email attachment of Customers or Sales data is not permitted.
+Access to the transfer location and to the PredictaX Dynamic Ingestion Engine must be limited to named, authorized dealer users.
+Credentials (transfer-channel logins, dashboard accounts, API keys/environment variables such as DATABASE_URL for a dealer-hosted database) must not be shared over unencrypted channels and must be rotated on personnel change.
+A Data Processing Agreement (DPA) / confidentiality addendum covering the data described in Section 7 should be executed prior to the first data transfer, if not already covered by the master services agreement.
+10.4 Data Retention & Deletion
+Retention periods for dealer data held within PredictaX, and the process for deletion on contract termination or dealer request, should be confirmed in the commercial/data agreement; this document assumes that agreement governs retention and does not itself set a retention period.
+10.5 API & Connector Credential Security (Path C)
+API keys, OAuth tokens, and database credentials used for direct system integrations are stored encrypted at rest and scoped to the minimum permissions needed — read-only wherever the source system supports it.
+Credentials are rotated on a defined schedule and immediately on personnel change or suspected compromise.
+Where a third-party middleware/iPaaS platform bridges a source system to PredictaX, that vendor is acting as a data sub-processor and must be disclosed to the dealer and covered under the Data Processing Agreement (Section 10.3).
+Connector health and data freshness are monitored so a silent sync failure is caught and alerted on, rather than surfacing later as stale dashboard data.
+11. Technical & Infrastructure Prerequisites
+11.1 Deployment Options
+Model
+Description
+Dealer Responsibility
+PredictaX-Hosted (recommended)
+PredictaX hosts the application and database; the dealer only exchanges data files and accesses the dashboard via a browser.
+Provide data; nominate named dashboard users; no infrastructure to maintain.
+Dealer-Hosted (Docker)
+The dealer runs the provided Docker image (docker-compose.yml) inside their own environment / private cloud.
+Provision a host meeting Section 11.2, open required ports, manage the container lifecycle, and configure environment variables (Section 11.3).
+11.2 Minimum Environment (Dealer-Hosted Option Only)
+Python 3.10 – 3.13 runtime (containerized via the supplied Dockerfile) or Docker Engine to run the provided image.
+A relational database: SQLite (default, file-based, suitable for pilot/single-instance use) or a managed PostgreSQL/MySQL instance for production/multi-user scale.
+Minimum 4 vCPU / 8 GB RAM recommended for the application host (ML model training is CPU-bound).
+Network access for dashboard users; adjustable via reverse proxy/load balancer.
+Outbound HTTPS access from the application host, if the dealer wishes to enable the sentiment/news-monitoring module, which calls external public data and AI-analysis services.
+11.3 Configuration & Environment Variables
+The application is configured via environment variables (a .env file or container environment)
+For a dealer-hosted deployment using an external database, the dealer's IT team must provision the database, provide PredictaX (or configure directly) with the DATABASE_URL connection strings, and ensure the application host can reach that database on its network.
+11.4 User Access
+Dealer must nominate named users who require dashboard access, and the intended role for each (e.g., executive/read-only view vs. data-upload/administrative access to the Dynamic Ingestion Engine).
+A modern web browser (Chrome, Edge, Firefox, Safari — current or previous major version) is the only client-side requirement; no software installation is needed for dashboard users.
+11.5 Connector / API Integration Requirements (Path C Only)
+The dealer's CRM/ERP/DMS administrator issues API credentials (OAuth client or API key) scoped to the entities in Section 7, following the principle of least privilege.
+For outbound polling (PredictaX calling the dealer's API), the dealer may need to allowlist PredictaX's source IP range on their firewall or API gateway.
+For inbound webhooks (the source system calling PredictaX), the dealer's system must be able to reach PredictaX's ingestion endpoint over HTTPS; a private link or VPN can be arranged if data cannot traverse the public internet.
+Separate sandbox/test credentials, distinct from production, should be provided for initial connector build and testing.
+The dealer notifies PredictaX in advance of any upgrade, migration, or replacement of a connected CRM/ERP/DMS, since API versions and field structures can change between releases.
+12. Onboarding & Integration Timeline
+Indicative phased plan; actual duration depends on data readiness and deployment model chosen.
+Phase
+Key Activities
+Owner
+1. Kickoff
+Confirm scope, nominate contacts, agree deployment model, execute DPA/confidentiality addendum
+Joint
+2. Data Mapping
+Map dealer source systems (DMS/CRM/ERP) to Section 7 schema; identify gaps/optional fields; if Path C is selected, begin connector discovery (API availability, auth method, sandbox access)
+Dealer, supported by PredictaX
+3. Sandbox Load
+Dealer delivers a sample extract; PredictaX loads into a sandbox environment and shares validation results
+Joint
+4. Historical Backfill
+Dealer delivers full historical data set (Section 9); PredictaX performs bulk load and trains initial models
+Dealer delivers, PredictaX loads
+5. UAT
+Dealer reviews dashboards, forecasts, and segmentation outputs against known business context; issues logged and resolved
+Dealer, supported by PredictaX
+6. Go-Live Sign-off
+Formal acceptance against criteria in Section 13; production access granted to named users
+Joint
+7. Hypercare
+Elevated support during first refresh cycles; ongoing cadence established
+PredictaX, with Dealer feedback
+
+13. Testing & Acceptance Criteria
+A dealer is considered successfully integrated when all of the following are met:
+All five required entity files have been loaded with zero unresolved referential-integrity or required-field errors.
+Row counts and key aggregates (total units sold, total revenue, current stock by dealer) in PredictaX dashboards reconcile with the dealer's own source-system reports for a sample period.
+Forecasting, inventory-risk, customer-segmentation, and lead-scoring views render without error for the dealer's data.
+Named dealer users can log in, view their scoped data, and (where authorized) successfully upload a file via the Dynamic Ingestion Engine.
+For dealers integrated via direct system integration (Path C), the connector has completed at least one full, automated sync cycle with zero unresolved errors.
+The dealer's business sponsor has reviewed and formally signed off on the initial forecast/segmentation outputs as directionally reasonable.
+A data refresh cadence and support escalation path (Section 14) has been agreed and documented.
+14. Ongoing Data Refresh, Support & Escalation
+14.1 Ongoing Refresh Process
+After go-live, the dealer supplies incremental or full-refresh files on the cadence agreed in Section 9, via the same channel used for the historical backfill or via the Dynamic Ingestion Engine. Each refresh should follow the file-naming and format standards in Section 8 so it can be traced and validated consistently.
+14.2 Change Management
+Any change to the dealer's source-system schema (new fields, renamed values, new vehicle categories, etc.) must be communicated to the PredictaX team in advance of the next refresh.
+New dealer locations, discontinued vehicle SKUs, or CRM migrations should be flagged as they occur, not discovered via a failed load.
+14.3 Support & Escalation
+Issue Type
+First Point of Contact
+Target Response
+Data load failure / validation error
+PredictaX integration/support contact
+1 business day
+Dashboard access issue
+PredictaX support contact
+1 business day
+Data discrepancy vs. dealer source system
+Joint (dealer data contact + PredictaX)
+2 business days
+Platform outage
+PredictaX support contact
+Per agreed SLA in commercial agreement
+Specific named contacts, ticketing channel, and formal SLAs are to be recorded in Appendix D (Contacts) once assigned during the Kickoff phase (Section 12, Phase 1).
+14.4 Refresh Cadence for Directly Integrated Systems
+For dealers on Path C, ongoing refresh runs continuously or on a schedule managed by the connector, rather than following the manual cadence in Section 9. The dealer's ongoing responsibility narrows to keeping API credentials valid and flagging source-system changes (Section 14.2); connector failures are surfaced and triaged per the support process in Section 14.3.
+
+Appendix A — Sample Data Rows
+Illustrative rows showing the expected shape of each file (values are examples, not real dealer data).
+A.1 dealers.csv
+dealer_id
+dealer_name
+brand
+state
+city
+tier
+latitude
+longitude
+DLR0001
+Sacramento Auto Group Hyundai
+Hyundai
+California
+Sacramento
+Silver
+38.47301
+-121.59228
+A.2 vehicles.csv
+vehicle_id
+brand
+model
+variant
+category
+fuel_type
+price_usd
+is_active
+VH0001
+Toyota
+RAV4
+LE
+SUV
+Gasoline
+29000
+True
+A.3 sales.csv (key columns)
+sale_id
+sale_date
+customer_id
+dealer_id
+vehicle_id
+selling_price_usd
+financing_type
+units_sold
+SAL0000001
+2026-03-03
+CUS030497
+DLR0064
+VH0135
+31135
+Cash
+1
+A.4 inventory.csv (key columns)
+inventory_id
+record_date
+dealer_id
+vehicle_id
+current_stock
+days_in_stock
+units_sold_last_30d
+INV0000001
+2023-09-30
+DLR0001
+VH0142
+2
+72
+0
+A.5 customers.csv (key columns)
+customer_id
+state
+city
+income_bracket
+preferred_vehicle_category
+registration_date
+CUS000001
+California
+Sacramento
+<40K
+SUV
+2025-11-16
+
+Appendix B — Glossary
+Term
+Definition
+Bulk Load
+A one-time or periodic full-file transfer of an entity's data, loaded directly into PredictaX's database (Section 4.1).
+Dynamic Ingestion Engine
+The in-app screen allowing an authorized dealer user to upload a CSV and trigger model retraining (Section 4.2).
+Direct System Integration (Path C)
+Connecting PredictaX directly to a dealer's CRM, ERP, or DMS via API, webhook, middleware, or database link, instead of exchanging CSV files (Section 4.3).
+Webhook
+An automated, near-real-time notification a source system sends to PredictaX when a record is created or changed.
+Middleware / iPaaS
+A third-party integration-platform-as-a-service that sits between a dealer's source system and PredictaX, handling extraction, transformation, and delivery when a direct API isn't available.
+OAuth 2.0
+An industry-standard authorization protocol used to grant PredictaX scoped, revocable access to a dealer's CRM/ERP/DMS API without sharing the underlying account password.
+DMS
+Dealer Management System — the dealer's core operational system of record for sales, inventory, and service.
+Fact Table
+A table (Sales) recording individual transactional events, as opposed to descriptive dimension data.
+Dimension Table
+A table (Dealers, Vehicles, Customers, Inventory) describing an entity referenced by the fact table.
+PII
+Personally Identifiable Information — data that can identify a specific individual (Section 10.2).
+Referential Integrity
+The requirement that foreign-key values (e.g., dealer_id in Sales) exist in their parent table (Dealers).
+UAT
+User Acceptance Testing — dealer-side validation of outputs prior to go-live sign-off.
+Star Schema
+A data-warehouse design pattern with a central fact table linked to surrounding dimension tables.
+
+Appendix C — Pre-Integration Checklist
+For the dealer's integration contact to complete before Phase 3 (Sandbox Load):
+☐  Integration contact and business sponsor nominated
+☐  Deployment model chosen (PredictaX-hosted vs. dealer-hosted)
+☐  Data intake path chosen per source system (Path A file export, Path B in-app upload, or Path C direct integration — Section 4)
+☐  Data Processing Agreement / confidentiality addendum executed
+☐  Source systems identified for each entity (DMS, CRM, ERP, dealer master)
+☐  (If Path C) API/OAuth credentials, sandbox access, and firewall/allowlisting requirements confirmed with source-system administrator (Section 11.5)
+☐  Field mapping completed from source systems to Section 7 schema
+☐  PII handling approach confirmed for Customers file (Section 10.2)
+☐  Secure transfer channel agreed and access provisioned
+☐  Historical data availability confirmed against Section 9 targets
+☐  Named dashboard users and roles identified
+☐  Refresh cadence agreed (Section 9 / 14.1)
+☐  (If dealer-hosted) Infrastructure provisioned per Section 11.2, environment variables configured per Section 11.3
+
+Appendix D — Key Contacts
+Role
+Name
+Organization
+Email / Phone
+Dealer Integration Contact
+
+
+
+Dealer Business Sponsor
+
+
+
+PredictaX Integration Lead
+
+
+
+PredictaX Support Contact
+
+
+
+
+Appendix E — Connector Reference Sheet
+To be completed jointly during onboarding (Section 12, Phase 2) for each source system integrated via direct system integration (Path C, Section 4.3):
+Source System Name & Version
+Category (DMS/CRM/ERP/Other)
+Integration Method
+Authentication Type
+Entities Synced
+Sync Frequency
+Technical Contact
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -52,7 +52,7 @@ automobile-demand-intelligence/
     ├── overview.py             # Landing metrics and volume graphs
     ├── forecasting.py          # Prophet uncertainty and decomposition views
     ├── comparison.py           # Overlapping YoY comparison charts
-    ├── regional.py             # GPS Map and dealer leaderboards
+    ├── regional.py             # Store Performance — footprint map + per-rooftop scorecard
     ├── customers.py            # KMeans 2D/3D profiles and lead scorers
     ├── ai_insights.py          # Automated growth recommendations & Simulator
     ├── upload_data.py          # Ingestion engine and uploader

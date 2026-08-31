@@ -168,11 +168,11 @@ with st.sidebar:
             "Executive Overview",
             "Demand Forecasting",
             "Comparative Analytics",
-            "Regional Intelligence",
+            "Store Performance",
             "Customer Intelligence",
             "Inventory Intelligence",
             # "Insights & Simulator",
-            "Sentimental  analysis",
+            "Sentiment Analysis",
             # "Data Ingestion Engine",
             # "Model Performance Metrics"
         ],
@@ -180,7 +180,7 @@ with st.sidebar:
             "speedometer2",
             "graph-up-arrow",
             "columns-gap",
-            "geo-alt",
+            "shop",
             "people",
             "box-seam",
             # "cpu",
@@ -225,13 +225,20 @@ with st.sidebar:
             }
         </style>
     """, unsafe_allow_html=True)
-    st.markdown("<h3 style='color: #f3f4f6; font-size: 15px; margin-bottom: 10px;'>Global Filters</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #f3f4f6; font-size: 15px; margin-bottom: 6px;'>Global Filters</h3>", unsafe_allow_html=True)
 
-    # Global Filters Inputs
-    start_date = st.date_input("Start Date", value=date(2021, 1, 1))
-    end_date = st.date_input("End Date", value=date(2026, 5, 31))
+    # Global Filters — paired into two columns so the whole block fits the
+    # sidebar without a long scroll. Dropdown popovers render at body level, so
+    # the compact rows don't clip them.
+    _dc1, _dc2 = st.columns(2)
+    with _dc1:
+        start_date = st.date_input("Start Date", value=date(2021, 1, 1))
+    with _dc2:
+        end_date = st.date_input("End Date", value=date(2026, 5, 31))
 
-    region = st.selectbox("State", options=["All"] + options["regions"])
+    _fc1, _fc2 = st.columns(2)
+    with _fc1:
+        region = st.selectbox("State", options=["All"] + options["regions"])
 
     # Filter cities dynamically based on state
     if region != "All":
@@ -247,9 +254,15 @@ with st.sidebar:
     else:
         city_options = options["cities"]
 
-    city = st.selectbox("City", options=["All"] + city_options)
-    brand = st.selectbox("Brand", options=["All"] + options["brands"])
-    category = st.selectbox("Vehicle Category", options=["All"] + options["categories"])
+    with _fc2:
+        city = st.selectbox("City", options=["All"] + city_options)
+
+    _fc3, _fc4 = st.columns(2)
+    with _fc3:
+        brand = st.selectbox("Brand", options=["All"] + options["brands"])
+    with _fc4:
+        category = st.selectbox("Category", options=["All"] + options["categories"])
+
     fuel_type = st.selectbox("Fuel Type", options=["All"] + options["fuel_types"])
 
     # Compile global filter dictionary
@@ -270,7 +283,7 @@ elif selected_page == "Demand Forecasting":
     render_forecasting(filters)
 elif selected_page == "Comparative Analytics":
     render_comparison(filters)
-elif selected_page == "Regional Intelligence":
+elif selected_page == "Store Performance":
     render_regional(filters)
 elif selected_page == "Customer Intelligence":
     render_customers(filters)
@@ -278,7 +291,7 @@ elif selected_page == "Inventory Intelligence":
     render_inventory(filters)
 # elif selected_page == "Insights & Simulator":
 #     render_ai_insights(filters)
-elif selected_page == "Sentimental  analysis":
+elif selected_page == "Sentiment Analysis":
     render_sentiment_analysis(filters)
 # elif selected_page == "Data Ingestion Engine":
 #     render_upload_data()

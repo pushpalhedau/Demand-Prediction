@@ -10,6 +10,11 @@ class Customer(Base):
     name = Column(String(100), nullable=True)
     age = Column(Integer, nullable=True)
     gender = Column(String(20), nullable=True)
+    # DEPRECATED — never populated. Segmenting or scoring US auto customers by
+    # national origin / ethnicity is a fair-lending (ECOA / disparate-impact)
+    # liability. Removed from the generator, the segmentation feature set and
+    # every dashboard view on 2026-08-29. Column kept nullable for schema
+    # stability only. See the customer-intelligence dealer-positioning changelog.
     nationality = Column(String(100), nullable=True)
     state = Column(String(50), nullable=True)                         # was: emirate
     city = Column(String(100), nullable=True)                         # was: area
@@ -123,6 +128,12 @@ class Sale(Base):
     city = Column(String(100), nullable=True)                         # was: area
 
     base_price_usd = Column(Integer, nullable=True)                   # was: base_price_aed
+    # Section 232 (25% on imported vehicles, Apr 2025+) dollars baked into this
+    # deal's sticker: import-brand base price × the modeled pass-through, plus a
+    # small materials/parts markup on domestic brands. 0 before Apr 2025 and 0
+    # for deals with no tariff exposure. Lets Comparative Analytics show the
+    # group's real per-franchise tariff cost instead of reconstructing it.
+    tariff_cost_usd = Column(Integer, nullable=True)
     discount_pct = Column(Float, nullable=True)
     selling_price_usd = Column(Integer, nullable=True)                # was: selling_price_aed
     sales_tax_amount_usd = Column(Integer, nullable=True)             # was: vat_amount_aed
@@ -233,6 +244,9 @@ class ExternalFactor(Base):
     gdp_growth_pct = Column(Float, nullable=True)
     cpi_inflation_pct = Column(Float, nullable=True)
     us_fed_rate_pct = Column(Float, nullable=True)
+    auto_loan_apr_pct = Column(Float, nullable=True)                  # policy rate + new-car spread; what customers finance at
+    incentive_pct_of_atp = Column(Float, nullable=True)              # mfr + dealer incentive spend as a share of transaction price
+    inventory_days_supply = Column(Float, nullable=True)             # new-vehicle days' supply on the group's lots
     consumer_confidence_index = Column(Float, nullable=True)
     tourism_index = Column(Float, nullable=True)
     home_price_index = Column(Float, nullable=True)                   # was: dubai_re_price_index

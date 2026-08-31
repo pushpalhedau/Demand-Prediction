@@ -314,7 +314,7 @@ The daily risk score itself reflects both **how negative** the day's news was an
 | Executive Overview | Aggregated sales/revenue queries |
 | Demand Forecasting | Forecasting model (Section 6) |
 | Comparative Analytics | Year-over-year queries, plus a dedicated Import Tariff Exposure analysis comparing domestic and import auto brands under the 2025 Section 232 tariffs |
-| Regional Intelligence | Dealer performance queries, mapped geographically |
+| Store Performance | Per-rooftop scorecard — units, pace vs each store's own target, YoY, close rate — on a footprint map and a sortable table |
 | Customer Intelligence | Segmentation + lead-scoring models (Section 7) |
 | Inventory Intelligence | Four sub-modules built on inventory *flow*: **Stock Health** (current position, aging ladder, reorder priorities), **Inventory Flow & Lease Returns** (forward lease-return book, net order gap, remarketing lanes, re-capture pipeline), **Trade-In & Acquisition** (used-supply intake, true-concession waterfall, incentive elasticity), and the **Placement Assistant** (Section 7) |
 | Sentiment Analysis | News and sentiment pipeline (Section 8) |

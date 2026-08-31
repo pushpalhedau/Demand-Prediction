@@ -21,6 +21,7 @@ Run: python -m preprocessing.generate_na_data
 
 import os
 import sys
+import calendar
 import numpy as np
 import pandas as pd
 from datetime import date
@@ -228,6 +229,37 @@ BRAND_TRIMS = {
     "Lexus":         ["Base", "Premium", "F Sport", "Luxury"],
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Nameplate demand skew.
+#
+# Within a brand, real retail volume is heavily skewed toward a couple of
+# mainstream nameplates (a Toyota store sells far more RAV4s and Camrys than
+# Priuses and Siennas). Uniform model selection made every nameplate equally
+# likely, which put niche minivans and halo trims at the top of the sales
+# board. These tiers restore a realistic best-seller shape; anything not listed
+# sits at the neutral 1.0 weight.
+# ─────────────────────────────────────────────────────────────────────────────
+MODEL_FLAGSHIP = {
+    "RAV4", "F-150", "Silverado", "CR-V", "Rogue", "Grand Cherokee", "Tucson",
+    "Sportage", "1500", "Sierra", "Outback", "X3", "GLC", "Model Y", "Tiguan", "RX",
+}
+MODEL_STRONG = {
+    "Camry", "Corolla", "Highlander", "Tacoma", "Explorer", "Escape",
+    "Equinox", "Civic", "Accord", "Altima", "Sentra", "Wrangler", "Compass",
+    "Elantra", "Santa Fe", "Forte", "Telluride", "Terrain", "Forester",
+    "Crosstrek", "3 Series", "X5", "C-Class", "GLE", "Model 3", "Jetta", "NX", "ES",
+}
+MODEL_NICHE = {
+    "Prius", "Sienna", "bZ4X", "Mustang", "Expedition", "Mustang Mach-E",
+    "Bolt EUV", "Ridgeline", "Odyssey", "Ariya", "Wagoneer", "Ioniq 5",
+    "Carnival", "EV6", "i4", "EQE", "Model S", "Model X", "ID.4",
+}
+MODEL_TIER_WEIGHT = {
+    **{m: 2.6 for m in MODEL_FLAGSHIP},
+    **{m: 1.7 for m in MODEL_STRONG},
+    **{m: 0.45 for m in MODEL_NICHE},
+}
+
 # Trim ladder economics: price multiplier, hp uplift, mpg penalty (bigger
 # wheels / heavier equipment), applied by position on the ladder.
 TRIM_PRICE_MULT = [1.00, 1.09, 1.19, 1.31]
@@ -332,6 +364,52 @@ TARIFF_PCT = np.where(np.arange(N_MONTHS) >= _month_index(2025, 4), 25.0, 0.0)
 # EV federal tax credit ($7,500): active through Sept 2025, expires Oct 2025
 EV_CREDIT_ACTIVE = np.arange(N_MONTHS) < _month_index(2025, 10)
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Retail demand shape — this is ONE regional dealer group's own sales pattern,
+# not a market model. The series below drive WHICH months and weekdays book
+# deals; the group's annual volume is set by n_sales and is not inflated by
+# any of this (the net macro effect is mean-normalised in build_sales).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# US new-vehicle retail seasonality — Federal Reserve G.17 seasonal factors for
+# total light vehicles (autos + light trucks), index average = 100. Winter
+# trough (Jan 84.8), spring build to the May peak (112.7), summer strength, a
+# September dip after the model-year selldown, and a December pickup/luxury
+# bump (106.8). Source: federalreserve.gov/releases/g17/mv_sales_sf.htm
+RETAIL_SEASONAL_FACTOR = {
+    1: 0.848, 2: 0.914, 3: 1.079, 4: 1.028, 5: 1.127, 6: 0.990,
+    7: 1.005, 8: 1.056, 9: 0.920, 10: 0.986, 11: 0.970, 12: 1.068,
+}
+
+# Day-of-week retail pattern (Mon..Sun, sums to 1). New-vehicle showroom
+# traffic concentrates on Saturday; many states restrict Sunday sales, so
+# Sunday is the lightest day.
+RETAIL_DOW_WEIGHT = np.array([0.130, 0.130, 0.135, 0.140, 0.160, 0.215, 0.090])
+
+# Auto-loan APR the group's customers finance at: the policy rate plus a
+# typical new-car spread for a blended prime / near-prime book.
+AUTO_LOAN_SPREAD_PCT = 3.0
+AUTO_LOAN_APR = FED_RATE + AUTO_LOAN_SPREAD_PCT
+
+# Manufacturer + dealer incentive spend as a share of transaction price. Heavy
+# pre-COVID (~9%), collapsed during the 2021-22 chip shortage (~2.4%), rebuilt
+# to the ~7.3% of 2024-25. Source: Cox Automotive / Kelley Blue Book ATP reports.
+INCENTIVE_PCT_ATP = _interp_series([
+    (2019, 1, 9.2), (2019, 12, 8.6), (2020, 6, 8.0), (2021, 3, 4.5),
+    (2021, 12, 2.4), (2022, 9, 2.3), (2023, 6, 4.2), (2024, 6, 6.8),
+    (2024, 12, 7.1), (2025, 7, 7.3), (2026, 8, 7.4),
+])
+
+# New-vehicle days' supply on the group's lots. ~60 is healthy; the shortage
+# years ran 25-35, then supply rebuilt to the 70-85 of 2024-25. Below ~45 days
+# the group cannot fully fill demand and loses sales; a glut adds only carrying
+# cost. Source: Cox Automotive days'-supply series.
+DAYS_SUPPLY = _interp_series([
+    (2019, 1, 65), (2019, 12, 63), (2020, 5, 48), (2021, 3, 32),
+    (2021, 12, 28), (2022, 9, 30), (2023, 6, 52), (2024, 3, 72),
+    (2024, 12, 82), (2025, 9, 80), (2026, 8, 76),
+])
+
 MONTH_OF = np.array([d.month for d in MONTHS])
 YEAR_OF = np.array([d.year for d in MONTHS])
 HOLIDAY_SEASON = np.where(np.isin(MONTH_OF, [11, 12]), 1, 0)
@@ -428,9 +506,92 @@ DEALER_TEMPLATES = [
 ]
 
 
-def build_dealers(rng, dealers_per_state):
+def _distribute_by_weight(total, weights):
+    """Split `total` integer units across buckets in proportion to `weights`
+    using the largest-remainder method, so the parts always sum back to total."""
+    weights = np.asarray(weights, dtype=float)
+    weights = weights / weights.sum()
+    raw = weights * total
+    base = np.floor(raw).astype(int)
+    remainder = total - base.sum()
+    if remainder > 0:
+        order = np.argsort(-(raw - base))
+        base[order[:remainder]] += 1
+    return base
+
+
+def _group_brand_portfolio(rng, n_rooftops):
+    """
+    Pick the set of franchises a single dealer *group* operates.
+
+    A real dealer group is not a market sample — it carries a deliberate,
+    coherent portfolio of franchises, weighted toward the high-volume domestic
+    and import brands, with every brand it sells backed by at least one rooftop
+    so a customer buying that brand always has a store to buy it from.
+    """
+    # Weighted draw of one brand per rooftop.
+    picks = list(rng.choice(BRAND_NAMES, size=n_rooftops, p=BRAND_WEIGHTS))
+    # Guarantee coverage: every catalog brand needs at least one rooftop.
+    missing = [b for b in BRAND_NAMES if b not in picks]
+    if missing:
+        # Replace the most over-represented picks with the missing brands.
+        from collections import Counter
+        for b in missing:
+            counts = Counter(picks)
+            # brand with the highest count that still has a spare rooftop
+            donor = max(counts, key=lambda k: (counts[k], k))
+            if counts[donor] <= 1:
+                break
+            picks[picks.index(donor)] = b
+    rng.shuffle(picks)
+    return picks
+
+
+def build_dealers(rng, n_rooftops=None, dealers_per_state=None):
+    """
+    Build the dealer network.
+
+    - `n_rooftops` (dealer-group mode): a single group of that many rooftops,
+      spread across states in proportion to market size, each rooftop a single
+      coherent franchise, sales targets filled in later from actual volume.
+    - `dealers_per_state` (legacy/market mode): an even grid of independent
+      dealers, kept for the larger "test" dataset.
+    """
     rows = []
     did = 1
+
+    if n_rooftops is not None:
+        per_state = _distribute_by_weight(n_rooftops, STATE_WEIGHTS)
+        brands = _group_brand_portfolio(rng, n_rooftops)
+        bi = 0
+        for st, k in zip(STATES, per_state):
+            for _ in range(int(k)):
+                brand = brands[bi]; bi += 1
+                city, lat, lon = st["cities"][rng.integers(0, len(st["cities"]))]
+                name = f"{brand} of {city}"
+                tier = rng.choice(["Platinum", "Gold", "Silver"], p=[0.25, 0.50, 0.25])
+                rows.append({
+                    "dealer_id": f"DLR{did:04d}", "dealer_name": name, "brand": brand,
+                    "state": st["name"], "city": city,
+                    "address": f"{int(rng.integers(100, 9999))} {rng.choice(['Auto Plaza Dr','Automall Pkwy','Commerce Way','Motor Mile','Dealership Row'])}",
+                    "zip_code": f"{int(rng.integers(10000, 99999))}",
+                    "tier": tier,
+                    "established_year": int(rng.integers(1985, 2016)),
+                    "monthly_capacity": int(rng.integers(120, 420)),
+                    "showroom_area_sqft": int(rng.integers(14000, 52000)),
+                    "service_center": bool(rng.random() < 0.95),
+                    "ev_charging_station": bool(rng.random() < (0.85 if brand in ("Tesla", "Hyundai", "Kia", "Chevrolet", "Ford", "Nissan") else 0.45)),
+                    "num_salespeople": int(rng.integers(14, 46)),
+                    "annual_target_units": 0,  # filled from trailing-12-month actuals in generate_dataset()
+                    "performance_score": round(float(rng.uniform(62, 96)), 1),
+                    "google_rating": round(float(rng.uniform(3.9, 4.9)), 1),
+                    "latitude": round(lat + rng.uniform(-0.15, 0.15), 5),
+                    "longitude": round(lon + rng.uniform(-0.15, 0.15), 5),
+                })
+                did += 1
+        return pd.DataFrame(rows)
+
+    # ── legacy even-grid market mode ─────────────────────────────────────────
     for st in STATES:
         for _ in range(dealers_per_state):
             brand = rng.choice(BRAND_NAMES, p=BRAND_WEIGHTS)
@@ -460,9 +621,12 @@ def build_dealers(rng, dealers_per_state):
     return pd.DataFrame(rows)
 
 
-NATIONALITY_MIX = ["American", "Mexican-American", "Chinese-American", "Indian-American",
-                    "Filipino-American", "Vietnamese-American", "Other/Mixed"]
-NATIONALITY_P = [0.68, 0.11, 0.05, 0.05, 0.04, 0.03, 0.04]
+# `nationality` is intentionally NOT generated. A US franchise dealer running
+# customer analytics keyed to national origin / ethnicity is a fair-lending
+# (ECOA / disparate-impact) liability, not a feature — it was a holdover from
+# the UAE version of the product. The Customer.nationality column is kept on the
+# model (nullable, deprecated) for schema stability; nothing populates it.
+# See docs/changelog/2026-08-29-customer-intelligence-dealer-positioning.md
 FIRST_NAMES = ["James", "Maria", "Michael", "Ashley", "David", "Jennifer", "Robert", "Linda",
                "William", "Elizabeth", "Carlos", "Emily", "Daniel", "Jessica", "Kevin", "Sarah",
                "Brian", "Amanda", "Steven", "Melissa", "Wei", "Priya", "Juan", "Sophia", "Ryan", "Nicole"]
@@ -481,7 +645,6 @@ def build_customers(rng, n, start, end):
     name = [f"{f} {l}" for f, l in zip(first, last)]
     age = np.clip(rng.normal(43, 13, n), 18, 80).astype(int)
     gender = rng.choice(["Male", "Female", "Other"], size=n, p=[0.48, 0.48, 0.04])
-    nationality = rng.choice(NATIONALITY_MIX, size=n, p=NATIONALITY_P)
 
     state_idx = rng.choice(len(STATES), size=n, p=STATE_WEIGHTS)
     state = [STATES[i]["name"] for i in state_idx]
@@ -495,10 +658,14 @@ def build_customers(rng, n, start, end):
 
     credit_score = np.clip(rng.normal(690, 75, n), 300, 850).astype(int)
     years_at_address = np.clip(rng.exponential(5, n), 0, 30).astype(int)
+    # Placeholder — overwritten with each customer's real lifetime deal count
+    # with the group in _derive_customer_history() once the sales are built.
     number_of_past_purchases = rng.poisson(1.1, n)
     preferred_fuel = rng.choice(["Gasoline", "Hybrid", "Electric", "Diesel"], size=n, p=[0.62, 0.16, 0.18, 0.04])
     preferred_category = rng.choice(["SUV", "Sedan", "Pickup", "Hatchback", "Minivan", "Luxury", "Coupe"], size=n,
                                      p=[0.38, 0.20, 0.18, 0.06, 0.05, 0.09, 0.04])
+    # Placeholders — recomputed from real purchase recency/frequency in
+    # _derive_customer_history() once the sales table exists.
     loyalty_score = np.clip(rng.normal(50, 22, n), 0, 100)
     marketing_response = np.clip(rng.normal(5, 2.2, n), 0, 10)
     lead_source = rng.choice(["Online Ad", "Referral", "Dealer Walk-in", "Search Engine", "Social Media", "Email Campaign"], size=n)
@@ -515,7 +682,7 @@ def build_customers(rng, n, start, end):
     churn_risk = np.clip(rng.beta(2, 5, n), 0, 1)
 
     return pd.DataFrame({
-        "customer_id": customer_id, "name": name, "age": age, "gender": gender, "nationality": nationality,
+        "customer_id": customer_id, "name": name, "age": age, "gender": gender,
         "state": state, "city": city, "occupation": occupation, "income_bracket": income_bracket,
         "estimated_annual_income_usd": estimated_income.round(2), "credit_score": credit_score,
         "years_at_address": years_at_address, "number_of_past_purchases": number_of_past_purchases,
@@ -546,6 +713,9 @@ def build_external_factors(rng):
                 "gdp_growth_pct": round(float(GDP_GROWTH[mi] + rng.uniform(-0.2, 0.2)), 2),
                 "cpi_inflation_pct": round(float(CPI_INFLATION[mi] + rng.uniform(-0.15, 0.15)), 2),
                 "us_fed_rate_pct": round(float(FED_RATE[mi]), 2),
+                "auto_loan_apr_pct": round(float(AUTO_LOAN_APR[mi]), 2),
+                "incentive_pct_of_atp": round(float(INCENTIVE_PCT_ATP[mi]), 2),
+                "inventory_days_supply": round(float(DAYS_SUPPLY[mi]), 1),
                 "consumer_confidence_index": round(float(CONSUMER_CONF[mi] + rng.uniform(-3, 3)), 1),
                 "tourism_index": round(float(TOURISM_IDX[mi] + rng.uniform(-3, 3)), 1),
                 "home_price_index": round(float(HOME_PRICE_IDX[mi] * (0.85 + st["weight"] / 100) + rng.uniform(-2, 2)), 1),
@@ -567,53 +737,237 @@ HOLIDAY_PERIODS = {1: None, 2: "Presidents Day Sale", 5: "Memorial Day Sale", 7:
 
 def build_sales(rng, n, vehicles_df, dealers_df, customers_df, start, end):
     days_range = (end - start).days
-    # Monthly volume shape: COVID dip 2020, recovery, mild growth + seasonality
-    month_weight = np.ones(N_MONTHS)
-    for mi in range(N_MONTHS):
-        y = int(YEAR_OF[mi])
-        base = {2019: 1.0, 2020: 0.68, 2021: 0.92, 2022: 0.98, 2023: 1.08, 2024: 1.15, 2025: 1.12, 2026: 1.10}[y]
-        seasonal = 1.0 + 0.15 * np.sin((MONTH_OF[mi] - 3) / 12 * 2 * np.pi)
-        month_weight[mi] = base * seasonal
+
+    # ── Monthly volume shape ────────────────────────────────────────────────
+    # Three layers: (1) a year-level base — the COVID dip and the recovery,
+    # (2) the US new-vehicle retail seasonal curve (Fed G.17), (3) the group's
+    # response to conditions its customers actually feel. The macro response is
+    # mean-normalised, so it moves WHICH months book deals without changing the
+    # group's annual totals. Coefficients are calibrated to published US
+    # auto-retail elasticities (see the demand-forecasting changelog):
+    #   pump price  ~ -4% units per +$1/gal
+    #   loan APR    ~ -3% units per +1pt
+    #   incentives  ~ +2% units per +1pt of transaction price
+    #   scarcity    :  below ~45 days' supply, unfillable demand walks
+    gas_e = -0.04 * (GAS_REGULAR - 3.00)
+    apr_e = -0.03 * (AUTO_LOAN_APR - 7.00)
+    inc_e = 0.02 * (INCENTIVE_PCT_ATP - 5.50)
+    macro_mult = np.clip(1.0 + gas_e + apr_e + inc_e, 0.85, 1.15)
+    scarcity = np.clip(0.70 + DAYS_SUPPLY / 120.0, 0.82, 1.0)
+    macro_mult = macro_mult * scarcity
+    macro_mult = macro_mult / macro_mult.mean()   # keep annual totals stable
+
+    YEAR_BASE = {2019: 1.0, 2020: 0.68, 2021: 0.92, 2022: 0.98,
+                 2023: 1.08, 2024: 1.15, 2025: 1.12, 2026: 1.10}
+    month_weight = np.array([
+        YEAR_BASE[int(YEAR_OF[mi])]
+        * RETAIL_SEASONAL_FACTOR[int(MONTH_OF[mi])]
+        * macro_mult[mi]
+        for mi in range(N_MONTHS)
+    ])
     month_p = month_weight / month_weight.sum()
     sale_month_idx = rng.choice(N_MONTHS, size=n, p=month_p)
-    day_in_month = rng.integers(1, 28, n)
+
+    # Day-of-week: draw a real weekday-weighted calendar day within each month,
+    # so Prophet's weekly component (and the "busiest day" chart) reflect an
+    # actual Saturday-heavy retail week rather than noise.
+    day_in_month = np.empty(n, dtype=int)
+    for mi in np.unique(sale_month_idx):
+        y, m = int(YEAR_OF[mi]), int(MONTH_OF[mi])
+        days = np.arange(1, calendar.monthrange(y, m)[1] + 1)
+        wd = np.array([date(y, m, int(d)).weekday() for d in days])
+        p = RETAIL_DOW_WEIGHT[wd]
+        p = p / p.sum()
+        sel = sale_month_idx == mi
+        day_in_month[sel] = rng.choice(days, size=int(sel.sum()), p=p)
     sale_date = [date(int(YEAR_OF[mi]), int(MONTH_OF[mi]), int(d)) for mi, d in zip(sale_month_idx, day_in_month)]
 
     brand_choice = rng.choice(BRAND_NAMES, size=n, p=BRAND_WEIGHTS)
+    sale_year = YEAR_OF[sale_month_idx].astype(int)
+    sale_mo = MONTH_OF[sale_month_idx].astype(int)
+
+    # ── Fuel-mix control ────────────────────────────────────────────────────
+    # The catalog is EV-dense relative to the real market, so uniform model
+    # selection over-states EV share. Weight model choice by fuel type, and let
+    # the EV weight follow the real adoption curve: a trickle in 2019, a steep
+    # 2021-2024 ramp, then a step down when the federal EV tax credit expired in
+    # Oct 2025. Hybrids are catalog-thin, so they carry a boost to reach the
+    # ~10-12% of new sales they hold in 2024-25 (Cox Automotive / KBB).
+    EV_WEIGHT_BY_YEAR = {2019: 0.13, 2020: 0.20, 2021: 0.45, 2022: 0.68,
+                         2023: 0.90, 2024: 1.10, 2025: 1.00, 2026: 0.72}
+    HYBRID_WEIGHT = 2.4
+
     veh_by_brand = {b: vehicles_df[vehicles_df["brand"] == b].reset_index(drop=True) for b in BRAND_NAMES}
+    brand_fuel = {b: veh_by_brand[b]["fuel_type"].to_numpy() for b in BRAND_NAMES}
+    brand_cat = {b: veh_by_brand[b]["category"].to_numpy() for b in BRAND_NAMES}
+    brand_pop = {
+        b: np.array([MODEL_TIER_WEIGHT.get(m, 1.0) for m in veh_by_brand[b]["model"]], dtype=float)
+        for b in BRAND_NAMES
+    }
     vehicle_rows = []
-    for b in brand_choice:
+    for b, yr, mo in zip(brand_choice, sale_year, sale_mo):
         pool = veh_by_brand[b]
-        vehicle_rows.append(pool.iloc[rng.integers(0, len(pool))])
+        fuels = brand_fuel[b]
+        cats = brand_cat[b]
+        w = brand_pop[b].copy()
+        w[fuels == "Electric"] *= EV_WEIGHT_BY_YEAR.get(int(yr), 0.8)
+        w[fuels == "Hybrid"] *= HYBRID_WEIGHT
+        if mo == 12:
+            # December: full-size pickup + luxury year-end surge (KBB/Cox: full-size
+            # pickups set a December record of >233k units / $15B in 2025).
+            w[cats == "Pickup"] *= 1.5
+            w[cats == "Luxury"] *= 1.25
+        w /= w.sum()
+        vehicle_rows.append(pool.iloc[int(rng.choice(len(pool), p=w))])
     veh_df_sel = pd.DataFrame(vehicle_rows).reset_index(drop=True)
 
-    state_idx = rng.choice(len(STATES), size=n, p=STATE_WEIGHTS)
-    state = [STATES[i]["name"] for i in state_idx]
-    city = [STATES[i]["cities"][rng.integers(0, len(STATES[i]["cities"]))][0] for i in state_idx]
-
-    dealer_ids = []
+    # ── Route each sale to a store that actually franchises the brand ────────
+    # Demand arises in a market (weighted by market size), but the customer
+    # buys from one of the group's rooftops that carries that brand — preferring
+    # a store in their own state, otherwise the nearest one the group operates.
+    # The sale is then booked at that store, so state/city on the sale is the
+    # STORE's location (where revenue lands), not the shopper's home address.
+    state_name_to_idx = {s["name"]: i for i, s in enumerate(STATES)}
+    dealers_by_brand = {b: dealers_df[dealers_df["brand"] == b] for b in BRAND_NAMES}
     dealers_by_brand_state = {}
     for b in BRAND_NAMES:
         for st in STATE_NAMES:
-            dealers_by_brand_state[(b, st)] = dealers_df[(dealers_df["brand"] == b) & (dealers_df["state"] == st)]
-    fallback_dealers = dealers_df
-    for b, st in zip(brand_choice, state):
-        pool = dealers_by_brand_state.get((b, st))
+            sub = dealers_df[(dealers_df["brand"] == b) & (dealers_df["state"] == st)]
+            if len(sub):
+                dealers_by_brand_state[(b, st)] = sub
+
+    dealer_state = dict(zip(dealers_df["dealer_id"], dealers_df["state"]))
+    dealer_city = dict(zip(dealers_df["dealer_id"], dealers_df["city"]))
+    pref_state_idx = rng.choice(len(STATES), size=n, p=STATE_WEIGHTS)
+    dealer_ids = []
+    for b, psi in zip(brand_choice, pref_state_idx):
+        pool = dealers_by_brand_state.get((b, STATE_NAMES[psi]))
         if pool is None or len(pool) == 0:
-            pool = dealers_df[dealers_df["state"] == st]
-        if len(pool) == 0:
-            pool = fallback_dealers
-        dealer_ids.append(pool.iloc[rng.integers(0, len(pool))]["dealer_id"])
+            pool = dealers_by_brand.get(b)
+        if pool is None or len(pool) == 0:
+            pool = dealers_df
+        dealer_ids.append(pool.iloc[int(rng.integers(0, len(pool)))]["dealer_id"])
+    state = [dealer_state[d] for d in dealer_ids]
+    city = [dealer_city[d] for d in dealer_ids]
+    state_idx = np.array([state_name_to_idx[s] for s in state])
+    state_arr = np.array(state)
 
-    customer_ids = customers_df["customer_id"].sample(n, replace=True, random_state=int(rng.integers(0, 1e9))).values
+    # ── Per-store sales effectiveness ──────────────────────────────────────
+    # Rooftops in one group are not equally good at converting a shopper who
+    # walks in, or at moving a signed deal along. Give each store a stable
+    # latent effectiveness (mean-zero across the network, ~1 s.d.): it shifts
+    # test-drive-to-sale conversion around the ~62% group average by ~7 points
+    # and pulls average time-to-close a few days either way. Mean-preserving,
+    # so the group-level close rate and the Lead Conversion model's training
+    # target are unchanged — only the between-store spread is new.
+    _elist = list(dealers_df["dealer_id"])
+    _eff = rng.normal(0.0, 1.0, len(_elist))
+    _eff = _eff - _eff.mean()
+    _dealer_eff = dict(zip(_elist, _eff))
+    eff_arr = np.array([_dealer_eff[d] for d in dealer_ids])
 
-    base_price = veh_df_sel["price_usd"].values.astype(float)
-    tariff_at_sale = TARIFF_PCT[sale_month_idx]
+    # ── Attach a customer: chronological, with a realistic new-vs-returning
+    # split ────────────────────────────────────────────────────────────────
+    # Real dealership volume is a blend of first-time buyers and customers
+    # coming back for their next vehicle. Roughly ~40% of a year's deals are to
+    # someone who has bought from the group before (the rest are conquest /
+    # first-time) — so the "repeat business" share, the acquisition-cohort
+    # retention curve and number_of_past_purchases all land in a believable
+    # range instead of the ~75% a small closed customer table produced.
+    #
+    # Deals are assigned oldest-first. Each deal is either RETURNING (a customer
+    # who bought before, and whose last purchase is at least ~2 years back — a
+    # real trade cycle, not a same-year re-buy) or NEW (a customer with no deal
+    # yet, preferring the store's state — new-vehicle buyers are overwhelmingly
+    # local: ~5-mi median buyer-to-store distance, Texas registration study; UK
+    # NFDA travel survey). So Customer.state stays meaningful per store for a
+    # later catchment view, repeat business lands near ~40% of volume, and the
+    # acquisition-cohort retention curve is not distorted by re-buys that happen
+    # implausibly fast.
+    P_RETURNING = 0.52
+    P_OUT_OF_STATE = 0.16   # buyers who travel out of their home state for the deal
+    MIN_REBUY_MONTHS = 22
+    _cust_state = dict(zip(customers_df["customer_id"], customers_df["state"]))
+    _fresh_by_state = {
+        st: list(rng.permutation(
+            customers_df.loc[customers_df["state"] == st, "customer_id"].to_numpy()
+        ))
+        for st in STATE_NAMES
+    }
+    _fresh_any = list(rng.permutation(
+        customers_df.loc[~customers_df["state"].isin(STATE_NAMES), "customer_id"].to_numpy()
+    ))
+    _bought_month = {}
+    _return_all = []
+    _return_by_state = {st: [] for st in STATE_NAMES}
+    _want_return = rng.random(n) < P_RETURNING
+    _travel = rng.random(n) < P_OUT_OF_STATE
+    _order = np.argsort(sale_month_idx, kind="stable")
+    _sm = sale_month_idx.astype(int)
+    customer_ids = np.empty(n, dtype=object)
+
+    def _take_fresh(_st):
+        q = _fresh_by_state.get(_st) if _st is not None else None
+        if q:
+            return q.pop()
+        for _stx in STATE_NAMES:
+            if _fresh_by_state[_stx]:
+                return _fresh_by_state[_stx].pop()
+        return _fresh_any.pop() if _fresh_any else None
+
+    for _i in _order:
+        _cur_m = _sm[_i]
+        _st = None if _travel[_i] else state_arr[_i]
+        _picked = None
+        if _want_return[_i] and len(_return_all) > 300:
+            _pool = (_return_by_state.get(_st) or []) if _st is not None else _return_all
+            if len(_pool) < 12:
+                _pool = _return_all
+            for _try in range(6):
+                _cand = _pool[int(rng.integers(0, len(_pool)))]
+                if _cur_m - _bought_month[_cand] >= MIN_REBUY_MONTHS:
+                    _picked = _cand
+                    break
+        if _picked is None:
+            _cid = _take_fresh(_st)
+            if _cid is None:                       # no first-time customers left
+                _picked = _return_all[int(rng.integers(0, len(_return_all)))]
+            else:
+                _picked = _cid
+                _return_all.append(_cid)
+                _cst = _cust_state.get(_cid)
+                if _cst in _return_by_state:
+                    _return_by_state[_cst].append(_cid)
+        customer_ids[_i] = _picked
+        _bought_month[_picked] = _cur_m
+
+    # Per-deal customer attributes (used by the conversion model just below).
+    _cust_ix = customers_df.set_index("customer_id")
+    cust_credit = _cust_ix["credit_score"].reindex(customer_ids).to_numpy(dtype=float)
+    cust_income = _cust_ix["estimated_annual_income_usd"].reindex(customer_ids).to_numpy(dtype=float)
+
+    # ── Section 232 tariff pass-through to the sticker ───────────────────────
+    # 25% duty on imported vehicles from Apr 2025. KBB/Cox Automotive tracked the
+    # first-year effect at roughly +$5,000-$8,900 on an imported vehicle and
+    # +$1,600-$2,000 on a domestic one (steel/aluminium + imported-parts duties),
+    # with average MSRP up ~10%. We model that split:
+    #   import brands   ~60% of the 25% duty reaches the sticker  → +15% on base
+    #   domestic brands a flat +4.5% materials/parts markup       → ~+$1,700
+    # tariff_cost_usd is stored per deal so Comparative Analytics can show the
+    # group's real per-franchise tariff cost rather than reconstruct it.
+    veh_base_price = veh_df_sel["price_usd"].values.astype(float)
+    tariff_active = (TARIFF_PCT[sale_month_idx] > 0).astype(float)
     is_import = veh_df_sel["brand"].isin(IMPORT_BRANDS).values
-    tariff_markup = np.where(is_import, tariff_at_sale / 100.0 * 0.5, 0.0)  # tariff partially passed to sticker price
-    base_price = base_price * (1 + tariff_markup)
+    tariff_markup = tariff_active * np.where(is_import, 0.60 * 0.25, 0.045)
+    tariff_cost = (veh_base_price * tariff_markup).round(0)
+    base_price = veh_base_price * (1 + tariff_markup)
 
-    discount_pct = np.clip(rng.normal(4.5, 2.5, n), 0, 15)
+    # Sticker discount alone, centred on the month's incentive environment: near
+    # zero through the 2021-22 chip shortage, ~7% by 2024-25. Stacked with trade
+    # over-allowance and trade bonus the effective giveaway lands a little above
+    # the incentive-as-%-of-ATP that KBB/Cox Automotive report.
+    incentive_at_sale = INCENTIVE_PCT_ATP[sale_month_idx]
+    discount_pct = np.clip(rng.normal(incentive_at_sale, 2.6, n), 0, 18)
     selling_price = (base_price * (1 - discount_pct / 100)).round(0)
 
     tax_rate = np.array([STATES[i]["sales_tax"] for i in state_idx]) / 100.0
@@ -731,17 +1085,56 @@ def build_sales(rng, n, vehicles_df, dealers_df, customers_df, start, end):
     over_allow_col = np.where(has_trade, over_allow, np.nan)
     trade_bonus_col = np.where(has_trade, trade_bonus, 0.0)
 
-    test_drive_converted = rng.random(n) < 0.62
-
-    # Deal velocity: incentive money measurably shortens time-to-close, which is
-    # what makes the trade-bonus elasticity read on the dashboard a real signal
-    # rather than noise.
-    lead_to_close_days = np.clip(
-        rng.integers(1, 60, n) - (trade_bonus_col / 250.0).round(0), 1, 60
-    ).astype(int)
-    salesperson_id = [f"SP{int(x):04d}" for x in rng.integers(1, 400, n)]
     marketing_channel = rng.choice(["Online Ad", "Referral", "Showroom Walk-in", "Search Engine",
                                      "Social Media", "Email Campaign", "TV/Radio"], size=n)
+
+    # ── Test-drive → sale ────────────────────────────────────────────────────
+    # The group close rate still centres on ~62% (NADA / Cox show-to-sale runs
+    # ~41%; a shopper who has already driven the car closes far higher), but the
+    # outcome now genuinely responds to the levers a desk actually has, so the
+    # Lead Conversion model fits real coefficients instead of noise:
+    #   channel   — walk-in / referral leads close ~25%, internet leads ~6%
+    #               (Foureyes / Demand Local 2025); modelled as a spread around
+    #               the post-test-drive rate, not the absolute funnel number
+    #   discount  — offering more than the month's going incentive helps close
+    #   credit    — prime shoppers commit; thin-file shoppers stall in finance
+    #   payment stress — selling price well above ~55% of annual income drags
+    #   trade-in  — a car to trade is a committed, ready-now buyer
+    #   store     — the same latent effectiveness as before (±~7 pts)
+    _CHANNEL_CONV = {
+        "Showroom Walk-in": 0.10, "Referral": 0.06, "Email Campaign": 0.02,
+        "TV/Radio": 0.00, "Search Engine": -0.03, "Online Ad": -0.05,
+        "Social Media": -0.06,
+    }
+    chan_eff = np.array([_CHANNEL_CONV[c] for c in marketing_channel])
+    _credit = np.nan_to_num(cust_credit, nan=690.0)
+    _income = np.nan_to_num(cust_income, nan=60000.0)
+    pay_stress = np.clip((selling_price - 0.55 * _income) / 100000.0, 0, None)
+    conv_z = (
+        0.07 * eff_arr
+        + chan_eff
+        + 0.012 * (discount_pct - incentive_at_sale)
+        + 0.0014 * (_credit - 690.0)
+        - 0.05 * pay_stress
+        + 0.05 * has_trade.astype(float)
+    )
+    conv_p = 0.62 + conv_z
+    conv_p = conv_p - conv_p.mean() + 0.62          # hold the group close rate
+    conv_p = np.clip(conv_p, 0.28, 0.93)
+    test_drive_converted = rng.random(n) < conv_p
+
+    # Deal velocity: incentive money measurably shortens time-to-close (this is
+    # what makes the trade-bonus elasticity read on the dashboard a real signal
+    # rather than noise); a stronger store — and a higher-intent shopper —
+    # closes quicker.
+    lead_to_close_days = np.clip(
+        rng.integers(1, 60, n)
+        - (trade_bonus_col / 250.0).round(0)
+        - (3.5 * eff_arr).round(0)
+        - (14.0 * (conv_p - 0.62)).round(0),
+        1, 60,
+    ).astype(int)
+    salesperson_id = [f"SP{int(x):04d}" for x in rng.integers(1, 400, n)]
     season_multiplier = np.clip(rng.normal(1.0, 0.08, n), 0.75, 1.35)
 
     quarter = [f"Q{(int(MONTH_OF[mi]) - 1) // 3 + 1}" for mi in sale_month_idx]
@@ -756,7 +1149,8 @@ def build_sales(rng, n, vehicles_df, dealers_df, customers_df, start, end):
         "brand": veh_df_sel["brand"].values, "model": veh_df_sel["model"].values,
         "vehicle_category": veh_df_sel["category"].values, "fuel_type": veh_df_sel["fuel_type"].values,
         "state": state, "city": city,
-        "base_price_usd": base_price.round(0).astype(int), "discount_pct": discount_pct.round(2),
+        "base_price_usd": base_price.round(0).astype(int),
+        "tariff_cost_usd": tariff_cost.astype(int), "discount_pct": discount_pct.round(2),
         "selling_price_usd": selling_price.astype(int), "sales_tax_amount_usd": sales_tax_amount.astype(int),
         "accessories_revenue_usd": accessories_rev.astype(int), "insurance_revenue_usd": insurance_rev.astype(int),
         "extended_warranty_usd": extended_warranty.astype(int), "total_revenue_excl_tax": total_excl_tax.astype(int),
@@ -957,15 +1351,87 @@ def build_inventory(rng, vehicles_df, dealers_df, sales_df):
     return pd.DataFrame(rows)
 
 
-def generate_dataset(out_dir, seed, n_customers, dealers_per_state, n_sales, n_trims):
+def _derive_customer_history(customers, sales, end):
+    """
+    Replace the decorative purchase-history fields with each customer's real
+    behaviour in the sales table, so customer segmentation and the CRM views
+    describe actual buyers rather than draws from an unrelated distribution:
+
+      number_of_past_purchases — lifetime new-vehicle deals with the group
+      last_activity_date       — most recent of (generated activity, last deal)
+      loyalty_score  (0-100)   — rises with deal frequency, falls with staleness
+      churn_risk_score (0-1)   — climbs the longer since the customer's last deal
+
+    Customers with no deal on file keep a low loyalty and a drifting churn score
+    (lapsed prospects). Scales are unchanged so the Inventory Intelligence
+    lease-recapture view, which reads both scores, keeps working.
+    """
+    end_ts = pd.Timestamp(end)
+    sd = pd.to_datetime(sales["sale_date"])
+    grp = sales.assign(_sd=sd).groupby("customer_id")["_sd"]
+    deal_count = grp.size()
+    last_deal = grp.max()
+
+    cid = customers["customer_id"]
+    n_deals = cid.map(deal_count).fillna(0).astype(int)
+
+    gen_activity = pd.to_datetime(customers["last_activity_date"])
+    last_deal_dt = cid.map(last_deal)
+    combined = last_deal_dt.fillna(gen_activity)
+    combined = pd.Series(
+        np.maximum(combined.to_numpy("datetime64[ns]"),
+                   gen_activity.to_numpy("datetime64[ns]")),
+        index=customers.index,
+    )
+    recency_years = ((end_ts - combined).dt.days / 365.25).clip(lower=0)
+
+    loyalty = np.clip(30 + 13 * n_deals - 7 * recency_years, 0, 100)
+    base_churn = customers["churn_risk_score"].astype(float).to_numpy()
+    churn = np.clip(0.6 * base_churn + 0.14 * recency_years - 0.04 * n_deals + 0.05, 0, 1)
+
+    customers = customers.copy()
+    customers["number_of_past_purchases"] = n_deals.to_numpy()
+    customers["last_activity_date"] = combined.dt.date
+    customers["loyalty_score"] = np.round(loyalty, 2)
+    customers["churn_risk_score"] = np.round(churn, 3)
+    return customers
+
+
+def _fill_dealer_targets(dealers, sales, end):
+    """
+    Set annual_target_units from each store's own trailing-12-month unit volume
+    plus a modest stretch, rounded to a round number a GM would actually be
+    handed. Replaces the old random 500-7000 draw, which had no relationship to
+    what a store actually sells and made "pace vs target" meaningless.
+    """
+    cutoff = pd.Timestamp(end) - pd.DateOffset(months=12)
+    sd = pd.to_datetime(sales["sale_date"])
+    last12 = sales.loc[sd >= cutoff].groupby("dealer_id")["units_sold"].sum()
+    STRETCH = 1.05
+    targets = {}
+    for d in dealers["dealer_id"]:
+        actual = float(last12.get(d, 0.0))
+        t = max(actual * STRETCH, 180.0)
+        targets[d] = int(round(t / 25.0) * 25)
+    dealers["annual_target_units"] = dealers["dealer_id"].map(targets)
+    return dealers
+
+
+def generate_dataset(out_dir, seed, n_customers, n_sales, n_trims,
+                     dealers_per_state=None, n_rooftops=None):
     rng = np.random.default_rng(seed)
     os.makedirs(out_dir, exist_ok=True)
 
     vehicles = build_vehicle_catalog(rng, n_trims=n_trims)
-    dealers = build_dealers(rng, dealers_per_state)
+    dealers = build_dealers(rng, n_rooftops=n_rooftops, dealers_per_state=dealers_per_state)
     customers = build_customers(rng, n_customers, START, END)
     external_factors = build_external_factors(rng)
     sales = build_sales(rng, n_sales, vehicles, dealers, customers, START, END)
+    # Rewrite the customer purchase-history fields from the real sales table.
+    customers = _derive_customer_history(customers, sales, END)
+    # Dealer-group mode leaves sales targets at 0 until we know actual volume.
+    if n_rooftops is not None:
+        dealers = _fill_dealer_targets(dealers, sales, END)
     # Inventory is derived from the sales history, so it is built last and
     # sized by the dealer network rather than by a row count.
     inventory = build_inventory(rng, vehicles, dealers, sales)
@@ -986,15 +1452,22 @@ def generate_dataset(out_dir, seed, n_customers, dealers_per_state, n_sales, n_t
 
 
 def main():
-    # realdata-datasets: primary "real" mode dataset
+    # realdata-datasets: primary "real" mode dataset — modeled as ONE regional
+    # dealer group of 24 rooftops (not a market sample). ~100k new-vehicle
+    # retail deals over 2019-2026 ≈ ~700 new units/rooftop/yr in recent years,
+    # in line with NADA's ~900/yr average franchised store.
+    # ~70k customers against ~100k deals, assigned chronologically with a ~40%
+    # returning-buyer share (see build_sales): ~62k first-time buyers, ~8k
+    # not-yet-converted prospects, repeat business ~40% of volume and the
+    # acquisition-cohort retention curve in a believable range.
     generate_dataset(
         os.path.join(ROOT, "realdata-datasets"), seed=42,
-        n_customers=42000, dealers_per_state=6, n_sales=100000, n_trims=2,
+        n_customers=70000, n_rooftops=24, n_sales=100000, n_trims=2,
     )
-    # automobile_datasets: larger "test" mode dataset
+    # automobile_datasets: larger "test" mode dataset (legacy market grid)
     generate_dataset(
         os.path.join(ROOT, "automobile_datasets"), seed=7,
-        n_customers=56000, dealers_per_state=15, n_sales=140000, n_trims=3,
+        n_customers=98000, dealers_per_state=15, n_sales=140000, n_trims=3,
     )
 
 

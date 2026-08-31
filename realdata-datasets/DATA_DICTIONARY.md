@@ -25,8 +25,13 @@ precision) is the macro-economic time series baked into `external_factors.csv`:
   spike (~$5.00/gal), settling to ~$3.05–3.15/gal in 2024–2026
 - **WTI crude oil price**, **CPI inflation**, **unemployment rate** — approximate real
   trajectories including the 2020 COVID unemployment spike and 2022 inflation peak
-- **Section 232 auto tariffs** — modeled as a step change from 0% to 25% in April 2025,
-  applied as a partial pass-through markup to import-brand vehicle prices in `sales.csv`
+- **Section 232 auto tariffs** — step change from 0% to 25% in April 2025, applied as a
+  pass-through markup to vehicle base prices in `sales.csv`: **+15%** on import-brand
+  vehicles (≈60% of the duty reaching the sticker) and **+4.5%** on domestic-brand
+  vehicles (steel/aluminium + imported-parts duties). Realised: ≈$5,300 per imported
+  unit, ≈$1,790 per domestic unit — in line with KBB/Cox Automotive's reported
+  first-year effect ($5,000–8,900 import, $1,600–2,000 domestic). The per-deal dollar
+  amount is stored in the new `tariff_cost_usd` column.
 - **Federal EV tax credit ($7,500)** — modeled as active through September 2025 and expired
   October 2025 (`ev_incentive_eligible` flag on vehicles; no direct "expiry event" column,
   but the vehicle catalog and generation logic assume this window)
@@ -70,7 +75,9 @@ markup after April 2025.
 
 ## 1. sales.csv — Transaction Data (~100,000 rows)
 
-Key columns: `state`/`city`, `base_price_usd`, `selling_price_usd`, `sales_tax_amount_usd`
+Key columns: `state`/`city`, `base_price_usd` (sticker, incl. any tariff markup),
+`tariff_cost_usd` (Section 232 dollars inside that sticker — 0 before April 2025),
+`selling_price_usd`, `sales_tax_amount_usd`
 (computed from the state's sales tax rate), `total_revenue_excl_tax` /
 `total_revenue_incl_tax`, `financing_type`, `loan_amount_usd`, `holiday_period` (Presidents
 Day / Memorial Day / July 4th / Labor Day / Black Friday / Year-End Clearance sales
@@ -135,13 +142,29 @@ Combined, true concession per unit averages **$2,358 (5.8% of MSRP)** against a 
 `discount_pct` of 4.5% — a ~1.3pt gap that only surfaces when over-allowance and trade
 bonus are counted.
 
-## 2. customers.csv — Customer Master (~42,000 rows)
+## 2. customers.csv — Customer Master (~70,000 rows)
 
-`nationality` models a rough US demographic mix (American ~68%, Mexican-American ~11%,
-plus Chinese-American / Indian-American / Filipino-American / Vietnamese-American / Other).
-`income_bracket` / `estimated_annual_income_usd` are annual USD (not monthly, unlike the
-old AED fields). `preferred_fuel_type` / `preferred_vehicle_category` skew toward
-Gasoline/SUV as in the real US market, with a meaningful Electric/Hybrid preference share.
+The group's own CRM — a mix of one-and-done buyers, repeat buyers and not-yet-converted
+prospects. Sales are assigned to customers **oldest deal first** with a ~52% returning /
+~48% new-or-conquest split and a ≥22-month trade cooldown before any re-buy
+(`P_RETURNING` / `MIN_REBUY_MONTHS` in `build_sales`). Realised: repeat-transaction share
+**~37%** of deals, purchase cadence **~34 months**, ~13% of records are prospects who
+have not bought yet, **84% in-state** buyers (a 16% out-of-state travel tail is modelled).
+
+- **`nationality` is not generated** (column dropped from the CSV). Segmenting or
+  profiling US auto customers by national origin is a fair-lending / ECOA / disparate-
+  impact liability. The `Customer.nationality` model column is kept nullable + deprecated
+  for schema stability only. (2026-08-29)
+- `number_of_past_purchases`, `last_activity_date`, `loyalty_score` (0–100) and
+  `churn_risk_score` (0–1) are **derived from the real sales table** after the deals are
+  built (`_derive_customer_history`): lifetime deal count, the later of last-activity /
+  last-deal date, a frequency-minus-staleness loyalty score, and a churn score that
+  climbs with recency. They are no longer independent random draws.
+- `income_bracket` / `estimated_annual_income_usd` are annual USD. `credit_score` is
+  `normal(690, 75)` — a prospect-inclusive spread that runs richer in subprime than
+  booked new-vehicle loans.
+- `preferred_fuel_type` / `preferred_vehicle_category` skew toward Gasoline/SUV as in the
+  real US market, with a meaningful Electric/Hybrid preference share.
 
 ## 3. dealers.csv — Dealer Network (48 rows, 6 per state)
 

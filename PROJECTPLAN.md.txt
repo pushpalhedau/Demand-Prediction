@@ -281,7 +281,7 @@ Dashboard Sections:
 - Executive Overview
 - Forecasting
 - Comparative Analytics
-- Regional Intelligence
+- Store Performance
 - Customer Intelligence
 - Inventory Intelligence
 - AI Insights

@@ -1,563 +1,416 @@
+from datetime import date
+
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-import numpy as np
+
 from database.connection import get_db_session
 from database.queries import (
-    get_yoy_comparison, get_sales_by_category, get_sales_by_region,
-    get_brand_origin_yearly_share, get_price_competitiveness,
-    get_ev_segment_by_brand_year, get_market_share_shift,
-    IMPORT_BRANDS, BRAND_ORIGIN,
+    get_period_trend,
+    get_tariff_exposure,
+    get_import_mix_monthly,
+    get_price_gap_by_segment,
+    get_franchise_footprint,
 )
-from utils.helpers import get_color_palette, render_kpi_card
-
-_ORIGIN_COLORS = {
-    'Domestic': '#10b981',
-    'Japanese': '#3b82f6',
-    'Korean':   '#8b5cf6',
-    'European': '#f59e0b',
-    'Other':    '#6b7280',
-}
-
-_BASE_LAYOUT = dict(
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(color='#f3f4f6', family='Plus Jakarta Sans'),
-    margin=dict(l=0, r=0, t=30, b=0),
-    legend=dict(
-        orientation='h', yanchor='bottom', y=1.02,
-        xanchor='right', x=1, font=dict(size=11)
-    ),
+from analytics import yoy_attribution as ya
+from utils.helpers import (
+    _section,
+    _base_layout,
+    _fmt_money,
+    _compact,
+    _pct_label,
+    _INK,
+    _HUE_HISTORY,
+    _HUE_FORECAST,
+    _HUE_UP,
+    _HUE_DOWN,
+    _HUE_MARKER,
 )
 
+# One hue per job. The up/down greens and reds are reserved for "ahead of / behind
+# last year"; the tariff section needs its own pair that can't be confused with
+# them, so import vs domestic franchises read as amber vs sky.
+_HUE_IMPORT = "#f59e0b"     # the group's import-brand rooftops (tariff-exposed)
+_HUE_DOMESTIC = "#38bdf8"   # the group's domestic-brand rooftops
 
-def _wt_avg_price(df: pd.DataFrame) -> float:
-    total = df['units'].sum()
-    return float((df['avg_price'] * df['units']).sum() / total) if total else 0.0
 
-
-def _sequential_shades(n: int, base_hex: str) -> list:
-    """n hex shades of base_hex running light -> dark, for ordered categories
-    (e.g. oldest -> newest year) where color should read as one hue's intensity."""
-    base = tuple(int(base_hex[i:i + 2], 16) for i in (1, 3, 5))
-    light = tuple(int(c + (255 - c) * 0.75) for c in base)
-    dark = tuple(int(c * 0.45) for c in base)
-    shades = []
-    for i in range(n):
-        t = i / (n - 1) if n > 1 else 1.0
-        rgb = tuple(int(light[j] + (dark[j] - light[j]) * t) for j in range(3))
-        shades.append('#{:02x}{:02x}{:02x}'.format(*rgb))
-    return shades
+def _signed(value, fmt) -> str:
+    """'+1.2K' / '−340' — a real minus glyph, formatted by the active measure."""
+    return ("+" if value >= 0 else "−") + fmt(abs(value))
 
 
 def render_comparison(filters: dict):
     session = get_db_session()
-    colors  = get_color_palette()
 
     try:
         st.markdown(
-            "<h2 class='gradient-text' style='margin-bottom: 20px;'>Comparative Analytics Dashboard</h2>",
+            "<h2 class='gradient-text' style='margin-bottom:14px;'>Comparative Analytics</h2>",
             unsafe_allow_html=True,
         )
 
-        # ── 1. YoY Overlap ──────────────────────────────────────────────────
-        df_yoy = get_yoy_comparison(session, filters)
+        tab_track, tab_tariff = st.tabs([
+            "How we're tracking vs last year",
+            "Tariff exposure by franchise",
+        ])
+        with tab_track:
+            _render_tracking(session, filters)
+        with tab_tariff:
+            _render_tariff(session, filters)
 
-        if not df_yoy.empty:
-            st.markdown("### Year-over-Year (YoY) Overlap Analysis")
-
-            months_map = {
-                1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr',  5: 'May',  6: 'Jun',
-                7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec',
-            }
-            df_yoy['month_name'] = df_yoy['month'].map(months_map)
-            df_yoy['year']       = df_yoy['year'].astype(str)
-            months_order         = list(months_map.values())
-
-            target_metric = st.radio(
-                "Compare Metric",
-                options=["revenue", "sales"],
-                format_func=lambda x: "Revenue (USD)" if x == "revenue" else "Sales Volume (Units)",
-                horizontal=True,
-            )
-
-            years_sorted = sorted(df_yoy['year'].unique())
-            year_shades = dict(zip(
-                years_sorted, _sequential_shades(len(years_sorted), colors['primary'])
-            ))
-
-            fig_yoy = px.line(
-                df_yoy, x='month_name', y=target_metric, color='year',
-                markers=True,
-                category_orders={'month_name': months_order, 'year': years_sorted},
-                color_discrete_map=year_shades,
-                labels={'month_name': 'Month', 'revenue': 'Revenue (USD)',
-                        'sales': 'Sales Volume', 'year': 'Year'},
-            )
-            fig_yoy.update_layout(
-                **{**_BASE_LAYOUT, 'height': 350,
-                   'xaxis': dict(showgrid=False),
-                   'yaxis': dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')}
-            )
-            st.plotly_chart(fig_yoy, use_container_width=True)
-
-            recent_years = df_yoy['year'].unique()
-            if len(recent_years) >= 2:
-                top_years = sorted(list(recent_years), reverse=True)[:2]
-                y1 = df_yoy[df_yoy['year'] == top_years[0]][target_metric].sum()
-                y2 = df_yoy[df_yoy['year'] == top_years[1]][target_metric].sum()
-                if y2 > 0:
-                    pct = ((y1 - y2) / y2) * 100
-                    label = target_metric.replace('_', ' ').title()
-                    st.info(
-                        f"**YoY Performance Summary:** Total {label} in **{top_years[0]}** "
-                        f"vs **{top_years[1]}** is **{pct:+.2f}%**."
-                    )
-        else:
-            st.warning("Insufficient time-series data for Year-over-Year comparison.")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # ── 2. Category + Region ─────────────────────────────────────────────
-        left_col, right_col = st.columns(2)
-
-        with left_col:
-            st.markdown("### Vehicle Category Growth Comparison")
-            cat_df = get_sales_by_category(session, filters)
-            if not cat_df.empty:
-                fig_cat = px.bar(
-                    cat_df, y='vehicle_category', x='sales', orientation='h',
-                    color='vehicle_category', color_discrete_sequence=colors['colors_seq'],
-                )
-                fig_cat.update_layout(
-                    **{**_BASE_LAYOUT, 'height': 300, 'showlegend': False,
-                       'xaxis': dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', title="Units Sold"),
-                       'yaxis': dict(showgrid=False, title="", categoryorder='total ascending')}
-                )
-                st.plotly_chart(fig_cat, use_container_width=True)
-            else:
-                st.info("No category data.")
-
-        with right_col:
-            st.markdown("### Regional Growth Matrix")
-            reg_df = get_sales_by_region(session, filters)
-            if not reg_df.empty:
-                fig_reg = px.bar(
-                    reg_df, x='state', y='revenue',
-                    color='state', color_discrete_sequence=colors['colors_seq'],
-                )
-                fig_reg.update_layout(
-                    **{**_BASE_LAYOUT, 'height': 300, 'showlegend': False,
-                       'xaxis': dict(showgrid=False, title=""),
-                       'yaxis': dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', title="Revenue (USD)")}
-                )
-                st.plotly_chart(fig_reg, use_container_width=True)
-            else:
-                st.info("No regional data.")
-
-        # ═══════════════════════════════════════════════════════════════════════
-        # IMPORT TARIFF EXPOSURE
-        # ═══════════════════════════════════════════════════════════════════════
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("""
-            <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:24px; margin-bottom:4px;">
-                <h2 style="background:linear-gradient(135deg,#ef4444 0%,#f97316 50%,#eab308 100%);
-                           -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-                           font-weight:800; margin-bottom:4px;">
-                    Import Tariff Exposure
-                </h2>
-                <p style="color:#9ca3af; font-size:13px; margin-top:0;">
-                    Domestic (Ford &middot; Chevrolet &middot; GMC &middot; Ram &middot; Jeep &middot; Tesla)
-                    vs. Import (Japanese &middot; Korean &middot; European) brand share &nbsp;&mdash;&nbsp;
-                    modeled against the 25% Section 232 auto tariff on imported vehicles that took effect in April 2025
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # All tariff-section queries ignore the brand sidebar filter
-        origin_f  = {**filters, 'brand': None}
-        df_yearly = get_brand_origin_yearly_share(session, origin_f)
-        df_price  = get_price_competitiveness(session, origin_f)
-        df_ev     = get_ev_segment_by_brand_year(session, origin_f)
-        df_shift  = get_market_share_shift(session, filters)
-
-        if df_yearly.empty:
-            st.info("No sales data available for the selected filters.")
-        else:
-            # ── KPI preparation ──────────────────────────────────────────────
-            year_totals   = df_yearly.groupby('year')['units'].sum()
-            import_yearly = (
-                df_yearly[df_yearly['brand'].isin(IMPORT_BRANDS)]
-                .groupby('year')['units'].sum()
-            )
-            share_by_year = (import_yearly / year_totals * 100).round(1)
-
-            latest_year   = int(df_yearly['year'].max())
-            earliest_year = int(df_yearly['year'].min())
-            latest_share  = float(share_by_year.get(latest_year, 0.0))
-            base_share    = float(share_by_year.get(earliest_year, 0.0))
-            share_delta   = round(latest_share - base_share, 1)
-
-            # Domestic EV segment share in latest EV year
-            domestic_ev_share = 0.0
-            if not df_ev.empty:
-                ev_latest = df_ev[df_ev['year'] == df_ev['year'].max()].copy()
-                ev_latest['origin'] = ev_latest['brand'].map(BRAND_ORIGIN).fillna('Other')
-                ev_total     = ev_latest['ev_units'].sum()
-                dom_units    = ev_latest[ev_latest['origin'] == 'Domestic']['ev_units'].sum()
-                domestic_ev_share = round(float(dom_units / ev_total * 100), 1) if ev_total else 0.0
-
-            # Price gap: Import SUV weighted avg vs Domestic SUV weighted avg
-            price_gap_usd = 0
-            if not df_price.empty:
-                suv_df  = df_price[df_price['vehicle_category'] == 'SUV'].copy()
-                imp_suv = suv_df[suv_df['origin'].isin(['Japanese', 'Korean', 'European'])]
-                dom_suv = suv_df[suv_df['origin'] == 'Domestic']
-                if not imp_suv.empty and not dom_suv.empty:
-                    price_gap_usd = int(_wt_avg_price(imp_suv) - _wt_avg_price(dom_suv))
-
-            # Projected 2027 share — trend fit on the recent (2022+) window
-            proj_2027 = None
-            recent = share_by_year[share_by_year.index >= 2022]
-            if len(recent) >= 3:
-                yrs   = np.array(recent.index, dtype=float)
-                shrs  = np.array(recent.values, dtype=float)
-                coeff = np.polyfit(yrs, shrs, 1)
-                proj_2027 = round(min(float(np.polyval(coeff, 2027)), 100.0), 1)
-
-            # ── KPI Cards ────────────────────────────────────────────────────
-            k1, k2, k3, k4 = st.columns(4)
-            with k1:
-                year_label = f"{latest_year} (Jan–May)" if latest_year == 2026 else str(latest_year)
-                render_kpi_card(
-                    f"Import Brand Share ({year_label})",
-                    f"{latest_share:.1f}%",
-                    f"{share_delta:+}pp since {earliest_year}",
-                    is_positive=(share_delta <= 0),
-                )
-            with k2:
-                render_kpi_card(
-                    f"Domestic EV Segment Share ({latest_year})",
-                    f"{domestic_ev_share:.1f}%",
-                    "of total US EV market",
-                    is_positive=True,
-                )
-            with k3:
-                render_kpi_card(
-                    "Import SUV Price Premium",
-                    f"${price_gap_usd:,}",
-                    "import vs. domestic avg",
-                    is_positive=(price_gap_usd <= 0),
-                )
-            with k4:
-                if proj_2027 is not None:
-                    render_kpi_card(
-                        "Projected 2027 Import Share",
-                        f"{proj_2027:.1f}%",
-                        "based on 2022-2026 trend",
-                        is_positive=False,
-                    )
-                else:
-                    render_kpi_card("Projected 2027 Import Share", "N/A", "insufficient data", is_positive=False)
-
-            st.markdown("<br>", unsafe_allow_html=True)
-
-            # ── Row 1: Origin Share Growth  +  Volume Comparison ─────────────
-            r1c1, r1c2 = st.columns(2)
-
-            with r1c1:
-                st.markdown("### Brand Origin Market Share Growth")
-                year_tot_df = year_totals.reset_index().rename(columns={'units': 'year_total'})
-                origin_area = df_yearly.groupby(['year', 'origin'])['units'].sum().reset_index()
-                origin_area = origin_area.merge(year_tot_df, on='year')
-                origin_area['share_pct'] = (origin_area['units'] / origin_area['year_total'] * 100).round(2)
-
-                # Fill zeros for years where an origin had no sales yet
-                all_years         = sorted(df_yearly['year'].unique())
-                origin_categories = ['Domestic', 'Japanese', 'Korean', 'European', 'Other']
-                full_idx = pd.MultiIndex.from_product(
-                    [all_years, origin_categories], names=['year', 'origin']
-                )
-                origin_area = (
-                    origin_area.set_index(['year', 'origin'])[['share_pct']]
-                    .reindex(full_idx, fill_value=0.0)
-                    .reset_index()
-                )
-
-                fig_area = px.area(
-                    origin_area, x='year', y='share_pct', color='origin',
-                    color_discrete_map=_ORIGIN_COLORS,
-                    labels={
-                        'share_pct': '% of Total US Market',
-                        'year': 'Year',
-                        'origin': 'Origin',
-                    },
-                )
-                fig_area.update_traces(line=dict(width=0.8))
-                fig_area.update_layout(
-                    **{**_BASE_LAYOUT, 'height': 320, 'hovermode': 'x unified',
-                       'xaxis': dict(showgrid=False, dtick=1),
-                       'yaxis': dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)',
-                                     title='% of Total US Market')}
-                )
-                st.plotly_chart(fig_area, use_container_width=True)
-                st.caption(
-                    "Sample scaled to national implied volume. "
-                    "Import share reflects the combined Japanese, Korean and European brand groups."
-                )
-
-            with r1c2:
-                st.markdown("### Import Brands vs Total Market Volume")
-                imp_vol = (
-                    df_yearly[df_yearly['brand'].isin(IMPORT_BRANDS)]
-                    .groupby('year')['units'].sum()
-                    .reset_index().rename(columns={'units': 'import_units'})
-                )
-                tot_vol = year_totals.reset_index().rename(columns={'units': 'total_units'})
-                vol_df  = tot_vol.merge(imp_vol, on='year', how='left').fillna(0)
-
-                fig_vol = go.Figure()
-                fig_vol.add_trace(go.Scatter(
-                    x=vol_df['year'], y=vol_df['import_units'].astype(int),
-                    name='Import Brands', mode='lines+markers',
-                    line=dict(color='#ef4444', width=2.5),
-                    marker=dict(size=7),
-                    yaxis='y1',
-                ))
-                fig_vol.add_trace(go.Scatter(
-                    x=vol_df['year'], y=vol_df['total_units'].astype(int),
-                    name='Total US Market', mode='lines+markers',
-                    line=dict(color='#6366f1', width=2.5, dash='dash'),
-                    marker=dict(size=7),
-                    yaxis='y2',
-                ))
-                fig_vol.update_layout(
-                    **{**_BASE_LAYOUT, 'height': 320, 'hovermode': 'x unified',
-                       'xaxis': dict(showgrid=False, dtick=1),
-                       'yaxis':  dict(title='Import Brand Units', side='left',
-                                      showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                       'yaxis2': dict(title='Total Market Units', side='right',
-                                      overlaying='y', showgrid=False)}
-                )
-                st.plotly_chart(fig_vol, use_container_width=True)
-                st.caption(
-                    "Dual axis: left = import brands, right = total US market. "
-                    "Both scaled to national implied volume."
-                )
-
-            # ── Row 2: Price Competitiveness Matrix  +  Price Gap by Category ─
-            r2c1, r2c2 = st.columns(2)
-
-            with r2c1:
-                st.markdown("### Price Competitiveness Matrix")
-                if not df_price.empty:
-                    # Weighted avg price per brand across all categories
-                    df_price['price_x_units'] = df_price['avg_price'] * df_price['units']
-                    brand_agg = (
-                        df_price.groupby(['brand', 'origin'])
-                        .agg(
-                            price_x_units =('price_x_units', 'sum'),
-                            total_units   =('units', 'sum'),
-                            market_share  =('market_share_pct', 'sum'),
-                        )
-                        .reset_index()
-                    )
-                    brand_agg['avg_price'] = (
-                        brand_agg['price_x_units'] / brand_agg['total_units']
-                    ).round(0)
-                    brand_agg = brand_agg.drop(columns=['price_x_units'])
-
-                    fig_scatter = px.scatter(
-                        brand_agg,
-                        x='avg_price', y='total_units',
-                        color='origin', size='market_share',
-                        text='brand',
-                        color_discrete_map=_ORIGIN_COLORS,
-                        size_max=45,
-                        labels={
-                            'avg_price':    'Avg Selling Price (USD)',
-                            'total_units':  'Total Units Sold',
-                            'origin':       'Brand Origin',
-                            'market_share': 'Market Share %',
-                        },
-                    )
-                    fig_scatter.update_traces(
-                        textposition='top center', textfont_size=9,
-                    )
-                    fig_scatter.update_layout(
-                        **{**_BASE_LAYOUT, 'height': 360,
-                           'xaxis': dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)',
-                                         tickformat=',.0f', title='Avg Selling Price (USD)'),
-                           'yaxis': dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)',
-                                         tickformat=',.0f', title='Total Units Sold')}
-                    )
-                    st.plotly_chart(fig_scatter, use_container_width=True)
-                    st.caption(
-                        "Bubble size = market share %. "
-                        "Import-origin brands (Japanese/Korean/European) carry the Section 232 tariff's price pressure; "
-                        "Domestic brands (green) are exempt."
-                    )
-                else:
-                    st.info("No price data available.")
-
-            with r2c2:
-                st.markdown("### Price Gap by Vehicle Category")
-                if not df_price.empty:
-                    df_price['price_x_units'] = df_price['avg_price'] * df_price['units']
-                    gap_records = []
-                    for cat in ['SUV', 'EV', 'Sedan']:
-                        cat_df  = df_price[df_price['vehicle_category'] == cat]
-                        imp_cat = cat_df[cat_df['origin'].isin(['Japanese', 'Korean', 'European'])]
-                        dom_cat = cat_df[cat_df['origin'] == 'Domestic']
-                        if imp_cat.empty or dom_cat.empty:
-                            continue
-                        imp_avg = (imp_cat['price_x_units'].sum() / imp_cat['units'].sum())
-                        dom_avg = (dom_cat['price_x_units'].sum() / dom_cat['units'].sum())
-                        gap_records += [
-                            {'Category': cat, 'Group': 'Import Brands',   'Avg Price (USD)': round(imp_avg)},
-                            {'Category': cat, 'Group': 'Domestic Brands', 'Avg Price (USD)': round(dom_avg)},
-                        ]
-
-                    if gap_records:
-                        gap_df  = pd.DataFrame(gap_records)
-                        fig_gap = px.bar(
-                            gap_df, x='Category', y='Avg Price (USD)',
-                            color='Group', barmode='group',
-                            color_discrete_map={
-                                'Import Brands':   '#ef4444',
-                                'Domestic Brands':  '#10b981',
-                            },
-                            text_auto=True,
-                        )
-                        fig_gap.update_traces(
-                            texttemplate='$%{y:,.0f}',
-                            textposition='outside',
-                            textfont_size=10,
-                        )
-                        fig_gap.update_layout(
-                            **{**_BASE_LAYOUT, 'height': 360,
-                               'xaxis': dict(showgrid=False),
-                               'yaxis': dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)',
-                                             tickformat=',.0f', title='Weighted Avg Selling Price (USD)')}
-                        )
-                        st.plotly_chart(fig_gap, use_container_width=True)
-                        st.caption(
-                            "Weighted by units sold. "
-                            "Import prices reflect the pass-through of the 25% Section 232 tariff on imported vehicles."
-                        )
-                    else:
-                        st.info("Insufficient category data for price gap analysis.")
-                else:
-                    st.info("No price data available.")
-
-            # ── Row 3: EV Segment Ownership  +  Market Share Shift ───────────
-            r3c1, r3c2 = st.columns(2)
-
-            with r3c1:
-                st.markdown("### EV Segment Ownership by Origin")
-                if not df_ev.empty:
-                    ev_plot = df_ev.copy()
-                    ev_plot['origin'] = ev_plot['brand'].map(BRAND_ORIGIN).fillna('Other')
-                    ev_agg = (
-                        ev_plot.groupby(['year', 'origin'])['ev_units']
-                        .sum().reset_index()
-                    )
-                    ev_yr_tot = (
-                        ev_agg.groupby('year')['ev_units'].sum()
-                        .reset_index().rename(columns={'ev_units': 'ev_total'})
-                    )
-                    ev_agg = ev_agg.merge(ev_yr_tot, on='year')
-                    ev_agg['ev_share_pct'] = (
-                        ev_agg['ev_units'] / ev_agg['ev_total'] * 100
-                    ).round(1)
-
-                    group_order = ['Domestic', 'Japanese', 'Korean', 'European', 'Other']
-                    ev_agg['origin'] = pd.Categorical(
-                        ev_agg['origin'], categories=group_order, ordered=True
-                    )
-                    ev_agg = ev_agg.sort_values(['year', 'origin'])
-
-                    fig_ev = px.bar(
-                        ev_agg, x='year', y='ev_share_pct', color='origin',
-                        color_discrete_map=_ORIGIN_COLORS,
-                        category_orders={'origin': group_order},
-                        labels={
-                            'ev_share_pct': '% of EV Segment',
-                            'year': 'Year',
-                            'origin': '',
-                        },
-                    )
-                    fig_ev.update_layout(
-                        **{**_BASE_LAYOUT, 'barmode': 'stack', 'height': 360,
-                           'xaxis': dict(showgrid=False, dtick=1, type='category'),
-                           'yaxis': dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)',
-                                         title='% of EV Segment')}
-                    )
-                    st.plotly_chart(fig_ev, use_container_width=True)
-                    st.caption(
-                        "Domestic EV volume is anchored by Tesla; import-origin EV share reflects "
-                        "Japanese, Korean and European entrants competing for the remaining segment."
-                    )
-                else:
-                    st.info("No EV segment data available.")
-
-            with r3c2:
-                st.markdown("### Market Share Shift")
-                if not df_shift.empty:
-                    base_yr = int(df_shift['base_year'].iloc[0])
-                    curr_yr = int(df_shift['curr_year'].iloc[0])
-                    st.markdown(
-                        f"<p style='color:#9ca3af; font-size:13px; margin-top:-12px;'>"
-                        f"{base_yr} → {curr_yr} &mdash; who gained, who lost</p>",
-                        unsafe_allow_html=True,
-                    )
-
-                    shift_plot = df_shift.sort_values('share_change', ascending=True).copy()
-                    shift_plot['is_import'] = shift_plot['origin'] != 'Domestic'
-                    shift_plot['label'] = shift_plot.apply(
-                        lambda r: f"{r['brand']} ★" if r['is_import'] else r['brand'],
-                        axis=1,
-                    )
-                    shift_plot['bar_color'] = shift_plot.apply(
-                        lambda r: (
-                            '#ef4444' if r['is_import'] and r['share_change'] < 0
-                            else '#fca5a5' if r['is_import']
-                            else '#10b981' if r['share_change'] > 0
-                            else '#4b5563'
-                        ),
-                        axis=1,
-                    )
-
-                    fig_shift = go.Figure(go.Bar(
-                        x=shift_plot['share_change'],
-                        y=shift_plot['label'],
-                        orientation='h',
-                        marker_color=shift_plot['bar_color'].tolist(),
-                        text=shift_plot['share_change'].apply(lambda x: f"{x:+.1f}pp"),
-                        textposition='outside',
-                        textfont=dict(size=10, color='#f3f4f6'),
-                    ))
-                    fig_shift.add_vline(
-                        x=0, line_color='rgba(255,255,255,0.25)', line_width=1.5
-                    )
-                    fig_shift.update_layout(
-                        **{**_BASE_LAYOUT, 'height': 420,
-                           'margin': dict(l=90, r=70, t=10, b=30),
-                           'xaxis': dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)',
-                                         title='Market Share Change (percentage points)', zeroline=False),
-                           'yaxis': dict(showgrid=False, title=''),
-                           'legend': dict(visible=False)}
-                    )
-                    st.plotly_chart(fig_shift, use_container_width=True)
-                    st.caption(
-                        "★ = Import-origin brand. Red = import brand losing share, consistent with cost pressure "
-                        "from the Section 232 tariff. Grey = domestic brand losing share."
-                    )
-                else:
-                    st.info("Insufficient data for market share shift analysis.")
-
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — surface, don't crash the tab
         st.error(f"Error rendering Comparative Analytics: {e}")
+        import traceback
+        st.code(traceback.format_exc())
     finally:
         session.close()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Section 1 — How we're tracking vs last year
+# ─────────────────────────────────────────────────────────────────────────────
+def _render_tracking(session, filters: dict):
+    measure = st.radio(
+        "Measure", ["Units", "Revenue"], horizontal=True, key="cmp_measure",
+    )
+    is_units = measure == "Units"
+    m_key = "units" if is_units else "revenue"
+    vcol = "units" if is_units else "revenue"
+    vword = "units" if is_units else "revenue"
+    fmt = _compact if is_units else _fmt_money
+
+    # "How are we tracking vs last year" is a trailing-12-month question, not a
+    # whole-sidebar-window one: the attribution module anchors to the window's
+    # end date and always compares the last 12 whole calendar months to the 12
+    # before. (The sidebar start date still drives the tariff section.)
+    summ = ya.summary(session, filters, m_key)
+    if summ is None:
+        st.info("No booked sales in the last 12 months for this scope.")
+        return
+    to_label = summ["windows"]["cur_label"]
+    win_start, win_end = summ["windows"]["cur"]
+    ttm = {**filters, "start_date": win_start, "end_date": win_end}
+
+    if not summ["comparable"]:
+        st.warning(
+            f"The 12 months before {to_label} reach past where booked data for this scope "
+            "begins — treat the year-on-year percentages below as indicative only."
+        )
+
+    total_yoy = summ["total_yoy_pct"]
+
+    # ── Trend: last 12 months vs the 12 before, on a calendar-month axis ────
+    # (The x-axis is month names, not dates: the grey line is the *same months a
+    # year earlier*, so plotting real dates put 2024 data under 2025 labels and
+    # read as confusing. Month names + explicit ranges in the caption make the
+    # month-over-month comparison unambiguous.)
+    trend = get_period_trend(session, ttm)
+    tcur = trend[trend["period"] == "This period"].sort_values("date")
+    tprev = trend[trend["period"] == "Prior year"].sort_values("date")
+
+    month_order = list(tcur["date"].dt.strftime("%b")) if not tcur.empty else []
+
+    _section(f"How we're tracking vs last year  ·  12 months to {to_label}")
+    fig = go.Figure()
+    if not tprev.empty:
+        fig.add_trace(go.Scatter(
+            x=tprev["date"].dt.strftime("%b"), y=tprev[vcol],
+            name="Prior 12 months", mode="lines",
+            line=dict(color=_HUE_HISTORY, width=2, dash="dot"),
+            customdata=(tprev["date"] - pd.DateOffset(years=1)).dt.strftime("%b %Y"),
+            hovertemplate="%{customdata}<br>%{y:,.0f}<extra>Prior 12 months</extra>",
+        ))
+    fig.add_trace(go.Scatter(
+        x=tcur["date"].dt.strftime("%b"), y=tcur[vcol],
+        name="Last 12 months", mode="lines",
+        line=dict(color=_HUE_FORECAST, width=3),
+        fill="tonexty" if not tprev.empty else None,
+        fillcolor="rgba(99,102,241,0.08)",
+        customdata=tcur["date"].dt.strftime("%b %Y"),
+        hovertemplate="%{customdata}<br>%{y:,.0f}<extra>Last 12 months</extra>",
+    ))
+    if total_yoy is not None:
+        fig.add_annotation(
+            x=0, y=1.16, xref="paper", yref="paper", xanchor="left", showarrow=False,
+            text=(f"<b>{fmt(summ['total_end'])} {vword} in the last 12 months  ·  "
+                  f"{_pct_label(total_yoy, 1)} vs the 12 before</b>"),
+            font=dict(color=_INK, size=14),
+        )
+    fig.update_layout(**_base_layout(height=360, legend=True,
+                                     margin=dict(l=0, r=0, t=54, b=0)))
+    fig.update_xaxes(type="category", categoryorder="array", categoryarray=month_order)
+    fig.update_yaxes(title=("Units / month" if is_units else "Revenue / month"))
+    st.plotly_chart(fig, use_container_width=True)
+
+    _render_drivers(session, filters, m_key, is_units, fmt, vword)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Feature 1 + Feature 5 — driver split (structural vs specific) + significance
+# ─────────────────────────────────────────────────────────────────────────────
+def _render_drivers(session, filters, m_key, is_units, fmt, vword):
+    dim_label = st.radio(
+        "Break the change down by", ["Store", "Franchise", "Segment"],
+        horizontal=True, key="cmp_dim",
+        disabled=(filters.get("brand") is not None),
+    )
+    if filters.get("brand"):
+        dim_label = "Store"
+    dim = {"Store": "store", "Franchise": "brand", "Segment": "category"}[dim_label]
+
+    split = ya.driver_split(session, filters, dim, m_key)
+    if split is None or split.empty:
+        st.info("No comparable prior-year period for this scope.")
+        return
+
+    n_sig = int(split["significant"].sum())
+    only_sig = False
+    if n_sig >= 3:
+        only_sig = st.checkbox(
+            f"Only the {n_sig} {dim_label.lower()}s outside their normal year-to-year range",
+            value=True, key="cmp_only_sig",
+        )
+
+    d = split.copy()
+    if only_sig:
+        d = d[d["significant"]]
+    d = d.reindex(d["specific"].abs().sort_values(ascending=False).index)
+    cap = 16 if dim == "store" else 12
+    d = d.head(cap).sort_values("specific")
+
+    spec_label = ya.SPECIFIC_LABEL.get(dim, "Specific")
+    _section(
+        f"What moved it — by {dim_label.lower()}",
+        "★ = unusual move for that {}".format(dim_label.lower()) if n_sig else None,
+    )
+
+    names = [f"{'★ ' if s else ''}{n}" for n, s in zip(d["name"], d["significant"])]
+    opac = [1.0 if s else 0.6 for s in d["significant"]] if n_sig else [0.92] * len(d)
+    # negative bars grow left into the y-label gutter — keep their text inside
+    tpos = ["inside" if v < 0 else "outside" for v in d["specific"]]
+
+    fig = go.Figure(go.Bar(
+        y=names, x=d["specific"], orientation="h",
+        marker=dict(color=[_HUE_UP if v >= 0 else _HUE_DOWN for v in d["specific"]],
+                    opacity=opac),
+        text=[_signed(v, fmt) for v in d["specific"]],
+        textposition=tpos, insidetextanchor="start", cliponaxis=False,
+        textfont=dict(size=11, color=_INK),
+        hovertemplate=("%{y}<br>" + spec_label.lower() + ": %{x:,.0f}"
+                       "<br>total change vs last year: %{customdata:,.0f}<extra></extra>"),
+        customdata=d["total"],
+    ))
+    fig.add_vline(x=0, line_color="rgba(255,255,255,0.25)", line_width=1.5)
+    fig.update_layout(**_base_layout(
+        height=max(260, 30 * len(d) + 60),
+        margin=dict(l=10, r=70, t=10, b=10),
+    ))
+    fig.update_xaxes(title=f"{spec_label} change in {vword} (group-wide move removed)",
+                     zeroline=False, showgrid=True, gridcolor="rgba(255,255,255,0.06)")
+    fig.update_yaxes(title="")
+    st.plotly_chart(fig, use_container_width=True)
+
+    for line in ya.movement_sentences(split, dim, m_key, fmt, limit=3):
+        st.markdown(f"- {line}".replace("$", "\\$"))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Section 2 — Tariff Exposure by Franchise
+# ─────────────────────────────────────────────────────────────────────────────
+def _render_tariff(session, filters: dict):
+    foot = get_franchise_footprint(session, filters)
+    n_import = n_total = 0
+    if not foot.empty:
+        is_imp = foot["origin"].isin(["Japanese", "Korean", "European"])
+        n_import = int(foot.loc[is_imp, "rooftops"].sum())
+        n_total = int(foot["rooftops"].sum())
+
+    exp = get_tariff_exposure(session, filters)
+    if exp.empty:
+        st.info(
+            "No booked sales on or after April 2025 in the selected window — "
+            "widen the date range to see tariff exposure."
+        )
+        return
+
+    total_units = float(exp["units"].sum())
+    imp = exp[exp["is_import"]]
+    dom = exp[exp["origin"] == "Domestic"]
+
+    imp_units = float(imp["units"].sum())
+    imp_tariff = float(imp["tariff_total"].sum())
+    dom_units = float(dom["units"].sum())
+    dom_tariff = float(dom["tariff_total"].sum())
+
+    if imp_units == 0:
+        st.info(
+            "No imported units in this scope since April 2025 — the group's rooftops "
+            "here are domestic-brand, so there's no Section 232 exposure to show."
+        )
+        return
+
+    per_imp = imp_tariff / imp_units if imp_units else 0.0
+    per_dom = dom_tariff / dom_units if dom_units else 0.0
+    imp_share = (imp_units / total_units * 100) if total_units else 0.0
+
+    # forward run-rate: import tariff dollars ÷ whole months the duty has been in
+    # effect within the window, annualised
+    end_d = filters.get("end_date") or date.today()
+    months_active = max((end_d.year - 2025) * 12 + (end_d.month - 4) + 1, 1)
+    annual_imp = imp_tariff / months_active * 12
+
+    dollars = lambda v: f"${v:,.0f}"
+
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.metric(
+            "Volume exposed to the duty", f"{imp_share:.0f}%",
+            delta=f"{n_import} of {n_total} rooftops are import franchises"
+            if n_total else "import-brand rooftops",
+            delta_color="off",
+        )
+    with m2:
+        st.metric(
+            "Tariff carried into import prices", _fmt_money(imp_tariff),
+            delta=f"≈ {_fmt_money(annual_imp)}/yr at this run-rate", delta_color="off",
+        )
+    with m3:
+        st.metric(
+            "Added cost per imported unit", dollars(per_imp),
+            delta=f"+{dollars(per_imp - per_dom)} vs a domestic unit", delta_color="off",
+        )
+
+    # ── Chart A: did the tariff shift the group's import↔domestic mix? ───────
+    mix = get_import_mix_monthly(session, filters)
+    shift_pts = None
+    if not mix.empty and len(mix) >= 6:
+        cut = pd.Timestamp(2025, 4, 1)
+        pre = mix.loc[mix["date"] < cut, "import_share_pct"]
+        post = mix.loc[mix["date"] >= cut, "import_share_pct"]
+        pre_avg = float(pre.mean()) if not pre.empty else None
+        post_avg = float(post.mean()) if not post.empty else None
+        if pre_avg is not None and post_avg is not None:
+            shift_pts = post_avg - pre_avg
+
+        _section("Did the tariff shift our mix?")
+
+        smooth = mix["import_share_pct"].rolling(3, center=True, min_periods=2).mean()
+        x0, x1 = mix["date"].min(), mix["date"].max()
+        figA = go.Figure()
+        figA.add_trace(go.Scatter(
+            x=mix["date"], y=mix["import_share_pct"], mode="markers", name="Monthly",
+            marker=dict(size=4, color=_HUE_IMPORT, opacity=0.35),
+            hovertemplate="%{x|%b %Y}<br>%{y:.0f}% import (that month)<extra></extra>",
+        ))
+        figA.add_trace(go.Scatter(
+            x=mix["date"], y=smooth, mode="lines", name="3-month average",
+            line=dict(color=_HUE_IMPORT, width=3),
+            hovertemplate="%{x|%b %Y}<br>%{y:.1f}% import (3-mo avg)<extra></extra>",
+        ))
+        if pre_avg is not None:
+            figA.add_trace(go.Scatter(
+                x=[x0, x1], y=[pre_avg, pre_avg], mode="lines",
+                name=f"Before Apr 2025 · {pre_avg:.1f}%",
+                line=dict(color=_HUE_HISTORY, width=1, dash="dot"), hoverinfo="skip",
+            ))
+        if post_avg is not None:
+            figA.add_trace(go.Scatter(
+                x=[x0, x1], y=[post_avg, post_avg], mode="lines",
+                name=f"Since Apr 2025 · {post_avg:.1f}%",
+                line=dict(color=_HUE_DOMESTIC, width=1, dash="dot"), hoverinfo="skip",
+            ))
+        cut_ts = pd.Timestamp(2025, 4, 1)
+        figA.add_vline(
+            x=cut_ts.timestamp() * 1000, line_width=1.5, line_dash="dot",
+            line_color=_HUE_MARKER, annotation_text="25% duty starts",
+            annotation_position="bottom right",
+            annotation_font=dict(color=_HUE_MARKER, size=11),
+        )
+        figA.update_layout(**_base_layout(height=320, legend=True,
+                                          margin=dict(l=0, r=0, t=30, b=0)))
+        figA.update_yaxes(title="% of units · import rooftops", ticksuffix="%")
+        st.plotly_chart(figA, use_container_width=True)
+
+    # ── Chart B: import vs domestic price, with the tariff slice called out ──
+    gap = get_price_gap_by_segment(session, filters)
+    top_tariff_seg, top_tariff_amt = None, None
+    if not gap.empty:
+        w = gap[gap["group"].isin(["Import franchises", "Domestic franchises"])].copy()
+        # Only segments with real volume on BOTH sides — a genuine cross-shop, not
+        # a thin cell (this drops Luxury, where the group's one domestic-luxury
+        # nameplate is Tesla and the comparison isn't like-for-like).
+        w = w[w["units"] >= 150]
+        piv = w.pivot_table(index="vehicle_category", columns="group",
+                            values=["avg_price", "avg_tariff"], aggfunc="first")
+        need = {("avg_price", "Import franchises"), ("avg_price", "Domestic franchises")}
+        if need.issubset(set(piv.columns)):
+            both = [c for c in piv.index
+                    if not pd.isna(piv.loc[c, ("avg_price", "Import franchises")])
+                    and not pd.isna(piv.loc[c, ("avg_price", "Domestic franchises")])]
+            piv = piv.loc[both]
+        else:
+            piv = piv.iloc[0:0]
+        if not piv.empty:
+            imp_price = piv[("avg_price", "Import franchises")]
+            imp_duty = piv[("avg_tariff", "Import franchises")]
+            dom_price = piv[("avg_price", "Domestic franchises")]
+            order = imp_price.sort_values().index.tolist()
+            piv = piv.loc[order]
+            imp_price, imp_duty, dom_price = imp_price[order], imp_duty[order], dom_price[order]
+
+            _im = imp_duty.idxmax()
+            top_tariff_seg, top_tariff_amt = _im, float(imp_duty.loc[_im])
+
+            y_imp = [f"{c}  ·  Import" for c in order]
+            y_dom = [f"{c}  ·  Domestic" for c in order]
+            y_all = [v for pair in zip(y_dom, y_imp) for v in pair]  # domestic under import
+
+            _section("What a shopper pays — and the tariff inside it, by segment")
+            figB = go.Figure()
+            figB.add_trace(go.Bar(
+                y=y_dom, x=dom_price.values, orientation="h",
+                name="Domestic — vehicle price", marker_color=_HUE_DOMESTIC,
+                text=[dollars(v) for v in dom_price.values],
+                textposition="outside", cliponaxis=False, textfont=dict(color=_INK),
+                hovertemplate="%{y}<br>%{x:$,.0f}<extra></extra>",
+            ))
+            figB.add_trace(go.Bar(
+                y=y_imp, x=(imp_price - imp_duty).values, orientation="h",
+                name="Import — vehicle price", marker_color=_HUE_IMPORT,
+                hovertemplate="%{y}<br>price ex-duty %{x:$,.0f}<extra></extra>",
+            ))
+            figB.add_trace(go.Bar(
+                y=y_imp, x=imp_duty.values, orientation="h",
+                name="Import — Section 232 duty", marker_color=_HUE_DOWN,
+                text=[dollars(v) for v in imp_price.values],
+                textposition="outside", cliponaxis=False, textfont=dict(color=_INK),
+                hovertemplate="%{y}<br>duty in price %{x:$,.0f}<extra></extra>",
+            ))
+            figB.update_layout(**_base_layout(
+                height=max(320, 40 * len(y_all) + 90), legend=True, barmode="stack",
+                margin=dict(l=10, r=95, t=64, b=10),
+            ))
+            figB.update_layout(
+                legend=dict(orientation="h", yanchor="bottom", y=1.06,
+                            xanchor="left", x=0),
+                yaxis=dict(categoryorder="array", categoryarray=y_all,
+                           showgrid=False, title=""),
+            )
+            figB.update_xaxes(title="Average selling price", tickprefix="$",
+                              showgrid=True, gridcolor="rgba(255,255,255,0.06)")
+            st.plotly_chart(figB, use_container_width=True)
+
+    # ── Plain-language takeaway ────────────────────────────────────────────
+    msg = (
+        f"**Since April 2025**, {imp_share:.0f}% of the group's sales carry the duty — "
+        f"**{_fmt_money(imp_tariff)}** of tariff cost in import prices (≈ {_fmt_money(annual_imp)}/yr), "
+        f"about **{dollars(per_imp)} per imported unit** vs {dollars(per_dom)} on a domestic one"
+    )
+    if top_tariff_seg is not None:
+        msg += f"; heaviest on imported **{top_tariff_seg}** (~{dollars(top_tariff_amt)}/unit)"
+    if shift_pts is not None:
+        if abs(shift_pts) < 1.0:
+            msg += ". The import share of the group's mix has held steady"
+        else:
+            moved = "toward the group's domestic rooftops" if shift_pts < 0 else "toward import"
+            msg += f". The mix has moved **{abs(shift_pts):.1f} pts {moved}** since the duty"
+    st.success((msg + ".").replace("$", "\\$"))
