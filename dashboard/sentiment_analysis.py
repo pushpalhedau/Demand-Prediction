@@ -22,10 +22,9 @@ from sentiment.signal_processor import (
     run_full_pipeline,
     ensure_recent_articles_analyzed,
     compute_live_overall_stats,
-    compute_live_category_summary,
 )
 from sentiment.fetchers.gdelt_fetcher import get_stored_articles, TIMESPAN_OPTIONS
-from sentiment.analyzers.grok_analyzer import generate_market_briefing
+from sentiment.group_briefing import build_briefing_context, generate_group_briefing
 from utils.helpers import (
     _section,
     _base_layout,
@@ -79,6 +78,14 @@ _DIR_ARROW = {"up": "▲", "down": "▼", "neutral": "■"}
 # ─────────────────────────────────────────────────────────────────────────────
 # Small helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cached_briefing_context(filters_key: str, _filters, _stats, _articles):
+    """The context build sweeps every module's queries (~10s). Cache it on the
+    filter set so re-clicking 'Generate read' in the same session is instant."""
+    return build_briefing_context(_filters, sentiment_stats=_stats,
+                                  sentiment_articles=_articles)
+
 
 @st.cache_data(ttl=600, show_spinner=False)
 def _group_monthly_runrate() -> float:
@@ -173,7 +180,7 @@ def render_sentiment_analysis(filters: dict):
 
     tab_watch, tab_fc = st.tabs(["Demand Watch", "Does news improve our forecast?"])
     with tab_watch:
-        _render_demand_watch(stats, articles)
+        _render_demand_watch(stats, articles, filters)
     with tab_fc:
         _render_forecast_verdict(filters)
 
@@ -330,7 +337,7 @@ def _bottom_line(stats: dict, articles: list):
 # Demand Watch
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _render_demand_watch(stats: dict, articles: list):
+def _render_demand_watch(stats: dict, articles: list, filters: dict):
     df = pd.DataFrame(articles)
     df["demand_change_pct"] = pd.to_numeric(df.get("demand_change_pct"), errors="coerce")
     df["impact_score"] = pd.to_numeric(df.get("impact_score"), errors="coerce")
@@ -400,29 +407,19 @@ def _render_demand_watch(stats: dict, articles: list):
         for _, a in actionable.iterrows():
             _signal_card(a)
 
-    # ── This week's read (briefing) ───────────────────────────────────
+    # ── This week's read (full cross-module briefing) ─────────────────
     st.markdown("<br>", unsafe_allow_html=True)
     _section("This week's read for the group")
     if st.button("Generate read", key="gen_briefing"):
-        with st.spinner("Writing…"):
-            cat_df = compute_live_category_summary(days_back=30)
-            cat_rows = []
-            if not cat_df.empty:
-                agg = (cat_df.groupby("category")[["sentiment", "demand_change"]]
-                       .mean().reset_index())
-                cat_rows = [
-                    {"category": r["category"], "avg_sentiment": r["sentiment"],
-                     "avg_demand_change": r["demand_change"]}
-                    for _, r in agg.iterrows()
-                ]
-            st.session_state["sentiment_briefing"] = generate_market_briefing(stats, cat_rows)
+        with st.spinner("Reading every module and writing the briefing…"):
+            import json
+            fk = json.dumps({k: str(v) for k, v in (filters or {}).items()}, sort_keys=True)
+            ctx = _cached_briefing_context(fk, filters, stats, articles)
+            st.session_state["sentiment_briefing"] = generate_group_briefing(ctx)
     if st.session_state.get("sentiment_briefing"):
-        st.markdown(
-            f"<div style='background:rgba(17,24,39,0.6);border:1px solid rgba(255,255,255,0.08);"
-            f"border-radius:12px;padding:18px 20px;color:{_INK};font-size:13.5px;line-height:1.7;"
-            f"white-space:pre-wrap;'>{st.session_state['sentiment_briefing']}</div>",
-            unsafe_allow_html=True,
-        )
+        # st.text (not markdown) so "1." / "-" line starts render literally,
+        # not as auto-numbered / bulleted lists.
+        st.text(st.session_state["sentiment_briefing"])
 
 
 def _signal_card(a: pd.Series):

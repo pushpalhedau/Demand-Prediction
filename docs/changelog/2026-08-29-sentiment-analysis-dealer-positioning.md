@@ -90,9 +90,12 @@ explicitly rather than leaving the reader to infer it from near-zero charts.
   **the affected segment and the group's exposure** ("hits the group's import franchises —
   about 56% of units" / "lands on the group's pickup demand") · a one-line **desk action**
   (`grok_analyzer`'s `summary`, now written as an action, not a score).
-- **This week's read for the group** — a short briefing (three sections: *What's moving
-  demand* / *Where the group is exposed* / *What to do this week*) generated from the current
-  signals. Mock templated text unless Grok is enabled; dealer-framed either way.
+- **This week's read for the group** — the "Generate read" button. Since 2026-09-06 this is a
+  full **cross-module operating briefing** (§8c), not just a sentiment recap: it sweeps every
+  module (Executive Overview → Inventory Intelligence) and writes an 8-section report —
+  headline read, then per-module *where we stand / triggers / recommendations*, closing with a
+  ranked *This week — priority actions* list. Grok when enabled, a detailed deterministic
+  template otherwise.
 
 ### Sub-tab 2 — Does news improve our forecast?
 
@@ -286,6 +289,52 @@ forecast lines directly. `bm` / `sm` / `sent_regs` / `improve` computation dropp
 
 ---
 
+## 8c. "Generate read" → full cross-module briefing (2026-09-06, stakeholder request)
+
+*"The AI-generated read must be very detailed — all triggers, insights, suggestions,
+recommendations, priority actions — across every module, Executive Overview to Inventory
+Intelligence."*
+
+New module **`sentiment/group_briefing.py`**:
+
+- `build_briefing_context(filters, sentiment_stats, sentiment_articles)` — sweeps the
+  existing `database.queries` (+ `analytics.yoy_attribution`) layer once and returns a
+  compact snapshot per module, each block in its own try/except so one failure never kills
+  the brief:
+  - **Executive** — units/revenue + YoY, target attainment & plan gap, F&I penetration,
+    discount, segment mix, top models.
+  - **Demand outlook** — trailing-3-mo vs prior-3-mo run-rate, last full month, the news
+    signal + per-segment reads.
+  - **Comparative** — YoY drivers (top gainers / laggards, stores down), controllable-vs-
+    handed-to-you split from `yoy_attribution.summary`, execution spread, Section-232 tariff
+    exposure (imported units, $ carried, per-unit import vs domestic).
+  - **Store Performance** — rooftops below 90% of target, group avg attainment, stores down
+    YoY, close-rate group + range, carrying-the-group vs needs-attention store.
+  - **Customer** — customers on file / lifetime buyers, repeat rate & repeat-revenue share,
+    churn-risk & lapsed counts, lease maturities due in 90 days, top-value segment.
+  - **Inventory** — network stock & days-of-supply, stockout / overstock / reorder line
+    counts, 90+ aging units & tied-up capital, lease returns (units + in-the-money + equity),
+    trade-in intake & true concession.
+- `generate_group_briefing(context)` — an 8-section report (headline · the six modules ·
+  ranked priority actions), each module block giving *where we stand → triggers &
+  recommendations*. **LIVE:** Grok writes it from the context (`max_tokens=4000`). **MOCK:**
+  a fully deterministic template — conditional trigger lines fire off the real numbers
+  (behind plan, F&I slipping, run-rate cooling, biggest YoY-drag store, wide close-rate
+  spread, thin/heavy days-supply, 90+ aging, in-the-money lease returns, …) and the ones that
+  fire become the ranked P1…P6 list.
+
+Dashboard: the "Generate read" handler now calls `build_briefing_context` (cached 10 min on
+the filter set — the sweep is ~9s) then `generate_group_briefing`; output renders via
+`st.text` (not `st.markdown`, so "1." / "-" line-starts don't become auto-lists). The old
+`generate_market_briefing(stats, cat_rows)` and its three-section sentiment-only template are
+no longer wired to the tab (still defined in `grok_analyzer.py`).
+
+Per a follow-up request the brief carries **no meta lines** — no "Prepared … · window … ·
+rooftops · scope" header line, no trailing "NOTES / written by the template" block, and no
+"— scored by Grok AI" tag on the LIVE output. It opens on the title and closes on the P-list.
+
+---
+
 ## 8. Known limitations / follow-ups
 
 - **MOCK vs LIVE.** The mock scorer is a **keyword heuristic** — deterministic, and now
@@ -300,8 +349,16 @@ forecast lines directly. `bm` / `sm` / `sent_regs` / `improve` computation dropp
   allowlist is the stronger follow-up.
 - **Forecast tail divergence.** When the sentiment regressor is near-constant, Prophet
   still extrapolates it into mild noise in the forecast window (visible as the news-aware
-  line drifting late). The verdict correctly reports "no meaningful difference"; the chart
-  line is a Prophet artifact, not a real signal.
+  line drifting late). The chart line is a Prophet artifact, not a real signal.
+- **"Generate read" is a ~9s sweep.** `build_briefing_context` runs a dozen aggregate
+  queries (the heaviest reads the full customers + sales tables for the CRM view). Cached
+  10 min on the filter set, behind a spinner. Some cross-metric horizons don't line up
+  exactly (customer "lease maturities in 90 days" vs inventory "lease returns over the
+  quarter" measure different grains over slightly different windows) — worded to make that
+  clear rather than forced to one number.
+- **The briefing's priority list is rule-fired, not judged.** In MOCK mode the P1…P6 items
+  are whichever trigger conditions tripped, in code order — sensible, not prioritised by a
+  model. LIVE Grok ranks them properly.
 - **Footprint-aware themes deferred.** All 8 GDELT themes are national. Scoping the
   demand/economy queries to the group's 8 states needs its own GDELT-syntax + rate-limit
   testing pass.

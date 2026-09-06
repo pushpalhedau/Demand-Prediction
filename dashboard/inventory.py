@@ -330,6 +330,46 @@ def _render_stock_health(snapshot, filters, colors):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # ── Does on-hand + inbound cover the forecast over 30 / 60 / 90 days? ────
+    _section("Forecast Demand Coverage")
+    _daily_line = snap["demand_forecast_30d"].clip(lower=0) / 30.0
+    daily_total = float(_daily_line.sum())
+    avail_now = int(snap["current_stock"].sum())
+    avail_all = (avail_now + int(snap["transit_stock"].fillna(0).sum())
+                 + int(snap["units_ordered"].fillna(0).sum()))
+
+    if daily_total > 0:
+        horizons = [30, 60, 90]
+        demand = [daily_total * h for h in horizons]
+        top = max(max(demand), avail_all) * 1.18
+
+        fig = go.Figure()
+        # Read-at-a-glance zones: covered by stock / needs the pipeline / short.
+        fig.add_hrect(y0=0, y1=avail_now, fillcolor="rgba(16,185,129,0.06)", line_width=0)
+        fig.add_hrect(y0=avail_now, y1=avail_all, fillcolor="rgba(245,158,11,0.08)", line_width=0)
+        fig.add_hrect(y0=avail_all, y1=top, fillcolor="rgba(239,68,68,0.07)", line_width=0)
+        fig.add_trace(go.Bar(
+            x=[f"Next {h} days" for h in horizons], y=demand, width=0.5,
+            marker_color=colors["primary"],
+            text=[f"{d:,.0f}" for d in demand], textposition="outside",
+            textfont=dict(color="#e5e7eb"),
+            hovertemplate="<b>%{x}</b><br>forecast demand %{y:,.0f} units<extra></extra>",
+        ))
+        fig.add_hline(y=avail_now, line=dict(color=colors["success"], width=2),
+                      annotation_text=f"In stock now · {avail_now:,}",
+                      annotation_position="top left",
+                      annotation_font=dict(color=colors["success"], size=11))
+        fig.add_hline(y=avail_all, line=dict(color="#e5e7eb", width=2, dash="dash"),
+                      annotation_text=f"+ inbound pipeline · {avail_all:,}",
+                      annotation_position="top left",
+                      annotation_font=dict(color="#e5e7eb", size=11))
+        fig.update_yaxes(title="Units", range=[0, top])
+        st.plotly_chart(_style(fig, height=320, showlegend=False), use_container_width=True)
+    else:
+        st.info("No forecast demand on the lines under the current filters.")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
     left, right = st.columns([1, 1])
 
     with left:
