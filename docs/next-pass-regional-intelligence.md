@@ -1,5 +1,8 @@
 # Next pass — Store Performance: customer-catchment view
 
+> ⚠️ **Written during the NA (US, 8-state) era.** The 2026-09-06 UAE conversion (`docs/changelog/2026-09-06-uae-conversion.md`) superseded the geography, currency and tariff details below; treat the *intent* as still useful, the specifics as stale.
+
+
 The "Regional Intelligence → Store Performance" repositioning landed on 2026-08-29
 (`docs/changelog/2026-08-29-store-performance-dealer-positioning.md`). One item was
 deliberately deferred out of that pass:

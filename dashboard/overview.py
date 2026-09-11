@@ -10,7 +10,6 @@ from database.queries import (
     get_sales_by_category,
     get_sales_by_fuel_type,
     get_sales_by_store,
-    get_top_models,
 )
 from utils.helpers import (
     render_kpi_card, get_color_palette,
@@ -19,6 +18,7 @@ from utils.helpers import (
 )
 from analytics.decision_engine import (
     project_year_end, generate_plays, category_accent, GROSS_PER_NEW_UNIT,
+    _project_series,
 )
 
 _CONF_DOT = {"High": "#10b981", "Medium": "#f59e0b", "Low": "#9ca3af"}
@@ -61,22 +61,51 @@ def _render_glance(session, filters: dict, colors: dict) -> None:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    _section("Revenue & unit trend")
+    _section("Revenue & unit trend",
+             "Last 3 years of booked revenue and units, plus a 6-month projection (dashed / faded).")
     trend_df = get_monthly_revenue_trend(session, filters)
     if not trend_df.empty:
+        td = trend_df.sort_values("date").set_index("date")
+        rev = td["revenue"].astype(float)
+        units = td["sales"].astype(float)
+
+        # drop a trailing partial month so the projection isn't anchored to it
+        if len(rev) >= 14 and rev.iloc[-1] < 0.55 * rev.iloc[-13:-1].mean():
+            rev, units = rev.iloc[:-1], units.iloc[:-1]
+
+        rev, units = rev.tail(36), units.tail(36)          # 3 years of history
+        rev_fc = _project_series(rev, 6)                   # 6-month projection
+        units_fc = _project_series(units, 6)
+        rev_join = pd.concat([rev.iloc[[-1]], rev_fc])
+
         fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=trend_df["date"], y=trend_df["revenue"], name="Revenue",
-            line=dict(color=colors["primary"], width=3), mode="lines",
-            hovertemplate="%{x|%b %Y} · $%{y:,.0f}<extra></extra>",
-        ))
         fig.add_trace(go.Bar(
-            x=trend_df["date"], y=trend_df["sales"], name="Units", yaxis="y2",
+            x=units.index, y=units.values, name="Units", yaxis="y2",
             marker_color="rgba(6,182,212,0.22)",
             hovertemplate="%{x|%b %Y} · %{y:,} units<extra></extra>",
         ))
+        fig.add_trace(go.Bar(
+            x=units_fc.index, y=units_fc.values, name="Units", yaxis="y2",
+            marker_color="rgba(6,182,212,0.09)", showlegend=False,
+            hovertemplate="%{x|%b %Y} · %{y:,.0f} units (projected)<extra></extra>",
+        ))
+        fig.add_trace(go.Scatter(
+            x=rev.index, y=rev.values, name="Revenue",
+            line=dict(color=colors["primary"], width=3), mode="lines",
+            hovertemplate="%{x|%b %Y} · AED %{y:,.0f}<extra></extra>",
+        ))
+        fig.add_trace(go.Scatter(
+            x=rev_join.index, y=rev_join.values, name="Revenue (projected)",
+            line=dict(color=colors["primary"], width=2.5, dash="dot"), mode="lines",
+            hovertemplate="%{x|%b %Y} · AED %{y:,.0f} (projected)<extra></extra>",
+        ))
+        fig.add_vrect(x0=rev.index[-1], x1=rev_fc.index[-1],
+                      fillcolor="rgba(99,102,241,0.06)", line_width=0, layer="below",
+                      annotation_text="projection", annotation_position="top left",
+                      annotation_font=dict(color=_INK_MUTED, size=10))
         fig.update_layout(**_base_layout(height=340, legend=True))
         fig.update_layout(
+            barmode="overlay",
             yaxis=dict(title="Revenue", showgrid=True, gridcolor="rgba(255,255,255,0.05)"),
             yaxis2=dict(title="Units", overlaying="y", side="right", showgrid=False),
         )
@@ -87,45 +116,53 @@ def _render_glance(session, filters: dict, colors: dict) -> None:
         _section("Sales mix by category")
         cat_df = get_sales_by_category(session, filters)
         if not cat_df.empty:
-            cat_df = cat_df.sort_values("sales")
-            tot = cat_df["sales"].sum() or 1
-            fig = go.Figure(go.Bar(
-                x=cat_df["sales"], y=cat_df["vehicle_category"], orientation="h",
-                marker_color=colors["primary"],
-                text=[f"{v / tot * 100:.0f}%" for v in cat_df["sales"]],
-                textposition="outside", cliponaxis=False,
+            fig = go.Figure(go.Pie(
+                labels=cat_df["vehicle_category"], values=cat_df["sales"], hole=0.45,
+                sort=True, direction="clockwise",
+                marker=dict(colors=colors["colors_seq"],
+                            line=dict(color="#0b0f19", width=2)),
+                textposition="inside", textinfo="percent",
+                hovertemplate="%{label} · %{value:,} units (%{percent})<extra></extra>",
             ))
-            fig.update_layout(**_base_layout(height=260))
-            fig.update_xaxes(visible=False, range=[0, cat_df["sales"].max() * 1.18])
+            fig.update_layout(**_base_layout(height=300, legend=True))
+            fig.update_layout(
+                margin=dict(l=0, r=0, t=10, b=0),
+                legend=dict(orientation="v", yanchor="middle", y=0.5,
+                            xanchor="left", x=1.0),
+            )
             st.plotly_chart(fig, use_container_width=True)
     with right:
         _section("Fuel type mix")
         fuel_df = get_sales_by_fuel_type(session, filters)
         if not fuel_df.empty:
-            fuel_df = fuel_df.sort_values("sales")
-            tot = fuel_df["sales"].sum() or 1
-            fig = go.Figure(go.Bar(
-                x=fuel_df["sales"], y=fuel_df["fuel_type"], orientation="h",
-                marker_color=colors["secondary"],
-                text=[f"{v / tot * 100:.0f}%" for v in fuel_df["sales"]],
-                textposition="outside", cliponaxis=False,
-            ))
-            fig.update_layout(**_base_layout(height=260))
-            fig.update_xaxes(visible=False, range=[0, fuel_df["sales"].max() * 1.18])
+            fuel_df = fuel_df.sort_values("sales", ascending=False)
+            seq = colors["colors_seq"]
+            fig = go.Figure()
+            for i, row in enumerate(fuel_df.itertuples(index=False)):
+                fig.add_trace(go.Bar(
+                    x=[row.fuel_type], y=[row.sales], name=row.fuel_type,
+                    marker_color=seq[i % len(seq)],
+                    hovertemplate="%{x} · %{y:,} units<extra></extra>",
+                ))
+            fig.update_layout(**_base_layout(height=300, legend=True))
+            fig.update_layout(
+                margin=dict(l=0, r=0, t=10, b=0),
+                yaxis=dict(title="Units", showgrid=True, gridcolor="rgba(255,255,255,0.05)"),
+            )
             st.plotly_chart(fig, use_container_width=True)
 
-    _section("Sales by store")
+    _section("Sales by store", "Top 5 rooftops by units; dashed line is the group average.")
     store_all = get_sales_by_store(session, filters, limit=500)
     if not store_all.empty:
         grp_avg = float(store_all["units"].mean())
-        store_df = store_all.head(15).sort_values("units")
+        store_df = store_all.head(5).sort_values("units")
         fig = go.Figure(go.Bar(
             x=store_df["units"], y=store_df["dealer_name"], orientation="h",
-            marker_color=colors["primary"],
+            marker_color=colors["primary"], width=0.45,
             text=[f"{u:,.0f}  ·  {_fmt_money(r)}" for u, r in zip(store_df["units"], store_df["revenue"])],
             textposition="outside", cliponaxis=False,
             hovertext=[f"{n} — {c}<br>{u:,.0f} units · {_fmt_money(r)}"
-                       for n, c, u, r in zip(store_df["dealer_name"], store_df["city"],
+                       for n, c, u, r in zip(store_df["dealer_name"], store_df["area"],
                                              store_df["units"], store_df["revenue"])],
             hoverinfo="text",
         ))
@@ -136,21 +173,6 @@ def _render_glance(session, filters: dict, colors: dict) -> None:
         fig.update_layout(**_base_layout(height=max(340, 27 * len(store_df) + 30),
                                          margin=dict(l=0, r=12, t=22, b=6)))
         fig.update_xaxes(visible=False, range=[0, store_df["units"].max() * 1.35])
-        st.plotly_chart(fig, use_container_width=True)
-
-    _section("Top-selling models")
-    models_df = get_top_models(session, filters, limit=8)
-    if not models_df.empty:
-        models_df["label"] = models_df["brand"] + " " + models_df["model"]
-        models_df = models_df.sort_values("units")
-        fig = go.Figure(go.Bar(
-            x=models_df["units"], y=models_df["label"], orientation="h",
-            marker_color=colors["secondary"],
-            text=[f"{u:,.0f}" for u in models_df["units"]],
-            textposition="outside", cliponaxis=False,
-        ))
-        fig.update_layout(**_base_layout(height=300))
-        fig.update_xaxes(visible=False)
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -171,13 +193,13 @@ def _render_play(idx: int, play) -> None:
               <span style="color:{dot};">●</span> {play.confidence} confidence · {play.horizon}
             </span>
           </div>
-          <div style="font-size:14.5px;font-weight:650;color:{_INK};margin:6px 0 4px;">
+          <div style="font-size:15px;font-weight:650;color:{_INK};margin:7px 0 5px;">
             {idx}. {play.title}
           </div>
-          <div style="font-size:12.5px;color:{_INK_MUTED};line-height:1.55;">{play.detail}</div>
-          <div style="font-size:17px;font-weight:700;color:#10b981;margin-top:9px;">
+          <div style="font-size:13px;color:{_INK_MUTED};line-height:1.7;">{play.detail}</div>
+          <div style="font-size:17px;font-weight:700;color:#10b981;margin-top:10px;">
             {_fmt_money(play.impact_usd)}
-            <span style="font-size:11px;color:{_INK_MUTED};font-weight:400;"> modelled impact</span>
+            <span style="font-size:11px;color:{_INK_MUTED};font-weight:400;"> estimated value if acted on</span>
           </div>
         </div>
         """,
@@ -240,36 +262,38 @@ def _render_recommendations(session, filters: dict) -> None:
     k1, k2, k3 = st.columns(3)
     with k1:
         if att is None:
-            render_kpi_card("12-Month Landing", "N/A", "no plan set", is_positive=False)
+            render_kpi_card("Where the year ends up", "N/A", "no plan set", is_positive=False)
         else:
             short = gap > 0
             render_kpi_card(
-                "12-Month Landing", f"{att:.0f}% of plan",
+                "Where the year ends up", f"{att:.0f}% of plan",
                 delta=(f"{'−' if short else '+'}{abs(gap):,.0f} units · "
-                       f"{_fmt_money(abs(gap) * GROSS_PER_NEW_UNIT)} gross"),
+                       f"{_fmt_money(abs(gap) * GROSS_PER_NEW_UNIT)} in profit"),
                 is_positive=not short,
             )
     with k2:
-        render_kpi_card("Gross at Stake", _fmt_money(gross_at_stake),
-                        delta=f"across {len(plays)} plays below", is_positive=True)
+        render_kpi_card("Total value in the actions below", _fmt_money(gross_at_stake),
+                        delta=f"across {len(plays)} actions", is_positive=True)
     with k3:
         if att is None or gap <= 0:
-            render_kpi_card("Gap to Close", "On plan", "no shortfall projected", is_positive=True)
+            render_kpi_card("Extra sales needed", "None", "on track to hit plan", is_positive=True)
         else:
-            render_kpi_card("Gap to Close", f"+{gpm:.0f} units",
-                            delta="per store, per month", is_positive=False)
+            render_kpi_card("Extra sales needed", f"+{gpm:.0f} cars",
+                            delta="per store, each month", is_positive=False)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    _section("The Decision Brief")
+    _section("What to do next",
+             "Plain-language actions, ranked by the estimated value of acting on each.")
     if plays:
         for i, p in enumerate(plays, 1):
             _render_play(i, p)
     else:
-        st.info("No plays surfaced for this scope — the group is tracking to plan "
-                "with no stock, margin or pace outliers.")
+        st.info("Nothing to flag for this selection — the group is on track to plan, "
+                "with no stock, discounting or sales-pace problems standing out.")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    _section("Where the year lands")
+    _section("Where the year lands",
+             "Monthly sales so far, and where the current pace takes the group by year-end.")
     _render_landing_chart(landing)
 
 

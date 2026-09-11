@@ -42,9 +42,9 @@ _BATCH_SIZE: int = 10  # articles per Grok API call
 # Grok system prompt
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You advise a US automobile dealer group — 24 rooftops across California, Texas, Florida, New York, Illinois, Georgia, Ohio and Michigan. About 56% of the group's units are import franchises (Toyota, Honda, Hyundai, Kia, Subaru, Nissan, VW, BMW, Mercedes-Benz, Lexus); the rest are domestic (Chevrolet, Ford, Ram, GMC, Jeep, Tesla). Segment mix is roughly SUV 49%, Pickup 23%, Sedan 16%, Luxury 9%.
+_SYSTEM_PROMPT = """You advise a UAE automobile dealer group — 24 rooftops across the seven emirates (concentrated in Dubai, Abu Dhabi and Sharjah). Every vehicle is imported; the group's franchises are mainstream Japanese and Korean volume brands (Toyota, Nissan, Mitsubishi, Hyundai, Kia, Honda, Mazda, Suzuki), value Chinese (MG), American (Chevrolet, Ford) and premium/luxury (Lexus, Mercedes-Benz, BMW, Land Rover). Segment mix is roughly SUV 50%, Sedan 28%, Luxury 7%, Pickup 6%. There is no local car industry and no import-vs-domestic split — every brand pays the same flat 5% GCC customs duty, and the only consumption tax is a flat 5% VAT. Petrol is a regulated monthly pump price. The seasonal calendar that matters is Ramadan / Eid, UAE National Day (December), the Dubai Shopping Festival (January) and the summer travel lull.
 
-For each news headline, score its effect on RETAIL new-vehicle demand at the group's showrooms and on day-to-day dealership operations (what to stock, how to price, whether to pull forward or hold incentives, and financing / F&I talk-tracks).
+For each news headline, score its effect on RETAIL new-vehicle demand at the group's showrooms and on day-to-day dealership operations (what to stock, how to price, whether to pull forward or hold offers, and finance / Islamic-finance talk-tracks).
 
 Return a JSON object with this exact schema:
 {
@@ -64,11 +64,12 @@ Return a JSON object with this exact schema:
 }
 
 Rules:
-- Financing cost is the strongest single lever: a higher auto-loan APR or Fed rate raises monthly payments and cuts financed demand within weeks (~-3% units per +1 point of APR); rate cuts help luxury, SUV and financed purchases.
-- Pump price: a higher gas price shifts mix away from SUV/Pickup toward Sedan (~-4% truck/SUV per +$1/gal) with a smaller drag on total volume; a gas price drop does the reverse.
-- Section 232 import tariffs raise vehicle cost for the group's import rooftops much more than its domestic ones (~+$5,000+ per imported unit vs ~+$1,800 domestic) — treat tariff news mainly as a cost / margin / pricing signal with a modest demand tilt against import segments.
-- OEM incentive / rebate / lease-deal news → supports demand when programs expand, drags when they are cut (~+2% per +1 point of incentive spend).
-- EV: adoption growth slowed after the federal EV tax credit expired Oct 2025; state rebates and charging buildout are the remaining tailwinds.
+- Finance cost is the strongest single lever: a higher car-loan rate (CBUAE / EIBOR-linked, and the equivalent Islamic Murabaha profit rate) raises monthly payments and cuts financed demand within weeks (~-3% units per +1 point); rate cuts help luxury, SUV and financed purchases.
+- Petrol price is a regulated monthly number: a rise shifts mix a little away from large SUV / 4x4 toward Sedan, with a smaller drag on total volume; a cut does the reverse. Effect is weaker than in an unregulated market.
+- Customs duty / VAT / registration-fee news is a cost / margin / pricing signal that hits the whole book equally (there is no domestic exemption).
+- Distributor / dealer offer news (0% finance, free registration/insurance, service packages, Ramadan and National Day campaigns) supports demand when offers expand, drags when they are pulled (~+2% per +1 point of incentive spend).
+- EV: UAE adoption is on a steep upward ramp led by Dubai/Abu Dhabi policy, charging build-out and low Chinese-brand pricing; there is no federal purchase credit to expire.
+- Oil price and the non-oil economy, Dubai real estate and tourism are leading demand signals here — a strong property/tourism cycle lifts luxury and SUV demand.
 - Consumer-sentiment / confidence news is a leading, low-magnitude signal (cap around ±2%).
 - Return exactly one signal per input article in the same order.
 - Only return valid JSON, nothing else."""
@@ -98,9 +99,10 @@ _NEGATIVE_WORDS = {
 }
 
 _HIGH_IMPACT_WORDS = {
-    "tariff", "interest rate", "rate cut", "rate hike", "apr", "fed", "federal reserve",
-    "incentive", "incentives", "rebate", "financing", "recall", "strike", "gas price",
-    "gasoline", "affordability", "auto loan", "policy", "ban", "crisis",
+    "customs", "duty", "vat", "interest rate", "rate cut", "rate hike", "apr",
+    "central bank", "cbuae", "eibor", "fed",
+    "incentive", "incentives", "offer", "rebate", "finance", "murabaha", "recall",
+    "petrol price", "petrol", "diesel", "affordability", "car loan", "policy", "ban",
 }
 
 _MEDIUM_IMPACT_WORDS = {
@@ -109,11 +111,11 @@ _MEDIUM_IMPACT_WORDS = {
 }
 
 _CATEGORY_KEYWORDS = {
-    "EV":         {"electric", "ev", "tesla", "charging", "battery", "hybrid", "zero-emission", "plug-in"},
-    "Luxury":     {"luxury", "mercedes", "bmw", "porsche", "lexus", "premium", "audi", "cadillac"},
-    "Pickup":     {"pickup", "truck", "f-150", "silverado", "ram 1500", "sierra", "full-size"},
-    "SUV":        {"suv", "4x4", "crossover", "off-road", "jeep", "grand cherokee"},
-    "Sedan":      {"sedan", "compact car", "hatchback", "camry", "civic", "corolla"},
+    "EV":         {"electric", "ev", "tesla", "byd", "charging", "battery", "hybrid", "zero-emission", "plug-in", "green plate"},
+    "Luxury":     {"luxury", "mercedes", "bmw", "porsche", "lexus", "premium", "range rover", "bentley", "g-class"},
+    "Pickup":     {"pickup", "hilux", "navara", "l200", "single cab", "double cab"},
+    "SUV":        {"suv", "4x4", "crossover", "off-road", "patrol", "land cruiser", "prado", "pajero"},
+    "Sedan":      {"sedan", "compact car", "hatchback", "camry", "corolla", "sunny", "accent"},
     "Commercial": {"van", "commercial", "fleet", "cargo", "logistics"},
 }
 
@@ -157,18 +159,18 @@ def _theme_directional_read(theme, tl: str, words: set):
     if rise == fall:  # neither, or ambiguous (both) → no call
         return None
 
-    if theme == "fuel_oil_prices" and any(k in tl for k in ("gas", "fuel", "oil", "pump", "gasoline", "diesel")):
-        seg = "Pickup" if any(k in tl for k in ("truck", "pickup", "f-150", "silverado", "ram")) else "SUV"
-        return ("down", seg) if rise else ("up", seg)   # dearer fuel = truck/SUV headwind
+    if theme in ("fuel_prices", "fuel_economic") and any(k in tl for k in ("petrol", "fuel", "oil", "pump", "diesel")):
+        seg = "Pickup" if any(k in tl for k in ("pickup", "hilux", "navara", "l200")) else "SUV"
+        return ("down", seg) if rise else ("up", seg)   # dearer fuel = 4x4/SUV headwind
 
-    if theme in ("auto_financing", "us_macro_economy") and any(k in tl for k in ("rate", "apr", "loan", "financ", "fed", "borrow", "mortgage")):
+    if theme in ("auto_financing", "uae_macro_economy", "macro_economic") and any(k in tl for k in ("rate", "apr", "loan", "financ", "eibor", "central bank", "borrow", "mortgage", "murabaha")):
         return ("down", "All") if rise else ("up", "All")   # dearer credit = demand headwind
 
-    if theme == "tariff_trade" and any(k in tl for k in ("tariff", "duty", "duties", "import", "232")):
-        relief = fall or any(k in tl for k in ("refund", "exempt", "pause", "remove", "repeal", "roll back", "rollback", "relief"))
-        return ("up", "All") if relief else ("down", "All")   # duty on = cost headwind on imports
+    if theme in ("customs_vat", "cost_policy") and any(k in tl for k in ("customs", "duty", "duties", "vat", "tax", "registration fee", "import")):
+        relief = fall or any(k in tl for k in ("cut", "waive", "waiver", "exempt", "reduce", "remove", "scrap", "relief"))
+        return ("up", "All") if relief else ("down", "All")   # higher landed cost = demand headwind
 
-    if theme == "incentives_rebates":
+    if theme in ("incentives_rebates", "incentives_offers"):
         expand = any(k in tl for k in ("expand", "boost", "return", "0%", "zero percent", "add")) or (rise and any(k in tl for k in ("incentive", "rebate", "deal")))
         cut = fall or any(k in tl for k in ("end", "reduce", "pull", "expire", "scale back"))
         if expand and not cut:
@@ -257,9 +259,8 @@ def _mock_signal_for_title(title: str, article_index: int, theme: Optional[str] 
     # Estimated demand change %. Zero unless a direction was called. Calibrated
     # so a single headline moves demand by at most a couple of points —
     # published US auto-retail elasticities put a +1pt APR move at ~-3% units
-    # and a +$1/gal gas move at ~-4% on truck/SUV mix, and those are sustained
-    # shifts, not one news item. (Fed FEDS Notes 2024; Resources for the Future
-    # WP 23-33 / Brandeis WP94 — see the sentiment-analysis changelog.)
+    # and a large fuel-price move a smaller shift toward Sedan, and those are
+    # sustained shifts, not one news item.
     if demand_direction == "neutral":
         estimated_demand_change_pct = 0.0
     else:
@@ -537,9 +538,9 @@ def get_unanalyzed_articles(limit: int = 100) -> List[Dict]:
 # Market Briefing Generator
 # ─────────────────────────────────────────────────────────────────────────────
 
-_BRIEFING_SYSTEM_PROMPT = """You advise the leadership of a US automobile dealer group (24 rooftops, ~56% import franchises, segment mix SUV 49% / Pickup 23% / Sedan 16% / Luxury 9%).
+_BRIEFING_SYSTEM_PROMPT = """You advise the leadership of a UAE automobile dealer group (24 rooftops across the seven emirates, all-imported franchises, segment mix SUV 50% / Sedan 28% / Luxury 7% / Pickup 6%).
 Write a short weekly read for the group's GMs and the F&I / used-car desks, using only the signal data provided.
-Talk about the group's own showroom demand, stocking, pricing, incentives and financing — not "the market".
+Talk about the group's own showroom demand, stocking, pricing, offers and finance — not "the market".
 Structure your response with exactly three clearly labeled sections:
 
 WHAT'S MOVING DEMAND
@@ -657,8 +658,8 @@ Over the next ~30 days the group's news signal is {net_word} ({net_signal:+.1f}%
 
 WHERE THE GROUP IS EXPOSED
 {chr(10).join(exposure_lines)}
-- Import franchises carry ~56% of the group's units, so tariff and exchange-rate headlines hit cost and price on more than half the book.
-- Financing news moves faster than anything else — a rate change shows up in showroom traffic within a few weeks.
+- Every unit is imported, so customs-duty, VAT and shipping headlines hit landed cost across the whole book at once.
+- Finance news moves faster than anything else — a CBUAE / EIBOR rate change shows up in showroom traffic within a few weeks.
 
 WHAT TO DO THIS WEEK
 1. Keep {top_up} stock full at the higher-volume rooftops; that is where the supportive signal is concentrated.
@@ -692,11 +693,11 @@ if __name__ == "__main__":
     print(f"Model: {_GROK_MODEL}\n")
 
     test_articles = [
-        {"article_id": 1, "title": "US Car Sales Surge 15% in April Driven by EV Adoption"},
-        {"article_id": 2, "title": "Auto Tariffs Raise Vehicle Price Concerns Across Import Brands"},
-        {"article_id": 3, "title": "Luxury Vehicle Registrations Hit Record High in Q1 2025"},
-        {"article_id": 4, "title": "Fed Rate Decision Weighs on Consumer Financing Confidence"},
-        {"article_id": 5, "title": "Tesla Opens Third Service Center in Texas Amid Growing Demand"},
+        {"article_id": 1, "title": "UAE new car sales rise as Ramadan offers and 0% finance draw buyers"},
+        {"article_id": 2, "title": "UAE fuel prices held steady for March, easing running-cost worries"},
+        {"article_id": 3, "title": "Dubai luxury car registrations hit record as property boom continues"},
+        {"article_id": 4, "title": "Central Bank of UAE keeps base rate unchanged after Fed hold"},
+        {"article_id": 5, "title": "Nissan Patrol and Toyota Land Cruiser lead UAE SUV demand in Q1"},
     ]
 
     print(f"Analyzing {len(test_articles)} articles...\n")

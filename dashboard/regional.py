@@ -11,16 +11,15 @@ from utils.helpers import (
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Estimated gross per new unit (front-end + F&I), 2024 industry benchmarks.
-#   Front-end new-vehicle gross ≈ $2,250 average — $1,950 domestic / $1,700
-#   import / $5,679 luxury (NADA 2024; Presidio-NCM FY2024). F&I per new retail
-#   unit ≈ $2,000–2,400 (NADA 2024 ≈ $1,581 blended new+used; Haig public
-#   dealers ≈ $2,400/vehicle retailed). Applied to each store's franchise so
-#   "Est. gross" scales with the store's own volume and brand mix. This is a
-#   benchmark estimate, not booked gross — the Sale table carries no cost basis.
-_GROSS_PER_UNIT = {"luxury": 8_100, "import": 3_750, "domestic": 4_050}
-_LUXURY_BRANDS = {"BMW", "Mercedes-Benz", "Lexus"}
-_MASS_IMPORT_BRANDS = {"Toyota", "Honda", "Nissan", "Subaru", "Hyundai", "Kia", "Volkswagen"}
+# Estimated gross per new unit (front-end + F&I), AED, rough Gulf-market
+# benchmarks. UAE new-car front-end gross is thin on mass brands (heavy list-
+# price discounting, 0% finance) and much fatter on luxury and body-on-frame
+# 4x4s. Applied to each store's franchise so "Est. gross" scales with the
+# store's own volume and brand mix — a benchmark estimate, not booked gross
+# (the Sale table carries no cost basis).
+_GROSS_PER_UNIT = {"luxury": 22_000, "premium": 9_000, "mass": 6_500}
+_LUXURY_BRANDS = {"Mercedes-Benz", "BMW", "Lexus", "Land Rover"}
+_PREMIUM_BRANDS = {"Toyota", "Honda", "Mazda", "Ford", "Chevrolet"}
 
 # "Pace vs the store's own annual target", coloured the same way on the map and
 # the ranking bar so the hue means one thing everywhere. Targets carry a +5%
@@ -35,9 +34,9 @@ _BEHIND_PLAN_PCT = 90   # materially short of target — worth a GM's attention
 def _origin_bucket(brand: str) -> str:
     if brand in _LUXURY_BRANDS:
         return "luxury"
-    if brand in _MASS_IMPORT_BRANDS:
-        return "import"
-    return "domestic"
+    if brand in _PREMIUM_BRANDS:
+        return "premium"
+    return "mass"
 
 
 def render_regional(filters: dict):
@@ -65,7 +64,7 @@ def render_regional(filters: dict):
         df["est_gross"] = df.apply(
             lambda r: r["units_sold"] * _GROSS_PER_UNIT[_origin_bucket(r["brand"])], axis=1
         )
-        df["label"] = df["dealer_name"] + " · " + df["city"]
+        df["label"] = df["dealer_name"] + " · " + df["area"]
         has_target = df["attainment_pct"].notna()
 
         # ── Headline row ────────────────────────────────────────────────────
@@ -106,7 +105,7 @@ def render_regional(filters: dict):
                 color="_attain", color_continuous_scale=_ATTAINMENT_SCALE,
                 range_color=_ATTAINMENT_RANGE, color_continuous_midpoint=_ATTAINMENT_MID,
                 hover_name="dealer_name",
-                custom_data=["brand", "city", "state", "units_sold", "_rev", "_att_txt", "_yoy"],
+                custom_data=["brand", "area", "emirate", "units_sold", "_rev", "_att_txt", "_yoy"],
                 map_style="carto-darkmatter",
                 zoom=zoom, center={"lat": (lat0 + lat1) / 2, "lon": (lon0 + lon1) / 2},
             )
@@ -160,12 +159,12 @@ def render_regional(filters: dict):
         board = pd.DataFrame({
             "Store": df["dealer_name"],
             "Franchise": df["brand"],
-            "State": df["state"],
+            "Emirate": df["emirate"],
             "Units": df["units_sold"],
-            "Revenue ($M)": (df["revenue"] / 1e6).round(1),
+            "Revenue (AED M)": (df["revenue"] / 1e6).round(1),
             "YoY units %": df["yoy_units_pct"].round(1),
             "Pace vs target %": df["attainment_pct"].round(0),
-            "Est. gross ($M)": (df["est_gross"] / 1e6).round(2),
+            "Est. gross (AED M)": (df["est_gross"] / 1e6).round(2),
             "Close rate %": (df["close_rate"] * 100).round(0),
             "Avg days to close": df["avg_days_to_close"].round(0),
             "Top segment": df["top_category"].fillna("–"),
@@ -174,10 +173,10 @@ def render_regional(filters: dict):
             board, use_container_width=True, hide_index=True, height=460,
             column_config={
                 "Units": st.column_config.NumberColumn(format="%d"),
-                "Revenue ($M)": st.column_config.NumberColumn(format="%.1f"),
+                "Revenue (AED M)": st.column_config.NumberColumn(format="%.1f"),
                 "YoY units %": st.column_config.NumberColumn(format="%.1f%%"),
                 "Pace vs target %": st.column_config.NumberColumn(format="%.0f%%"),
-                "Est. gross ($M)": st.column_config.NumberColumn(format="%.2f"),
+                "Est. gross (AED M)": st.column_config.NumberColumn(format="%.2f"),
                 "Close rate %": st.column_config.NumberColumn(format="%.0f%%"),
                 "Avg days to close": st.column_config.NumberColumn(format="%.0f"),
             },

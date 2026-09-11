@@ -16,19 +16,24 @@ from sqlalchemy import func
 
 _BASE_MODEL_DIR = "models/clustering"
 
-# Segmentation feature set (2026-08-29 dealer-positioning pass).
+# Segmentation feature set.
 #
-# `nationality` was removed — segmenting US auto customers by national origin /
-# ethnicity is a fair-lending (ECOA / disparate-impact) liability. The two
-# decorative "score" fields (`loyalty_score`, `churn_risk_score`) were dropped
-# too; they now carry real signal but it is redundant with recency/frequency.
-# What's left is what a dealer actually groups a customer base by: how much they
-# earn, their credit tier, their life-stage, how many times they've bought from
-# the group, how long since the last deal, and how big their deals run.
+# The model clusters on behavioural / financial features a dealer actually
+# groups a customer base by: age, monthly income, credit tier, how many times
+# they've bought from the group, how long since the last deal, deal size, and
+# `years_in_uae` (residency tenure — a genuine Gulf signal: a resident of two
+# years and one of fifteen shop, finance and trade-cycle very differently).
+#
+# `nationality` itself is NOT a clustering feature — one-hot-encoding ~18
+# nationalities would swamp the distance metric — but it IS retained on the
+# customer record and surfaced descriptively in Customer Intelligence (the
+# nationality mix of each segment), which is where it is useful and defensible
+# for a UAE market where ~88% of residents are expatriate.
 FEATURES = [
     "age",
-    "estimated_annual_income_usd",
+    "estimated_monthly_income_aed",
     "credit_score",
+    "years_in_uae",
     "number_of_past_purchases",
     "recency_days",
     "avg_deal_value",
@@ -55,7 +60,7 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
     One row per customer with the six segmentation features, joining each
     customer's real deal history from the sales table:
       recency_days   — days since the customer's last activity / last deal
-      avg_deal_value — mean total_revenue_incl_tax across their deals
+      avg_deal_value — mean total_revenue_incl_vat across their deals
     Customers with no deal on file get recency from last_activity_date and the
     buyer-median deal value (so they still cluster somewhere sensible).
     """
@@ -66,8 +71,9 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
         session.query(
             Customer.customer_id,
             Customer.age,
-            Customer.estimated_annual_income_usd,
+            Customer.estimated_monthly_income_aed,
             Customer.credit_score,
+            Customer.years_in_uae,
             Customer.number_of_past_purchases,
             Customer.last_activity_date,
         ).statement,
@@ -77,7 +83,7 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
     deals = pd.read_sql(
         session.query(
             Sale.customer_id.label("customer_id"),
-            func.avg(Sale.total_revenue_incl_tax).label("avg_deal_value"),
+            func.avg(Sale.total_revenue_incl_vat).label("avg_deal_value"),
         ).group_by(Sale.customer_id).statement,
         session.bind,
     )
@@ -93,10 +99,11 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
     df["avg_deal_value"] = df["avg_deal_value"].fillna(buyer_median)
 
     df["age"] = df["age"].fillna(df["age"].median())
-    df["estimated_annual_income_usd"] = df["estimated_annual_income_usd"].fillna(
-        df["estimated_annual_income_usd"].median()
+    df["estimated_monthly_income_aed"] = df["estimated_monthly_income_aed"].fillna(
+        df["estimated_monthly_income_aed"].median()
     )
     df["credit_score"] = df["credit_score"].fillna(df["credit_score"].median())
+    df["years_in_uae"] = df["years_in_uae"].fillna(df["years_in_uae"].median())
     df["number_of_past_purchases"] = df["number_of_past_purchases"].fillna(0)
 
     return df
@@ -121,7 +128,7 @@ def _assign_labels(cluster_means: pd.DataFrame) -> dict:
     remaining.remove(c)
 
     # High-Value / Prime — highest income of what's left.
-    c = cluster_means.loc[remaining, "estimated_annual_income_usd"].idxmax()
+    c = cluster_means.loc[remaining, "estimated_monthly_income_aed"].idxmax()
     mapping[c] = "High-Value / Prime"
     remaining.remove(c)
 
@@ -198,9 +205,10 @@ def train_customer_segmentation(n_clusters: int = 5):
 
 def predict_customer_segment(customer_data: dict) -> str:
     """
-    Predict the segment for a customer profile given the six features
-    (age, estimated_annual_income_usd, credit_score, number_of_past_purchases,
-    recency_days, avg_deal_value). Falls back to "Core Mainstream" on any error.
+    Predict the segment for a customer profile given the seven features
+    (age, estimated_monthly_income_aed, credit_score, years_in_uae,
+    number_of_past_purchases, recency_days, avg_deal_value). Falls back to
+    "Core Mainstream" on any error.
     """
     try:
         mdir = _model_dir()
@@ -212,12 +220,13 @@ def predict_customer_segment(customer_data: dict) -> str:
             cluster_mapping = pickle.load(f)
 
         row = [
-            customer_data.get("age", 45),
-            customer_data.get("estimated_annual_income_usd", 75000.0),
+            customer_data.get("age", 39),
+            customer_data.get("estimated_monthly_income_aed", 15000.0),
             customer_data.get("credit_score", 700),
+            customer_data.get("years_in_uae", 6),
             customer_data.get("number_of_past_purchases", 1),
             customer_data.get("recency_days", 540),
-            customer_data.get("avg_deal_value", 42000.0),
+            customer_data.get("avg_deal_value", 120000.0),
         ]
         cluster_idx = int(kmeans.predict(scaler.transform([row]))[0])
         return cluster_mapping.get(cluster_idx, "Core Mainstream")

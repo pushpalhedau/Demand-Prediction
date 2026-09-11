@@ -6,7 +6,7 @@ dollar impact and a confidence, plus a forward 12-month landing vs. plan.
 This is what makes the Executive Overview a decision tab rather than a set of
 charts: BI tools show what happened; this joins a forward projection with the
 current stock position, each store's own economics and plan, and turns it into
-"do this, it's worth roughly $X".
+"do this, it's worth roughly AED X".
 
 Deliberately NOT Prophet: the Overview tab retrains nothing and must stay
 responsive, so projections here are a fast seasonal run-rate model in pandas.
@@ -32,16 +32,16 @@ from database.queries import (
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Benchmark constants (US franchised new-vehicle retail, 2024-25).
-# Sources are listed in the tab's changelog. These are the ONLY non-data inputs
-# to a dollar figure on a card; a dealer replaces them with their own actuals
-# once real gross / F&I data is connected (see DEALER_INTEGRATION_REQUIREMENTS).
+# Benchmark constants (UAE new-vehicle retail, rough Gulf-market figures, AED).
+# These are the ONLY non-data inputs to a money figure on a card; a dealer
+# replaces them with their own actuals once real gross / F&I data is connected
+# (see DEALER_INTEGRATION_REQUIREMENTS).
 # ─────────────────────────────────────────────────────────────────────────────
-GROSS_PER_NEW_UNIT = 4_200      # blended front-end + F&I gross per new unit
-FNI_GROSS_PER_DEAL = 2_000      # incremental F&I gross on one more financed deal
+GROSS_PER_NEW_UNIT = 9_000      # blended front-end + F&I gross per new unit (AED)
+FNI_GROSS_PER_DEAL = 4_500      # incremental F&I gross on one more financed deal (AED)
 RECOVERABLE_SHARE = 0.5        # share of an identified gap realistically closable
 TURN_ON_TRANSFER = 0.6        # prob. a transferred unit actually sells in 60d
-AGED_MARKUP_PER_UNIT_MONTH = 250   # extra markdown taken per aged unit per month
+AGED_MARKUP_PER_UNIT_MONTH = 900   # extra markdown taken per aged unit per month (AED)
 
 _CONF_WEIGHT = {"High": 1.0, "Medium": 0.65, "Low": 0.4}
 
@@ -131,9 +131,9 @@ def _annual_target(session, filters: dict) -> int:
     q = session.query(func.coalesce(func.sum(Dealer.annual_target_units), 0))
     f = filters or {}
     if f.get("region"):
-        q = q.filter(Dealer.state == f["region"])
+        q = q.filter(Dealer.emirate == f["region"])
     if f.get("city"):
-        q = q.filter(Dealer.city == f["city"])
+        q = q.filter(Dealer.area == f["city"])
     if f.get("brand"):
         q = q.filter(Dealer.brand == f["brand"])
     return int(q.scalar() or 0)
@@ -151,9 +151,9 @@ def project_year_end(session, filters: dict) -> dict:
     n_stores = session.query(func.count(Dealer.dealer_id))
     f = filters or {}
     if f.get("region"):
-        n_stores = n_stores.filter(Dealer.state == f["region"])
+        n_stores = n_stores.filter(Dealer.emirate == f["region"])
     if f.get("city"):
-        n_stores = n_stores.filter(Dealer.city == f["city"])
+        n_stores = n_stores.filter(Dealer.area == f["city"])
     if f.get("brand"):
         n_stores = n_stores.filter(Dealer.brand == f["brand"])
     n_stores = int(n_stores.scalar() or 1)
@@ -214,12 +214,14 @@ def _play_allocation(snap: pd.DataFrame) -> list[Play]:
         impact = movable * GROSS_PER_NEW_UNIT * TURN_ON_TRANSFER
         plays.append(Play(
             category="Allocation",
-            title=f"Move ~{movable} {cat.lower()} units to {defc['dealer_name']}",
+            title=f"Move about {movable} {cat.lower()} cars to {defc['dealer_name']}",
             detail=(
-                f"{defc['dealer_name']} is down to {defc['dos']:.0f} days' supply of "
-                f"{cat.lower()}s{' (stockout risk)' if tight else ''}, while "
-                f"{sup['dealer_name']} is sitting on {sup['dos']:.0f} days. Rebalancing "
-                f"puts sellable metal where the demand is instead of aging on one lot."
+                f"{defc['dealer_name']} has only about {defc['dos']:.0f} days of "
+                f"{cat.lower()} stock left"
+                f"{' and could run out' if tight else ''}, while {sup['dealer_name']} "
+                f"has {sup['dos']:.0f} days' worth sitting unsold. Moving cars from the "
+                f"overstocked store to the short one puts them in front of buyers instead "
+                f"of ageing on the lot."
             ),
             impact_usd=impact,
             horizon="next 60 days",
@@ -258,12 +260,13 @@ def _play_targets(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]
         strong = r["attainment_pct"] < 85 and r["pace_pct"] < 82 and r["ttm_units"] > 500
         plays.append(Play(
             category="Target",
-            title=f"{r['dealer_name']} is running {r['pace_pct']:.0f}% of plan and slipping",
+            title=f"{r['dealer_name']} is behind its sales plan and not catching up",
             detail=(
-                f"Trailing 12 months it hit {r['attainment_pct']:.0f}% of its "
-                f"{r['target']:,.0f}-unit plan, and the last 90 days annualise to only "
-                f"{r['pace_units']:,.0f}. Closing the gap is ~+{gap / 12:,.0f} units/month — "
-                f"ad spend, a desk change, or shift allocation here."
+                f"Over the last 12 months it reached {r['attainment_pct']:.0f}% of its "
+                f"{r['target']:,.0f}-car plan, and its recent pace (last 90 days) points to "
+                f"about {r['pace_units']:,.0f} cars for the year. Getting back on plan means "
+                f"roughly {gap / 12:,.0f} more sales a month — for example through more "
+                f"advertising, a change of sales manager, or sending it more stock."
             ),
             impact_usd=gap * GROSS_PER_NEW_UNIT,
             horizon="this plan year",
@@ -277,11 +280,12 @@ def _play_targets(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]
         surplus = r["pace_units"] - r["target"]
         plays.append(Play(
             category="Target",
-            title=f"{r['dealer_name']} is outrunning its plan by ~{surplus:,.0f} units",
+            title=f"{r['dealer_name']} is beating its plan by about {surplus:,.0f} cars",
             detail=(
-                f"It is at {r['attainment_pct']:.0f}% trailing and the last 90 days "
-                f"annualise to {r['pace_units']:,.0f} vs a {r['target']:,.0f} plan. Give it "
-                f"more allocation, or its target is set too low for next year."
+                f"It has hit {r['attainment_pct']:.0f}% of plan over the last 12 months, and "
+                f"its recent pace points to {r['pace_units']:,.0f} cars against a "
+                f"{r['target']:,.0f} plan. Send it more stock now, or raise its target for "
+                f"next year — it is currently set too low."
             ),
             impact_usd=surplus * GROSS_PER_NEW_UNIT * 0.5,
             horizon="this plan year",
@@ -300,9 +304,9 @@ def _play_margin(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
         Sale.dealer_id, Sale.vehicle_category,
         func.sum(Sale.units_sold).label("units"),
         func.sum(
-            Sale.discount_pct / 100.0 * Sale.base_price_usd
-            + func.coalesce(Sale.trade_in_over_allowance_usd, 0)
-            + func.coalesce(Sale.trade_bonus_usd, 0)
+            Sale.discount_pct / 100.0 * Sale.base_price_aed
+            + func.coalesce(Sale.trade_in_over_allowance_aed, 0)
+            + func.coalesce(Sale.trade_bonus_aed, 0)
         ).label("concession"),
     )
     q = _apply_sale_filters(q, tf).filter(
@@ -333,12 +337,13 @@ def _play_margin(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
         annual = excess * units
         plays.append(Play(
             category="Margin",
-            title=f"{nm} is giving away ~${excess:,.0f}/unit over peers",
+            title=f"{nm} is discounting about AED {excess:,.0f} more per car than other stores",
             detail=(
-                f"Adjusted for its segment mix, {nm}'s true concession (discount + "
-                f"trade over-allowance + trade bonus) runs ~${excess:,.0f}/unit above "
-                f"the group — about ${annual:,.0f}/year. A desk-discipline and "
-                f"pricing-guardrail question, not a volume one."
+                f"Allowing for the mix of vehicles it sells, {nm} gives away about "
+                f"AED {excess:,.0f} more per car than the group average once discounts, "
+                f"trade-in over-payments and trade-in bonuses are added up — roughly "
+                f"AED {annual:,.0f} a year. This is about tighter deal approval and clear "
+                f"pricing limits, not about selling more cars."
             ),
             impact_usd=annual * RECOVERABLE_SHARE,
             horizon="ongoing",
@@ -357,8 +362,8 @@ def _play_aged_inventory(snap: pd.DataFrame) -> list[Play]:
         return []
     grp = aged.groupby("dealer_name").agg(
         units=("current_stock", "sum"),
-        value=("inventory_value_usd", "sum"),
-        daily_hold=("holding_cost_per_day_usd", "sum"),
+        value=("inventory_value_aed", "sum"),
+        daily_hold=("holding_cost_per_day_aed", "sum"),
     ).reset_index().sort_values("value", ascending=False)
 
     plays: list[Play] = []
@@ -370,12 +375,12 @@ def _play_aged_inventory(snap: pd.DataFrame) -> list[Play]:
         impact = r["value"] * 0.06 + r["daily_hold"] * 90
         plays.append(Play(
             category="Inventory",
-            title=f"${r['value']:,.0f} of capital aging at {r['dealer_name']}",
+            title=f"AED {r['value']:,.0f} tied up in slow-moving stock at {r['dealer_name']}",
             detail=(
-                f"{int(r['units'])} units have sat 90+ days at {r['dealer_name']} — "
-                f"~${r['daily_hold']:,.0f}/day in floorplan and depreciating toward a "
-                f"deeper markdown. Transfer to a store selling that model, or take the "
-                f"hit now while there's still gross to protect."
+                f"{int(r['units'])} vehicles have been in stock more than 90 days at "
+                f"{r['dealer_name']}, costing about AED {r['daily_hold']:,.0f} a day to hold "
+                f"and losing value the longer they sit. Move them to a store that is selling "
+                f"that model, or discount them now while there is still profit to protect."
             ),
             impact_usd=impact,
             horizon="next 90 days",
@@ -418,12 +423,13 @@ def _play_fni(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
         deals = (gap / 2 / 100) * r["units"]
         plays.append(Play(
             category="F&I",
-            title=f"{name.get(r['dealer_id'], r['dealer_id'])} under-finances by {gap:.0f} pts",
+            title=(f"{name.get(r['dealer_id'], r['dealer_id'])} arranges fewer finance and "
+                   f"lease deals than other stores — by {gap:.0f} points"),
             detail=(
-                f"{name.get(r['dealer_id'], r['dealer_id'])} finances or leases "
-                f"{r['pen']:.0f}% of deals vs the group's {median:.0f}%. Closing half "
-                f"that gap is ~{deals:,.0f} more F&I deals a year at roughly "
-                f"${FNI_GROSS_PER_DEAL:,} each."
+                f"{name.get(r['dealer_id'], r['dealer_id'])} arranges finance or leasing on "
+                f"{r['pen']:.0f}% of its sales, against {median:.0f}% across the group. "
+                f"Closing half of that gap would add about {deals:,.0f} finance or lease "
+                f"deals a year, each worth roughly AED {FNI_GROSS_PER_DEAL:,} in profit."
             ),
             impact_usd=deals * FNI_GROSS_PER_DEAL,
             horizon="next 12 months",
@@ -453,11 +459,12 @@ def _play_velocity(scorecard: pd.DataFrame) -> list[Play]:
     lost = worst["ttm_units"] * min(extra / 60.0, 0.15)
     return [Play(
         category="Velocity",
-        title=f"Deals at {worst['dealer_name']} take {extra:.0f} days longer to close",
+        title=f"Sales at {worst['dealer_name']} take {extra:.0f} days longer to close than elsewhere",
         detail=(
-            f"Average lead-to-close is {worst['avg_days_to_close']:.0f} days vs the "
-            f"group's {med:.0f}. That pipeline friction is worth roughly {lost:,.0f} "
-            f"units a year in walk-outs and stale leads — a BDC / desk-process fix."
+            f"On average a customer here takes {worst['avg_days_to_close']:.0f} days from "
+            f"first contact to buying, against {med:.0f} days across the group. That delay is "
+            f"worth roughly {lost:,.0f} lost sales a year as buyers go elsewhere — a "
+            f"follow-up and sales-process fix."
         ),
         impact_usd=lost * GROSS_PER_NEW_UNIT * RECOVERABLE_SHARE,
         horizon="ongoing",
@@ -501,12 +508,12 @@ def _play_category_momentum(session, filters: dict, snap: pd.DataFrame) -> list[
         if change < -8 and dos > 55:
             plays.append(Play(
                 category="Demand",
-                title=f"{cat} demand is projected down {abs(change):.0f}% — and you're long on it",
+                title=f"{cat} demand looks set to fall about {abs(change):.0f}% — and stock is high",
                 detail=(
-                    f"The group's {cat.lower()} volume is trending to {abs(change):.0f}% "
-                    f"below the last 12 months, while the lot is carrying ~{dos:.0f} days' "
-                    f"supply. Cut the next order, or get ahead of it with a targeted "
-                    f"incentive before the segment softens."
+                    f"The group's {cat.lower()} sales are trending about {abs(change):.0f}% "
+                    f"below the last 12 months, while the lot is holding around {dos:.0f} "
+                    f"days of supply. Reduce the next order, or move the stock now with a "
+                    f"targeted offer before demand drops."
                 ),
                 impact_usd=recent * (abs(change) / 100) * GROSS_PER_NEW_UNIT * 0.4,
                 horizon="next two quarters",

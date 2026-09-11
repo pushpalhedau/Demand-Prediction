@@ -25,12 +25,12 @@ def render_ai_insights(filters: dict):
         # rec_col1, rec_col2 = st.columns(2)
         # 
         # with rec_col1:
-        #     st.info("**Growth Hotspot Identified:** SUV and Luxury demand is expected to spike by **14.8%** in California and Texas over the next 60 days, driven by Detroit Auto Show momentum. **Action:** Reposition 25% of Sedan transit inventory into SUV/Luxury at Long Beach and Baltimore port warehouses.")
-        #     st.warning("**Dealer Network Anomaly:** Showrooms in *Chicago* are underperforming state averages by **18.2%** despite a strong local credit-score profile. **Action:** Review Illinois-area marketing allocation and test drive conversion statistics.")
+        #     st.info("**Growth Hotspot Identified:** SUV and Luxury demand is expected to spike by **14.8%** in Dubai and Abu Dhabi over the next 60 days, driven by Dubai Motor Show momentum. **Action:** Reposition 25% of Sedan transit inventory into SUV/Luxury at the Jebel Ali and Khalifa Port warehouses.")
+        #     st.warning("**Dealer Network Anomaly:** Showrooms in *Sharjah* are underperforming the group average by **18.2%** despite a strong local credit-score profile. **Action:** Review Sharjah-area marketing allocation and test-drive conversion statistics.")
         #
         # with rec_col2:
-        #     st.success("**EV Adoption Acceleration:** Electric and Hybrid categories show a compound **9.4% MoM growth rate** in California and New York, aided by expanding EV charging infrastructure. **Action:** Prioritize fast-charger installation at Platinum and Gold tier dealerships in Los Angeles and Austin.")
-        #     st.error("**Holding Cost Risk:** Slow-moving Pickup Truck inventory in Ohio and Michigan (Cleveland, Detroit) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
+        #     st.success("**EV Adoption Acceleration:** Electric and Hybrid categories show a compound **9.4% MoM growth rate** in Dubai and Abu Dhabi, aided by expanding EV charging infrastructure. **Action:** Prioritize fast-charger installation at Platinum and Gold tier rooftops in Dubai and Al Ain.")
+        #     st.error("**Holding Cost Risk:** Slow-moving Pickup inventory in the northern emirates (Ajman, RAK) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
         #     
         # st.markdown("<br>", unsafe_allow_html=True)
         
@@ -41,8 +41,8 @@ def render_ai_insights(filters: dict):
         sim_col1, sim_col2 = st.columns(2)
         
         with sim_col1:
-            fuel_shift = st.slider("Gasoline Regular Price Shift ($/gal)", min_value=-1.0, max_value=2.0, value=0.0, step=0.1)
-            ev_subsidy_active = st.checkbox("Federal EV Tax Credit Active", value=True)
+            fuel_shift = st.slider("Petrol (Special 95) Price Shift (AED/litre)", min_value=-1.0, max_value=2.0, value=0.0, step=0.1)
+            ev_subsidy_active = st.checkbox("EV incentives active (free charging / green plates)", value=True)
             semiconductor_risk = st.select_slider("Supply Chain Constraints", options=["None", "Moderate Shortage", "Severe Shortage"])
             
         with sim_col2:
@@ -74,7 +74,7 @@ def render_ai_insights(filters: dict):
         # These map how much a unit change in a variable affects the overall sales volume.
         
         # Calculate shifts
-        fuel_impact = -0.018 * fuel_shift        # gasoline price increase has immediate demand dampening
+        fuel_impact = -0.015 * fuel_shift        # petrol price rise has a modest demand dampening (regulated market)
         subsidy_impact = 0.085 if ev_subsidy_active else -0.04
         semi_impact = -0.15 if semiconductor_risk == "Severe Shortage" else (-0.05 if semiconductor_risk == "Moderate Shortage" else 0.0)
         inflation_impact = -0.030 * inflation_shift

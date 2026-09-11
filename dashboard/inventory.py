@@ -242,10 +242,10 @@ def _stock_health_frame(snapshot):
     df["_net_deficit"] = (df["reorder_point"] - df["_net_position"]).clip(lower=0)
     df["_healthy_stock"] = np.ceil(daily * DAYS_SUPPLY_HEALTHY_HIGH)
     df["_surplus_units"] = (df["current_stock"] - df["_healthy_stock"]).clip(lower=0).astype(int)
-    df["_cost_value"] = df["current_stock"] * df["price_usd"].fillna(0) * INVOICE_COST_FACTOR
+    df["_cost_value"] = df["current_stock"] * df["price_aed"].fillna(0) * INVOICE_COST_FACTOR
     df["_gp_at_risk"] = (
         daily * df["supplier_lead_time_days"].fillna(30)
-        * df["price_usd"].fillna(0) * NEW_VEHICLE_GROSS_MARGIN
+        * df["price_aed"].fillna(0) * NEW_VEHICLE_GROSS_MARGIN
         * df["stockout_risk_score"].fillna(0)
     )
     return df
@@ -267,14 +267,14 @@ def _render_stock_health(snapshot, filters, colors):
     net_days_supply = units / daily_demand if daily_demand > 0 else 0
 
     cost_value = float(snap["_cost_value"].sum())
-    total_holding = float(snap["estimated_holding_cost_usd"].sum())
+    total_holding = float(snap["estimated_holding_cost_aed"].sum())
     floorplan_mo = cost_value * FLOORPLAN_APR / 12.0
     fixed_mo = max(total_holding - floorplan_mo, 0.0)
 
     aged = snap[snap["days_in_stock"] > aged_days]
     aged_units = int(aged["current_stock"].sum())
     aged_capital = float(aged["_cost_value"].sum())
-    aged_burn = float(aged["estimated_holding_cost_usd"].sum())
+    aged_burn = float(aged["estimated_holding_cost_aed"].sum())
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -292,14 +292,14 @@ def _render_stock_health(snapshot, filters, colors):
         render_kpi_card("Net Days of Supply", f"{net_days_supply:,.0f} days",
                         delta=band_txt, is_positive=healthy)
     with c3:
-        render_kpi_card("Inventory at Cost", f"${cost_value/1e6:,.1f}M",
-                        delta=f"${(floorplan_mo + fixed_mo)/1e3:,.0f}K/mo carry "
-                              f"(${floorplan_mo/1e3:,.0f}K floorplan)",
+        render_kpi_card("Inventory at Cost", f"AED {cost_value/1e6:,.1f}M",
+                        delta=f"AED {(floorplan_mo + fixed_mo)/1e3:,.0f}K/mo carry "
+                              f"(AED {floorplan_mo/1e3:,.0f}K floorplan)",
                         is_positive=False)
     with c4:
         render_kpi_card(f"Aged Over {aged_days} Days", f"{aged_units:,} units",
-                        delta=f"${aged_capital/1e6:,.1f}M capital · "
-                              f"${aged_burn/1e3:,.0f}K/mo burn",
+                        delta=f"AED {aged_capital/1e6:,.1f}M capital · "
+                              f"AED {aged_burn/1e3:,.0f}K/mo burn",
                         is_positive=False)
 
     # ── Alert strip: the three positions that need action, sized in money ────
@@ -307,7 +307,7 @@ def _render_stock_health(snapshot, filters, colors):
     # overstock as a triage row under the KPI cards.
     # stockouts = snap[snap["stockout_flag"].fillna(False)]
     # so_exposure = float(
-    #     (stockouts["_daily_demand"] * 30 * stockouts["price_usd"].fillna(0)
+    #     (stockouts["_daily_demand"] * 30 * stockouts["price_aed"].fillna(0)
     #      * NEW_VEHICLE_GROSS_MARGIN).sum()
     # )
     # below = snap[snap["reorder_needed"].fillna(False)]
@@ -322,7 +322,7 @@ def _render_stock_health(snapshot, filters, colors):
     #     + _pill(colors["warning"], "Below Reorder", f"{len(below):,} lines",
     #             f"{below_units:,} units short of trigger")
     #     + _pill(colors["secondary"], "Overstocked", f"{len(over):,} lines",
-    #             f"${over_capital/1e6:,.1f}M capital over the "
+    #             f"AED {over_capital/1e6:,.1f}M capital over the "
     #             f"{DAYS_SUPPLY_HEALTHY_HIGH}-day line")
     #     + "</div>",
     #     unsafe_allow_html=True,
@@ -383,19 +383,19 @@ def _render_stock_health(snapshot, filters, colors):
                 ytext = [f"{u:,}" for u in aging["units"]]
                 ytitle = "Units"
             else:
-                y = aging["capital_usd"] / 1e6
-                ytext = [f"${v:,.1f}M" for v in y]
-                ytitle = "Capital (USD, millions)"
+                y = aging["capital_aed"] / 1e6
+                ytext = [f"AED {v:,.1f}M" for v in y]
+                ytitle = "Capital (AED, millions)"
             fig = go.Figure()
             fig.add_trace(go.Bar(
                 x=aging["bucket"], y=y,
                 marker_color=[colors["success"], colors["secondary"],
                               colors["warning"], colors["danger"]],
                 text=ytext, textposition="outside",
-                customdata=np.stack([aging["units"], aging["capital_usd"] / 1e6,
+                customdata=np.stack([aging["units"], aging["capital_aed"] / 1e6,
                                      aging["lines"]], axis=-1),
                 hovertemplate="<b>%{x}</b><br>%{customdata[0]:,} units"
-                              "<br>$%{customdata[1]:.1f}M capital"
+                              "<br>AED %{customdata[1]:.1f}M capital"
                               "<br>%{customdata[2]} lines<extra></extra>",
             ))
             fig.update_yaxes(title=ytitle)
@@ -413,9 +413,9 @@ def _render_stock_health(snapshot, filters, colors):
             )
             fig = px.scatter(
                 pos_df, x="demand_forecast_30d", y="current_stock",
-                color="Position", size="inventory_value_usd", size_max=26,
+                color="Position", size="inventory_value_aed", size_max=26,
                 hover_data={"brand": True, "model": True, "dealer_name": True,
-                            "days_of_supply": ":.0f", "inventory_value_usd": ":,.0f"},
+                            "days_of_supply": ":.0f", "inventory_value_aed": ":,.0f"},
                 color_discrete_map={"Healthy": colors["success"],
                                     "Below reorder point": colors["warning"],
                                     "Overstocked": colors["danger"]},
@@ -487,8 +487,8 @@ def _render_stock_health(snapshot, filters, colors):
 
     _section("Reorder Priorities")
 
-    # Sister-store surplus, matched on vehicle: a Dallas surplus is not cover for
-    # a Detroit shortage, so netting on vehicle alone is not enough.
+    # Sister-store surplus, matched on vehicle: a Dubai surplus is not cover for
+    # a Sharjah shortage, so netting on vehicle alone is not enough.
     surplus_by_vehicle = {}
     for vid, grp in snap[snap["_surplus_units"] > 0].groupby("vehicle_id"):
         best = grp.loc[grp["_surplus_units"].idxmax()]
@@ -521,13 +521,13 @@ def _render_stock_health(snapshot, filters, colors):
             "Dealer": reorder["dealer_name"],
             "Vehicle": (reorder["brand"] + " " + reorder["model"] + " "
                         + reorder["variant"].fillna("")).str.strip(),
-            "State": reorder["state"],
+            "Emirate": reorder["emirate"],
             "On Hand": reorder["current_stock"].astype(int),
             "Inbound": reorder["_inbound"].astype(int),
             "Reorder Pt": reorder["reorder_point"].astype(int),
             "Net Short": reorder["_net_deficit"].astype(int),
             "Lead Time": reorder["supplier_lead_time_days"].fillna(30).astype(int).astype(str) + " d",
-            "GP at Risk": reorder["_gp_at_risk"].round(-2).apply(lambda v: f"${v:,.0f}"),
+            "GP at Risk": reorder["_gp_at_risk"].round(-2).apply(lambda v: f"AED {v:,.0f}"),
             "Coverage": reorder["_coverage"],
             "Urgency": (reorder["_urgency"] * 100).round(0),
         })
@@ -570,12 +570,12 @@ def _render_stock_health(snapshot, filters, colors):
             "Dealer": aged_tbl["dealer_name"],
             "Vehicle": (aged_tbl["brand"] + " " + aged_tbl["model"] + " "
                         + aged_tbl["variant"].fillna("")).str.strip(),
-            "State": aged_tbl["state"],
+            "Emirate": aged_tbl["emirate"],
             "Units": aged_tbl["current_stock"].astype(int),
             "Days on Lot": aged_tbl["days_in_stock"].astype(int),
             "Days of Supply": aged_tbl["days_of_supply"].astype(int),
-            "Capital": (aged_tbl["_cost_value"] / 1e3).round(0).apply(lambda v: f"${v:,.0f}K"),
-            "Monthly Burn": aged_tbl["estimated_holding_cost_usd"].round(-1).apply(lambda v: f"${v:,.0f}"),
+            "Capital": (aged_tbl["_cost_value"] / 1e3).round(0).apply(lambda v: f"AED {v:,.0f}K"),
+            "Monthly Burn": aged_tbl["estimated_holding_cost_aed"].round(-1).apply(lambda v: f"AED {v:,.0f}"),
             "Suggested Action": aged_tbl["_action"],
         })
         st.dataframe(table.head(15), use_container_width=True, hide_index=True)
@@ -599,7 +599,7 @@ def _render_flow(snapshot, filters, colors):
 
     itm = returns[returns["in_the_money"]]
     uw = returns[~returns["in_the_money"]]
-    itm_equity = float(itm["equity_usd"].sum())
+    itm_equity = float(itm["equity_aed"].sum())
     next_90 = returns[
         returns["lease_maturity_date"] <= pd.Timestamp.today() + pd.Timedelta(days=90)
     ]
@@ -619,7 +619,7 @@ def _render_flow(snapshot, filters, colors):
                         delta=f"{share_90:.0%} of the {horizon}-month book",
                         is_positive=True)
     with c3:
-        render_kpi_card("Equity to Capture", f"${itm_equity/1e6:,.1f}M",
+        render_kpi_card("Equity to Capture", f"AED {itm_equity/1e6:,.1f}M",
                         delta=f"across {len(itm):,} units returning above buyout",
                         is_positive=True)
     with c4:
@@ -724,8 +724,8 @@ def _render_flow(snapshot, filters, colors):
             pd.DataFrame({
                 "Lane": lanes["lane"],
                 "Units": lanes["units"].astype(int),
-                "Est. Value": (lanes["est_value"] / 1e6).apply(lambda v: f"${v:,.1f}M"),
-                "Avg Equity": lanes["avg_equity"].round(0).apply(lambda v: f"${v:,.0f}"),
+                "Est. Value": (lanes["est_value"] / 1e6).apply(lambda v: f"AED {v:,.1f}M"),
+                "Avg Equity": lanes["avg_equity"].round(0).apply(lambda v: f"AED {v:,.0f}"),
             }),
             use_container_width=True, hide_index=True,
         )
@@ -759,8 +759,8 @@ def _render_flow(snapshot, filters, colors):
             "Segment": tbl["customer_segment"],
             "Current Vehicle": tbl["brand"] + " " + tbl["model"],
             "Matures": pd.to_datetime(tbl["lease_maturity_date"]).dt.strftime("%d %b %Y"),
-            "Monthly Pmt": tbl["lease_monthly_payment_usd"].apply(
-                lambda v: f"${v:,.0f}" if pd.notnull(v) else "-"),
+            "Monthly Pmt": tbl["lease_monthly_payment_aed"].apply(
+                lambda v: f"AED {v:,.0f}" if pd.notnull(v) else "-"),
             "Loyalty /100": tbl["loyalty_score"].apply(
                 lambda v: f"{v:,.0f}" if pd.notnull(v) else "-"),
             "Churn Risk": tbl["churn_risk_score"].apply(
@@ -789,8 +789,8 @@ def _order_plan(snapshot, returns):
     df["gross_need"] = (df["required"] - df["current_stock"] - df["inbound"]).clip(lower=0)
 
     # Returns landing inside each line's own pipeline window. Matched on
-    # (dealer, vehicle): a unit coming back to the Dallas store is not supply
-    # for the Detroit store, so netting on vehicle alone would wipe out orders
+    # (dealer, vehicle): a unit coming back to the Dubai store is not supply
+    # for the Sharjah store, so netting on vehicle alone would wipe out orders
     # the network genuinely needs to place.
     horizon_days = dict(zip(zip(df["dealer_id"], df["vehicle_id"]), df["pipeline_days"]))
     today = pd.Timestamp.today()
@@ -842,7 +842,7 @@ def _remarketing_lanes(returns, snapshot):
     df["model_days"] = df["model"].map(turn).fillna(70)
 
     fast = df["model_days"] <= 60
-    equity = df["equity_usd"].fillna(0)
+    equity = df["equity_aed"].fillna(0)
     df["lane"] = np.where(
         (equity > 1500) & fast, "Retail on lot",
         np.where(equity > 0, "Certified pre-owned", "Wholesale / auction"),
@@ -850,8 +850,8 @@ def _remarketing_lanes(returns, snapshot):
     order = ["Retail on lot", "Certified pre-owned", "Wholesale / auction"]
     summary = (df.groupby("lane")
                .agg(units=("sale_id", "size"),
-                    est_value=("est_market_value_usd", "sum"),
-                    avg_equity=("equity_usd", "mean"))
+                    est_value=("est_market_value_aed", "sum"),
+                    avg_equity=("equity_aed", "mean"))
                .reindex(order).dropna(how="all").reset_index())
     return summary
 
@@ -875,9 +875,9 @@ def _render_trade_in(filters, colors):
     sale_dates = pd.to_datetime(with_trade["sale_date"])
     ttm_cutoff = sale_dates.max() - pd.DateOffset(months=12)
     ttm = with_trade[sale_dates >= ttm_cutoff]
-    acquired_value = float(ttm["trade_in_appraised_value_usd"].fillna(0).sum())
+    acquired_value = float(ttm["trade_in_appraised_value_aed"].fillna(0).sum())
 
-    avg_concession = float(trades["true_concession_usd"].mean())
+    avg_concession = float(trades["true_concession_aed"].mean())
     reported_disc = float(trades["discount_pct"].mean())
     true_disc = float(trades["true_concession_pct"].mean())
 
@@ -886,10 +886,10 @@ def _render_trade_in(filters, colors):
         render_kpi_card("Trade Attach Rate", f"{attach:,.1f}%",
                         delta=f"{len(with_trade):,} deals with a trade", is_positive=True)
     with c2:
-        render_kpi_card("Used Supply Acquired", f"${acquired_value/1e6:,.1f}M",
+        render_kpi_card("Used Supply Acquired", f"AED {acquired_value/1e6:,.1f}M",
                         delta=f"{len(ttm):,} units, trailing 12 months", is_positive=True)
     with c3:
-        render_kpi_card("True Concession / Unit", f"${avg_concession:,.0f}",
+        render_kpi_card("True Concession / Unit", f"AED {avg_concession:,.0f}",
                         delta=f"{true_disc:,.1f}% of MSRP", is_positive=False)
     with c4:
         gap = true_disc - reported_disc
@@ -910,31 +910,31 @@ def _render_trade_in(filters, colors):
         _section("True Concession Waterfall",
                  "What the store actually gives away per unit, versus what the "
                  "reported discount rate shows.")
-        sticker = float(trades["sticker_discount_usd"].mean())
-        over = float(trades["over_allowance_usd"].mean())
-        bonus = float(trades["trade_bonus_usd"].mean())
+        sticker = float(trades["sticker_discount_aed"].mean())
+        over = float(trades["over_allowance_aed"].mean())
+        bonus = float(trades["trade_bonus_aed"].mean())
         fig = go.Figure(go.Waterfall(
             orientation="v",
             measure=["relative", "relative", "relative", "total"],
             x=["Sticker discount", "Over-allowance", "Trade bonus", "True concession"],
             y=[sticker, over, bonus, 0],
-            text=[f"${sticker:,.0f}", f"${over:,.0f}", f"${bonus:,.0f}",
-                  f"${sticker+over+bonus:,.0f}"],
+            text=[f"AED {sticker:,.0f}", f"AED {over:,.0f}", f"AED {bonus:,.0f}",
+                  f"AED {sticker+over+bonus:,.0f}"],
             textposition="outside",
             connector=dict(line=dict(color="rgba(255,255,255,0.20)")),
             increasing=dict(marker=dict(color=colors["warning"])),
             totals=dict(marker=dict(color=colors["danger"])),
         ))
-        fig.update_yaxes(title="USD per unit")
+        fig.update_yaxes(title="AED per unit")
         st.plotly_chart(_style(fig, height=320, showlegend=False), use_container_width=True)
 
     with right:
         _section("Incentive Elasticity",
                  "Whether trade bonus money actually buys deal velocity — and "
                  "where it does not.")
-        band = pd.cut(with_trade["trade_bonus_usd"].fillna(0),
-                      [-1, 0, 500, 1000, 2000],
-                      labels=["No bonus", "$1-500", "$501-1,000", "$1,001-2,000"])
+        band = pd.cut(with_trade["trade_bonus_aed"].fillna(0),
+                      [-1, 0, 2000, 4000, 8000],
+                      labels=["No bonus", "AED 1-2K", "AED 2-4K", "AED 4-8K"])
         elas = (with_trade.assign(band=band)
                 .groupby(["band", "vehicle_category"], observed=True)["lead_to_close_days"]
                 .mean().reset_index())
@@ -954,11 +954,11 @@ def _render_trade_in(filters, colors):
         _section("Over-Allowance by Segment",
                  "Slow-turning segments need more help closing, and that shows "
                  "up as money credited above appraised value.")
-        seg = (with_trade.groupby("vehicle_category")["over_allowance_usd"]
-               .mean().reset_index().sort_values("over_allowance_usd", ascending=True))
-        fig = px.bar(seg, x="over_allowance_usd", y="vehicle_category", orientation="h",
-                     color="over_allowance_usd", color_continuous_scale="Oranges",
-                     labels={"over_allowance_usd": "Avg over-allowance (USD)",
+        seg = (with_trade.groupby("vehicle_category")["over_allowance_aed"]
+               .mean().reset_index().sort_values("over_allowance_aed", ascending=True))
+        fig = px.bar(seg, x="over_allowance_aed", y="vehicle_category", orientation="h",
+                     color="over_allowance_aed", color_continuous_scale="Oranges",
+                     labels={"over_allowance_aed": "Avg over-allowance (AED)",
                              "vehicle_category": ""})
         fig.update_layout(coloraxis_showscale=False)
         st.plotly_chart(_style(fig, height=300, showlegend=False), use_container_width=True)
@@ -968,7 +968,7 @@ def _render_trade_in(filters, colors):
                  "What is flowing into used inventory through trade, by make.")
         intake = (with_trade.groupby("trade_in_brand")
                   .agg(units=("sale_id", "size"),
-                       value=("trade_in_appraised_value_usd", "sum"))
+                       value=("trade_in_appraised_value_aed", "sum"))
                   .reset_index().sort_values("units", ascending=False).head(10))
         fig = px.bar(intake, x="trade_in_brand", y="units",
                      color="units", color_continuous_scale="Teal",
@@ -1054,7 +1054,7 @@ def _render_placement(snapshot, filters, colors):
     with d1:
         dealer_name = st.selectbox("Selling dealer", dealer_pool["dealer_name"].tolist())
     with d2:
-        max_miles = st.slider("Search radius (miles)", 25, 400, 150, step=25)
+        max_km = st.slider("Search radius (km)", 25, 400, 150, step=25)
 
     dealer_row = dealer_pool[dealer_pool["dealer_name"] == dealer_name].iloc[0]
     dealer_id = dealer_row["dealer_id"]
@@ -1082,7 +1082,7 @@ def _render_placement(snapshot, filters, colors):
     recs = recommend_alternatives(
         target, catalog, snapshot, dealers=dealers, dealer_id=dealer_id,
         lease_returns=returns, market_share=market_share, top_n=6,
-        max_miles=max_miles,
+        max_km=max_km,
     )
 
     if recs.empty:
@@ -1091,7 +1091,7 @@ def _render_placement(snapshot, filters, colors):
         return
 
     st.markdown("<br>", unsafe_allow_html=True)
-    _note(f"Requested: <b>{brand} {model} {trim}</b> — ${target['price_usd']:,} · "
+    _note(f"Requested: <b>{brand} {model} {trim}</b> — AED {target['price_aed']:,} · "
           f"{target['category']} · {target['fuel_type']} · {target['drive_type']} · "
           f"{int(target['horsepower'])} hp · seats {int(target['seating_capacity'])}")
 
@@ -1104,9 +1104,9 @@ def _render_placement(snapshot, filters, colors):
 
     for _, r in recs.iterrows():
         label, tone = tier_label.get(r["availability"], ("Unavailable", colors["muted"]))
-        delta = r["price_delta_usd"]
-        delta_txt = (f"+${delta:,.0f}" if delta > 0 else
-                     (f"-${abs(delta):,.0f}" if delta < 0 else "same price"))
+        delta = r["price_delta_aed"]
+        delta_txt = (f"+AED {delta:,.0f}" if delta > 0 else
+                     (f"-AED {abs(delta):,.0f}" if delta < 0 else "same price"))
         aged_txt = ""
         if pd.notnull(r["days_in_stock"]) and r["days_in_stock"] > 75:
             aged_txt = (f"<span style='color:#f59e0b;'> · {int(r['days_in_stock'])} days "
@@ -1128,7 +1128,7 @@ def _render_placement(snapshot, filters, colors):
             <span style="background:{tone}22;color:{tone};border-radius:5px;padding:2px 8px;
                          font-size:11px;font-weight:600;">{label}</span>
             <span style="color:#9ca3af;"> {r['availability_detail']}</span>
-            · ${r['price_usd']:,.0f} ({delta_txt})
+            · AED {r['price_aed']:,.0f} ({delta_txt})
             · spec match {r['match_pct']:.0f}%{aged_txt}
           </div>
           <div style="color:#10b981;font-size:12px;margin-top:7px;">Matches: {r['match_reasons']}</div>
@@ -1142,7 +1142,7 @@ def _render_placement(snapshot, filters, colors):
     compare = pd.DataFrame({
         "Vehicle": ["REQUESTED: " + f"{target['brand']} {target['model']} {target['variant']}"]
                    + [f"{r['brand']} {r['model']} {r['variant']}" for _, r in recs.iterrows()],
-        "Price": [target["price_usd"]] + recs["price_usd"].tolist(),
+        "Price": [target["price_aed"]] + recs["price_aed"].tolist(),
         "Category": [target["category"]] + recs["category"].tolist(),
         "Fuel": [target["fuel_type"]] + recs["fuel_type"].tolist(),
         "Drive": [target["drive_type"]] + recs["drive_type"].tolist(),
@@ -1152,4 +1152,4 @@ def _render_placement(snapshot, filters, colors):
                                  for a in recs["availability"]],
     })
     st.dataframe(compare, use_container_width=True, hide_index=True,
-                 column_config={"Price": st.column_config.NumberColumn("Price", format="$%d")})
+                 column_config={"Price": st.column_config.NumberColumn("Price", format="AED %d")})

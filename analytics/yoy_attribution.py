@@ -6,8 +6,8 @@ move into parts a dealer principal can act on differently:
 
   - **selling days**   the calendar handed you (or took away) trading days
   - **network**        rooftops opened / closed since last year (M&A, not ops)
-  - **price & tariff**  (revenue only) higher transaction prices / Section 232
-                        pass-through — not more metal sold
+  - **price & mix**    (revenue only) higher transaction prices / a richer mix —
+                        not more metal sold
   - **comp volume**    same rooftops, same trading intensity, selling more or
                         fewer units — the part the group actually *ran*
 
@@ -87,20 +87,19 @@ def _scope(filters: dict) -> dict:
 
 
 def _period_frame(session, filters: dict, start, end) -> pd.DataFrame:
-    """Units / revenue / tariff for the window, grouped store × brand × segment.
+    """Units / revenue for the window, grouped store × brand × segment.
     One query; the caller aggregates to whatever dimension it needs."""
     q = session.query(
         Dealer.dealer_name.label("store"),
         Sale.brand.label("brand"),
         Sale.vehicle_category.label("category"),
         func.coalesce(func.sum(Sale.units_sold), 0).label("units"),
-        func.coalesce(func.sum(Sale.total_revenue_incl_tax), 0).label("revenue"),
-        func.coalesce(func.sum(Sale.tariff_cost_usd), 0).label("tariff"),
+        func.coalesce(func.sum(Sale.total_revenue_incl_vat), 0).label("revenue"),
     ).join(Dealer, Sale.dealer_id == Dealer.dealer_id)
     q = _apply_sale_filters(q, {**_scope(filters), "start_date": start, "end_date": end})
     q = q.group_by(Dealer.dealer_name, Sale.brand, Sale.vehicle_category)
     df = pd.read_sql(q.statement, session.bind)
-    for c in ("units", "revenue", "tariff"):
+    for c in ("units", "revenue"):
         df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0.0)
     return df
 
@@ -159,14 +158,11 @@ def _bridge_core(session, filters: dict) -> dict | None:
             "comp": comp, "ss_start": ss_v0, "ss_end": ss_v1,
         }
 
-    # Revenue: split the comp move into "sold more/better metal" vs "price + tariff"
+    # Revenue: split the comp move into "sold more/better metal" vs "price & mix"
     u = out["units"]; r = out["revenue"]
-    ss_t0 = agg(pri, "tariff", ss); ss_t1 = agg(cur, "tariff", ss)
-    tariff_rev = ss_t1 - ss_t0
     atp0 = (r["ss_start"] / u["ss_start"]) if u["ss_start"] else 0.0
     volume_rev = u["comp"] * atp0
-    price_rev = r["comp"] - tariff_rev - volume_rev
-    r["tariff"] = tariff_rev
+    price_rev = r["comp"] - volume_rev
     r["price_mix"] = price_rev
     r["volume"] = volume_rev
     return out
@@ -184,8 +180,7 @@ def build_bridge(session, filters: dict, measure: str) -> dict | None:
     steps = [("Prior 12 months", m["start"], "absolute")]
     cand = [("Selling days", m["selling_days"]), ("Rooftops opened / closed", m["network"])]
     if not is_units:
-        cand += [("Tariff pass-through", m["tariff"]), ("Price & mix", m["price_mix"]),
-                 ("Comp volume", m["volume"])]
+        cand += [("Price & mix", m["price_mix"]), ("Comp volume", m["volume"])]
     else:
         cand += [("Comp volume", m["comp"])]
 
@@ -261,7 +256,7 @@ def summary(session, filters: dict, measure: str) -> dict | None:
         "removed": {  # what "controllable" strips out, in the measure's units
             "selling_days": m["selling_days"],
             "network": m["network"],
-            **({"tariff": m["tariff"], "price_mix": m["price_mix"]} if not is_units else {}),
+            **({"price_mix": m["price_mix"]} if not is_units else {}),
         },
         "spread": spread,
     }

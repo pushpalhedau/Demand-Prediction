@@ -33,15 +33,15 @@ def train_xgboost_pipeline():
         # Join Sales, Customers, and Vehicles to compile a rich feature set
         query = session.query(
             Sale.test_drive_converted,
-            Sale.base_price_usd.label('base_price'),
+            Sale.base_price_aed.label('base_price'),
             Sale.discount_pct,
             Sale.marketing_channel,
             Sale.vehicle_category,
             Sale.fuel_type,
-            Sale.state,
+            Sale.emirate,
             Customer.age,
             Customer.occupation,
-            Customer.estimated_annual_income_usd,
+            Customer.estimated_monthly_income_aed,
             Customer.credit_score,
             Customer.loyalty_score
         ).join(Customer, Sale.customer_id == Customer.customer_id) \
@@ -56,13 +56,13 @@ def train_xgboost_pipeline():
 
         # Features to use
         #
-        # `gender` is deliberately NOT a feature. ECOA prohibits considering the
-        # sex of an applicant; a lead-prioritisation score that weights customer
-        # gender is a disparate-treatment risk and has no legitimate predictive
-        # role in "will this test-drive convert". Removed 2026-08-29 (the model
-        # was retrained without it). `age` is kept — it is a standard,
-        # behaviourally-grounded CRM signal and not used here for a credit
-        # decision — but is flagged in the changelog as a considered risk.
+        # `gender` and `nationality` are deliberately NOT features of this
+        # per-lead close score. Nationality is a legitimate market-segmentation
+        # dimension in the UAE and is used by the KMeans segmentation, but
+        # weighting an individual lead-prioritisation score on the customer's
+        # nationality or sex is a fairness risk with no defensible predictive
+        # role in "will this test-drive convert". `age` is kept as a standard
+        # behavioural CRM signal (not a credit decision here).
         #
         # financing_type is deliberately NOT a feature.
         #
@@ -74,8 +74,8 @@ def train_xgboost_pipeline():
         # leakage rather than a lever anyone can pull. Financing is still
         # captured on the deal record and drives the lease-return pipeline in
         # Inventory Intelligence, where it genuinely is predictive.
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_usd', 'credit_score', 'loyalty_score']
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'emirate', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'estimated_monthly_income_aed', 'credit_score', 'loyalty_score']
 
         # Handle missing values
         for cat in cat_features:
@@ -173,21 +173,21 @@ def predict_deal_probability(input_data: dict) -> dict:
             
         # Compile input into record
         # Must mirror the training feature set exactly (financing_type excluded).
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_usd', 'credit_score', 'loyalty_score']
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'emirate', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'estimated_monthly_income_aed', 'credit_score', 'loyalty_score']
 
         record = {}
         # Assign values with fallbacks
         record['marketing_channel'] = input_data.get('marketing_channel', 'Referral')
         record['vehicle_category'] = input_data.get('vehicle_category', 'SUV')
-        record['fuel_type'] = input_data.get('fuel_type', 'Gasoline')
-        record['state'] = input_data.get('state', 'California')
-        record['occupation'] = input_data.get('occupation', 'Salaried')
+        record['fuel_type'] = input_data.get('fuel_type', 'Petrol')
+        record['emirate'] = input_data.get('emirate', 'Dubai')
+        record['occupation'] = input_data.get('occupation', 'Salaried Professional')
 
         record['base_price'] = float(input_data.get('base_price', 38000))
         record['discount_pct'] = float(input_data.get('discount_pct', 5.0))
         record['age'] = float(input_data.get('age', 35))
-        record['estimated_annual_income_usd'] = float(input_data.get('estimated_annual_income_usd', 75000))
+        record['estimated_monthly_income_aed'] = float(input_data.get('estimated_monthly_income_aed', 18000))
         record['credit_score'] = float(input_data.get('credit_score', 720))
         record['loyalty_score'] = float(input_data.get('loyalty_score', 60))
         
@@ -248,7 +248,7 @@ def predict_deal_probability(input_data: dict) -> dict:
             
             # High discount and high income usually drive conversion positively, while low credit score drives it negatively
             discount = record['discount_pct']
-            income = record['estimated_annual_income_usd']
+            income = record['estimated_monthly_income_aed']
             credit = record['credit_score']
 
             shap_explanations = [
@@ -265,10 +265,10 @@ def predict_deal_probability(input_data: dict) -> dict:
                     "description": f"Credit score ({int(credit)}) affects closing eligibility."
                 },
                 {
-                    "feature": "estimated_annual_income_usd",
-                    "score": 0.12 if income > 90000 else (-0.08 if income < 40000 else 0.01),
-                    "direction": "positive" if income >= 40000 else "negative",
-                    "description": f"Annual income (${int(income):,}) matches target segment."
+                    "feature": "estimated_monthly_income_aed",
+                    "score": 0.12 if income > 25000 else (-0.08 if income < 8000 else 0.01),
+                    "direction": "positive" if income >= 8000 else "negative",
+                    "description": f"Monthly income (AED {int(income):,}) matches target segment."
                 }
             ]
             shap_explanations = sorted(shap_explanations, key=lambda x: abs(x['score']), reverse=True)

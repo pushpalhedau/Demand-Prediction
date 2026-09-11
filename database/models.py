@@ -10,19 +10,19 @@ class Customer(Base):
     name = Column(String(100), nullable=True)
     age = Column(Integer, nullable=True)
     gender = Column(String(20), nullable=True)
-    # DEPRECATED — never populated. Segmenting or scoring US auto customers by
-    # national origin / ethnicity is a fair-lending (ECOA / disparate-impact)
-    # liability. Removed from the generator, the segmentation feature set and
-    # every dashboard view on 2026-08-29. Column kept nullable for schema
-    # stability only. See the customer-intelligence dealer-positioning changelog.
+    # The UAE resident population is ~88% expatriate, so nationality and length
+    # of residency are first-class demand / credit signals here. Surfaced
+    # descriptively in Customer Intelligence and factored into KMeans
+    # segmentation (via years_in_uae); deliberately kept OUT of the per-lead
+    # XGBoost conversion score.
     nationality = Column(String(100), nullable=True)
-    state = Column(String(50), nullable=True)                         # was: emirate
-    city = Column(String(100), nullable=True)                         # was: area
+    emirate = Column(String(50), nullable=True)
+    area = Column(String(100), nullable=True)
     occupation = Column(String(100), nullable=True)
-    income_bracket = Column(String(50), nullable=True)                # was: monthly_income_bracket
-    estimated_annual_income_usd = Column(Float, nullable=True)        # was: estimated_monthly_income_aed
-    credit_score = Column(Integer, nullable=True)
-    years_at_address = Column(Integer, nullable=True)                 # was: years_in_uae
+    monthly_income_bracket = Column(String(50), nullable=True)
+    estimated_monthly_income_aed = Column(Float, nullable=True)
+    credit_score = Column(Integer, nullable=True)                     # AECB score, 300-900
+    years_in_uae = Column(Integer, nullable=True)
     number_of_past_purchases = Column(Integer, nullable=True)
     preferred_fuel_type = Column(String(50), nullable=True)
     preferred_vehicle_category = Column(String(50), nullable=True)
@@ -32,8 +32,8 @@ class Customer(Base):
     lead_source = Column(String(50), nullable=True)
     email_opt_in = Column(Boolean, nullable=True)
     test_drive_taken = Column(Boolean, nullable=True)
-    emi_preferred = Column(Boolean, nullable=True)                    # financing preferred (was: emi_preferred)
-    down_payment_capacity_usd = Column(Integer, nullable=True)        # was: down_payment_capacity_aed
+    emi_preferred = Column(Boolean, nullable=True)                    # instalment financing preferred
+    down_payment_capacity_aed = Column(Integer, nullable=True)
     registration_date = Column(Date, nullable=True)
     last_activity_date = Column(Date, nullable=True)
     churn_risk_score = Column(Float, nullable=True)
@@ -51,11 +51,11 @@ class Vehicle(Base):
     variant = Column(String(100), nullable=True)
     category = Column(String(50), nullable=True)
     fuel_type = Column(String(50), nullable=True)
-    price_usd = Column(Integer, nullable=True)                        # was: price_aed
+    price_aed = Column(Integer, nullable=True)
     engine_cc = Column(Integer, nullable=True)
     horsepower = Column(Integer, nullable=True)
-    mpg = Column(Float, nullable=True)                                # was: mileage_kmpl
-    range_miles = Column(Integer, nullable=True)                      # was: range_km
+    mileage_kmpl = Column(Float, nullable=True)                       # km per litre
+    range_km = Column(Integer, nullable=True)                         # EV range
     seating_capacity = Column(Integer, nullable=True)
     transmission = Column(String(50), nullable=True)
     drive_type = Column(String(50), nullable=True)
@@ -65,10 +65,10 @@ class Vehicle(Base):
     is_active = Column(Boolean, nullable=True)
     warranty_years = Column(Integer, nullable=True)
     service_contract_available = Column(Boolean, nullable=True)
-    ev_incentive_eligible = Column(Boolean, nullable=True)            # was: gcc_spec (repurposed: federal EV tax credit eligibility)
+    gcc_spec = Column(Boolean, nullable=True)                         # built for Gulf conditions
 
-    # Share of MSRP retained at 36-month lease maturity (ALG-style residual).
-    # Drives lease residual pricing and the return-equity model.
+    # Share of list price retained at 36-month maturity. Drives lease residual
+    # pricing and the return-equity model.
     residual_value_36mo = Column(Float, nullable=True)
 
     # Relationships
@@ -82,10 +82,10 @@ class Dealer(Base):
     dealer_id = Column(String(50), primary_key=True)
     dealer_name = Column(String(150), nullable=True)
     brand = Column(String(100), nullable=True)
-    state = Column(String(50), nullable=True)                         # was: emirate
-    city = Column(String(100), nullable=True)                         # was: area
+    emirate = Column(String(50), nullable=True)
+    area = Column(String(100), nullable=True)
     address = Column(String(250), nullable=True)
-    zip_code = Column(String(20), nullable=True)                      # was: po_box
+    po_box = Column(String(30), nullable=True)
     tier = Column(String(50), nullable=True)
     established_year = Column(Integer, nullable=True)
     monthly_capacity = Column(Integer, nullable=True)
@@ -113,7 +113,7 @@ class Sale(Base):
     month = Column(Integer, nullable=True)
     quarter = Column(String(10), nullable=True)
     day_of_week = Column(String(20), nullable=True)
-    holiday_period = Column(String(100), nullable=True)               # was: festival_period
+    festival_period = Column(String(100), nullable=True)              # Ramadan / Eid / National Day / DSF sales events
 
     customer_id = Column(String(50), ForeignKey("customers.customer_id"), nullable=True)
     dealer_id = Column(String(50), ForeignKey("dealers.dealer_id"), nullable=True)
@@ -124,27 +124,21 @@ class Sale(Base):
     model = Column(String(100), nullable=True)
     vehicle_category = Column(String(50), nullable=True)
     fuel_type = Column(String(50), nullable=True)
-    state = Column(String(50), nullable=True)                         # was: emirate
-    city = Column(String(100), nullable=True)                         # was: area
+    emirate = Column(String(50), nullable=True)
+    area = Column(String(100), nullable=True)
 
-    base_price_usd = Column(Integer, nullable=True)                   # was: base_price_aed
-    # Section 232 (25% on imported vehicles, Apr 2025+) dollars baked into this
-    # deal's sticker: import-brand base price × the modeled pass-through, plus a
-    # small materials/parts markup on domestic brands. 0 before Apr 2025 and 0
-    # for deals with no tariff exposure. Lets Comparative Analytics show the
-    # group's real per-franchise tariff cost instead of reconstructing it.
-    tariff_cost_usd = Column(Integer, nullable=True)
+    base_price_aed = Column(Integer, nullable=True)
     discount_pct = Column(Float, nullable=True)
-    selling_price_usd = Column(Integer, nullable=True)                # was: selling_price_aed
-    sales_tax_amount_usd = Column(Integer, nullable=True)             # was: vat_amount_aed
-    accessories_revenue_usd = Column(Integer, nullable=True)          # was: accessories_revenue_aed
-    insurance_revenue_usd = Column(Integer, nullable=True)            # was: insurance_revenue_aed
-    extended_warranty_usd = Column(Integer, nullable=True)            # was: extended_warranty_aed
-    total_revenue_excl_tax = Column(Integer, nullable=True)           # was: total_revenue_excl_vat
-    total_revenue_incl_tax = Column(Integer, nullable=True)           # was: total_revenue_incl_vat
+    selling_price_aed = Column(Integer, nullable=True)
+    vat_amount_aed = Column(Integer, nullable=True)                   # federal 5% VAT on the selling price
+    accessories_revenue_aed = Column(Integer, nullable=True)
+    insurance_revenue_aed = Column(Integer, nullable=True)
+    extended_warranty_aed = Column(Integer, nullable=True)
+    total_revenue_excl_vat = Column(Integer, nullable=True)
+    total_revenue_incl_vat = Column(Integer, nullable=True)
 
-    financing_type = Column(String(50), nullable=True)
-    loan_amount_usd = Column(Integer, nullable=True)                  # was: loan_amount_aed
+    financing_type = Column(String(50), nullable=True)               # Cash / Bank Loan / Islamic Finance / Dealer Financing / Lease
+    loan_amount_aed = Column(Integer, nullable=True)
     units_sold = Column(Integer, default=1)
     test_drive_converted = Column(Boolean, nullable=True)
     lead_to_close_days = Column(Integer, nullable=True)
@@ -153,29 +147,23 @@ class Sale(Base):
     season_multiplier = Column(Float, nullable=True)
 
     # ── Lease contract terms (populated only when financing_type == "Lease") ──
-    # A signed lease is a near-deterministic forward supply commitment: it tells
-    # us which unit returns to which dealer in which month. This is the basis of
-    # the lease-return pipeline in Inventory Intelligence.
     lease_term_months = Column(Integer, nullable=True)
     lease_maturity_date = Column(Date, nullable=True, index=True)
-    residual_value_pct = Column(Float, nullable=True)        # share of MSRP at maturity
-    residual_value_usd = Column(Integer, nullable=True)      # contractual buyout price
-    contract_mileage_allowance = Column(Integer, nullable=True)  # total miles over the term
-    lease_monthly_payment_usd = Column(Integer, nullable=True)
+    residual_value_pct = Column(Float, nullable=True)        # share of list price at maturity
+    residual_value_aed = Column(Integer, nullable=True)      # contractual buyout price
+    contract_mileage_allowance = Column(Integer, nullable=True)  # total km over the term
+    lease_monthly_payment_aed = Column(Integer, nullable=True)
 
     # ── Trade-in activity ────────────────────────────────────────────────────
-    # Trade-ins are the largest inbound source of used inventory and hide real
-    # margin: the gap between appraised value and the allowance actually
-    # credited is a discount that never shows up in discount_pct.
     trade_in_flag = Column(Boolean, nullable=True)
     trade_in_brand = Column(String(100), nullable=True)
     trade_in_model = Column(String(100), nullable=True)
     trade_in_year = Column(Integer, nullable=True)
-    trade_in_mileage = Column(Integer, nullable=True)
-    trade_in_appraised_value_usd = Column(Integer, nullable=True)
-    trade_in_allowance_usd = Column(Integer, nullable=True)
-    trade_in_over_allowance_usd = Column(Integer, nullable=True)  # allowance - appraised
-    trade_bonus_usd = Column(Integer, nullable=True)              # promotional incentive
+    trade_in_mileage = Column(Integer, nullable=True)                # km
+    trade_in_appraised_value_aed = Column(Integer, nullable=True)
+    trade_in_allowance_aed = Column(Integer, nullable=True)
+    trade_in_over_allowance_aed = Column(Integer, nullable=True)     # allowance - appraised
+    trade_bonus_aed = Column(Integer, nullable=True)                 # promotional incentive
 
     # Relationships
     customer = relationship("Customer", back_populates="sales")
@@ -196,8 +184,8 @@ class Inventory(Base):
     model = Column(String(100), nullable=True)
     vehicle_category = Column(String(50), nullable=True)
     fuel_type = Column(String(50), nullable=True)
-    state = Column(String(50), nullable=True)                         # was: emirate
-    city = Column(String(100), nullable=True)                         # was: area
+    emirate = Column(String(50), nullable=True)
+    area = Column(String(100), nullable=True)
 
     current_stock = Column(Integer, nullable=True)
     demand_forecast_30d = Column(Integer, nullable=True)
@@ -208,8 +196,8 @@ class Inventory(Base):
     reorder_needed = Column(Boolean, nullable=True)
     stockout_risk_score = Column(Float, nullable=True)
     overstock_risk_score = Column(Float, nullable=True)
-    holding_cost_per_day_usd = Column(Float, nullable=True)           # was: holding_cost_per_day_aed
-    estimated_holding_cost_usd = Column(Float, nullable=True)         # was: estimated_holding_cost_aed
+    holding_cost_per_day_aed = Column(Float, nullable=True)
+    estimated_holding_cost_aed = Column(Float, nullable=True)
     units_sold_last_30d = Column(Integer, nullable=True)
     units_ordered = Column(Integer, nullable=True)
     transit_stock = Column(Integer, nullable=True)
@@ -232,39 +220,39 @@ class ExternalFactor(Base):
     year = Column(Integer, nullable=True)
     month = Column(Integer, nullable=True)
     quarter = Column(String(10), nullable=True)
-    state = Column(String(50), nullable=True)                         # was: emirate
+    emirate = Column(String(50), nullable=True)
 
-    # Fuel Prices (USD)
-    gasoline_regular_usd_per_gallon = Column(Float, nullable=True)    # was: petrol_95_price_aed_per_litre
-    gasoline_premium_usd_per_gallon = Column(Float, nullable=True)    # was: petrol_98_price_aed_per_litre
-    diesel_usd_per_gallon = Column(Float, nullable=True)              # was: diesel_price_aed_per_litre
-    wti_crude_price_usd = Column(Float, nullable=True)                # was: crude_oil_price_usd (Brent -> WTI benchmark)
+    # Fuel prices (AED) — UAE regulated monthly pump prices
+    petrol_95_price_aed_per_litre = Column(Float, nullable=True)
+    petrol_98_price_aed_per_litre = Column(Float, nullable=True)
+    diesel_price_aed_per_litre = Column(Float, nullable=True)
+    crude_oil_price_usd = Column(Float, nullable=True)                # Brent benchmark
 
     # Macro-economic
     gdp_growth_pct = Column(Float, nullable=True)
     cpi_inflation_pct = Column(Float, nullable=True)
-    us_fed_rate_pct = Column(Float, nullable=True)
+    cbuae_rate_pct = Column(Float, nullable=True)                     # CBUAE base rate (pegged to the Fed)
     auto_loan_apr_pct = Column(Float, nullable=True)                  # policy rate + new-car spread; what customers finance at
-    incentive_pct_of_atp = Column(Float, nullable=True)              # mfr + dealer incentive spend as a share of transaction price
+    incentive_pct_of_atp = Column(Float, nullable=True)              # distributor + dealer incentive spend as a share of transaction price
     inventory_days_supply = Column(Float, nullable=True)             # new-vehicle days' supply on the group's lots
     consumer_confidence_index = Column(Float, nullable=True)
     tourism_index = Column(Float, nullable=True)
-    home_price_index = Column(Float, nullable=True)                   # was: dubai_re_price_index
+    dubai_re_price_index = Column(Float, nullable=True)               # Dubai residential price index
     luxury_demand_index = Column(Float, nullable=True)
 
     # Events / Seasonal flags
-    holiday_season_month = Column(Integer, nullable=True)             # was: ramadan_month (Nov/Dec holiday shopping season)
-    july_4th_month = Column(Integer, nullable=True)                   # was: national_day_month
-    detroit_auto_show_month = Column(Integer, nullable=True)          # was: dubai_motor_show (NAIAS)
-    la_auto_show_month = Column(Integer, nullable=True)               # was: abu_dhabi_motor_show
+    ramadan_month = Column(Integer, nullable=True)                    # month overlaps Ramadan
+    national_day_month = Column(Integer, nullable=True)              # UAE National Day (December)
+    dubai_motor_show_month = Column(Integer, nullable=True)          # Dubai International Motor Show (Nov, biennial)
+    dsf_month = Column(Integer, nullable=True)                       # Dubai Shopping Festival (January)
 
     # Industry
     new_model_launches = Column(Integer, nullable=True)
-    tariff_pct = Column(Float, nullable=True)                         # was: import_duty_pct (Section 232 auto tariffs)
-    avg_sales_tax_pct = Column(Float, nullable=True)                  # was: vat_rate_pct
+    import_duty_pct = Column(Float, nullable=True)                    # flat 5% GCC customs duty (constant reference)
+    vat_rate_pct = Column(Float, nullable=True)                       # federal VAT (constant 5%)
     unemployment_rate_pct = Column(Float, nullable=True)
     population_millions = Column(Float, nullable=True)
-    ev_charging_stations = Column(Integer, nullable=True)             # was: ev_charging_stations_uae
+    ev_charging_stations_uae = Column(Integer, nullable=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

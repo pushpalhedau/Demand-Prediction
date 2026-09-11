@@ -8,7 +8,7 @@ This document explains how the platform is built and how information moves throu
 
 ## 1. What the Platform Does
 
-The platform is a single web dashboard that helps North American (US, 8-state) automobile businesses forecast demand, understand customers, plan inventory, and track how world events affect the car market. It combines a transaction database, three predictive models, and a live news-analysis pipeline into one interface, organized into seven modules a user navigates between.
+The platform is a single web dashboard for a **UAE automobile dealer group** — one regional group of 24 rooftops trading across the seven emirates. It helps the group forecast demand, understand its own customer base, plan inventory, and track how news affects showroom demand. It combines a transaction database, three predictive models, and a live news-analysis pipeline into one interface, organized into modules a user navigates between. All figures are the group's own booked retail sales (no market extrapolation); currency is AED; every vehicle is imported (flat 5% GCC customs duty, flat 5% federal VAT).
 
 ---
 
@@ -41,7 +41,7 @@ The platform is organized in layers: a UI layer the user interacts with, an appl
 flowchart TB
     A["People using the platform<br/>(business users, in a web browser)"]
     B["Application Layer<br/>Navigation, filters, page routing"]
-    C["Seven Intelligence Modules<br/>Overview · Forecasting · Comparisons ·<br/>Regions · Customers · Inventory · Sentiment"]
+    C["Intelligence Modules<br/>Overview · Forecasting · Comparisons ·<br/>Regions · Customers · Inventory · Sentiment"]
     D["Analytics Engines<br/>Forecasting model · Segmentation model ·<br/>Lead-scoring model · Sentiment pipeline"]
     E["Data Storage<br/>Sales, customers, dealers, inventory,<br/>market conditions, news signals"]
     F["External Data Sources<br/>Global news feed · AI sentiment scoring service"]
@@ -62,7 +62,7 @@ flowchart TB
     class F layerExternal
 ```
 
-A single set of filters (date range, state, city, brand, vehicle type, fuel type) sits above all seven modules and narrows down what each one shows. Choosing a module on the left simply swaps which module renders in the main panel — the filters and underlying data connection stay the same underneath.
+A single set of filters (date range, emirate, area, brand, vehicle type, fuel type) sits above all modules and narrows down what each one shows. Choosing a module on the left simply swaps which module renders in the main panel — the filters and underlying data connection stay the same underneath.
 
 One important operating characteristic: nothing is cached. Each time a user changes a filter or a setting, the relevant module re-queries the database and — on the Forecasting page — retrains its prediction model from scratch. This keeps every view fully up to date at the cost of some responsiveness; it's a reasonable tradeoff at the current data volume and worth revisiting if usage grows.
 
@@ -104,7 +104,7 @@ erDiagram
         string stock "month-end snapshot: stock, forecast demand, reorder status"
     }
     EXTERNAL_FACTORS {
-        string conditions "fuel prices, GDP, inflation, tariffs"
+        string conditions "petrol price, CBUAE rate, Dubai property index, Ramadan/National Day flags"
     }
     NEWS_ARTICLES {
         string article "source, title, publish date"
@@ -117,7 +117,7 @@ erDiagram
     }
 ```
 
-Two independent copies of this database exist side by side, both fully synthetic: one holding a **richer, primary NA market dataset** (referred to internally as "real" mode, in the sense of being the main dataset the app is built around, not because it's sourced from actual real-world sales records) and one holding a lighter **synthetic test dataset**. The application currently always runs against the primary dataset, though the underlying design supports switching between the two.
+Two independent copies of this database exist side by side, both fully synthetic: one holding a **richer, primary UAE dealer-group dataset** (referred to internally as "real" mode, in the sense of being the main dataset the app is built around, not because it's sourced from actual real-world sales records) and one holding a lighter **synthetic test dataset**. The application currently always runs against the primary dataset, though the underlying design supports switching between the two.
 
 A practical detail worth documenting: on hosting environments where the application's own folder can't be written to, the platform automatically detects this and works from a temporary writable copy of the database instead, so the app doesn't crash — any changes made in that situation simply don't persist past that session, and the committed database is never at risk of corruption.
 
@@ -313,7 +313,7 @@ The daily risk score itself reflects both **how negative** the day's news was an
 |---|---|
 | Executive Overview | Aggregated sales/revenue queries |
 | Demand Forecasting | Forecasting model (Section 6) |
-| Comparative Analytics | Year-over-year queries, plus a dedicated Import Tariff Exposure analysis comparing domestic and import auto brands under the 2025 Section 232 tariffs |
+| Comparative Analytics | Year-over-year queries, plus a dedicated Import Tariff Exposure analysis comparing domestic and import auto brands under the 2025 GCC customs duty |
 | Store Performance | Per-rooftop scorecard — units, pace vs each store's own target, YoY, close rate — on a footprint map and a sortable table |
 | Customer Intelligence | Segmentation + lead-scoring models (Section 7) |
 | Inventory Intelligence | Four sub-modules built on inventory *flow*: **Stock Health** (current position, aging ladder, reorder priorities), **Inventory Flow & Lease Returns** (forward lease-return book, net order gap, remarketing lanes, re-capture pipeline), **Trade-In & Acquisition** (used-supply intake, true-concession waterfall, incentive elasticity), and the **Placement Assistant** (Section 7) |

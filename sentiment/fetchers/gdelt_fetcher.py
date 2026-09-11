@@ -1,5 +1,5 @@
 """
-GDELT Doc v2 API fetcher for demand-relevant US auto news (dealer-group demand advisory).
+GDELT Doc v2 API fetcher for demand-relevant UAE auto news (dealer-group demand advisory).
 
 GDELT (Global Database of Events, Language, and Tone) is a free, real-time
 global news database with no API key required.
@@ -10,7 +10,7 @@ Two data products used here:
 
 Flow:
   fetch_all_themes()
-      └─→ fetch_articles_for_query()  [for each NA_AUTO_QUERIES entry]
+      └─→ fetch_articles_for_query()  [for each UAE_AUTO_QUERIES entry]
   save_articles_to_db()               [deduplicates by URL, persists to SQLite]
   fetch_tone_timeline()               [used by the dashboard for trend charts]
   get_stored_articles()               [loads persisted articles + signals for rendering]
@@ -62,97 +62,94 @@ class GdeltQueryError(RuntimeError):
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# North American automobile market themed search queries
+# UAE automobile market themed search queries
 # Each entry maps to a thematic bucket used later for per-theme aggregation.
 # ─────────────────────────────────────────────────────────────────────────────
-NA_AUTO_QUERIES: List[Dict] = [
+UAE_AUTO_QUERIES: List[Dict] = [
     {
-        "name": "na_auto_demand",
-        "label": "US Auto Demand",
+        "name": "uae_auto_demand",
+        "label": "UAE Auto Demand",
         # GDELT syntax notes:
         #   - Space-separated words are an implicit AND, so a bare list of 5
         #     words matches almost nothing. Use explicit OR of short phrases.
         #   - Parentheses are ONLY legal around OR'd statements. Putting an
         #     implicit-AND group in parens makes GDELT reject the whole query
         #     with "Parentheses may only be used around OR'd statements."
-        #   - Scope to the US with sourcecountry: rather than a "US" keyword.
+        #   - Scope to the UAE with sourcecountry: rather than a "UAE" keyword.
         # "keywords" is used by _infer_theme() for bucketing combined-query
         # results; it must stay plain words (no quotes/OR) for that matching.
-        "query": '("car sales" OR "auto sales" OR "vehicle sales" OR dealership) sourcecountry:US',
-        "keywords": ["car", "sales", "auto", "vehicle", "dealership"],
+        "query": '("car sales" OR "auto sales" OR "vehicle sales" OR showroom OR dealership) sourcecountry:AE',
+        "keywords": ["car", "sales", "auto", "vehicle", "showroom", "dealership"],
         "theme": "auto_demand",
         "affected_category": "All",
     },
     {
-        "name": "ev_market_na",
-        "label": "EV Market US",
-        "query": '("electric vehicle" OR "EV tax credit" OR "electric car") sourcecountry:US',
-        "keywords": ["electric", "vehicle", "credit"],
+        "name": "ev_market_uae",
+        "label": "EV Market UAE",
+        "query": '("electric vehicle" OR "EV charging" OR "electric car" OR "green plate") sourcecountry:AE',
+        "keywords": ["electric", "vehicle", "charging", "ev"],
         "theme": "ev_market",
         "affected_category": "EV",
     },
     {
-        "name": "tariff_trade",
-        "label": "Auto Tariffs & Trade",
-        "query": '("auto tariff" OR "car tariffs" OR "vehicle imports") sourcecountry:US',
-        "keywords": ["tariff", "tariffs", "import", "imports", "trade"],
-        "theme": "tariff_trade",
+        "name": "customs_vat",
+        "label": "Customs, VAT & Imports",
+        "query": '("customs duty" OR "vehicle imports" OR "VAT" OR "car prices") sourcecountry:AE',
+        "keywords": ["customs", "duty", "import", "imports", "vat", "prices"],
+        "theme": "cost_policy",
         "affected_category": "All",
     },
     {
-        "name": "fuel_oil_prices",
+        "name": "fuel_prices",
         "label": "Fuel & Oil Prices",
-        "query": '("gas prices" OR "oil prices" OR "crude oil" OR "fuel prices") sourcecountry:US',
-        "keywords": ["gas", "oil", "crude", "fuel", "prices"],
+        "query": '("petrol prices" OR "fuel prices" OR "oil prices" OR "diesel prices") sourcecountry:AE',
+        "keywords": ["petrol", "fuel", "oil", "diesel", "prices"],
         "theme": "fuel_economic",
         "affected_category": "All",
     },
     {
-        "name": "us_macro_economy",
-        "label": "US Economy",
-        "query": '("interest rates" OR inflation OR "Federal Reserve") sourcecountry:US',
-        "keywords": ["interest", "rates", "inflation", "federal", "reserve", "economy"],
+        "name": "uae_macro_economy",
+        "label": "UAE Economy",
+        "query": '("interest rates" OR inflation OR "Central Bank" OR "non-oil economy") sourcecountry:AE',
+        "keywords": ["interest", "rates", "inflation", "central", "bank", "economy"],
         "theme": "macro_economic",
         "affected_category": "All",
     },
     {
-        "name": "luxury_suv_na",
-        "label": "Luxury, SUV & Pickup US",
-        "query": '("luxury SUV" OR "pickup truck" OR "luxury car" OR "full-size SUV") sourcecountry:US',
-        "keywords": ["luxury", "truck", "pickup", "suv"],
+        "name": "luxury_suv_uae",
+        "label": "Luxury & SUV UAE",
+        "query": '("luxury car" OR "luxury SUV" OR "premium car" OR "4x4" OR "sports car") sourcecountry:AE',
+        "keywords": ["luxury", "premium", "suv", "4x4", "sports"],
         "theme": "luxury_suv",
-        # Query spans luxury AND pickup — let the analyzer classify per headline
-        # rather than force every hit to "Luxury".
         "affected_category": "All",
     },
     {
         "name": "auto_financing",
-        "label": "Auto Loans & Financing",
-        "query": '("auto loan rates" OR "car loan" OR "auto financing" OR "subprime auto") sourcecountry:US',
-        "keywords": ["loan", "financing", "apr", "rate", "credit", "subprime"],
+        "label": "Car Finance & Islamic Finance",
+        "query": '("car loan" OR "auto finance" OR "car finance rates" OR "Islamic finance") sourcecountry:AE',
+        "keywords": ["loan", "finance", "financing", "rate", "islamic", "murabaha"],
         "theme": "auto_financing",
         "affected_category": "All",
     },
     {
-        "name": "incentives_rebates",
-        "label": "Incentives & Rebates",
-        "query": '("auto incentives" OR "car rebates" OR "0% financing" OR "lease deals") sourcecountry:US',
-        "keywords": ["incentive", "incentives", "rebate", "rebates", "lease", "deals"],
+        "name": "incentives_offers",
+        "label": "Offers & Promotions",
+        "query": '("car offers" OR "0% finance" OR "Ramadan offers" OR "auto promotion" OR "trade-in offer") sourcecountry:AE',
+        "keywords": ["offer", "offers", "promotion", "ramadan", "finance", "trade-in"],
         "theme": "incentives_rebates",
         "affected_category": "All",
     },
 ]
 
+# Backward-compatible alias (older imports referenced NA_AUTO_QUERIES).
+NA_AUTO_QUERIES = UAE_AUTO_QUERIES
+
 # Flat OR-list covering every theme above, used by fetch_all_themes(combine_queries=True).
 # Kept flat (no nested parens) because GDELT rejects nested/AND-grouped parentheses.
-# GDELT rejects an over-long Doc-API query ("Your query was too short or too
-# long"), so this stays close to the original ~10-phrase length. "auto loan"
-# and "car incentives" cover the two financing/incentive themes; per-article
-# bucketing back to a theme is by keyword overlap (see _infer_theme).
 COMBINED_QUERY = (
-    '("car sales" OR "auto sales" OR dealership OR "electric vehicle" '
-    'OR "auto tariff" OR "gas prices" OR "auto loan" OR "car incentives" '
-    'OR "luxury SUV" OR "pickup truck") sourcecountry:US'
+    '("car sales" OR "auto sales" OR showroom OR "electric vehicle" '
+    'OR "customs duty" OR "petrol prices" OR "car loan" OR "car offers" '
+    'OR "luxury car" OR "4x4") sourcecountry:AE'
 )
 
 
@@ -320,14 +317,16 @@ def _timespan_days(timespan: str) -> int:
 # like pure off-topic noise to be kept and scored.
 # ─────────────────────────────────────────────────────────────────────────────
 _RELEVANCE_TERMS = (
-    "car", "cars", "auto", "autos", "vehicle", "vehicles", "truck", "suv", "sedan",
+    "car", "cars", "auto", "autos", "vehicle", "vehicles", "suv", "sedan", "4x4",
     "pickup", "ev ", "electric vehicle", "dealer", "dealership", "showroom",
     "new-vehicle", "new vehicle", "used car", "car sales", "auto sales", "car buyer",
-    "car prices", "auto loan", "car loan", "auto financing", "car payment", "lease",
-    "tariff", "incentive", "rebate", "gas price", "gasoline price", "fuel price",
-    "interest rate", "fed ", "federal reserve", "inflation", "consumer confidence",
-    "toyota", "honda", "ford", "chevrolet", "chevy", "nissan", "hyundai", "kia",
-    "tesla", "jeep", "ram ", "gmc", "subaru", "lexus", "bmw", "mercedes", "volkswagen",
+    "car prices", "car loan", "auto finance", "car finance", "islamic finance",
+    "car payment", "lease", "customs duty", "vat", "offer", "promotion", "rebate",
+    "petrol price", "fuel price", "diesel price", "oil price",
+    "interest rate", "central bank", "eibor", "inflation", "consumer confidence",
+    "toyota", "nissan", "mitsubishi", "hyundai", "kia", "honda", "mg", "chevrolet",
+    "lexus", "ford", "mercedes", "bmw", "land rover", "range rover", "mazda", "suzuki",
+    "patrol", "land cruiser", "prado",
 )
 _NOISE_TERMS = (
     "short interest", "otcmkts", "nasdaq:", "nyse:", "price target", "hedge fund",
@@ -339,6 +338,10 @@ _NOISE_TERMS = (
     "horoscope", "recipe", "celebrity", "box office",
     "advantages of", "disadvantages of", "reasons to", "things to know",
     "best cars", "worst cars", "ranked", "vs.",
+    # non-auto retail that trips the bare "showroom" / "offer" terms
+    "jewell", "tailoring", "bespoke suit", "perfume", "furniture showroom",
+    "kitchen showroom", "bathroom showroom", "real estate", "property showroom",
+    "paw patrol",
 )
 
 
@@ -361,12 +364,12 @@ def _title_key(article: Dict) -> str:
 def _infer_theme(article: Dict) -> Dict:
     """
     Best-effort mapping of a combined-query article back to one of our
-    NA_AUTO_QUERIES themes, by keyword overlap against the article title.
+    UAE_AUTO_QUERIES themes, by keyword overlap against the article title.
     Falls back to the first (general) theme when nothing scores.
     """
     title = (article.get("title") or "").lower()
-    best, best_score = NA_AUTO_QUERIES[0], -1
-    for q in NA_AUTO_QUERIES:
+    best, best_score = UAE_AUTO_QUERIES[0], -1
+    for q in UAE_AUTO_QUERIES:
         # Match against the curated "keywords" list, NOT q["query"] — the query
         # string now contains GDELT syntax (quotes, OR, sourcecountry:) that
         # would otherwise be treated as matchable words.
@@ -385,7 +388,7 @@ def fetch_all_themes(
     slice_days: int = 0,
 ) -> List[Dict]:
     """
-    Fetch articles for all NA auto-market themes and return a deduplicated list.
+    Fetch articles for all UAE auto-market themes and return a deduplicated list.
 
     Each article dict is enriched with:
         _theme, _query_name, _query_label, _affected_category
@@ -482,7 +485,7 @@ def fetch_all_themes(
             raw = fetch_articles_for_query(
                 query=COMBINED_QUERY,
                 timespan=timespan,
-                max_records=min(max_records_per_query * len(NA_AUTO_QUERIES), 250),
+                max_records=min(max_records_per_query * len(UAE_AUTO_QUERIES), 250),
             )
 
         dropped_noise = 0
@@ -521,7 +524,7 @@ def fetch_all_themes(
         return all_articles
 
     # ── Fallback: original slower per-theme path (one GDELT call per theme) ──
-    for q in NA_AUTO_QUERIES:
+    for q in UAE_AUTO_QUERIES:
         raw = fetch_articles_for_query(
             query=q["query"],
             timespan=timespan,
@@ -669,11 +672,11 @@ def fetch_tone_timeline(
 
 def fetch_all_tone_timelines(timespan: str = "90d") -> Dict[str, List[Dict]]:
     """
-    Fetch tone timelines for all NA auto themes.
+    Fetch tone timelines for all UAE auto themes.
     Returns dict: {theme_name: [{"date": date, "tone": float}, ...]}
     """
     timelines: Dict[str, List[Dict]] = {}
-    for q in NA_AUTO_QUERIES:
+    for q in UAE_AUTO_QUERIES:
         tl = fetch_tone_timeline(q["query"], timespan=timespan)
         timelines[q["name"]] = tl
         logger.info("Tone timeline | theme='%s' | points=%d", q["label"], len(tl))
@@ -773,7 +776,7 @@ def get_article_stats() -> Dict:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 
-    print("Fetching NA auto market articles from GDELT (last 7 days)...")
+    print("Fetching UAE auto market articles from GDELT (last 7 days)...")
     articles = fetch_all_themes(timespan="7d", max_records_per_query=10, delay_between_queries=5.0)
     print(f"Fetched {len(articles)} unique articles")
 

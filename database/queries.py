@@ -25,7 +25,7 @@ def _period_aggregates(session: Session, filters: dict) -> dict:
     average discount, average lead-to-close."""
     q = session.query(
         func.coalesce(func.sum(Sale.units_sold), 0).label("units"),
-        func.coalesce(func.sum(Sale.total_revenue_incl_tax), 0).label("revenue"),
+        func.coalesce(func.sum(Sale.total_revenue_incl_vat), 0).label("revenue"),
         func.coalesce(func.avg(Sale.discount_pct), 0.0).label("avg_discount"),
         func.coalesce(func.avg(Sale.lead_to_close_days), 0.0).label("avg_lead_close"),
         func.coalesce(
@@ -121,9 +121,9 @@ def _apply_dealer_scope(query, filters: dict):
     if not filters:
         return query
     if filters.get("region"):
-        query = query.filter(Dealer.state == filters["region"])
+        query = query.filter(Dealer.emirate == filters["region"])
     if filters.get("city"):
-        query = query.filter(Dealer.city == filters["city"])
+        query = query.filter(Dealer.area == filters["city"])
     if filters.get("brand"):
         query = query.filter(Dealer.brand == filters["brand"])
     return query
@@ -176,7 +176,7 @@ def get_top_models(session: Session, filters: dict = None, limit: int = 8) -> pd
         Sale.brand,
         Sale.model,
         func.sum(Sale.units_sold).label("units"),
-        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
+        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.brand, Sale.model).order_by(desc("units")).limit(limit)
@@ -187,15 +187,15 @@ def get_sales_by_store(session: Session, filters: dict = None, limit: int = 20) 
     """Units and revenue booked per rooftop in the window, best first."""
     query = session.query(
         Dealer.dealer_name,
-        Dealer.city,
-        Dealer.state,
+        Dealer.area,
+        Dealer.emirate,
         Dealer.brand,
         func.sum(Sale.units_sold).label("units"),
-        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
+        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
     ).join(Sale, Sale.dealer_id == Dealer.dealer_id)
     query = _apply_sale_filters(query, filters)
     query = query.group_by(
-        Dealer.dealer_name, Dealer.city, Dealer.state, Dealer.brand
+        Dealer.dealer_name, Dealer.area, Dealer.emirate, Dealer.brand
     ).order_by(desc("units")).limit(limit)
     return pd.read_sql(query.statement, session.bind)
 
@@ -207,7 +207,7 @@ def get_monthly_revenue_trend(session: Session, filters: dict = None) -> pd.Data
     query = session.query(
         Sale.year,
         Sale.month,
-        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
+        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
         func.sum(Sale.units_sold).label("sales")
     )
     query = _apply_sale_filters(query, filters)
@@ -226,7 +226,7 @@ def get_sales_by_category(session: Session, filters: dict = None) -> pd.DataFram
     query = session.query(
         Sale.vehicle_category,
         func.sum(Sale.units_sold).label("sales"),
-        func.sum(Sale.total_revenue_incl_tax).label("revenue")
+        func.sum(Sale.total_revenue_incl_vat).label("revenue")
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.vehicle_category).order_by(desc("sales"))
@@ -242,7 +242,7 @@ def get_sales_by_fuel_type(session: Session, filters: dict = None) -> pd.DataFra
     query = session.query(
         Sale.fuel_type,
         func.sum(Sale.units_sold).label("sales"),
-        func.sum(Sale.total_revenue_incl_tax).label("revenue")
+        func.sum(Sale.total_revenue_incl_vat).label("revenue")
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.fuel_type).order_by(desc("sales"))
@@ -256,12 +256,12 @@ def get_sales_by_region(session: Session, filters: dict = None) -> pd.DataFrame:
     Get sales distribution by state.
     """
     query = session.query(
-        Sale.state,
+        Sale.emirate,
         func.sum(Sale.units_sold).label("sales"),
-        func.sum(Sale.total_revenue_incl_tax).label("revenue")
+        func.sum(Sale.total_revenue_incl_vat).label("revenue")
     )
     query = _apply_sale_filters(query, filters)
-    query = query.group_by(Sale.state).order_by(desc("sales"))
+    query = query.group_by(Sale.emirate).order_by(desc("sales"))
 
     df = pd.read_sql(query.statement, session.bind)
     return df
@@ -300,8 +300,8 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
         Dealer.dealer_id,
         Dealer.dealer_name,
         Dealer.brand,
-        Dealer.city,
-        Dealer.state,
+        Dealer.area,
+        Dealer.emirate,
         Dealer.latitude,
         Dealer.longitude,
         Dealer.annual_target_units,
@@ -310,7 +310,7 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
     query = session.query(
         *group_cols,
         func.sum(Sale.units_sold).label("units_sold"),
-        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
+        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
         func.count(Sale.sale_id).label("deal_rows"),
         func.sum(case((Sale.test_drive_converted == True, 1), else_=0)).label("td_converted"),
         func.avg(Sale.lead_to_close_days).label("avg_days_to_close"),
@@ -388,7 +388,7 @@ def get_yoy_comparison(session: Session, filters: dict = None) -> pd.DataFrame:
     query = session.query(
         Sale.year,
         Sale.month,
-        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
+        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
         func.sum(Sale.units_sold).label("sales")
     )
     query = _apply_sale_filters(query, filters)
@@ -406,18 +406,20 @@ def get_customer_segments_data(session: Session, filters: dict = None) -> pd.Dat
     sales table — everything the Customer Intelligence tab needs to describe a
     segment as an actionable group rather than a scatter cluster.
 
-    `nationality` is intentionally not selected — segmenting or profiling US auto
-    customers by national origin is a fair-lending liability (see the model
-    comment on Customer.nationality). `filters['region']` optionally scopes the
-    view to customers whose home state matches the sidebar region.
+    `nationality` is selected here — in the UAE (~88% expatriate resident base)
+    it is a first-class market-segmentation dimension, and it is a KMeans
+    feature. It is deliberately kept OUT of the per-lead XGBoost conversion
+    score. `filters['region']` optionally scopes the view to customers whose
+    home emirate matches the sidebar filter.
     """
     cust = pd.read_sql(
         session.query(
             Customer.customer_id,
             Customer.age,
-            Customer.state,
-            Customer.income_bracket,
-            Customer.estimated_annual_income_usd,
+            Customer.nationality,
+            Customer.emirate,
+            Customer.monthly_income_bracket,
+            Customer.estimated_monthly_income_aed,
             Customer.credit_score,
             Customer.number_of_past_purchases,
             Customer.loyalty_score,
@@ -428,14 +430,14 @@ def get_customer_segments_data(session: Session, filters: dict = None) -> pd.Dat
         session.bind,
     )
     if filters and filters.get("region"):
-        cust = cust[cust["state"] == filters["region"]]
+        cust = cust[cust["emirate"] == filters["region"]]
 
     deals = pd.read_sql(
         session.query(
             Sale.customer_id.label("customer_id"),
             func.count(Sale.sale_id).label("lifetime_deals"),
-            func.sum(Sale.total_revenue_incl_tax).label("lifetime_revenue"),
-            func.avg(Sale.total_revenue_incl_tax).label("avg_deal_value"),
+            func.sum(Sale.total_revenue_incl_vat).label("lifetime_revenue"),
+            func.avg(Sale.total_revenue_incl_vat).label("avg_deal_value"),
             func.max(Sale.sale_date).label("last_deal_date"),
             func.sum(case((Sale.financing_type == "Lease", 1), else_=0)).label("lease_deals"),
             func.sum(case((Sale.financing_type == "Cash", 1), else_=0)).label("cash_deals"),
@@ -462,19 +464,20 @@ def get_customer_book(session: Session, filters: dict = None) -> pd.DataFrame:
     deal dates, lifetime deals/revenue, the store and vehicle of the most recent
     deal, the customer's own average months-between-purchases (cadence), and the
     nearest upcoming lease maturity (date + vehicle + store). `filters['region']`
-    scopes to customers whose home state matches the sidebar region.
+    scopes to customers whose home emirate matches the sidebar filter.
 
-    No `nationality` (fair-lending). Customer counts are raw.
+    Customer counts are raw.
     """
     cust = pd.read_sql(
         session.query(
             Customer.customer_id,
             Customer.name,
             Customer.age,
-            Customer.state,
-            Customer.city,
-            Customer.income_bracket,
-            Customer.estimated_annual_income_usd,
+            Customer.nationality,
+            Customer.emirate,
+            Customer.area,
+            Customer.monthly_income_bracket,
+            Customer.estimated_monthly_income_aed,
             Customer.credit_score,
             Customer.customer_segment,
             Customer.churn_risk_score,
@@ -483,7 +486,7 @@ def get_customer_book(session: Session, filters: dict = None) -> pd.DataFrame:
         session.bind,
     )
     if filters and filters.get("region"):
-        cust = cust[cust["state"] == filters["region"]]
+        cust = cust[cust["emirate"] == filters["region"]]
 
     sales = pd.read_sql(
         session.query(
@@ -494,7 +497,7 @@ def get_customer_book(session: Session, filters: dict = None) -> pd.DataFrame:
             Sale.vehicle_category,
             Sale.financing_type,
             Sale.lease_maturity_date,
-            Sale.total_revenue_incl_tax.label("deal_revenue"),
+            Sale.total_revenue_incl_vat.label("deal_revenue"),
             Dealer.dealer_name.label("store"),
         ).join(Dealer, Sale.dealer_id == Dealer.dealer_id).statement,
         session.bind,
@@ -548,11 +551,11 @@ def get_repeat_contribution(session: Session, filters: dict = None) -> dict:
     How much of the group's recent volume is repeat business: the share of the
     last 12 months' deals that went to a customer who had bought from the group
     before, plus the all-time share. `filters['region']` scopes by the store's
-    state (same as the other Sale-based queries)."""
-    q = session.query(Sale.customer_id, Sale.sale_date, Sale.state)
+    emirate (same as the other Sale-based queries)."""
+    q = session.query(Sale.customer_id, Sale.sale_date, Sale.emirate)
     df = pd.read_sql(q.statement, session.bind)
     if filters and filters.get("region"):
-        df = df[df["state"] == filters["region"]]
+        df = df[df["emirate"] == filters["region"]]
     if df.empty:
         return {"ttm_total": 0, "ttm_repeat": 0, "ttm_pct": 0.0, "all_pct": 0.0}
 
@@ -586,8 +589,8 @@ def get_inventory_status(session: Session, filters: dict = None) -> pd.DataFrame
     query = session.query(
         Inventory.inventory_id,
         Inventory.dealer_id,
-        Inventory.city,
-        Inventory.state,
+        Inventory.area,
+        Inventory.emirate,
         Inventory.brand,
         Inventory.model,
         Inventory.vehicle_category,
@@ -600,8 +603,8 @@ def get_inventory_status(session: Session, filters: dict = None) -> pd.DataFrame
         Inventory.reorder_needed,
         Inventory.stockout_risk_score,
         Inventory.overstock_risk_score,
-        Inventory.holding_cost_per_day_usd,
-        Inventory.estimated_holding_cost_usd,
+        Inventory.holding_cost_per_day_aed,
+        Inventory.estimated_holding_cost_aed,
         Inventory.units_sold_last_30d,
         Inventory.units_ordered,
         Inventory.transit_stock,
@@ -610,9 +613,9 @@ def get_inventory_status(session: Session, filters: dict = None) -> pd.DataFrame
 
     if filters:
         if filters.get("region"):
-            query = query.filter(Inventory.state == filters["region"])
+            query = query.filter(Inventory.emirate == filters["region"])
         if filters.get("city"):
-            query = query.filter(Inventory.city == filters["city"])
+            query = query.filter(Inventory.area == filters["city"])
         if filters.get("vehicle_category"):
             query = query.filter(Inventory.vehicle_category == filters["vehicle_category"])
         if filters.get("fuel_type"):
@@ -630,13 +633,13 @@ def update_inventory_from_csv(session: Session, df: pd.DataFrame):
     pass
 
 
-def get_fed_rate_kpi(session: Session, filters: dict = None) -> dict:
+def get_cbuae_rate_kpi(session: Session, filters: dict = None) -> dict:
     """
-    Returns the US Federal Funds Rate for the selected period and YoY delta.
+    Returns the CBUAE base rate for the selected period and YoY delta.
     Uses the period-end rate (last month within the date range).
     """
     def _period_end_rate(start_date, end_date):
-        q = session.query(ExternalFactor.us_fed_rate_pct, ExternalFactor.year, ExternalFactor.month)
+        q = session.query(ExternalFactor.cbuae_rate_pct, ExternalFactor.year, ExternalFactor.month)
         if start_date and end_date:
             sy, sm = start_date.year, start_date.month
             ey, em = end_date.year, end_date.month
@@ -645,7 +648,7 @@ def get_fed_rate_kpi(session: Session, filters: dict = None) -> dict:
                 (ExternalFactor.year * 100 + ExternalFactor.month) <= (ey * 100 + em),
             )
         row = q.order_by(ExternalFactor.year.desc(), ExternalFactor.month.desc()).first()
-        return row.us_fed_rate_pct if row else None
+        return row.cbuae_rate_pct if row else None
 
     current_rate = _period_end_rate(
         filters.get("start_date") if filters else None,
@@ -701,8 +704,8 @@ def get_unique_filter_options(session: Session) -> dict:
     Gets lists of unique states, cities, categories, fuel types, brands and years
     to populate filters in the Streamlit sidebar.
     """
-    regions = [r[0] for r in session.query(Sale.state).distinct().all() if r[0]]
-    cities = [c[0] for c in session.query(Sale.city).distinct().all() if c[0]]
+    regions = [r[0] for r in session.query(Sale.emirate).distinct().all() if r[0]]
+    cities = [c[0] for c in session.query(Sale.area).distinct().all() if c[0]]
     categories = [cat[0] for cat in session.query(Sale.vehicle_category).distinct().all() if cat[0]]
     fuels = [f[0] for f in session.query(Sale.fuel_type).distinct().all() if f[0]]
     brands = [b[0] for b in session.query(Sale.brand).distinct().all() if b[0]]
@@ -726,9 +729,9 @@ def _apply_sale_filters(query, filters: dict = None):
         return query
 
     if filters.get("region"):
-        query = query.filter(Sale.state == filters["region"])
+        query = query.filter(Sale.emirate == filters["region"])
     if filters.get("city"):
-        query = query.filter(Sale.city == filters["city"])
+        query = query.filter(Sale.area == filters["city"])
 
     if filters.get("vehicle_category"):
         query = query.filter(Sale.vehicle_category == filters["vehicle_category"])
@@ -749,153 +752,13 @@ def _apply_sale_filters(query, filters: dict = None):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Tariff exposure — constants & queries
+# Comparative Analytics — "how are we tracking vs last year"
 #
-# Section 232 auto tariffs (25% on imported vehicles, effective Apr 2025) raise
-# the landed cost of the group's IMPORT-brand franchises far more than its
-# domestic ones. The dealer-facing question is "what does this cost our import
-# rooftops, and how does it move the price gap against the domestic models we
-# also sell" — get_tariff_exposure / get_tariff_cost_monthly / get_price_gap_*
-# answer that from the group's own booked deals (tariff_cost_usd per row).
-#
-# The older share-of-market views below (get_brand_origin_yearly_share,
-# get_ev_segment_by_brand_year, get_market_share_shift) computed "% of the US
-# market" from the group's own 24-rooftop book — an OEM / equity-analyst frame
-# that does not fit a dealer group. They are retained (unused) in case another
-# module has a legitimate use; do not wire them back into Comparative Analytics.
-# ─────────────────────────────────────────────────────────────────────────────
-
-IMPORT_BRANDS = ['Toyota', 'Honda', 'Nissan', 'Subaru', 'Lexus', 'Hyundai', 'Kia', 'BMW', 'Mercedes-Benz', 'Volkswagen']
-
-BRAND_ORIGIN = {
-    'Toyota': 'Japanese',      'Nissan': 'Japanese',
-    'Honda': 'Japanese',       'Lexus': 'Japanese',       'Subaru': 'Japanese',
-    'Hyundai': 'Korean',       'Kia': 'Korean',
-    'BMW': 'European',         'Mercedes-Benz': 'European', 'Volkswagen': 'European',
-    'Ford': 'Domestic',        'Chevrolet': 'Domestic',    'Jeep': 'Domestic',
-    'GMC': 'Domestic',         'Ram': 'Domestic',
-    'Tesla': 'Domestic',
-}
-
-
-def _filters_no_brand(filters: dict) -> dict:
-    """Return a copy of filters with brand cleared so import/domestic queries see all brands."""
-    if not filters:
-        return {}
-    return {**filters, 'brand': None}
-
-
-def get_brand_origin_yearly_share(session: Session, filters: dict = None) -> pd.DataFrame:
-    """Year-by-year units per brand with origin tag. Brand filter is always ignored.
-
-    DEPRECATED (2026-08-28): powered the "Brand Origin Market Share Growth" /
-    "% of Total US Market" charts, which read the group's own book as if it were
-    the national market. Left defined; not called by any tab."""
-    query = session.query(
-        Sale.year,
-        Sale.brand,
-        func.sum(Sale.units_sold).label("units")
-    )
-    query = _apply_sale_filters(query, _filters_no_brand(filters))
-    query = query.group_by(Sale.year, Sale.brand).order_by(Sale.year)
-    df = pd.read_sql(query.statement, session.bind)
-    if df.empty:
-        return df
-    df['origin'] = df['brand'].map(BRAND_ORIGIN).fillna('Other')
-    return df
-
-
-def get_price_competitiveness(session: Session, filters: dict = None) -> pd.DataFrame:
-    """Weighted avg selling price and total units per brand+category. Brand filter ignored."""
-    query = session.query(
-        Sale.brand,
-        Sale.vehicle_category,
-        func.avg(Sale.selling_price_usd).label("avg_price"),
-        func.sum(Sale.units_sold).label("units")
-    )
-    query = _apply_sale_filters(query, _filters_no_brand(filters))
-    query = query.group_by(Sale.brand, Sale.vehicle_category)
-    df = pd.read_sql(query.statement, session.bind)
-    if df.empty:
-        return df
-    df['origin'] = df['brand'].map(BRAND_ORIGIN).fillna('Other')
-    grand_total = df['units'].sum()
-    df['market_share_pct'] = (df['units'] / grand_total * 100).round(2) if grand_total else 0.0
-    return df
-
-
-def get_ev_segment_by_brand_year(session: Session, filters: dict = None) -> pd.DataFrame:
-    """Electric vehicle units by brand and year. Brand and fuel_type filters ignored.
-
-    DEPRECATED (2026-08-28): powered "EV Segment Ownership by Origin" / the
-    "Domestic EV Segment Share of total US EV market" KPI — again the group's
-    own EV deals mislabelled as a national segment. Left defined; not called."""
-    f = {**_filters_no_brand(filters), 'fuel_type': None}
-    query = session.query(
-        Sale.year,
-        Sale.brand,
-        func.sum(Sale.units_sold).label("ev_units")
-    ).filter(Sale.fuel_type == 'Electric')
-    query = _apply_sale_filters(query, f)
-    query = query.group_by(Sale.year, Sale.brand).order_by(Sale.year)
-    df = pd.read_sql(query.statement, session.bind)
-    if df.empty:
-        return df
-    df['origin'] = df['brand'].map(BRAND_ORIGIN).fillna('Other')
-    return df
-
-
-def get_market_share_shift(session: Session, filters: dict = None) -> pd.DataFrame:
-    """Brand market share in the base year vs latest year within the filter date range.
-
-    DEPRECATED (2026-08-28): powered the "Market Share Shift — who gained, who
-    lost" diverging bar, an equity-analyst winners/losers view computed on the
-    group's own book (and comparing a full base year against a partial latest
-    year). Left defined; not called by any tab."""
-    if filters and filters.get("start_date") and filters.get("end_date"):
-        base_year = filters["start_date"].year
-        curr_year = filters["end_date"].year
-    else:
-        base_year, curr_year = 2019, 2026
-
-    if base_year >= curr_year:
-        curr_year = base_year + 1
-
-    # Apply region/category filters only — no date or brand filtering here
-    extra: dict = {}
-    if filters:
-        if filters.get("region"):
-            extra["region"] = filters["region"]
-        if filters.get("vehicle_category"):
-            extra["vehicle_category"] = filters["vehicle_category"]
-
-    def _year_shares(yr: int) -> dict:
-        q = session.query(Sale.brand, func.sum(Sale.units_sold).label("units"))
-        q = _apply_sale_filters(q, extra)
-        q = q.filter(Sale.year == yr).group_by(Sale.brand)
-        rows = q.all()
-        total = sum(r.units for r in rows)
-        return {r.brand: round(r.units / total * 100, 2) for r in rows} if total else {}
-
-    base_shares = _year_shares(base_year)
-    curr_shares  = _year_shares(curr_year)
-    all_brands   = set(base_shares) | set(curr_shares)
-
-    records = [{
-        'brand':        b,
-        'base_share':   base_shares.get(b, 0.0),
-        'curr_share':   curr_shares.get(b,  0.0),
-        'share_change': round(curr_shares.get(b, 0.0) - base_shares.get(b, 0.0), 2),
-        'origin':       BRAND_ORIGIN.get(b, 'Other'),
-        'base_year':    base_year,
-        'curr_year':    curr_year,
-    } for b in all_brands]
-
-    return pd.DataFrame(records).sort_values('share_change', ascending=False)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Comparative Analytics — "how are we tracking vs last year" + tariff exposure
+# No import-vs-domestic tariff analysis in the UAE build: every vehicle is
+# imported and every brand pays the same flat 5% GCC customs duty, always
+# inside the retail price. The import-tariff-exposure queries and the
+# share-of-market views that used to live here were removed in the UAE
+# conversion.
 # ─────────────────────────────────────────────────────────────────────────────
 
 def get_period_trend(session: Session, filters: dict = None) -> pd.DataFrame:
@@ -913,7 +776,7 @@ def get_period_trend(session: Session, filters: dict = None) -> pd.DataFrame:
         q = session.query(
             Sale.year, Sale.month,
             func.sum(Sale.units_sold).label("units"),
-            func.sum(Sale.total_revenue_incl_tax).label("revenue"),
+            func.sum(Sale.total_revenue_incl_vat).label("revenue"),
         )
         q = _apply_sale_filters(q, f)
         q = q.group_by(Sale.year, Sale.month).order_by(Sale.year, Sale.month)
@@ -940,6 +803,29 @@ def get_period_trend(session: Session, filters: dict = None) -> pd.DataFrame:
     return pd.concat([cur[cols], prior[cols]], ignore_index=True)
 
 
+def get_scope_monthly_trend(session: Session, filters: dict = None) -> pd.DataFrame:
+    """
+    Monthly booked units and revenue over ALL history for the scope filters
+    (brand / region / segment / fuel) — the sidebar date window is ignored so
+    the calendar-year comparison and its forecast have the full history to work
+    from. Columns [date, units, revenue], one row per month, ascending.
+    """
+    f = {k: v for k, v in (filters or {}).items()
+         if k not in ("start_date", "end_date")}
+    q = session.query(
+        Sale.year, Sale.month,
+        func.sum(Sale.units_sold).label("units"),
+        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+    )
+    q = _apply_sale_filters(q, f)
+    q = q.group_by(Sale.year, Sale.month).order_by(Sale.year, Sale.month)
+    d = pd.read_sql(q.statement, session.bind)
+    if d.empty:
+        return d
+    d["date"] = pd.to_datetime(d[["year", "month"]].assign(day=1))
+    return d[["date", "units", "revenue"]]
+
+
 def get_yoy_drivers(session: Session, filters: dict = None,
                     dimension: str = "store") -> pd.DataFrame:
     """
@@ -959,7 +845,7 @@ def get_yoy_drivers(session: Session, filters: dict = None,
         q = session.query(
             dim_col.label("name"),
             func.sum(Sale.units_sold).label("units"),
-            func.sum(Sale.total_revenue_incl_tax).label("revenue"),
+            func.sum(Sale.total_revenue_incl_vat).label("revenue"),
         )
         if dimension == "store":
             q = q.join(Dealer, Sale.dealer_id == Dealer.dealer_id)
@@ -986,145 +872,18 @@ def get_yoy_drivers(session: Session, filters: dict = None,
     return m
 
 
-_TARIFF_START = date(2025, 4, 1)   # Section 232 25% duty on imported vehicles
-
-
-def get_tariff_exposure(session: Session, filters: dict = None) -> pd.DataFrame:
-    """
-    Per-brand units, tariff dollars baked into stickers, and selling-price total
-    for the group's deals since the tariff took effect. Location/category/fuel
-    filters are honored; the single-brand filter is ignored so the import-vs-
-    domestic contrast always holds. Columns: [brand, origin, is_import, units,
-    tariff_total, sales_total].
-    """
-    f = _filters_no_brand(filters)
-    q = session.query(
-        Sale.brand,
-        func.sum(Sale.units_sold).label("units"),
-        func.coalesce(func.sum(Sale.tariff_cost_usd), 0).label("tariff_total"),
-        func.coalesce(func.sum(Sale.selling_price_usd), 0).label("sales_total"),
-    )
-    q = _apply_sale_filters(q, f)
-    q = q.filter(Sale.sale_date >= _TARIFF_START)
-    q = q.group_by(Sale.brand)
-    df = pd.read_sql(q.statement, session.bind)
-    if df.empty:
-        return df
-    df["origin"] = df["brand"].map(BRAND_ORIGIN).fillna("Other")
-    df["is_import"] = df["origin"].isin(["Japanese", "Korean", "European"])
-    return df
-
-
-def get_tariff_cost_monthly(session: Session, filters: dict = None) -> pd.DataFrame:
-    """
-    Monthly tariff dollars absorbed into the group's stickers and the number of
-    tariffed (imported) units, from Jan 2025 so the April step change is visible.
-    Columns: [date, tariff_total, tariffed_units].
-
-    Not currently called by any tab (2026-08-31): the "tariff cost by month" bar
-    was cut from Comparative Analytics as it only restated the KPI total. Kept
-    defined for a future forward-cost view.
-    """
-    f = _filters_no_brand(filters)
-    q = session.query(
-        Sale.year, Sale.month,
-        func.coalesce(func.sum(Sale.tariff_cost_usd), 0).label("tariff_total"),
-        func.coalesce(
-            func.sum(case((Sale.tariff_cost_usd > 0, Sale.units_sold), else_=0)), 0
-        ).label("tariffed_units"),
-    )
-    q = _apply_sale_filters(q, f)
-    q = q.filter(Sale.sale_date >= date(2025, 1, 1))
-    q = q.group_by(Sale.year, Sale.month).order_by(Sale.year, Sale.month)
-    df = pd.read_sql(q.statement, session.bind)
-    if not df.empty:
-        df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
-    return df
-
-
-def get_import_mix_monthly(session: Session, filters: dict = None) -> pd.DataFrame:
-    """
-    Monthly import-franchise share of the group's booked units, spanning ~24
-    months to the sidebar end date so a shift in the mix after the April-2025
-    tariff is visible. Location/segment/fuel filters honored; single-brand
-    filter ignored. Columns: [date, import_units, total_units, import_share_pct].
-    """
-    f = _filters_no_brand(filters)
-    end = f.get("end_date") or session.query(func.max(Sale.sale_date)).scalar() or date.today()
-    start = (pd.Timestamp(end).replace(day=1) - pd.DateOffset(months=23)).date()
-    q = session.query(
-        Sale.year, Sale.month, Sale.brand,
-        func.sum(Sale.units_sold).label("units"),
-    )
-    q = _apply_sale_filters(q, {**f, "start_date": start})
-    q = q.group_by(Sale.year, Sale.month, Sale.brand)
-    df = pd.read_sql(q.statement, session.bind)
-    if df.empty:
-        return df
-    df["is_import"] = (
-        df["brand"].map(BRAND_ORIGIN).fillna("Other")
-        .isin(["Japanese", "Korean", "European"])
-    )
-    g = (
-        df.assign(imp=lambda x: x["units"].where(x["is_import"], 0))
-        .groupby(["year", "month"], as_index=False)
-        .agg(import_units=("imp", "sum"), total_units=("units", "sum"))
-    )
-    g["date"] = pd.to_datetime(g[["year", "month"]].assign(day=1))
-    g["import_share_pct"] = (g["import_units"] / g["total_units"].clip(lower=1) * 100).round(1)
-    return g.sort_values("date")
-
-
-def get_price_gap_by_segment(session: Session, filters: dict = None) -> pd.DataFrame:
-    """
-    Average selling price for the group's IMPORT-franchise deals vs its
-    DOMESTIC-franchise deals, by vehicle category, since the tariff took effect,
-    plus the average Section 232 tariff dollars inside each price.
-    Columns: [vehicle_category, group, avg_price, avg_tariff, units].
-    """
-    f = _filters_no_brand(filters)
-    q = session.query(
-        Sale.vehicle_category,
-        Sale.brand,
-        func.sum(Sale.units_sold).label("units"),
-        func.coalesce(func.sum(Sale.selling_price_usd), 0).label("price_sum"),
-        func.coalesce(func.sum(Sale.tariff_cost_usd), 0).label("tariff_sum"),
-    )
-    q = _apply_sale_filters(q, f)
-    q = q.filter(Sale.sale_date >= _TARIFF_START)
-    q = q.group_by(Sale.vehicle_category, Sale.brand)
-    df = pd.read_sql(q.statement, session.bind)
-    if df.empty:
-        return df
-    origin = df["brand"].map(BRAND_ORIGIN).fillna("Other")
-    df["group"] = origin.isin(["Japanese", "Korean", "European"]).map(
-        {True: "Import franchises", False: "Domestic franchises"}
-    )
-    g = (
-        df.groupby(["vehicle_category", "group"], as_index=False)
-        .agg(price_sum=("price_sum", "sum"), tariff_sum=("tariff_sum", "sum"),
-             units=("units", "sum"))
-    )
-    units = g["units"].clip(lower=1)
-    g["avg_price"] = (g["price_sum"] / units).round(0)
-    g["avg_tariff"] = (g["tariff_sum"] / units).round(0)
-    return g[["vehicle_category", "group", "avg_price", "avg_tariff", "units"]]
-
-
 def get_franchise_footprint(session: Session, filters: dict = None) -> pd.DataFrame:
     """
-    The group's own rooftops by franchise brand and origin (location filters
-    honored, single-brand filter ignored). Columns: [brand, rooftops, origin].
+    The group's own rooftops by franchise brand (location filters honored,
+    single-brand filter ignored). Columns: [brand, rooftops].
     """
+    f = {**(filters or {}), 'brand': None}
     q = session.query(
-        Dealer.brand, func.count(Dealer.dealer_id).label("rooftops")
+        Dealer.brand, func.count(Dealer.dealer_id).label('rooftops')
     )
-    q = _apply_dealer_scope(q, _filters_no_brand(filters))
-    q = q.group_by(Dealer.brand).order_by(desc("rooftops"))
-    df = pd.read_sql(q.statement, session.bind)
-    if not df.empty:
-        df["origin"] = df["brand"].map(BRAND_ORIGIN).fillna("Other")
-    return df
+    q = _apply_dealer_scope(q, f)
+    q = q.group_by(Dealer.brand).order_by(desc('rooftops'))
+    return pd.read_sql(q.statement, session.bind)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1151,9 +910,9 @@ def _apply_inventory_filters(query, filters: dict = None):
     if not filters:
         return query
     if filters.get("region"):
-        query = query.filter(Inventory.state == filters["region"])
+        query = query.filter(Inventory.emirate == filters["region"])
     if filters.get("city"):
-        query = query.filter(Inventory.city == filters["city"])
+        query = query.filter(Inventory.area == filters["city"])
     if filters.get("brand"):
         query = query.filter(Inventory.brand == filters["brand"])
     if filters.get("vehicle_category"):
@@ -1184,8 +943,8 @@ def get_inventory_snapshot(session: Session, filters: dict = None) -> pd.DataFra
             Inventory.model,
             Inventory.vehicle_category,
             Inventory.fuel_type,
-            Inventory.state,
-            Inventory.city,
+            Inventory.emirate,
+            Inventory.area,
             Inventory.current_stock,
             Inventory.demand_forecast_30d,
             Inventory.reorder_point,
@@ -1195,8 +954,8 @@ def get_inventory_snapshot(session: Session, filters: dict = None) -> pd.DataFra
             Inventory.reorder_needed,
             Inventory.stockout_risk_score,
             Inventory.overstock_risk_score,
-            Inventory.holding_cost_per_day_usd,
-            Inventory.estimated_holding_cost_usd,
+            Inventory.holding_cost_per_day_aed,
+            Inventory.estimated_holding_cost_aed,
             Inventory.units_sold_last_30d,
             Inventory.units_ordered,
             Inventory.transit_stock,
@@ -1208,7 +967,7 @@ def get_inventory_snapshot(session: Session, filters: dict = None) -> pd.DataFra
             Dealer.latitude,
             Dealer.longitude,
             Vehicle.variant,
-            Vehicle.price_usd,
+            Vehicle.price_aed,
             Vehicle.residual_value_36mo,
         )
         .outerjoin(Dealer, Inventory.dealer_id == Dealer.dealer_id)
@@ -1229,7 +988,7 @@ def get_inventory_snapshot(session: Session, filters: dict = None) -> pd.DataFra
     df["days_of_supply"] = (
         df["current_stock"] / daily_demand.replace(0, float("nan"))
     ).fillna(999).clip(upper=999).round(0)
-    df["inventory_value_usd"] = df["current_stock"] * df["price_usd"].fillna(0)
+    df["inventory_value_aed"] = df["current_stock"] * df["price_aed"].fillna(0)
     return df
 
 
@@ -1239,7 +998,7 @@ def get_inventory_trend(session: Session, filters: dict = None) -> pd.DataFrame:
         Inventory.record_date,
         func.sum(Inventory.current_stock).label("units_in_stock"),
         func.sum(Inventory.transit_stock).label("units_in_transit"),
-        func.sum(Inventory.estimated_holding_cost_usd).label("holding_cost_usd"),
+        func.sum(Inventory.estimated_holding_cost_aed).label("holding_cost_aed"),
         func.avg(Inventory.days_in_stock).label("avg_days_in_stock"),
         func.sum(Inventory.units_sold_last_30d).label("units_sold_30d"),
     )
@@ -1261,8 +1020,8 @@ def get_aging_buckets(snapshot_df: pd.DataFrame) -> pd.DataFrame:
             "bucket": label,
             "units": int(sel["current_stock"].sum()),
             "lines": int(len(sel)),
-            "capital_usd": float(sel["inventory_value_usd"].sum()),
-            "holding_cost_usd": float(sel["estimated_holding_cost_usd"].sum()),
+            "capital_aed": float(sel["inventory_value_aed"].sum()),
+            "holding_cost_aed": float(sel["estimated_holding_cost_aed"].sum()),
         })
     return pd.DataFrame(rows)
 
@@ -1297,19 +1056,19 @@ def get_lease_return_pipeline(session: Session, filters: dict = None,
             Sale.model,
             Sale.vehicle_category,
             Sale.fuel_type,
-            Sale.state,
-            Sale.city,
+            Sale.emirate,
+            Sale.area,
             Sale.lease_term_months,
             Sale.lease_maturity_date,
             Sale.residual_value_pct,
-            Sale.residual_value_usd,
+            Sale.residual_value_aed,
             Sale.contract_mileage_allowance,
-            Sale.lease_monthly_payment_usd,
-            Sale.selling_price_usd,
-            Sale.base_price_usd,
+            Sale.lease_monthly_payment_aed,
+            Sale.selling_price_aed,
+            Sale.base_price_aed,
             Dealer.dealer_name,
             Vehicle.variant,
-            Vehicle.price_usd.label("current_msrp"),
+            Vehicle.price_aed.label("current_msrp"),
             Vehicle.residual_value_36mo,
         )
         .outerjoin(Dealer, Sale.dealer_id == Dealer.dealer_id)
@@ -1322,9 +1081,9 @@ def get_lease_return_pipeline(session: Session, filters: dict = None,
 
     if filters:
         if filters.get("region"):
-            query = query.filter(Sale.state == filters["region"])
+            query = query.filter(Sale.emirate == filters["region"])
         if filters.get("city"):
-            query = query.filter(Sale.city == filters["city"])
+            query = query.filter(Sale.area == filters["city"])
         if filters.get("brand"):
             query = query.filter(Sale.brand == filters["brand"])
         if filters.get("vehicle_category"):
@@ -1343,10 +1102,10 @@ def get_lease_return_pipeline(session: Session, filters: dict = None,
     # applied to today's MSRP. Where that exceeds the contractual buyout the unit
     # comes back "in the money" and is worth retaining rather than grounding to
     # auction.
-    est_market = df["current_msrp"].fillna(df["base_price_usd"]) * df["residual_value_36mo"].fillna(0.55)
-    df["est_market_value_usd"] = est_market.round(0)
-    df["equity_usd"] = (df["est_market_value_usd"] - df["residual_value_usd"]).round(0)
-    df["in_the_money"] = df["equity_usd"] > 0
+    est_market = df["current_msrp"].fillna(df["base_price_aed"]) * df["residual_value_36mo"].fillna(0.55)
+    df["est_market_value_aed"] = est_market.round(0)
+    df["equity_aed"] = (df["est_market_value_aed"] - df["residual_value_aed"]).round(0)
+    df["in_the_money"] = df["equity_aed"] > 0
     return df
 
 
@@ -1369,15 +1128,15 @@ def get_lease_maturity_recapture(session: Session, filters: dict = None,
             Sale.brand,
             Sale.model,
             Sale.vehicle_category,
-            Sale.state,
+            Sale.emirate,
             Sale.lease_maturity_date,
-            Sale.lease_monthly_payment_usd,
-            Sale.residual_value_usd,
+            Sale.lease_monthly_payment_aed,
+            Sale.residual_value_aed,
             Customer.name.label("customer_name"),
             Customer.customer_segment,
             Customer.loyalty_score,
             Customer.churn_risk_score,
-            Customer.estimated_annual_income_usd,
+            Customer.estimated_monthly_income_aed,
             Customer.preferred_vehicle_category,
             Dealer.dealer_name,
         )
@@ -1390,7 +1149,7 @@ def get_lease_maturity_recapture(session: Session, filters: dict = None,
     )
     if filters:
         if filters.get("region"):
-            query = query.filter(Sale.state == filters["region"])
+            query = query.filter(Sale.emirate == filters["region"])
         if filters.get("brand"):
             query = query.filter(Sale.brand == filters["brand"])
         if filters.get("vehicle_category"):
@@ -1412,24 +1171,24 @@ def get_trade_in_activity(session: Session, filters: dict = None) -> pd.DataFram
         Sale.brand,
         Sale.model,
         Sale.vehicle_category,
-        Sale.state,
-        Sale.city,
+        Sale.emirate,
+        Sale.area,
         Sale.dealer_id,
         Sale.financing_type,
-        Sale.base_price_usd,
-        Sale.selling_price_usd,
+        Sale.base_price_aed,
+        Sale.selling_price_aed,
         Sale.discount_pct,
         Sale.lead_to_close_days,
-        Sale.holiday_period,
+        Sale.festival_period,
         Sale.trade_in_flag,
         Sale.trade_in_brand,
         Sale.trade_in_model,
         Sale.trade_in_year,
         Sale.trade_in_mileage,
-        Sale.trade_in_appraised_value_usd,
-        Sale.trade_in_allowance_usd,
-        Sale.trade_in_over_allowance_usd,
-        Sale.trade_bonus_usd,
+        Sale.trade_in_appraised_value_aed,
+        Sale.trade_in_allowance_aed,
+        Sale.trade_in_over_allowance_aed,
+        Sale.trade_bonus_aed,
     )
     query = _apply_sale_filters(query, filters)
     df = pd.read_sql(query.statement, session.bind)
@@ -1439,14 +1198,14 @@ def get_trade_in_activity(session: Session, filters: dict = None) -> pd.DataFram
     # True concession = sticker discount + over-allowance + trade bonus. Only
     # the first of these shows up in discount_pct, which is why reported
     # discount understates what the store actually gave away.
-    df["sticker_discount_usd"] = (df["base_price_usd"] - df["selling_price_usd"]).clip(lower=0)
-    df["over_allowance_usd"] = df["trade_in_over_allowance_usd"].fillna(0)
-    df["trade_bonus_usd"] = df["trade_bonus_usd"].fillna(0)
-    df["true_concession_usd"] = (
-        df["sticker_discount_usd"] + df["over_allowance_usd"] + df["trade_bonus_usd"]
+    df["sticker_discount_aed"] = (df["base_price_aed"] - df["selling_price_aed"]).clip(lower=0)
+    df["over_allowance_aed"] = df["trade_in_over_allowance_aed"].fillna(0)
+    df["trade_bonus_aed"] = df["trade_bonus_aed"].fillna(0)
+    df["true_concession_aed"] = (
+        df["sticker_discount_aed"] + df["over_allowance_aed"] + df["trade_bonus_aed"]
     )
     df["true_concession_pct"] = (
-        df["true_concession_usd"] / df["base_price_usd"].replace(0, pd.NA) * 100
+        df["true_concession_aed"] / df["base_price_aed"].replace(0, pd.NA) * 100
     ).astype(float)
     return df
 
@@ -1490,16 +1249,16 @@ def get_vehicle_catalog(session: Session) -> pd.DataFrame:
         Vehicle.variant,
         Vehicle.category,
         Vehicle.fuel_type,
-        Vehicle.price_usd,
+        Vehicle.price_aed,
         Vehicle.horsepower,
-        Vehicle.mpg,
-        Vehicle.range_miles,
+        Vehicle.mileage_kmpl,
+        Vehicle.range_km,
         Vehicle.seating_capacity,
         Vehicle.drive_type,
         Vehicle.safety_rating,
         Vehicle.warranty_years,
         Vehicle.residual_value_36mo,
-        Vehicle.ev_incentive_eligible,
+        Vehicle.gcc_spec,
     ).filter(Vehicle.is_active.is_(True))
     return pd.read_sql(query.statement, session.bind)
 
@@ -1516,7 +1275,7 @@ def get_substitution_history(session: Session, filters: dict = None) -> pd.DataF
         Sale.model,
         Sale.fuel_type,
         func.count(Sale.sale_id).label("units"),
-        func.avg(Sale.selling_price_usd).label("avg_price"),
+        func.avg(Sale.selling_price_aed).label("avg_price"),
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.vehicle_category, Sale.brand, Sale.model, Sale.fuel_type)
@@ -1529,8 +1288,8 @@ def get_dealer_directory(session: Session) -> pd.DataFrame:
         Dealer.dealer_id,
         Dealer.dealer_name,
         Dealer.brand,
-        Dealer.state,
-        Dealer.city,
+        Dealer.emirate,
+        Dealer.area,
         Dealer.tier,
         Dealer.latitude,
         Dealer.longitude,

@@ -51,15 +51,15 @@ CATEGORY_AFFINITY = {
 }
 
 # Powertrain switching. A shopper on an EV may accept a hybrid, but someone who
-# came in for a gas car is rarely ready to change how they refuel.
+# came in for a petrol car is rarely ready to change how they refuel.
 FUEL_AFFINITY = {
-    ("Gasoline", "Gasoline"): 1.00, ("Gasoline", "Hybrid"): 0.80,
-    ("Gasoline", "Diesel"): 0.55, ("Gasoline", "Electric"): 0.30,
-    ("Hybrid", "Hybrid"): 1.00, ("Hybrid", "Gasoline"): 0.80,
+    ("Petrol", "Petrol"): 1.00, ("Petrol", "Hybrid"): 0.80,
+    ("Petrol", "Diesel"): 0.55, ("Petrol", "Electric"): 0.30,
+    ("Hybrid", "Hybrid"): 1.00, ("Hybrid", "Petrol"): 0.80,
     ("Hybrid", "Electric"): 0.60, ("Hybrid", "Diesel"): 0.40,
     ("Electric", "Electric"): 1.00, ("Electric", "Hybrid"): 0.65,
-    ("Electric", "Gasoline"): 0.25, ("Electric", "Diesel"): 0.15,
-    ("Diesel", "Diesel"): 1.00, ("Diesel", "Gasoline"): 0.60,
+    ("Electric", "Petrol"): 0.25, ("Electric", "Diesel"): 0.15,
+    ("Diesel", "Diesel"): 1.00, ("Diesel", "Petrol"): 0.60,
     ("Diesel", "Hybrid"): 0.40, ("Diesel", "Electric"): 0.20,
 }
 
@@ -88,15 +88,15 @@ AVAILABILITY_TIERS = {
 # Final blend across the three constraints.
 SCORE_WEIGHTS = {"similarity": 0.55, "availability": 0.30, "business": 0.15}
 
-EARTH_RADIUS_MILES = 3958.8
+EARTH_RADIUS_KM = 6371.0
 
 
-def _haversine_miles(lat1, lon1, lat2, lon2):
-    """Great-circle distance in miles between two coordinate arrays."""
+def _haversine_km(lat1, lon1, lat2, lon2):
+    """Great-circle distance in km between two coordinate arrays."""
     lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
     dlat, dlon = lat2 - lat1, lon2 - lon1
     a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
-    return 2 * EARTH_RADIUS_MILES * np.arcsin(np.sqrt(np.clip(a, 0, 1)))
+    return 2 * EARTH_RADIUS_KM * np.arcsin(np.sqrt(np.clip(a, 0, 1)))
 
 
 def _affinity(table, a, b, default=0.2):
@@ -124,8 +124,8 @@ def compute_similarity(target: pd.Series, candidates: pd.DataFrame,
 
     # Price tolerance: a shopper stretches a few thousand dollars, not tens of
     # thousands, so similarity decays exponentially rather than linearly.
-    target_price = float(target["price_usd"]) or 1.0
-    price_gap = (out["price_usd"].astype(float) - target_price).abs()
+    target_price = float(target["price_aed"]) or 1.0
+    price_gap = (out["price_aed"].astype(float) - target_price).abs()
     out["sim_price"] = np.exp(-price_gap / (target_price * 0.22))
 
     # Seating is close to a hard requirement — a family that needs three rows
@@ -164,7 +164,7 @@ def compute_similarity(target: pd.Series, candidates: pd.DataFrame,
 def attach_availability(candidates: pd.DataFrame, snapshot: pd.DataFrame,
                         dealer_id: str = None, dealers: pd.DataFrame = None,
                         lease_returns: pd.DataFrame = None,
-                        max_miles: float = 150.0) -> pd.DataFrame:
+                        max_km: float = 150.0) -> pd.DataFrame:
     """
     Resolve where each candidate physically is, and how soon it can be had.
 
@@ -177,9 +177,9 @@ def attach_availability(candidates: pd.DataFrame, snapshot: pd.DataFrame,
     out["availability_detail"] = "Factory order required"
     out["units_available"] = 0
     out["source_dealer"] = None
-    out["distance_miles"] = np.nan
+    out["distance_km"] = np.nan
     out["days_in_stock"] = np.nan
-    out["holding_cost_usd"] = 0.0
+    out["holding_cost_aed"] = 0.0
 
     if snapshot is None or snapshot.empty:
         return out
@@ -204,9 +204,9 @@ def attach_availability(candidates: pd.DataFrame, snapshot: pd.DataFrame,
             out.at[idx, "availability_detail"] = "On your lot now"
             out.at[idx, "units_available"] = int(here["current_stock"].sum())
             out.at[idx, "source_dealer"] = best.get("dealer_name")
-            out.at[idx, "distance_miles"] = 0.0
+            out.at[idx, "distance_km"] = 0.0
             out.at[idx, "days_in_stock"] = best["days_in_stock"]
-            out.at[idx, "holding_cost_usd"] = float(best["estimated_holding_cost_usd"])
+            out.at[idx, "holding_cost_aed"] = float(best["estimated_holding_cost_aed"])
             continue
 
         # Tier 2 — at another store within driving range.
@@ -214,28 +214,28 @@ def attach_availability(candidates: pd.DataFrame, snapshot: pd.DataFrame,
         if not others.empty:
             cand = others.copy()
             if home is not None and pd.notnull(home.get("latitude")):
-                cand["distance_miles"] = _haversine_miles(
+                cand["distance_km"] = _haversine_km(
                     float(home["latitude"]), float(home["longitude"]),
                     cand["latitude"].astype(float), cand["longitude"].astype(float),
                 )
-                cand = cand[cand["distance_miles"] <= max_miles]
+                cand = cand[cand["distance_km"] <= max_km]
             else:
-                cand["distance_miles"] = np.nan
+                cand["distance_km"] = np.nan
 
             if not cand.empty:
                 best = cand.sort_values(
-                    ["distance_miles", "days_in_stock"], ascending=[True, False]
+                    ["distance_km", "days_in_stock"], ascending=[True, False]
                 ).iloc[0]
-                dist = best["distance_miles"]
+                dist = best["distance_km"]
                 detail = (f"{best['dealer_name']} ({dist:.0f} mi away)"
                           if pd.notnull(dist) else f"{best['dealer_name']}")
                 out.at[idx, "availability"] = "in_stock_nearby"
                 out.at[idx, "availability_detail"] = detail
                 out.at[idx, "units_available"] = int(cand["current_stock"].sum())
                 out.at[idx, "source_dealer"] = best.get("dealer_name")
-                out.at[idx, "distance_miles"] = dist
+                out.at[idx, "distance_km"] = dist
                 out.at[idx, "days_in_stock"] = best["days_in_stock"]
-                out.at[idx, "holding_cost_usd"] = float(best["estimated_holding_cost_usd"])
+                out.at[idx, "holding_cost_aed"] = float(best["estimated_holding_cost_aed"])
                 continue
 
         # Tier 3 — already on a truck or a boat.
@@ -295,7 +295,7 @@ def recommend_alternatives(target_vehicle: pd.Series, catalog: pd.DataFrame,
                            dealer_id: str = None, lease_returns: pd.DataFrame = None,
                            market_share: pd.Series = None, top_n: int = 6,
                            include_unavailable: bool = False,
-                           max_miles: float = 150.0) -> pd.DataFrame:
+                           max_km: float = 150.0) -> pd.DataFrame:
     """
     Rank substitute vehicles for an unavailable request.
 
@@ -309,7 +309,7 @@ def recommend_alternatives(target_vehicle: pd.Series, catalog: pd.DataFrame,
     scored = compute_similarity(target_vehicle, candidates, market_share=market_share)
     scored = attach_availability(
         scored, snapshot, dealer_id=dealer_id, dealers=dealers,
-        lease_returns=lease_returns, max_miles=max_miles,
+        lease_returns=lease_returns, max_km=max_km,
     )
     scored = compute_business_priority(scored)
 
@@ -328,11 +328,11 @@ def recommend_alternatives(target_vehicle: pd.Series, catalog: pd.DataFrame,
     # placement score drives the ranking (it accounts for how fast the customer
     # can actually get the car), while spec match answers "is this the same
     # car?". Showing only the second makes the ordering look wrong when a
-    # perfect spec match sits 100 miles away.
+    # perfect spec match sits 100 km away.
     scored["placement_score_pct"] = (scored["match_score"] * 100).round(0)
     scored["match_pct"] = (scored["similarity"] * 100).round(0)
-    scored["price_delta_usd"] = (
-        scored["price_usd"].astype(float) - float(target_vehicle["price_usd"])
+    scored["price_delta_aed"] = (
+        scored["price_aed"].astype(float) - float(target_vehicle["price_aed"])
     )
     scored["match_reasons"] = scored.apply(
         lambda r: _explain(target_vehicle, r), axis=1
@@ -349,7 +349,7 @@ def _explain(target: pd.Series, row: pd.Series) -> str:
         reasons.append(f"same {row['category']} body style")
     if row["fuel_type"] == target["fuel_type"]:
         reasons.append(f"same {row['fuel_type'].lower()} powertrain")
-    if abs(float(row["price_usd"]) - float(target["price_usd"])) <= float(target["price_usd"]) * 0.08:
+    if abs(float(row["price_aed"]) - float(target["price_aed"])) <= float(target["price_aed"]) * 0.08:
         reasons.append("within 8% on price")
     if row["seating_capacity"] == target["seating_capacity"]:
         reasons.append(f"seats {int(row['seating_capacity'])}")
@@ -363,9 +363,9 @@ def _explain(target: pd.Series, row: pd.Series) -> str:
 def _tradeoffs(target: pd.Series, row: pd.Series) -> str:
     """What the customer gives up — stated honestly, not buried."""
     gaps = []
-    delta = float(row["price_usd"]) - float(target["price_usd"])
-    if abs(delta) > float(target["price_usd"]) * 0.08:
-        gaps.append(f"{'+' if delta > 0 else '-'}${abs(delta):,.0f} on price")
+    delta = float(row["price_aed"]) - float(target["price_aed"])
+    if abs(delta) > float(target["price_aed"]) * 0.08:
+        gaps.append(f"{'+' if delta > 0 else '-'}AED {abs(delta):,.0f} on price")
     if row["category"] != target["category"]:
         gaps.append(f"{row['category']} instead of {target['category']}")
     if row["fuel_type"] != target["fuel_type"]:

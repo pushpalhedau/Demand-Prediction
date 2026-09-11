@@ -50,24 +50,24 @@ def _pct(v, nd=1):
 
 
 def _money(v):
-    """Compact USD for big totals: $2.96B / $53.2M / $652K."""
+    """Compact AED for big totals: AED 2.96B / AED 53.2M / AED 652K."""
     try:
         v = float(v)
     except (TypeError, ValueError):
         return "n/a"
     if abs(v) >= 1e9:
-        return f"${v / 1e9:.2f}B"
+        return f"AED {v / 1e9:.2f}B"
     if abs(v) >= 1e6:
-        return f"${v / 1e6:.1f}M"
+        return f"AED {v / 1e6:.1f}M"
     if abs(v) >= 1e3:
-        return f"${v / 1e3:.0f}K"
-    return f"${v:,.0f}"
+        return f"AED {v / 1e3:.0f}K"
+    return f"AED {v:,.0f}"
 
 
 def _usd(v):
-    """Exact USD for per-unit / small figures: $5,296."""
+    """Exact AED for per-unit / small figures: AED 5,296."""
     try:
-        return f"${float(v):,.0f}"
+        return f"AED {float(v):,.0f}"
     except (TypeError, ValueError):
         return "n/a"
 
@@ -220,25 +220,8 @@ def _comparative(s, filters, ctx):
     except Exception as e:
         ctx["errors"].append(f"comparative.attribution: {e}")
 
-    try:
-        t = Q.get_tariff_exposure(s, filters)
-        if not t.empty:
-            imp = t[t["is_import"]]
-            dom = t[~t["is_import"]]
-            imp_units = float(imp["units"].sum())
-            dom_units = float(dom["units"].sum())
-            imp_tariff = float(imp["tariff_total"].sum())
-            dom_tariff = float(dom["tariff_total"].sum())
-            tot_units = imp_units + dom_units
-            c["tariff"] = {
-                "imported_units": round(imp_units),
-                "import_share_pct": round(100 * imp_units / tot_units, 1) if tot_units else None,
-                "tariff_carried_total": round(imp_tariff + dom_tariff),
-                "per_import_unit": round(imp_tariff / imp_units) if imp_units else None,
-                "per_domestic_unit": round(dom_tariff / dom_units) if dom_units else None,
-            }
-    except Exception as e:
-        ctx["errors"].append(f"comparative.tariff: {e}")
+    # No import-vs-domestic tariff exposure in the UAE build (every vehicle is
+    # imported and pays the same flat 5% GCC customs duty, always in the price).
 
     ctx["comparative"] = c
 
@@ -343,7 +326,7 @@ def _inventory(s, filters, ctx):
                     old = ab[ab["bucket"].str.contains("90")]
                     if not old.empty:
                         inv["aging_90plus_units"] = int(old["units"].sum())
-                        inv["aging_90plus_capital"] = round(float(old["capital_usd"].sum()))
+                        inv["aging_90plus_capital"] = round(float(old["capital_aed"].sum()))
             except Exception:
                 pass
         try:
@@ -352,7 +335,7 @@ def _inventory(s, filters, ctx):
                 inv["lease_returns_90d"] = int(len(lrp))
                 inv["lease_returns_in_money"] = int(lrp["in_the_money"].sum())
                 inv["lease_returns_equity"] = round(
-                    float(lrp.loc[lrp["in_the_money"], "equity_usd"].sum()))
+                    float(lrp.loc[lrp["in_the_money"], "equity_aed"].sum()))
         except Exception:
             pass
         try:
@@ -401,9 +384,9 @@ def _sentiment(ctx, sent, articles):
 # Report generation
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SYSTEM = """You advise the leadership of a US automobile dealer group — a single regional group of 24 rooftops across California, Texas, Florida, New York, Illinois, Georgia, Ohio and Michigan. ~56% of units are import franchises; segment mix is roughly SUV 49%, Pickup 23%, Sedan 16%, Luxury 9%.
+_SYSTEM = """You advise the leadership of a UAE automobile dealer group — a single regional group of 24 rooftops across the seven emirates (concentrated in Dubai, Abu Dhabi and Sharjah). Every vehicle is imported (no domestic industry, flat 5% GCC customs duty, flat 5% VAT); segment mix is roughly SUV 50%, Sedan 28%, Luxury 7%, Pickup 6%.
 
-You are given a data snapshot covering every part of the business — Executive Overview, Demand Forecasting, Comparative Analytics (vs last year + tariff exposure), Store Performance, Customer Intelligence and Inventory Intelligence — plus the current news read.
+You are given a data snapshot covering every part of the business — Executive Overview, Demand Forecasting, Comparative Analytics (vs last year), Store Performance, Customer Intelligence and Inventory Intelligence — plus the current news read.
 
 Write a detailed operating briefing for the group's GMs, F&I desk and used-car desk. For EACH section below, give: (a) where the group stands (the numbers, in plain terms), (b) what's notable — triggers, risks and opportunities, (c) concrete recommendations. Then close with a single ranked "This week — priority actions" list (P1…P6), each naming who acts and on what. Be specific, use the numbers you're given, and do not invent figures that aren't in the snapshot.
 
@@ -577,23 +560,12 @@ def _template_briefing(ctx: dict) -> str:
     if cp.get("execution_worst"):
         L.append(f"     - Weakest execution vs the group's own rate: {cp['execution_worst']}; "
                  f"strongest: {cp.get('execution_best', 'n/a')}")
-    tf = cp.get("tariff") or {}
-    if tf:
-        L.append(f"     - Tariff exposure: {_num(tf.get('imported_units'))} imported units since "
-                 f"Apr 2025 ({_num(tf.get('import_share_pct'), 0)}% of sales), carrying "
-                 f"{_money(tf.get('tariff_carried_total'))} of Section 232 cost "
-                 f"(~{_usd(tf.get('per_import_unit'))}/imported unit vs "
-                 f"{_usd(tf.get('per_domestic_unit'))} domestic)")
     L.append("   Triggers & recommendations:")
     if cp.get("laggards"):
         P.append(("P?", f"Store ops — sit down with {cp['laggards'][0].split(' (')[0]} (biggest YoY drag); "
                         "review stock, floor coverage and lead handling."))
         L.append(f"     - {cp['laggards'][0].split(' (')[0]} is the biggest single drag on the YoY "
                  "number. That's where a store visit pays back fastest.")
-    if tf and tf.get("per_import_unit"):
-        L.append("     - The import tariff is a fixed cost in the sticker on more than half the "
-                 "book. Make sure the desk is leading imported-vehicle conversations with monthly "
-                 "payment and the domestic alternative you also carry, not sticker price.")
     L.append("")
 
     # ── 5. STORE PERFORMANCE ────────────────────────────────────

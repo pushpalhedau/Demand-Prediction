@@ -1,16 +1,18 @@
-# 🚗 AI-Powered Automobile Demand Intelligence Platform
+# 🚗 AI-Powered Automobile Demand Intelligence Platform — UAE Edition
 
 Welcome to the **AI-Powered Automobile Demand Intelligence Platform**, an enterprise-grade decision support suite that integrates advanced machine learning forecasting models, behavioral customer segmentation matrices, and interactive simulation capabilities into a cohesive, high-performance web dashboard.
+
+The dataset models **one regional dealer group of 24 rooftops trading across the seven emirates** (Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Fujairah, Umm Al Quwain). All figures are the group's own booked retail sales — there is no market-level extrapolation. Currency is **AED**; every vehicle is imported (flat 5% GCC customs duty, flat 5% federal VAT).
 
 ---
 
 ## 🌟 Core Features
 
 - **Executive Analytics:** High-impact KPI indicators (Total Revenue, Sales Volume, average discounts, and lead closing velocity) backed by rich Plotly charts.
-- **AI-Powered Forecasting:** Dynamic time-series projections leveraging **Facebook Prophet** integrated with monthly regional macroeconomic indicators (petrol prices, GDP shifts, CPI inflation) upsampled daily as external regressors.
-- **Customer Segmentation:** Automated customer profiling using **KMeans clustering** to partition the customer base into actionable cohorts (Budget Buyers, Premium Buyers, EV Enthusiasts, Fleet Buyers, High Repeat Customers) and seeding those segments back into the primary database.
+- **AI-Powered Forecasting:** Dynamic time-series projections leveraging **Facebook Prophet** integrated with monthly per-emirate indicators (regulated petrol price, CBUAE base rate, incentive spend, days' supply, Ramadan) upsampled daily as external regressors.
+- **Customer Segmentation:** Automated customer profiling using **KMeans clustering** to partition the customer base into actionable cohorts (High-Value / Prime, Loyal Repeat, Core Mainstream, Value Buyers, Lapsed / At-Risk) and seeding those segments back into the primary database. Features include monthly income (AED), AECB credit score and residency tenure; `nationality` is retained on the record and surfaced descriptively (the UAE resident base is ~88% expatriate) but is not itself a clustering feature.
 - **Lead Close Predictive Modeling:** A production-grade **XGBoost Classifier** that calculates the exact conversion probability of a sales lead, backed by a **SHAP explainability** layer mapping the explicit positive and negative feature contributions in real-time.
-- **Business Scenario Simulator:** A interactive simulator allowing executives to alter external market conditions (macroeconomic inflation, petrol pricing, EV subsidies, semiconductor constraints) and view simulated forecast shifts live.
+- **What-if Levers (Demand Forecasting tab):** Alter the four conditions a dealer GM actually reasons about — pump price (Special 95, AED/litre), car-loan APR, incentive spend, days' supply on hand — and see the modelled shift against the baseline forecast.
 - **Dynamic Ingestion Engine:** Live dataset uploading with automatic column detection, data validation, and real-time model retraining triggers.
 
 ---
@@ -38,8 +40,10 @@ automobile-demand-intelligence/
 │   └── queries.py              # Optimized analytical aggregations
 │
 ├── preprocessing/
+│   ├── generate_uae_data.py    # Synthetic UAE (7-emirate) dataset generator (seeded)
 │   ├── clean_data.py           # Data scrubbing and normalization functions
-│   └── seed_database.py        # Relational database seeding script
+│   ├── seed_database.py        # "test" DB seeder (automobile_datasets/ → automobile_demand.db)
+│   └── seed_real_database.py   # "real" DB seeder (realdata-datasets/ → real_demand.db)
 │
 ├── forecasting/
 │   └── prophet_forecasting.py   # Prophet trainer and forecast generator
@@ -83,12 +87,23 @@ source .venv/bin/activate
 uv pip install -r requirements.txt
 ```
 
-### 3. Ingest Datasets & Train Machine Learning Models
-Run the pipeline runner script to ingest all raw CSV datasets into the local SQLite database (`automobile_demand.db`) and train all KMeans clustering and XGBoost classifier assets:
+### 3. Generate Data, Ingest & Train Machine Learning Models
+
+Regenerate the synthetic UAE datasets (seeded — deterministic), then seed both SQLite databases and train the ML assets:
 
 ```bash
+# (re)generate realdata-datasets/ and automobile_datasets/ from scratch
+python -m preprocessing.generate_uae_data
+
+# seed the "real" DB (real_demand.db) and the "test" DB (automobile_demand.db)
+python -m preprocessing.seed_real_database
+python -m preprocessing.seed_database
+
+# train KMeans clustering + XGBoost classifier (per data mode)
 python train_models.py
 ```
+
+The Streamlit app also auto-seeds `real_demand.db` on first launch if it is empty.
 
 ### 4. Launch the Streamlit Dashboard
 Start the production-ready Streamlit app locally:
@@ -104,9 +119,9 @@ Open `http://localhost:8501` in your browser to explore the fully functional das
 ## 💾 Database Schema (Star Schema)
 
 The database utilizes standard relational mappings built via SQLAlchemy ORM:
-- **`sales` (Fact Table):** Tracks all individual sale transactions, fully denormalized with region, vehicle categories, and fuel types for high-performance analytical aggregates.
-- **`customers` (Dimension Table):** Hosts CRM profiles, including credit score, occupation, estimated annual income, and assigned customer segments.
-- **`vehicles` (Dimension Table):** The product catalog containing specifications, range (for EVs), pricing, and launch details.
-- **`dealers` (Dimension Table):** Showroom network data containing tier listings, capacity, and latitude/longitude coordinates.
-- **`inventory` (Dimension Table):** Stock levels, daily holding costs, stockout alerts, and transit quantities.
-- **`external_factors` (Dimension Table):** Macroeconomic conditions tracked monthly per region.
+- **`sales` (Fact Table):** Tracks all individual sale transactions, fully denormalized with emirate/area, vehicle categories, and fuel types for high-performance analytical aggregates. All money columns are AED (`selling_price_aed`, `vat_amount_aed`, …).
+- **`customers` (Dimension Table):** CRM profiles — nationality, emirate/area, AECB credit score, occupation, estimated **monthly** income (AED), residency tenure, and assigned customer segments.
+- **`vehicles` (Dimension Table):** The product catalog containing specifications, `mileage_kmpl`, `range_km` (for EVs), `price_aed`, `gcc_spec`, and launch details.
+- **`dealers` (Dimension Table):** Rooftop network data — brand, emirate/area, P.O. box, capacity, and latitude/longitude coordinates.
+- **`inventory` (Dimension Table):** Month-end stock snapshots, daily holding costs (AED), stockout alerts, port of entry and transit quantities.
+- **`external_factors` (Dimension Table):** Per-emirate monthly conditions — regulated petrol price (AED/litre), CBUAE base rate, Dubai real-estate index, tourism index, Ramadan / National Day / DSF flags.

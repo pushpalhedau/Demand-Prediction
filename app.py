@@ -64,20 +64,16 @@ try:
 except Exception:
     # Fail-safe fallbacks if DB is not seeded or active
     options = {
-        "regions": ["California", "Texas", "Florida", "New York", "Illinois", "Georgia", "Ohio", "Michigan"],
+        "regions": ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Fujairah", "Umm Al Quwain"],
         "cities": [
-            "Los Angeles", "San Francisco", "San Diego", "Sacramento",
-            "Houston", "Dallas", "Austin", "San Antonio",
-            "Miami", "Orlando", "Tampa", "Jacksonville",
-            "New York City", "Buffalo", "Albany", "Rochester",
-            "Chicago", "Naperville", "Springfield",
-            "Atlanta", "Savannah", "Augusta",
-            "Columbus", "Cleveland", "Cincinnati",
-            "Detroit", "Grand Rapids", "Ann Arbor"
+            "Deira", "Bur Dubai", "Sheikh Zayed Road", "Al Quoz", "Dubai Marina",
+            "Abu Dhabi City", "Musaffah", "Al Ain", "Khalifa City",
+            "Sharjah City", "Industrial Area", "Al Nahda",
+            "Ajman City", "RAK City", "Fujairah City", "UAQ City"
         ],
-        "categories": ["SUV", "Sedan", "Luxury", "EV", "Sports Car", "Pickup Truck", "Van/Commercial"],
-        "fuel_types": ["Gasoline", "Diesel", "Electric", "Hybrid"],
-        "brands": ["Toyota", "Nissan", "Hyundai", "Kia", "Honda", "Mercedes-Benz", "BMW", "Audi", "Lexus", "Ford", "Chevrolet", "Tesla"],
+        "categories": ["SUV", "Sedan", "Luxury", "Pickup", "Hatchback", "Minivan", "Coupe"],
+        "fuel_types": ["Petrol", "Diesel", "Electric", "Hybrid"],
+        "brands": ["Toyota", "Nissan", "Mitsubishi", "Hyundai", "Kia", "Honda", "MG", "Chevrolet", "Lexus", "Ford", "Mercedes-Benz", "BMW", "Land Rover", "Mazda", "Suzuki"],
         "years": [2021, 2022, 2023, 2024, 2025, 2026]
     }
 finally:
@@ -238,14 +234,14 @@ with st.sidebar:
 
     _fc1, _fc2 = st.columns(2)
     with _fc1:
-        region = st.selectbox("State", options=["All"] + options["regions"])
+        region = st.selectbox("Emirate", options=["All"] + options["regions"])
 
-    # Filter cities dynamically based on state
+    # Filter areas dynamically based on emirate
     if region != "All":
         session = get_db_session()
         try:
             from database.models import Sale
-            region_cities = [c[0] for c in session.query(Sale.city).filter(Sale.state == region).distinct().all() if c[0]]
+            region_cities = [c[0] for c in session.query(Sale.area).filter(Sale.emirate == region).distinct().all() if c[0]]
             city_options = sorted(region_cities)
         except Exception:
             city_options = options["cities"]
@@ -255,7 +251,7 @@ with st.sidebar:
         city_options = options["cities"]
 
     with _fc2:
-        city = st.selectbox("City", options=["All"] + city_options)
+        city = st.selectbox("Area", options=["All"] + city_options)
 
     _fc3, _fc4 = st.columns(2)
     with _fc3:

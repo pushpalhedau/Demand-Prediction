@@ -31,36 +31,40 @@ from utils.helpers import (
 # external_factors so the baseline forecast already reflects its history.
 # ─────────────────────────────────────────────────────────────────────────────
 LEVERS = {
-    "gasoline_regular_usd_per_gallon": dict(
-        label="Pump price", unit="$/gal", step=0.05, fmt="{:.2f}",
+    "crude_oil_price_usd": dict(
+        label="Crude oil price", unit="USD/barrel", step=1.0, fmt="{:.0f}",
+    ),
+    "petrol_95_price_aed_per_litre": dict(
+        label="Petrol price (Special 95)", unit="AED/litre", step=0.05, fmt="{:.2f}",
+    ),
+    "diesel_price_aed_per_litre": dict(
+        label="Diesel price", unit="AED/litre", step=0.05, fmt="{:.2f}",
     ),
     "auto_loan_apr_pct": dict(
         label="Auto-loan APR", unit="%", step=0.10, fmt="{:.1f}",
     ),
-    "incentive_pct_of_atp": dict(
-        label="Incentive spend", unit="% of price", step=0.20, fmt="{:.1f}",
-    ),
-    "inventory_days_supply": dict(
-        label="Inventory on hand", unit="days' supply", step=2.0, fmt="{:.0f}",
-    ),
 }
 
 # Group demand response to each lever, held one-at-a-time, relative to the
-# recent baseline. Calibrated to published US auto-retail elasticities (sources
-# in docs/changelog/2026-08-27-demand-forecasting-dealer-positioning.md):
-#   pump price  ~ -4% units per +$1/gal   (Resources for the Future / NBER)
-#   loan APR    ~ -3% units per +1pt      (Fed FEDS Notes 2024; KBB)
-#   incentives  ~ +2% units per +1pt ATP  (Cox Automotive / KBB)
-# Inventory is handled separately below — a shortfall loses sales, a glut does
-# not add them.
+# recent baseline. Petrol and diesel are regulated monthly pump prices in the
+# UAE, so those levers are really "what happens to demand if the Fuel Price
+# Committee moves the number", and the response is smaller than the US
+# pump-price elasticity. Crude is upstream of the regulated pump price, so its
+# own direct effect (cost-of-ownership sentiment) is deliberately mild to avoid
+# double-counting the petrol/diesel move it usually feeds:
+#   crude oil   ~ -0.15% units per +1 USD/barrel
+#   petrol      ~ -3%   units per +1 AED/litre
+#   diesel      ~ -2%   units per +1 AED/litre  (pickup / commercial buyers)
+#   loan APR    ~ -3%   units per +1pt
 GROUP_DEMAND_RESPONSE = {
-    "gasoline_regular_usd_per_gallon": -4.0,
+    "crude_oil_price_usd": -0.15,
+    "petrol_95_price_aed_per_litre": -3.0,
+    "diesel_price_aed_per_litre": -2.0,
     "auto_loan_apr_pct": -3.0,
-    "incentive_pct_of_atp": +2.0,
 }
 
-_AVG_LOAN = 42000      # $ financed, for the monthly-payment translation
-_LOAN_MONTHS = 72
+_AVG_LOAN = 150000     # AED financed, for the monthly-payment translation
+_LOAN_MONTHS = 60
 
 
 def _supply_drag_pct(days_supply: float) -> float:
@@ -119,7 +123,7 @@ def render_forecasting(filters: dict):
     c1, c2, c3 = st.columns(3)
     with c1:
         target = st.selectbox(
-            "Forecast", ["units_sold", "total_revenue_incl_tax"],
+            "Forecast", ["units_sold", "total_revenue_incl_vat"],
             format_func=lambda x: "Units Sold" if x == "units_sold" else "Revenue",
         )
     with c2:
@@ -292,10 +296,8 @@ def render_forecasting(filters: dict):
     rate_delta = (exp_rate / ttm_rate - 1) * 100 if ttm_rate > 0 else None
 
     fmt = _fmt_money if not is_units else (lambda v: f"{_compact(v)}")
-    # A metric value with two "$" is parsed as LaTeX by st.metric, so the range
-    # card carries a single leading "$" and lets the unit ride on the compact M/K.
     range_str = (f"{_compact(low)} – {_compact(high)}" if is_units
-                 else f"${_compact(low)} – {_compact(high)}")
+                 else f"AED {_compact(low)} – {_compact(high)}")
 
     # ── Lever impact banner ─────────────────────────────────────────────────
     if overrides and abs(net_pct) >= 0.1:
@@ -440,9 +442,10 @@ def render_forecasting(filters: dict):
             order = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
             pat = fc.groupby("m")["yearly"].mean().reindex(order)
-            mcol = [_HUE_UP if v >= 0 else _HUE_DOWN for v in pat.values]
-            mfig = go.Figure(go.Bar(x=pat.index, y=pat.values, marker_color=mcol,
-                                    hovertemplate="%{x}<br>%{y:.2f}<extra></extra>"))
+            mfig = go.Figure(go.Scatter(
+                x=pat.index, y=pat.values, mode="lines+markers",
+                line=dict(color=_HUE_FORECAST, width=2.5), marker=dict(size=6),
+                hovertemplate="%{x}<br>%{y:.2f}<extra></extra>"))
             mfig.update_layout(**_base_layout(height=240))
             mfig.add_hline(y=0, line_color="rgba(255,255,255,0.2)")
             st.plotly_chart(mfig, use_container_width=True)
@@ -455,10 +458,10 @@ def render_forecasting(filters: dict):
             dorder = ["Monday", "Tuesday", "Wednesday", "Thursday",
                       "Friday", "Saturday", "Sunday"]
             dp = fc.groupby("d")["weekly"].mean().reindex(dorder)
-            dcol = [_HUE_UP if v >= 0 else _HUE_DOWN for v in dp.values]
-            dfig = go.Figure(go.Bar(x=[d[:3] for d in dp.index], y=dp.values,
-                                    marker_color=dcol,
-                                    hovertemplate="%{x}<br>%{y:.2f}<extra></extra>"))
+            dfig = go.Figure(go.Scatter(
+                x=[d[:3] for d in dp.index], y=dp.values, mode="lines+markers",
+                line=dict(color=_HUE_FORECAST, width=2.5), marker=dict(size=6),
+                hovertemplate="%{x}<br>%{y:.2f}<extra></extra>"))
             dfig.update_layout(**_base_layout(height=240))
             dfig.add_hline(y=0, line_color="rgba(255,255,255,0.2)")
             st.plotly_chart(dfig, use_container_width=True)

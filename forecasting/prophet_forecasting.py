@@ -18,22 +18,22 @@ def get_external_factor_stats(region: str = None) -> dict:
     try:
         query = session.query(ExternalFactor)
         if region:
-            query = query.filter(ExternalFactor.state == region)
+            query = query.filter(ExternalFactor.emirate == region)
         df = pd.read_sql(query.statement, session.bind)
         if df.empty:
             return {}
         numeric_cols = [
             # Dealer-facing what-if levers (what the group's customers actually feel)
-            'gasoline_regular_usd_per_gallon', 'auto_loan_apr_pct',
+            'petrol_95_price_aed_per_litre', 'auto_loan_apr_pct',
             'incentive_pct_of_atp', 'inventory_days_supply',
             # Retained for other consumers / backward compatibility
-            'diesel_usd_per_gallon', 'wti_crude_price_usd', 'gdp_growth_pct',
-            'cpi_inflation_pct', 'us_fed_rate_pct', 'consumer_confidence_index',
-            'tourism_index', 'luxury_demand_index', 'tariff_pct',
-            'unemployment_rate_pct', 'new_model_launches', 'ev_charging_stations',
+            'diesel_price_aed_per_litre', 'crude_oil_price_usd', 'gdp_growth_pct',
+            'cpi_inflation_pct', 'cbuae_rate_pct', 'consumer_confidence_index',
+            'tourism_index', 'luxury_demand_index', 'import_duty_pct',
+            'unemployment_rate_pct', 'new_model_launches', 'ev_charging_stations_uae',
         ]
         binary_cols = [
-            'holiday_season_month', 'july_4th_month', 'detroit_auto_show_month', 'la_auto_show_month',
+            'ramadan_month', 'national_day_month', 'dubai_motor_show_month', 'dsf_month',
         ]
         stats = {}
         for col in numeric_cols + binary_cols:
@@ -77,12 +77,12 @@ def train_prophet_model(
         sale_query = session.query(
             Sale.sale_date,
             Sale.units_sold,
-            Sale.total_revenue_incl_tax
+            Sale.total_revenue_incl_vat
         )
         if category:
             sale_query = sale_query.filter(Sale.vehicle_category == category)
         if region:
-            sale_query = sale_query.filter(Sale.state == region)
+            sale_query = sale_query.filter(Sale.emirate == region)
         if fuel_type:
             sale_query = sale_query.filter(Sale.fuel_type == fuel_type)
         if brand:
@@ -98,7 +98,7 @@ def train_prophet_model(
             daily_series = sales_df.groupby('sale_date')['units_sold'].sum().reset_index()
             daily_series.columns = ['ds', 'y']
         else:
-            daily_series = sales_df.groupby('sale_date')['total_revenue_incl_tax'].sum().reset_index()
+            daily_series = sales_df.groupby('sale_date')['total_revenue_incl_vat'].sum().reset_index()
             daily_series.columns = ['ds', 'y']
             
         # Complete missing dates with zero sales/revenue
@@ -114,14 +114,14 @@ def train_prophet_model(
         # stock it has to sell from, and the year-end holiday selling season.
         ext_query = session.query(
             ExternalFactor.date,
-            ExternalFactor.gasoline_regular_usd_per_gallon,
+            ExternalFactor.petrol_95_price_aed_per_litre,
             ExternalFactor.auto_loan_apr_pct,
             ExternalFactor.incentive_pct_of_atp,
             ExternalFactor.inventory_days_supply,
-            ExternalFactor.holiday_season_month,
+            ExternalFactor.ramadan_month,
         )
         if region:
-            ext_query = ext_query.filter(ExternalFactor.state == region)
+            ext_query = ext_query.filter(ExternalFactor.emirate == region)
             
         ext_df = pd.read_sql(ext_query.statement, session.bind)
         if not ext_df.empty:
@@ -180,9 +180,9 @@ def train_prophet_model(
         
         # Add external regressors if they exist in dataframe
         regressors = [
-            'gasoline_regular_usd_per_gallon', 'auto_loan_apr_pct',
+            'petrol_95_price_aed_per_litre', 'auto_loan_apr_pct',
             'incentive_pct_of_atp', 'inventory_days_supply',
-            'holiday_season_month',
+            'ramadan_month',
         ] + sentiment_regressor_candidates  # appended when use_sentiment=True
 
         active_regressors = []

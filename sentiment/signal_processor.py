@@ -76,24 +76,48 @@ def run_full_pipeline(
         "errors":    [],
     }
 
-    # ── Step 1: Fetch from GDELT ──────────────────────────────────────────
-    logger.info("Pipeline | Step 1: Fetching articles from GDELT (timespan=%s)", timespan)
+    # ── Step 1: Fetch fresh articles ─────────────────────────────────────
+    # Google News RSS is the primary source: no key, no rate limit, reliable
+    # from any network. GDELT is kept as a fallback for when RSS returns
+    # nothing — its free Doc API rate-limits whole IP ranges hard (HTTP 429)
+    # and frequently will not serve at all, so it can't be relied on first.
+    logger.info("Pipeline | Step 1: Fetching articles (timespan=%s)", timespan)
+    raw_articles: list = []
+    source = "Google News RSS"
     try:
-        raw_articles = fetch_all_themes(
-            timespan=timespan,
-            max_records_per_query=max_articles_per_query,
-        )
-        fetch_result = save_articles_to_db(raw_articles)
+        from sentiment.fetchers.rss_fetcher import fetch_all_themes_rss
+        raw_articles = fetch_all_themes_rss(timespan=timespan)
+    except Exception as e:
+        logger.warning("RSS fetch failed (%s) — trying GDELT", e)
+
+    if not raw_articles:
+        try:
+            raw_articles = fetch_all_themes(
+                timespan=timespan,
+                max_records_per_query=max_articles_per_query,
+            )
+            source = "GDELT"
+        except Exception as e:
+            msg = f"News fetch failed (RSS and GDELT both unavailable): {e}"
+            logger.error(msg)
+            status["errors"].append(msg)
+
+    try:
+        fetch_result = save_articles_to_db(raw_articles) if raw_articles else {
+            "inserted": 0, "skipped": 0, "errors": 0
+        }
         status["fetch"] = {
             "fetched_from_gdelt": len(raw_articles),
+            "source": source,
             **fetch_result,
         }
-        logger.info("Pipeline | fetch done: %s", fetch_result)
+        logger.info("Pipeline | fetch done via %s: %s", source, fetch_result)
     except Exception as e:
-        msg = f"GDELT fetch failed: {e}"
+        msg = f"Saving fetched articles failed: {e}"
         logger.error(msg)
         status["errors"].append(msg)
-        status["fetch"] = {"fetched_from_gdelt": 0, "inserted": 0, "skipped": 0, "errors": 1}
+        status["fetch"] = {"fetched_from_gdelt": 0, "source": source,
+                           "inserted": 0, "skipped": 0, "errors": 1}
 
     # ── Step 2: Analyze unanalyzed articles ──────────────────────────────
     logger.info("Pipeline | Step 2: Analyzing unanalyzed articles")

@@ -1,5 +1,8 @@
 # Prompt — Dealer-facing pass on the "Comparative Analytics" tab
 
+> ⚠️ **Written during the NA (US, 8-state) era.** The 2026-09-06 UAE conversion (`docs/changelog/2026-09-06-uae-conversion.md`) superseded the geography, currency and tariff details below; treat the *intent* as still useful, the specifics as stale.
+
+
 Paste the block below into Claude Code.
 
 ---

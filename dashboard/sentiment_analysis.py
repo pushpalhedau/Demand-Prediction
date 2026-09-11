@@ -42,9 +42,6 @@ from utils.helpers import (
 # Framing constants
 # ─────────────────────────────────────────────────────────────────────────────
 
-# The group's own book — used to express each signal as the group's exposure.
-# Kept in sync with the dealer-positioning changelogs.
-_IMPORT_UNIT_SHARE = 0.56
 _SEGMENT_LABEL = {
     "SUV": "SUV", "Pickup": "pickup", "Sedan": "sedan", "Luxury": "luxury",
     "EV": "EV", "Commercial": "commercial", "All": "all segments",
@@ -52,24 +49,24 @@ _SEGMENT_LABEL = {
 
 # get_stored_articles() returns `theme` = the GDELT query name.
 _THEME_LABEL = {
-    "na_auto_demand": "Auto demand",
-    "ev_market_na": "EV market",
-    "tariff_trade": "Tariffs & trade",
-    "fuel_oil_prices": "Fuel prices",
-    "us_macro_economy": "Economy & rates",
-    "luxury_suv_na": "Luxury / SUV / pickup",
-    "auto_financing": "Auto financing",
-    "incentives_rebates": "Incentives & rebates",
+    "uae_auto_demand": "Auto demand",
+    "ev_market_uae": "EV market",
+    "customs_vat": "Customs, VAT & imports",
+    "fuel_prices": "Fuel prices",
+    "uae_macro_economy": "Economy & rates",
+    "luxury_suv_uae": "Luxury / SUV",
+    "auto_financing": "Car finance",
+    "incentives_offers": "Offers & promotions",
 }
 
 # What a signal on this theme is mostly about, for the exposure line.
 _THEME_EXPOSURE = {
-    "tariff_trade": f"hits the group's import franchises — about {_IMPORT_UNIT_SHARE*100:.0f}% of units",
+    "customs_vat": "moves landed cost on the whole book — every unit is imported",
     "auto_financing": "moves financed demand across the whole book — fastest-acting driver",
-    "us_macro_economy": "moves financed demand across the whole book",
-    "fuel_oil_prices": "shifts mix between pickup/SUV and sedan",
-    "incentives_rebates": "changes the incentive backdrop the desk is working against",
-    "ev_market_na": "affects the group's EV rooftops (Tesla + import BEVs)",
+    "uae_macro_economy": "moves financed demand across the whole book",
+    "fuel_prices": "shifts mix a little between large SUV / 4x4 and sedan",
+    "incentives_offers": "changes the offer backdrop the desk is working against",
+    "ev_market_uae": "affects the group's EV demand (MG, Hyundai/Kia BEVs, Tesla/BYD cross-shop)",
 }
 
 _DIR_ARROW = {"up": "▲", "down": "▼", "neutral": "■"}
@@ -149,7 +146,7 @@ def render_sentiment_analysis(filters: dict):
     if refresh and not running:
         st.session_state["sentiment_pipeline_running"] = True
         try:
-            with st.spinner("Fetching news from GDELT and scoring signals…"):
+            with st.spinner("Fetching the latest UAE auto news and scoring signals…"):
                 status = run_full_pipeline(timespan=timespan, max_articles_per_query=50, analyze_limit=200)
             st.session_state["sentiment_pipeline_status"] = status
         finally:
@@ -169,7 +166,7 @@ def render_sentiment_analysis(filters: dict):
     if stats.get("total_articles", 0) == 0 or not articles:
         _empty_state(
             "No recent signals yet.<br>Click <b>Refresh news</b> above to pull the latest "
-            "US auto headlines and score them for the group's demand."
+            "UAE auto headlines and score them for the group's demand."
         )
         return
 
@@ -270,7 +267,7 @@ def _bottom_line(stats: dict, articles: list):
             "No single story is moving the group's demand right now — the news nets out "
             "<b>roughly neutral</b> over the next ~30 days. Nothing here calls for a change "
             "to stocking or pricing; run the standard demand forecast and keep scanning the "
-            "feed for a rate move, a tariff change, or a gas-price swing that would."
+            "feed for a rate move, a customs/VAT change, or a fuel-price swing that would."
         )
     elif abs(net) < 0.5:
         color = _INK_MUTED
@@ -476,7 +473,7 @@ def _render_forecast_verdict(filters: dict):
         horizon = st.selectbox("Look ahead", [30, 60, 90, 180], index=2, key="fc_v_horizon",
                                format_func=lambda d: f"{d} days")
     with c2:
-        target = st.selectbox("Measure", ["units_sold", "total_revenue_incl_tax"],
+        target = st.selectbox("Measure", ["units_sold", "total_revenue_incl_vat"],
                               format_func=lambda x: "Units" if x == "units_sold" else "Revenue",
                               key="fc_v_target")
     with c1:
@@ -543,7 +540,7 @@ def _render_forecast_verdict(filters: dict):
                       line_color=_HUE_MARKER, annotation_text="forecast starts",
                       annotation_font_color=_HUE_MARKER)
     fig.update_layout(**_base_layout(height=360, legend=True,
-                                     yaxis=dict(title="Units / month" if _target == "units_sold" else "Revenue / month (USD)")))
+                                     yaxis=dict(title="Units / month" if _target == "units_sold" else "Revenue / month (AED)")))
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 
@@ -555,14 +552,23 @@ def _show_pipeline_status(status: dict):
     fetch = status.get("fetch", {})
     analyze = status.get("analyze", {})
     summ = status.get("summarize", {})
-    errors = status.get("errors", [])
+    errors = list(status.get("errors", []))
     mode = status.get("mode", "mock")
+    source = fetch.get("source", "GDELT")
     msg = (
-        f"Fetched **{fetch.get('fetched_from_gdelt', 0)}** headlines "
+        f"Fetched **{fetch.get('fetched_from_gdelt', 0)}** headlines from **{source}** "
         f"({fetch.get('inserted', 0)} new) · scored **{analyze.get('articles_found', 0)}** "
         f"· {summ.get('rows_computed', 0)} daily rows · scorer: **{mode.upper()}**"
     )
-    if errors:
-        st.warning(f"Refresh finished with warnings: {'; '.join(errors)}\n\n{msg}")
+
+    # A GDELT→RSS fallback is expected behaviour, not a failure — show it as a
+    # note so it doesn't read like the refresh broke.
+    notes = [e for e in errors if "Google News RSS" in e]
+    hard = [e for e in errors if "Google News RSS" not in e]
+
+    if hard:
+        st.warning(f"Refresh finished with warnings: {'; '.join(hard)}\n\n{msg}")
     else:
         st.success(f"Refresh complete — {msg}")
+    for n in notes:
+        st.caption(f"ℹ️ {n}")

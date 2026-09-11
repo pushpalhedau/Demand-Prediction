@@ -84,15 +84,15 @@ _HUE_MARKER = "#f59e0b"           # "forecast starts here" separators
 
 
 def _fmt_money(value: float) -> str:
-    """Compact USD for KPI cards and labels: $3.04B / $742.0M / $940K."""
+    """Compact AED for KPI cards and labels: AED 3.04B / AED 742.0M / AED 940K."""
     value = float(value or 0)
     if abs(value) >= 1_000_000_000:
-        return f"${value / 1_000_000_000:.2f}B"
+        return f"AED {value / 1_000_000_000:.2f}B"
     if abs(value) >= 1_000_000:
-        return f"${value / 1_000_000:.1f}M"
+        return f"AED {value / 1_000_000:.1f}M"
     if abs(value) >= 1_000:
-        return f"${value / 1_000:.0f}K"
-    return f"${value:,.0f}"
+        return f"AED {value / 1_000:.0f}K"
+    return f"AED {value:,.0f}"
 
 
 def _compact(n: float) -> str:

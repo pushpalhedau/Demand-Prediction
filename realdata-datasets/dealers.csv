@@ -1,25 +1,25 @@
-dealer_id,dealer_name,brand,state,city,address,zip_code,tier,established_year,monthly_capacity,showroom_area_sqft,service_center,ev_charging_station,num_salespeople,annual_target_units,performance_score,google_rating,latitude,longitude
-DLR0001,Kia of San Francisco,Kia,California,San Francisco,5203 Dealership Row,76439,Gold,2009,283,18202,False,False,35,800,90.5,4.0,37.92463,-122.36969
-DLR0002,Chevrolet of San Francisco,Chevrolet,California,San Francisco,6270 Auto Plaza Dr,71264,Gold,2012,379,15101,True,True,41,675,68.7,4.8,37.82178,-122.55855
-DLR0003,Hyundai of Sacramento,Hyundai,California,Sacramento,1647 Auto Plaza Dr,83797,Platinum,2003,414,44456,True,True,21,525,89.2,4.8,38.66323,-121.43496
-DLR0004,Tesla of Los Angeles,Tesla,California,Los Angeles,4520 Auto Plaza Dr,51057,Silver,1991,154,18747,True,True,31,325,90.9,4.1,34.12259,-118.33579
-DLR0005,Chevrolet of San Diego,Chevrolet,California,San Diego,1089 Motor Mile,57029,Gold,2015,344,37238,True,True,14,625,92.1,4.6,32.61764,-117.28358
-DLR0006,Toyota of Houston,Toyota,Texas,Houston,3825 Dealership Row,63276,Platinum,1999,282,43795,True,False,28,1275,94.2,4.2,29.78381,-95.30987
-DLR0007,Tesla of Houston,Tesla,Texas,Houston,4482 Dealership Row,24212,Gold,1989,258,33317,True,True,18,275,66.6,4.2,29.70181,-95.39143
-DLR0008,Nissan of Houston,Nissan,Texas,Houston,4067 Motor Mile,97430,Gold,1997,166,29533,True,True,33,1075,63.2,4.3,29.75264,-95.45212
-DLR0009,Volkswagen of Dallas,Volkswagen,Texas,Dallas,3573 Commerce Way,63073,Gold,2006,284,38622,True,True,21,325,80.7,4.3,32.8145,-96.8388
-DLR0010,Honda of Jacksonville,Honda,Florida,Jacksonville,8101 Motor Mile,60247,Gold,2012,158,49000,True,False,22,750,72.7,4.7,30.33044,-81.77094
-DLR0011,BMW of Jacksonville,BMW,Florida,Jacksonville,8697 Dealership Row,83968,Platinum,1986,143,24663,True,True,37,475,87.3,3.9,30.43035,-81.54874
-DLR0012,Jeep of Orlando,Jeep,Florida,Orlando,7120 Auto Plaza Dr,31547,Gold,2003,320,18547,True,False,16,975,88.3,4.2,28.5946,-81.31758
-DLR0013,Ram of Jacksonville,Ram,Florida,Jacksonville,9263 Motor Mile,40026,Gold,1985,322,21944,True,True,36,400,90.4,4.9,30.34899,-81.55398
-DLR0014,Hyundai of New York City,Hyundai,New York,New York City,6543 Auto Plaza Dr,55260,Silver,1998,372,28917,True,True,15,425,78.0,4.1,40.61708,-73.88387
-DLR0015,Honda of Buffalo,Honda,New York,Buffalo,6357 Automall Pkwy,27330,Platinum,1994,178,32627,True,False,14,725,70.3,4.7,42.92768,-78.83366
-DLR0016,Chevrolet of New York City,Chevrolet,New York,New York City,7964 Motor Mile,65244,Gold,1986,337,27931,True,True,43,700,78.4,4.7,40.8184,-74.00456
-DLR0017,Subaru of Springfield,Subaru,Illinois,Springfield,3119 Commerce Way,20814,Silver,2011,235,26942,True,False,30,650,75.6,4.8,39.82095,-89.74685
-DLR0018,Toyota of Chicago,Toyota,Illinois,Chicago,3232 Auto Plaza Dr,33324,Gold,1985,302,49243,True,True,18,1100,62.2,4.2,41.93901,-87.58967
-DLR0019,Ford of Savannah,Ford,Georgia,Savannah,8046 Motor Mile,89111,Silver,1999,415,42934,True,True,23,1025,88.6,4.8,31.96513,-81.02148
-DLR0020,GMC of Augusta,GMC,Georgia,Augusta,6531 Commerce Way,96536,Gold,2005,245,50852,False,True,40,700,87.5,4.2,33.36066,-82.14822
-DLR0021,Ram of Cincinnati,Ram,Ohio,Cincinnati,9635 Commerce Way,88749,Silver,2015,377,31668,False,True,16,350,64.9,4.5,39.19372,-84.38459
-DLR0022,Lexus of Cincinnati,Lexus,Ohio,Cincinnati,2459 Auto Plaza Dr,14954,Silver,1996,405,15850,True,False,38,375,88.3,4.8,39.17493,-84.42174
-DLR0023,Mercedes-Benz of Ann Arbor,Mercedes-Benz,Michigan,Ann Arbor,9086 Automall Pkwy,19170,Platinum,2004,190,46608,True,False,22,475,63.0,4.3,42.39949,-83.69152
-DLR0024,Ford of Ann Arbor,Ford,Michigan,Ann Arbor,4208 Dealership Row,57176,Platinum,1995,353,46427,True,True,28,1075,71.3,4.8,42.18708,-83.86756
+dealer_id,dealer_name,brand,emirate,area,address,po_box,tier,established_year,monthly_capacity,showroom_area_sqft,service_center,ev_charging_station,num_salespeople,annual_target_units,performance_score,google_rating,latitude,longitude
+DLR0001,Nissan Bur Dubai,Nissan,Dubai,Bur Dubai,"Showroom, Airport Road",P.O. Box 35354,Gold,2014,120,24763,True,False,32,700,76.9,4.4,25.30767,55.31366
+DLR0002,MG Dubai Marina,MG,Dubai,Dubai Marina,"Motor City, Al Wahda Street",P.O. Box 27433,Silver,2012,261,21036,True,True,27,500,94.5,4.4,25.0738,55.09388
+DLR0003,Lexus Al Quoz,Lexus,Dubai,Al Quoz,"Motor City, Sheikh Zayed Road",P.O. Box 30071,Silver,1991,135,23350,True,False,22,675,72.6,4.0,25.10116,55.21845
+DLR0004,Mitsubishi Al Quoz,Mitsubishi,Dubai,Al Quoz,"Motor City, Corniche Road",P.O. Box 45478,Platinum,1995,413,25478,True,True,18,825,65.8,4.8,25.09012,55.23082
+DLR0005,Mercedes-Benz Deira,Mercedes-Benz,Dubai,Deira,"Showroom, Al Ittihad Road",P.O. Box 41602,Gold,2002,285,43662,True,True,21,600,70.2,4.4,25.28943,55.28233
+DLR0006,Hyundai Bur Dubai,Hyundai,Dubai,Bur Dubai,"Showroom, Al Wahda Street",P.O. Box 48779,Gold,1991,268,31509,True,True,33,1225,66.7,4.8,25.20913,55.26503
+DLR0007,Nissan Deira,Nissan,Dubai,Deira,"Showroom, Sheikh Zayed Road",P.O. Box 70919,Platinum,2007,262,23182,True,False,35,700,62.2,4.8,25.28301,55.27577
+DLR0008,Honda Deira Automarket,Honda,Dubai,Deira Automarket,"Motor City, Emirates Road",P.O. Box 29821,Silver,1997,194,48914,True,False,43,775,74.3,4.7,25.26484,55.37792
+DLR0009,Land Rover Deira Automarket,Land Rover,Dubai,Deira Automarket,"Showroom, Airport Road",P.O. Box 52023,Gold,2001,310,26070,True,True,37,300,62.6,4.1,25.30552,55.36881
+DLR0010,BMW Sheikh Zayed Road,BMW,Dubai,Sheikh Zayed Road,"Motor City, Al Ittihad Road",P.O. Box 13293,Gold,2014,164,36565,True,True,35,500,67.9,4.4,25.26718,55.2294
+DLR0011,Ford Khalifa City,Ford,Abu Dhabi,Khalifa City,"Auto Mall, Al Wahda Street",P.O. Box 58202,Platinum,2006,236,18822,True,False,27,600,83.1,4.2,24.37505,54.58946
+DLR0012,Chevrolet Al Ain,Chevrolet,Abu Dhabi,Al Ain,"Auto Mall, Corniche Road",P.O. Box 97693,Gold,2013,176,14690,True,True,41,775,70.6,4.5,24.21285,55.73432
+DLR0013,Mazda Mussafah Auto Market,Mazda,Abu Dhabi,Mussafah Auto Market,"Auto Mall, Corniche Road",P.O. Box 76546,Gold,2005,200,42820,False,True,43,450,62.4,4.7,24.35002,54.4808
+DLR0014,MG Al Ain,MG,Abu Dhabi,Al Ain,"Motor City, Al Wahda Street",P.O. Box 66083,Platinum,2001,168,39938,True,False,22,425,68.8,4.8,24.24876,55.71591
+DLR0015,Suzuki Abu Dhabi City,Suzuki,Abu Dhabi,Abu Dhabi City,"Motor City, Corniche Road",P.O. Box 64798,Gold,2014,313,28404,True,False,34,175,88.6,4.5,24.41436,54.4177
+DLR0016,Suzuki Khalifa City,Suzuki,Abu Dhabi,Khalifa City,"Motor City, Emirates Road",P.O. Box 50784,Silver,1992,120,21767,True,True,20,175,74.8,4.6,24.45876,54.56946
+DLR0017,Toyota Mussafah Auto Market,Toyota,Abu Dhabi,Mussafah Auto Market,"Auto Mall, Industrial Area",P.O. Box 57567,Gold,2006,235,29547,True,False,30,2125,68.7,4.3,24.33741,54.45311
+DLR0018,Nissan Industrial Area,Nissan,Sharjah,Industrial Area,"Showroom, Corniche Road",P.O. Box 5629,Platinum,1999,127,50286,True,True,29,600,92.0,4.2,25.28221,55.39858
+DLR0019,Toyota Al Rahmaniya,Toyota,Sharjah,Al Rahmaniya,"Showroom, Maliya Street",P.O. Box 46015,Gold,1997,158,15716,True,False,21,1150,78.8,4.0,25.26524,55.44948
+DLR0020,Toyota Al Nahda,Toyota,Sharjah,Al Nahda,"Showroom, Al Wahda Street",P.O. Box 77493,Silver,2015,151,51413,False,False,32,1125,66.7,4.2,25.31029,55.3317
+DLR0021,Mitsubishi Sharjah City,Mitsubishi,Sharjah,Sharjah City,"Motor City, Industrial Area",P.O. Box 40852,Silver,2005,276,20281,True,True,17,475,81.9,4.6,25.3259,55.40803
+DLR0022,Nissan Al Jurf,Nissan,Ajman,Al Jurf,"Showroom, Emirates Road",P.O. Box 3985,Gold,2011,132,21858,True,True,21,275,65.4,4.2,25.44765,55.44995
+DLR0023,Kia Al Nakheel,Kia,Ras Al Khaimah,Al Nakheel,"Showroom, Maliya Street",P.O. Box 19337,Gold,1996,383,40989,True,False,37,550,80.0,4.1,25.73448,55.91313
+DLR0024,Kia Fujairah City,Kia,Fujairah,Fujairah City,"Showroom, Al Wahda Street",P.O. Box 1304,Silver,2011,218,33671,True,True,26,550,76.8,4.0,25.09137,56.37172
