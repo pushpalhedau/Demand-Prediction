@@ -1,0 +1,263 @@
+========================================================
+DEMO SCRIPT - AUTOMOBILE DEMAND INTELLIGENCE PLATFORM (UAE)
+========================================================
+(Read this out loud, section by section, as you click through the app)
+
+
+INTRODUCTION
+------------
+Good [morning/afternoon] everyone. Today I'm showing a platform built for
+a car dealer group here in the UAE - one group that runs 24 showrooms
+across all seven emirates. It's not a general market report; everything
+you'll see is the group's own sales, its own stock, and its own
+customers, brought together in one place so the leadership team can see
+what's happening and what to do about it, without digging through
+spreadsheets.
+
+There's a filter panel that stays with us throughout, letting us narrow
+the view by date, Emirate, area, brand, vehicle category, or fuel type -
+so we can always zoom into a specific slice of the business, like just
+Dubai, or just one brand.
+
+Let's walk through each part of the platform.
+
+
+===========================================================
+SECTION 1: EXECUTIVE OVERVIEW
+===========================================================
+This is the homepage - the one-glance summary a business owner or
+manager would check first thing in the morning. It has two views.
+
+The first view gives us the headline numbers: how many vehicles the
+group sold, total revenue in dirhams, how the group is tracking against
+its yearly sales target, and what share of deals include financing or a
+lease - each one compared against the same period last year.
+
+Below that, a chart shows three years of revenue and unit sales side by
+side, plus a look-ahead at the next six months. Next to it, we can see
+which vehicle categories - SUVs, sedans, and so on - make up the sales
+mix, and the split between petrol, hybrid, and electric vehicles. There's
+also a chart ranking the top-performing showrooms against the group's
+own average.
+
+The second view is where it gets really useful - we call it
+Recommendations. Instead of just showing numbers, the platform reads all
+of that data and tells us exactly what to do next. It shows where the
+year is likely to land against target, how much value is sitting in the
+actions it's suggesting, and roughly how many extra cars per showroom
+per month would close the gap.
+
+Then it lists out its top recommendations - things like moving stock
+from a showroom that has too much of a certain car to one that's running
+low, flagging a showroom that's falling behind its target, pointing out
+where discounting is running higher than it should, or highlighting
+slow-moving stock that's tying up cash. Each recommendation comes with a
+confidence level and an estimated dirham value if we act on it. This
+turns the data into an actual to-do list for management.
+
+
+===========================================================
+SECTION 2: DEMAND FORECASTING
+===========================================================
+This is where things get really interesting - this is the prediction
+engine.
+
+Instead of just looking backward at what already happened, this tab
+predicts what will happen next. We can choose whether to forecast units
+sold or revenue, choose how far ahead to look - three, six, or twelve
+months - and focus on a specific brand if we want.
+
+Now here's the exciting part. There's a panel where we can adjust
+real-world conditions and instantly see how they would change future
+demand - things like the price of crude oil, the price of petrol at the
+pump, diesel prices, and the interest rate on car loans. So, for
+example, if we think petrol prices are about to rise, we can move that
+slider and watch the forecast update to show how that would likely
+affect sales. This is basically a "what-if" simulator for the business -
+leadership can test different conditions before making real decisions.
+
+The main chart shows our history leading up to today, and then three
+possible paths forward - an optimistic case, an expected case, and a
+more conservative case - so we can see the range of what's realistic
+rather than a single guess.
+
+There are also two smaller charts showing seasonal patterns - which
+months of the year and which days of the week the group typically sells
+the most. This helps with planning stock and staffing in advance.
+
+And at the bottom, the platform sums it all up in one plain-English
+sentence telling us what to expect and what to plan for.
+
+
+===========================================================
+SECTION 3: COMPARATIVE ANALYTICS
+===========================================================
+This tab answers one question clearly: how are we tracking against last
+year, and why?
+
+At the top, a chart lines up last year's monthly numbers against this
+year's, plus a projection for the months still to come, with a headline
+telling us straight away whether we're pacing ahead of or behind last
+year.
+
+Below that, we can break that change down three ways - by showroom, by
+brand, or by vehicle segment - to see exactly where the movement is
+coming from. A chart then shows which specific showrooms, brands, or
+segments are moving the most, with a star marking anything that's moved
+further than its usual swing and is worth a closer look. There's also an
+option to filter down to just those standout movers.
+
+Finally, the platform writes out a few plain-English sentences
+explaining the story behind the numbers - for example, calling out that
+a particular showroom is ahead of last year, but so is every other
+showroom selling the same brand, meaning it's really a brand trend
+rather than something that one location did differently.
+
+
+===========================================================
+SECTION 4: STORE PERFORMANCE
+===========================================================
+This tab zooms into the individual showrooms, or "rooftops" as we call
+them in the trade.
+
+At the top, we see how many showrooms are reporting in, how many
+vehicles were sold in the current period, and how many showrooms are
+running behind their sales target.
+
+There's an interactive map showing where every showroom sits across the
+seven emirates. Bigger markers mean more cars sold, and the color shows
+how well each one is pacing against its own target - green means ahead,
+red means behind. We can hover over any showroom to see its brand, its
+area, its units sold, revenue, target pace, and year-over-year change.
+
+Below the map, a bar chart ranks every showroom by units sold, and a
+detailed scorecard table lists each one with its brand, emirate,
+revenue, year-over-year change, pace against target, estimated gross
+profit, how often it closes a deal, and how long that typically takes.
+
+The platform then calls out two showrooms by name - the one carrying the
+group this period, and the one that needs the most attention - so
+leadership knows exactly where to focus.
+
+
+===========================================================
+SECTION 5: CUSTOMER INTELLIGENCE
+===========================================================
+This tab has two parts, and it's all about turning the customer list
+into action, not just charts.
+
+The first part, Retention & Actions, starts with the headline numbers:
+how many buyers are on file, what share of them come back to buy again,
+how much of total sales that repeat business represents, and how many
+customers are currently flagged for outreach.
+
+The centerpiece is the retention action queue - a working list of
+specific customers the sales team should be calling, and why: maybe
+their lease is coming up for renewal, they're overdue for their next
+vehicle based on the group's typical buying cycle, they were once a
+high-value customer who's gone quiet, or their engagement has suddenly
+dropped. Each entry tells us which showroom owns that customer, exactly
+what offer or approach to use, the estimated value if we win them back,
+and the list can be downloaded as a spreadsheet for the sales team to
+work from directly.
+
+Below that, a chart groups the entire customer base into four simple
+categories based on how recently they've engaged: Active, due back soon,
+going quiet, or likely lost - along with the lifetime value sitting in
+each group. There's also a more detailed breakdown available if we want
+to plan a targeted campaign around a specific type of customer.
+
+The second part, Lead Close Score, is genuinely one of the most fun
+features to demo live. We pick which showroom is handling the lead, then
+enter details about a potential customer - their age, occupation,
+income, credit score, what vehicle they're interested in, how they found
+us, whether they've bought from us before, and what discount we're
+considering. When we click "Score this lead," the platform instantly
+predicts the probability that this customer will actually buy.
+
+It doesn't just give a number - it shows a simple gauge telling us
+whether to work the lead now, follow up in a structured way, or treat it
+as a long shot. It also shows exactly which factors are pushing that
+probability up or down. Then it gives a plain-English recommendation on
+what to do next. This turns guesswork into a data-backed sales strategy.
+
+
+===========================================================
+SECTION 6: INVENTORY INTELLIGENCE
+===========================================================
+This tab helps make sure our showrooms never run out of the cars people
+actually want, and never get stuck with cars that don't sell.
+
+At the top, four numbers summarize the current stock situation: how many
+units are currently in stock, how many days of supply that represents,
+how much money is tied up in that inventory, and how many units have
+been sitting for longer than a chosen number of days - that aging
+threshold can be adjusted right there on screen.
+
+A chart compares how much stock we're carrying, and what's already on
+the way, against how much demand we expect over the next 30, 60, and 90
+days - so we can see immediately where we're overstocked or
+understocked. Another view lays out exactly how long every vehicle has
+been sitting on the lot, and a further chart plots stock levels against
+demand to flag anything healthy, running low, or overstocked.
+
+There are two working lists here as well: one ranking which vehicles
+need to be reordered most urgently, and another listing aged stock along
+with a suggested action for each one - both of which can be downloaded
+as a spreadsheet.
+
+
+===========================================================
+SECTION 7: SENTIMENT ANALYSIS
+===========================================================
+This is the most advanced part of the platform, and it's genuinely
+unique - it connects real-world news to what's likely to happen to
+demand in our own showrooms.
+
+Here's the idea: things happening in the world - fuel prices, financing
+conditions, the wider economy - all influence whether people feel
+confident enough to buy a car. This tab reads real news headlines
+relevant to the UAE auto market, scores how positive or negative they
+are, and translates that into an expected effect on demand. There's a
+"Refresh news" button that pulls in the latest headlines whenever we
+want an update.
+
+The headline the moment we open this tab is simple: expected demand
+impact over the next month or so, shown as a plain percentage alongside
+a small gauge and a one-word read - tailwind, headwind, or roughly flat
+- plus a "bottom line" summary explaining the direction, the size of the
+effect, and what's driving it.
+
+This tab has two parts. The first, Demand Watch, breaks that signal down
+by news topic and by vehicle segment, lists the specific news stories
+worth paying attention to along with a suggested action for each, and
+includes a "Generate read" button that produces a full written briefing
+pulling together everything happening across the whole platform - sales,
+inventory, customers, and news - into one readable report for
+leadership.
+
+The second part, "Does news improve our forecast?", lets us put that to
+the test. With one click, it runs two forecasts side by side - one based
+purely on past sales, and one that also factors in the news signal - so
+we can see whether paying attention to current events actually sharpens
+our predictions.
+
+
+===========================================================
+CLOSING
+===========================================================
+So to summarize what we just walked through: this platform takes
+everything the group already has - past sales, future predictions,
+showroom performance, customer relationships, stock levels, and even
+real-world news - and brings it into one place, explained in plain
+language, with clear recommendations built right in.
+
+The goal is simple: help the group sell smarter, stock smarter, and
+react faster - all backed by our own data instead of guesswork.
+
+That's the full tour. Happy to answer any questions, or dive deeper into
+any specific part you're curious about.
+
+========================================================
+END OF SCRIPT
+========================================================
