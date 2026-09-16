@@ -1,6 +1,6 @@
 """
-Group Demand & Operations Briefing — the detailed cross-module read behind the
-Sentiment Analysis tab's "Generate read" button.
+Group Demand & Operations Briefing — the detailed cross-module read that loads
+automatically at the bottom of the Sentiment Analysis tab's Demand Watch view.
 
 `build_briefing_context(filters, sentiment_stats)` gathers a compact snapshot
 from every dashboard module — Executive Overview, Demand Forecasting,
@@ -325,6 +325,58 @@ def _customer(s, filters, ctx):
         ctx["errors"].append(f"customer: {e}")
 
 
+def _transfer_recommendations(snap: pd.DataFrame, top_n: int = 3) -> list:
+    """A specific vehicle line running low at one rooftop, matched against the
+    same (or closest) model sitting deep at another rooftop — a direct
+    "move N of this vehicle from store A to store B" read for the brief.
+
+    Starts from the lines actually flagged stockout_flag (falls back to the
+    thinnest days'-supply lines network-wide if none are flagged) so the
+    brief always has a concrete transfer to name, not just a threshold-gated
+    "if this happens" play."""
+    needed = {"brand", "model", "vehicle_category", "dealer_name",
+              "current_stock", "days_of_supply"}
+    if snap is None or snap.empty or not needed.issubset(snap.columns):
+        return []
+
+    short = snap[snap.get("stockout_flag") == True].sort_values("days_of_supply")  # noqa: E712
+    if short.empty:
+        short = snap.sort_values("days_of_supply").head(5)
+
+    recs, used_sources = [], set()
+    for _, need in short.iterrows():
+        same_model = snap[
+            (snap["dealer_name"] != need["dealer_name"])
+            & (snap["brand"] == need["brand"]) & (snap["model"] == need["model"])
+        ]
+        candidates = same_model if not same_model.empty else snap[
+            (snap["dealer_name"] != need["dealer_name"])
+            & (snap["vehicle_category"] == need["vehicle_category"])
+        ]
+        candidates = candidates[candidates["days_of_supply"] > need["days_of_supply"] + 20]
+        candidates = candidates[~candidates["dealer_name"].isin(used_sources)]
+        if candidates.empty:
+            continue
+        source = candidates.sort_values("days_of_supply", ascending=False).iloc[0]
+        movable = int(min(max(source["current_stock"] - 3, 0),
+                          max(round(source["current_stock"] * 0.35), 2)))
+        if movable < 1:
+            continue
+        recs.append({
+            "vehicle": f"{source['brand']} {source['model']}",
+            "category": need["vehicle_category"],
+            "from_dealer": source["dealer_name"],
+            "from_dos": int(source["days_of_supply"]),
+            "to_dealer": need["dealer_name"],
+            "to_dos": int(need["days_of_supply"]),
+            "units": movable,
+        })
+        used_sources.add(source["dealer_name"])
+        if len(recs) >= top_n:
+            break
+    return recs
+
+
 def _inventory(s, filters, ctx):
     try:
         snap = Q.get_inventory_snapshot(s, filters)
@@ -337,6 +389,12 @@ def _inventory(s, filters, ctx):
             inv["stockout_risk_lines"] = int(snap.get("stockout_flag", pd.Series(dtype=bool)).sum())
             inv["overstock_lines"] = int(snap.get("overstock_flag", pd.Series(dtype=bool)).sum())
             inv["reorder_lines"] = int(snap.get("reorder_needed", pd.Series(dtype=bool)).sum())
+            try:
+                recs = _transfer_recommendations(snap)
+                if recs:
+                    inv["transfer_recommendations"] = recs
+            except Exception:
+                pass
             try:
                 ab = Q.get_aging_buckets(snap)
                 if not ab.empty:
@@ -416,6 +474,12 @@ Sections, in order:
 6. CUSTOMER INTELLIGENCE
 7. INVENTORY INTELLIGENCE
 8. THIS WEEK — PRIORITY ACTIONS
+
+In INVENTORY INTELLIGENCE, if the snapshot's inventory.transfer_recommendations list is
+present, state it as a concrete instruction: which vehicle segment to move, from which
+rooftop (the one sitting on excess days' supply) to which rooftop (the one running low),
+and roughly how many units — so stock is rebalanced across the network instead of ordering
+more in. Include at least the top entry from that list.
 
 Plain text only. No markdown symbols."""
 
@@ -670,6 +734,13 @@ def _template_briefing(ctx: dict) -> str:
         L.append(f"     - Trade-in intake (90d): {_num(iv['trade_ins_last_90d'])} units"
                  + (f", true concession {_num(iv.get('avg_true_concession_pct'), 1)}% of price"
                     if iv.get("avg_true_concession_pct") is not None else ""))
+    tr = iv.get("transfer_recommendations") or []
+    if tr:
+        L.append("     - Stock imbalance: " + "; ".join(
+            f"move ~{r['units']} {r['vehicle']} from {r['from_dealer']} "
+            f"({r['from_dos']:.0f}d supply) to {r['to_dealer']} ({r['to_dos']:.0f}d supply)"
+            for r in tr
+        ))
     L.append("   Triggers & recommendations:")
     if iv.get("network_days_supply") is not None and iv["network_days_supply"] < 45:
         L.append(f"     - Days of supply is thin ({_num(iv['network_days_supply'], 0)}). Expedite the "
@@ -686,6 +757,13 @@ def _template_briefing(ctx: dict) -> str:
     if iv.get("lease_returns_in_money"):
         L.append(f"     - {iv['lease_returns_in_money']} lease returns are coming back in the money. "
                  "Pull them into inventory rather than grounding to auction.")
+    if tr:
+        top = tr[0]
+        L.append(f"     - {top['from_dealer']} is sitting on {top['from_dos']:.0f} days' supply of the "
+                 f"{top['vehicle']} while {top['to_dealer']} is down to {top['to_dos']:.0f}. "
+                 f"Transfer ~{top['units']} units between the two rather than ordering more in.")
+        P.append(("P?", f"Logistics — transfer ~{top['units']} {top['vehicle']} units from "
+                        f"{top['from_dealer']} to {top['to_dealer']} to cover its stock shortfall."))
     L.append("")
 
     # ── 8. PRIORITY ACTIONS ────────────────────────────────────

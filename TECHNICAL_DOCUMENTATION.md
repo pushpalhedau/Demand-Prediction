@@ -170,7 +170,7 @@ flowchart TB
 7. Routing is a plain `if/elif` chain on the selected menu string → `dashboard.<module>.render_*(filters)`.
 
 ### Session state keys in use
-`data_mode`, `market_overrides`, `sentiment_pipeline_running`, `sentiment_pipeline_status`, `sentiment_timespan`, `sentiment_briefing` (the "Generate read" cross-module briefing text, `sentiment/group_briefing.py`), `fc_v` (the sentiment tab's baseline-vs-news-aware result tuple).
+`data_mode`, `market_overrides`, `sentiment_pipeline_running`, `sentiment_pipeline_status`, `sentiment_timespan`, `fc_v` (the sentiment tab's baseline-vs-news-aware result tuple). The cross-module briefing text (`sentiment/group_briefing.py`) loads automatically on tab render, cached via `st.cache_data` rather than session state.
 
 ---
 

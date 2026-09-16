@@ -80,11 +80,14 @@ _DIR_ARROW = {"up": "▲", "down": "▼", "neutral": "■"}
 # ─────────────────────────────────────────────────────────────────────────────
 
 @st.cache_data(ttl=600, show_spinner=False)
-def _cached_briefing_context(filters_key: str, _filters, _stats, _articles):
-    """The context build sweeps every module's queries (~10s). Cache it on the
-    filter set so re-clicking 'Generate read' in the same session is instant."""
-    return build_briefing_context(_filters, sentiment_stats=_stats,
-                                  sentiment_articles=_articles)
+def _cached_group_briefing(filters_key: str, stats_key: str, _filters, _stats, _articles):
+    """The context build sweeps every module's queries (~10s) and (in live mode)
+    calls Grok on top. Cache the whole thing on the filter set + a fingerprint
+    of the current signal picture, so it loads once per session and only
+    recomputes when the filters change or 'Refresh news' pulls new signals."""
+    ctx = build_briefing_context(_filters, sentiment_stats=_stats,
+                                 sentiment_articles=_articles)
+    return generate_group_briefing(ctx)
 
 
 @st.cache_data(ttl=600, show_spinner=False)
@@ -345,28 +348,16 @@ def _render_demand_watch(stats: dict, articles: list, filters: dict):
 
     quiet = (df["_dir"] != "neutral").sum() == 0
 
-    if not quiet:
-        # ── Drivers: mean signal by news theme ────────────────────────
-        _section("What's driving the signal")
-        by_theme = (
-            df.dropna(subset=["demand_change_pct"])
-            .assign(theme_label=df["theme"].map(_THEME_LABEL).fillna(df["theme"]))
-            .groupby("theme_label")["demand_change_pct"].mean()
-            .sort_values()
-        )
-        fig = go.Figure(go.Bar(
-            x=by_theme.values, y=by_theme.index, orientation="h",
-            marker_color=[_HUE_UP if v >= 0 else _HUE_DOWN for v in by_theme.values],
-            text=[_pct_label(v, 1) for v in by_theme.values],
-            textposition="outside",
-            hovertemplate="%{y}: %{x:+.1f}%<extra></extra>",
-        ))
-        tspan = max(abs(by_theme.min()), abs(by_theme.max()), 0.5) * 1.3
-        fig.add_vline(x=0, line_color="rgba(148,163,184,0.35)")
-        fig.update_layout(**_base_layout(height=max(200, 42 * len(by_theme)),
-                                         xaxis=dict(title="", showgrid=False, zeroline=False,
-                                                    range=[-tspan, tspan])))
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    # ── This week's read (full cross-module briefing) ──────────────────
+    _section("This week's read for the group")
+    import json
+    fk = json.dumps({k: str(v) for k, v in (filters or {}).items()}, sort_keys=True)
+    sk = f"{stats.get('total_articles')}|{stats.get('net_demand_signal_pct')}"
+    with st.spinner("Reading every module and writing the briefing…"):
+        briefing = _cached_group_briefing(fk, sk, filters, stats, articles)
+    # st.text (not markdown) so "1." / "-" line starts render literally,
+    # not as auto-numbered / bulleted lists.
+    st.text(briefing)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -407,19 +398,29 @@ def _render_demand_watch(stats: dict, articles: list, filters: dict):
         for _, a in actionable.iterrows():
             _signal_card(a)
 
-    # ── This week's read (full cross-module briefing) ─────────────────
-    st.markdown("<br>", unsafe_allow_html=True)
-    _section("This week's read for the group")
-    if st.button("Generate read", key="gen_briefing"):
-        with st.spinner("Reading every module and writing the briefing…"):
-            import json
-            fk = json.dumps({k: str(v) for k, v in (filters or {}).items()}, sort_keys=True)
-            ctx = _cached_briefing_context(fk, filters, stats, articles)
-            st.session_state["sentiment_briefing"] = generate_group_briefing(ctx)
-    if st.session_state.get("sentiment_briefing"):
-        # st.text (not markdown) so "1." / "-" line starts render literally,
-        # not as auto-numbered / bulleted lists.
-        st.text(st.session_state["sentiment_briefing"])
+    # ── Drivers: mean signal by news theme ──────────────────────────────
+    if not quiet:
+        st.markdown("<br>", unsafe_allow_html=True)
+        _section("What's driving the signal")
+        by_theme = (
+            df.dropna(subset=["demand_change_pct"])
+            .assign(theme_label=df["theme"].map(_THEME_LABEL).fillna(df["theme"]))
+            .groupby("theme_label")["demand_change_pct"].mean()
+            .sort_values()
+        )
+        fig = go.Figure(go.Bar(
+            x=by_theme.values, y=by_theme.index, orientation="h",
+            marker_color=[_HUE_UP if v >= 0 else _HUE_DOWN for v in by_theme.values],
+            text=[_pct_label(v, 1) for v in by_theme.values],
+            textposition="outside",
+            hovertemplate="%{y}: %{x:+.1f}%<extra></extra>",
+        ))
+        tspan = max(abs(by_theme.min()), abs(by_theme.max()), 0.5) * 1.3
+        fig.add_vline(x=0, line_color="rgba(148,163,184,0.35)")
+        fig.update_layout(**_base_layout(height=max(200, 42 * len(by_theme)),
+                                         xaxis=dict(title="", showgrid=False, zeroline=False,
+                                                    range=[-tspan, tspan])))
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 
 def _signal_card(a: pd.Series):
