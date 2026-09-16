@@ -1,5 +1,5 @@
 """
-Google News RSS fallback fetcher for UAE auto-demand news.
+Google News RSS fetcher for German auto-demand news.
 
 Why this exists
 ---------------
@@ -32,7 +32,7 @@ import xml.etree.ElementTree as ET
 import requests
 
 from sentiment.fetchers.gdelt_fetcher import (
-    UAE_AUTO_QUERIES,
+    DE_AUTO_QUERIES,
     _is_relevant,
     _title_key,
     _timespan_days,
@@ -43,25 +43,26 @@ logger = logging.getLogger(__name__)
 _GOOGLE_NEWS_RSS = "https://news.google.com/rss/search"
 _HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; PredictaX/1.0; +demand-advisory)"}
 
-# One Google-News search string per theme in UAE_AUTO_QUERIES, keyed by its
+# One German-language Google-News search string per theme in
+# DE_AUTO_QUERIES, keyed by its
 # `name`. Plain Google News query syntax (space = AND, OR = or, "" = phrase);
 # a `when:<N>d` recency clause is appended per call.
 _RSS_QUERIES: Dict[str, str] = {
-    "uae_auto_demand":   'UAE ("car sales" OR "auto sales" OR "vehicle sales" OR dealership OR showroom)',
-    "ev_market_uae":     'UAE ("electric vehicle" OR "EV charging" OR "electric car" OR "green plate")',
-    "customs_vat":       'UAE ("car prices" OR "customs duty" OR "vehicle import" OR "VAT" OR "registration fee")',
-    "fuel_prices":       'UAE ("petrol price" OR "fuel price" OR "diesel price" OR "oil price")',
-    "uae_macro_economy": 'UAE ("interest rate" OR inflation OR "Central Bank" OR EIBOR OR "non-oil economy")',
-    "luxury_suv_uae":    'UAE ("luxury car" OR "premium SUV" OR "4x4" OR "sports car" OR "Land Cruiser" OR Patrol)',
-    "auto_financing":    'UAE ("car loan" OR "auto finance" OR "car finance rate" OR "Islamic finance" OR Murabaha)',
-    "incentives_offers": 'UAE ("car offers" OR "0% finance" OR "Ramadan offer" OR "trade-in offer" OR "auto promotion")',
+    "de_auto_demand":    'Neuzulassungen OR Autohaus OR "Auto Absatz" OR Autohandel OR KBA',
+    "ev_market_de":      'Elektroauto OR "E-Auto" OR Ladesäule OR Ladeinfrastruktur OR Batteriefabrik',
+    "tax_policy":        '"Kfz-Steuer" OR Dienstwagen OR "CO2-Preis" OR Autopreise OR Zulassungskosten',
+    "fuel_prices":       'Spritpreise OR Benzinpreis OR Dieselpreis OR Strompreis OR Tankstelle',
+    "de_macro_economy":  'EZB OR Leitzins OR Inflation OR Konjunktur OR Rezession Deutschland',
+    "auto_industry_de":  'Autoindustrie OR Werkschließung OR Stellenabbau Automobil OR "IG Metall" OR Autoproduktion',
+    "auto_financing":    'Autokredit OR Autofinanzierung OR Leasing Auto OR Restwert OR Leasingrate',
+    "incentives_offers": 'Neuwagen Rabatt OR "0 Prozent Finanzierung" OR Umweltbonus OR Kaufprämie OR Inzahlungnahme',
 }
 
 _GDELT_DATE_FMT = "%Y%m%dT%H%M%SZ"
 
 
 def _q_by_name(name: str) -> Optional[Dict]:
-    return next((q for q in UAE_AUTO_QUERIES if q["name"] == name), None)
+    return next((q for q in DE_AUTO_QUERIES if q["name"] == name), None)
 
 
 def _to_seendate(pub_raw: str) -> Optional[str]:
@@ -97,7 +98,7 @@ def _split_title(raw_title: str) -> str:
 def _fetch_one(rss_query: str, days: int, max_records: int) -> List[Dict]:
     params = {
         "q": f"{rss_query} when:{days}d",
-        "hl": "en-AE", "gl": "AE", "ceid": "AE:en",
+        "hl": "de", "gl": "DE", "ceid": "DE:de",
     }
     resp = requests.get(_GOOGLE_NEWS_RSS, params=params, headers=_HEADERS, timeout=20)
     resp.raise_for_status()
@@ -117,8 +118,8 @@ def _fetch_one(rss_query: str, days: int, max_records: int) -> List[Dict]:
             "title": _split_title(item.findtext("title") or ""),
             "domain": _domain_from(src_url, src_name),
             "seendate": _to_seendate(item.findtext("pubDate") or ""),
-            "language": "english",
-            "sourcecountry": "United Arab Emirates",
+            "language": "german",
+            "sourcecountry": "Germany",
             "socialimage": None,
         })
     return out
@@ -130,7 +131,7 @@ def fetch_all_themes_rss(
     one_per_day: bool = True,
 ) -> List[Dict]:
     """
-    Fetch recent UAE auto-market news for every theme via Google News RSS and
+    Fetch recent German auto-market news for every theme via Google News RSS and
     return a flat, deduplicated, relevance-gated list of article dicts shaped
     like ``gdelt_fetcher.fetch_all_themes``.
     """

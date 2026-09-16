@@ -64,7 +64,7 @@ def render_regional(filters: dict):
         df["est_gross"] = df.apply(
             lambda r: r["units_sold"] * _GROSS_PER_UNIT[_origin_bucket(r["brand"])], axis=1
         )
-        df["label"] = df["dealer_name"] + " · " + df["area"]
+        df["label"] = df["dealer_name"] + " · " + df["city"]
         has_target = df["attainment_pct"].notna()
 
         # ── Headline row ────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ def render_regional(filters: dict):
                 color="_attain", color_continuous_scale=_ATTAINMENT_SCALE,
                 range_color=_ATTAINMENT_RANGE, color_continuous_midpoint=_ATTAINMENT_MID,
                 hover_name="dealer_name",
-                custom_data=["brand", "area", "emirate", "units_sold", "_rev", "_att_txt", "_yoy"],
+                custom_data=["brand", "city", "state", "units_sold", "_rev", "_att_txt", "_yoy"],
                 map_style="carto-darkmatter",
                 zoom=zoom, center={"lat": (lat0 + lat1) / 2, "lon": (lon0 + lon1) / 2},
             )
@@ -159,7 +159,7 @@ def render_regional(filters: dict):
         board = pd.DataFrame({
             "Store": df["dealer_name"],
             "Franchise": df["brand"],
-            "Emirate": df["emirate"],
+            "State": df["state"],
             "Units": df["units_sold"],
             "Revenue (AED M)": (df["revenue"] / 1e6).round(1),
             "YoY units %": df["yoy_units_pct"].round(1),

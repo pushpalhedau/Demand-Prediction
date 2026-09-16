@@ -1,6 +1,11 @@
 import streamlit as st
 import os
 
+from utils.i18n import (
+    t, tv, tv_series, is_de,
+    fmt_money, fmt_num, fmt_pct, fmt_date, plotly_number_format,
+)
+
 def inject_custom_css():
     """
     Inject custom HSL CSS styling from custom.css into Streamlit app.
@@ -84,39 +89,45 @@ _HUE_MARKER = "#f59e0b"           # "forecast starts here" separators
 
 
 def _fmt_money(value: float) -> str:
-    """Compact AED for KPI cards and labels: AED 3.04B / AED 742.0M / AED 940K."""
-    value = float(value or 0)
-    if abs(value) >= 1_000_000_000:
-        return f"AED {value / 1_000_000_000:.2f}B"
-    if abs(value) >= 1_000_000:
-        return f"AED {value / 1_000_000:.1f}M"
-    if abs(value) >= 1_000:
-        return f"AED {value / 1_000:.0f}K"
-    return f"AED {value:,.0f}"
+    """
+    Compact EUR for KPI cards and labels, in the active language.
+      EN: EUR 3.04B / EUR 742.0M / EUR 940K
+      DE: 3,04 Mrd. EUR / 742,0 Mio. EUR / 940 Tsd. EUR
+
+    Thin wrapper over utils.i18n.fmt_money, kept because the dashboards import
+    `_fmt_money` by name in a few dozen places.
+    """
+    return fmt_money(value, compact=True)
 
 
 def _compact(n: float) -> str:
-    """Compact count for headline numbers and direct labels: 9.4K / 1.2M / 320."""
+    """
+    Compact count for headline numbers and direct labels.
+      EN: 9.4K / 1.2M / 320        DE: 9,4 Tsd. / 1,2 Mio. / 320
+    """
     n = float(n or 0)
-    if abs(n) >= 1_000_000:
+    a = abs(n)
+    if is_de():
+        if a >= 1_000_000:
+            return f"{fmt_num(n / 1_000_000, 1)} Mio."
+        if a >= 10_000:
+            return f"{fmt_num(n / 1_000, 0)} Tsd."
+        if a >= 1_000:
+            return f"{fmt_num(n / 1_000, 1)} Tsd."
+        return fmt_num(n, 0)
+    if a >= 1_000_000:
         return f"{n / 1_000_000:.1f}M"
-    if abs(n) >= 10_000:
+    if a >= 10_000:
         return f"{n / 1_000:.0f}K"
-    if abs(n) >= 1_000:
+    if a >= 1_000:
         return f"{n / 1_000:.1f}K"
     return f"{n:,.0f}"
 
 
 def _pct_label(value, digits: int = 0) -> str:
-    """Signed percent with an explicit + / − and a real minus glyph: +8% / −3%."""
-    if value is None:
-        return "n/a"
-    s = f"{abs(value):.{digits}f}%"
-    if value > 0:
-        return f"+{s}"
-    if value < 0:
-        return f"−{s}"
-    return s
+    """Signed percent with an explicit + / − and a real minus glyph.
+      EN: +8% / −3%        DE: +8 % / −3 %"""
+    return fmt_pct(value, digits=digits, signed=True)
 
 
 def _section(title: str, caption: str = None):
@@ -135,6 +146,8 @@ def _base_layout(height: int = 340, legend: bool = False, **overrides) -> dict:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(color=_INK, family=FONT, size=12),
+        # Axis and hover numbers must use the same separators as the KPI cards.
+        **plotly_number_format(),
         xaxis=dict(showgrid=False, title=""),
         yaxis=dict(showgrid=True, gridcolor=_GRID, title=""),
         margin=dict(l=0, r=0, t=10, b=0),

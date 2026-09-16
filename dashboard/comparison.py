@@ -52,8 +52,8 @@ def render_comparison(filters: dict):
 # ─────────────────────────────────────────────────────────────────────────────
 # How we're tracking vs last year
 #
-# There is no import-vs-domestic tariff view in the UAE build: every vehicle is
-# imported and every brand pays the same flat 5% GCC customs duty, always inside
+# There is deliberately no import-vs-domestic tariff view in this build. It
+# would be possible for Germany (domestic industry, plus EU duties on Chinese
 # the retail price. The old "Tariff exposure by franchise" subtab was
 # removed in the UAE conversion, so this tab is a single view.
 # ─────────────────────────────────────────────────────────────────────────────

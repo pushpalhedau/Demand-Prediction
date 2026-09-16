@@ -30,7 +30,7 @@ def render_ai_insights(filters: dict):
         #
         # with rec_col2:
         #     st.success("**EV Adoption Acceleration:** Electric and Hybrid categories show a compound **9.4% MoM growth rate** in Dubai and Abu Dhabi, aided by expanding EV charging infrastructure. **Action:** Prioritize fast-charger installation at Platinum and Gold tier rooftops in Dubai and Al Ain.")
-        #     st.error("**Holding Cost Risk:** Slow-moving Pickup inventory in the northern emirates (Ajman, RAK) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
+        #     st.error("**Holding Cost Risk:** Slow-moving Pickup inventory in the northern states (Ajman, RAK) has exceeded an average of **72 days in stock**, accumulating high estimated holding costs. **Action:** Authorize a selective **4.5% dealer discount** to clear lot stock before the next shipment arrival.")
         #     
         # st.markdown("<br>", unsafe_allow_html=True)
         

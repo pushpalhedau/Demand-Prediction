@@ -1,106 +1,91 @@
-dealer_id,dealer_name,brand,emirate,area,address,po_box,tier,established_year,monthly_capacity,showroom_area_sqft,service_center,ev_charging_station,num_salespeople,annual_target_units,performance_score,google_rating,latitude,longitude
-DLR0001,Honda Deira,Honda,Dubai,Deira,"Trade Centre, Airport Road",P.O. Box 89033,Silver,2007,499,37898,False,True,18,3933,92.7,4.3,25.27323,55.27954
-DLR0002,Hyundai Centre Deira Automarket,Hyundai,Dubai,Deira Automarket,"Auto Mall, Al Ittihad Road",P.O. Box 13690,Platinum,1991,496,41435,True,True,74,1910,60.8,3.7,25.29133,55.34023
-DLR0003,Mitsubishi Emirates Bur Dubai,Mitsubishi,Dubai,Bur Dubai,"Showroom, Al Ittihad Road",P.O. Box 29661,Silver,2011,287,42863,False,True,39,2825,68.3,4.7,25.24761,55.29672
-DLR0004,Premier Mercedes-Benz Dubai Marina,Mercedes-Benz,Dubai,Dubai Marina,"Motor City, Emirates Road",P.O. Box 14546,Platinum,1988,595,18299,True,False,7,3592,61.9,3.7,25.03914,55.1375
-DLR0005,Kia Deira,Kia,Dubai,Deira,"Auto Mall, Emirates Road",P.O. Box 81283,Platinum,2003,498,23874,True,True,47,835,73.4,4.7,25.2601,55.31059
-DLR0006,Toyota Emirates Al Quoz,Toyota,Dubai,Al Quoz,"Motor City, Industrial Area",P.O. Box 73393,Silver,2012,213,37971,True,False,79,4908,88.5,3.7,25.15396,55.25188
-DLR0007,Hyundai Showroom Sheikh Zayed Road,Hyundai,Dubai,Sheikh Zayed Road,"Trade Centre, Airport Road",P.O. Box 47023,Gold,2016,228,43490,True,True,73,5427,95.2,4.8,25.171,55.32845
-DLR0008,Kia Showroom Sheikh Zayed Road,Kia,Dubai,Sheikh Zayed Road,"Showroom, Al Ittihad Road",P.O. Box 5897,Gold,1991,365,36425,True,True,18,5352,90.4,4.8,25.20089,55.28597
-DLR0009,Gulf Toyota Al Quoz,Toyota,Dubai,Al Quoz,"Auto Mall, Maliya Street",P.O. Box 12764,Silver,2001,532,35725,True,False,53,4908,93.5,3.5,25.1019,55.255
-DLR0010,Bur Dubai Mitsubishi,Mitsubishi,Dubai,Bur Dubai,"Showroom, Sheikh Zayed Road",P.O. Box 30399,Gold,2008,365,34975,False,True,60,5756,97.3,4.1,25.28516,55.25593
-DLR0011,Al Futtaim Mercedes-Benz Al Quoz,Mercedes-Benz,Dubai,Al Quoz,"Motor City, Corniche Road",P.O. Box 78923,Silver,1990,532,24778,True,True,9,2045,69.0,4.3,25.15279,55.27314
-DLR0012,Toyota Showroom Bur Dubai,Toyota,Dubai,Bur Dubai,"Showroom, Emirates Road",P.O. Box 81981,Gold,1996,365,22502,True,False,43,4717,58.7,4.1,25.29622,55.30601
-DLR0013,Bur Dubai Toyota,Toyota,Dubai,Bur Dubai,"Auto Mall, Industrial Area",P.O. Box 58659,Gold,1999,385,11977,True,False,76,2001,93.1,4.5,25.25529,55.32766
-DLR0014,Mitsubishi Al Quoz,Mitsubishi,Dubai,Al Quoz,"Trade Centre, Sheikh Zayed Road",P.O. Box 13611,Gold,1996,511,44333,True,False,27,3759,58.7,4.6,25.09659,55.27652
-DLR0015,Al Futtaim Mercedes-Benz Al Quoz,Mercedes-Benz,Dubai,Al Quoz,"Auto Mall, Al Ittihad Road",P.O. Box 88680,Platinum,2008,329,25430,True,True,14,5236,82.5,4.8,25.17009,55.1961
-DLR0016,Gulf Mitsubishi Al Ain,Mitsubishi,Abu Dhabi,Al Ain,"Auto Mall, Al Wahda Street",P.O. Box 9602,Silver,2017,345,21841,True,True,73,5636,68.8,4.8,24.16598,55.71537
-DLR0017,Al Ain Toyota,Toyota,Abu Dhabi,Al Ain,"Motor City, Emirates Road",P.O. Box 90115,Gold,2002,544,40863,True,True,75,1884,96.4,4.5,24.16347,55.76496
-DLR0018,BMW Emirates Musaffah,BMW,Abu Dhabi,Musaffah,"Trade Centre, Industrial Area",P.O. Box 86435,Silver,2015,517,43358,True,False,31,3869,71.5,4.9,24.36198,54.50317
-DLR0019,Gulf Land Rover Abu Dhabi City,Land Rover,Abu Dhabi,Abu Dhabi City,"Auto Mall, Emirates Road",P.O. Box 91285,Silver,1995,269,38517,True,False,29,2097,55.4,4.7,24.46371,54.39448
-DLR0020,MG Abu Dhabi City,MG,Abu Dhabi,Abu Dhabi City,"Showroom, Industrial Area",P.O. Box 50483,Platinum,1999,106,14190,True,True,42,5046,57.0,3.8,24.49365,54.33962
-DLR0021,Premier Hyundai Khalifa City,Hyundai,Abu Dhabi,Khalifa City,"Showroom, Emirates Road",P.O. Box 17984,Silver,2003,293,22506,True,False,46,2848,69.9,3.5,24.44074,54.62725
-DLR0022,Toyota Showroom Khalifa City,Toyota,Abu Dhabi,Khalifa City,"Trade Centre, Maliya Street",P.O. Box 46534,Gold,2001,351,30682,False,False,51,4129,85.7,4.1,24.41131,54.56657
-DLR0023,Hyundai Centre Musaffah,Hyundai,Abu Dhabi,Musaffah,"Auto Mall, Al Wahda Street",P.O. Box 15698,Gold,2001,308,28870,True,False,26,1078,81.6,4.8,24.34192,54.50647
-DLR0024,Mitsubishi Emirates Musaffah,Mitsubishi,Abu Dhabi,Musaffah,"Motor City, Emirates Road",P.O. Box 14723,Silver,1988,582,37855,True,False,54,2508,69.0,4.5,24.33241,54.50187
-DLR0025,Premier MG Mussafah Auto Market,MG,Abu Dhabi,Mussafah Auto Market,"Showroom, Al Wahda Street",P.O. Box 79303,Platinum,1990,500,20300,True,True,54,3701,83.5,4.3,24.35972,54.4847
-DLR0026,Gulf Toyota Abu Dhabi City,Toyota,Abu Dhabi,Abu Dhabi City,"Motor City, Sheikh Zayed Road",P.O. Box 74791,Gold,1999,269,17113,True,False,11,1665,93.2,3.5,24.48108,54.35344
-DLR0027,MG Showroom Mussafah Auto Market,MG,Abu Dhabi,Mussafah Auto Market,"Auto Mall, Maliya Street",P.O. Box 49339,Gold,1997,355,31955,True,True,57,5781,84.1,3.9,24.35875,54.48595
-DLR0028,Hyundai Emirates Musaffah,Hyundai,Abu Dhabi,Musaffah,"Showroom, Emirates Road",P.O. Box 22776,Gold,1991,280,17867,True,False,10,3952,59.5,4.3,24.3187,54.54016
-DLR0029,Musaffah Toyota,Toyota,Abu Dhabi,Musaffah,"Auto Mall, Sheikh Zayed Road",P.O. Box 12669,Gold,1994,245,43752,True,False,25,3130,89.0,3.6,24.36399,54.49427
-DLR0030,Nissan Showroom Musaffah,Nissan,Abu Dhabi,Musaffah,"Trade Centre, Al Wahda Street",P.O. Box 14265,Silver,2015,232,11585,False,False,66,1796,97.3,4.5,24.37047,54.47312
-DLR0031,Gulf Nissan Al Rahmaniya,Nissan,Sharjah,Al Rahmaniya,"Motor City, Al Wahda Street",P.O. Box 30882,Silver,1996,285,38031,True,False,6,5649,65.0,4.4,25.30731,55.46643
-DLR0032,Al Rahmaniya Toyota,Toyota,Sharjah,Al Rahmaniya,"Auto Mall, Emirates Road",P.O. Box 19729,Silver,2005,126,12899,True,False,39,3756,95.6,4.7,25.30474,55.43871
-DLR0033,Gulf Lexus Al Rahmaniya,Lexus,Sharjah,Al Rahmaniya,"Motor City, Maliya Street",P.O. Box 70045,Silver,2005,511,27197,True,False,27,4125,69.1,3.6,25.28915,55.45687
-DLR0034,Mitsubishi Showroom Industrial Area,Mitsubishi,Sharjah,Industrial Area,"Trade Centre, Al Ittihad Road",P.O. Box 68343,Silver,2005,591,22746,True,True,21,465,95.9,3.5,25.33777,55.46654
-DLR0035,Hyundai Emirates Industrial Area,Hyundai,Sharjah,Industrial Area,"Trade Centre, Industrial Area",P.O. Box 35981,Gold,2000,342,35713,True,True,19,2089,69.4,3.7,25.35598,55.39386
-DLR0036,Gulf Mazda Al Rahmaniya,Mazda,Sharjah,Al Rahmaniya,"Trade Centre, Emirates Road",P.O. Box 43352,Silver,2012,182,24464,True,True,12,5967,94.7,4.2,25.33906,55.49209
-DLR0037,Toyota Centre Industrial Area,Toyota,Sharjah,Industrial Area,"Motor City, Corniche Road",P.O. Box 4881,Gold,2017,570,40707,True,True,30,4515,74.8,3.4,25.33352,55.40567
-DLR0038,Chevrolet Emirates Al Nahda,Chevrolet,Sharjah,Al Nahda,"Auto Mall, Sheikh Zayed Road",P.O. Box 46262,Gold,1995,431,11883,True,True,79,2841,65.1,3.6,25.27452,55.34681
-DLR0039,Premier Mazda Industrial Area,Mazda,Sharjah,Industrial Area,"Motor City, Sheikh Zayed Road",P.O. Box 70182,Silver,1995,244,41511,True,True,34,1245,88.2,3.5,25.28966,55.4279
-DLR0040,Premier Honda Industrial Area,Honda,Sharjah,Industrial Area,"Motor City, Emirates Road",P.O. Box 11420,Silver,1991,173,20264,True,False,28,5663,84.4,3.4,25.29176,55.4603
-DLR0041,Al Futtaim BMW Al Rahmaniya,BMW,Sharjah,Al Rahmaniya,"Motor City, Emirates Road",P.O. Box 36156,Gold,2017,409,21304,True,True,69,5347,60.9,4.7,25.30246,55.51906
-DLR0042,Premier Toyota Sharjah City,Toyota,Sharjah,Sharjah City,"Auto Mall, Industrial Area",P.O. Box 66458,Silver,2003,114,40066,True,False,35,3260,63.1,4.8,25.34295,55.44263
-DLR0043,Al Futtaim Hyundai Industrial Area,Hyundai,Sharjah,Industrial Area,"Showroom, Corniche Road",P.O. Box 7239,Gold,2008,179,33873,True,True,20,2292,90.1,3.4,25.27234,55.46078
-DLR0044,Hyundai Showroom Industrial Area,Hyundai,Sharjah,Industrial Area,"Auto Mall, Industrial Area",P.O. Box 54689,Gold,2014,195,42544,True,True,69,5178,93.2,3.8,25.32769,55.46582
-DLR0045,Premier Lexus Sharjah City,Lexus,Sharjah,Sharjah City,"Trade Centre, Emirates Road",P.O. Box 84386,Gold,1988,319,42632,True,True,24,3968,90.8,3.6,25.31274,55.40927
-DLR0046,Premier Mitsubishi Al Jurf,Mitsubishi,Ajman,Al Jurf,"Trade Centre, Airport Road",P.O. Box 96736,Silver,1994,459,9702,True,False,55,773,90.8,3.8,25.37093,55.46356
-DLR0047,Premier Nissan Ajman City,Nissan,Ajman,Ajman City,"Motor City, Al Ittihad Road",P.O. Box 23771,Platinum,1990,546,11264,True,False,69,3322,92.6,4.5,25.40649,55.4797
-DLR0048,Toyota Emirates Ajman City,Toyota,Ajman,Ajman City,"Auto Mall, Industrial Area",P.O. Box 7044,Gold,2011,291,44289,True,False,38,1882,71.2,4.3,25.40493,55.48336
-DLR0049,Gulf Lexus Ajman City,Lexus,Ajman,Ajman City,"Motor City, Airport Road",P.O. Box 71620,Gold,1999,471,24351,True,False,68,4619,61.8,4.4,25.38065,55.48938
-DLR0050,Toyota Showroom Al Jurf,Toyota,Ajman,Al Jurf,"Auto Mall, Al Ittihad Road",P.O. Box 66040,Platinum,2002,469,40156,True,False,63,1105,56.5,3.7,25.38978,55.4782
-DLR0051,Toyota Al Jurf,Toyota,Ajman,Al Jurf,"Motor City, Al Ittihad Road",P.O. Box 65855,Gold,2017,356,43832,True,False,56,2427,86.0,3.5,25.45762,55.48969
-DLR0052,Al Futtaim Nissan Al Jurf,Nissan,Ajman,Al Jurf,"Auto Mall, Al Ittihad Road",P.O. Box 52258,Gold,1999,208,15097,True,False,24,4290,56.7,4.1,25.38314,55.43324
-DLR0053,Mazda Emirates Ajman City,Mazda,Ajman,Ajman City,"Auto Mall, Corniche Road",P.O. Box 36461,Gold,2001,107,40777,False,True,72,1256,71.1,3.7,25.42137,55.5418
-DLR0054,Chevrolet Emirates Ajman City,Chevrolet,Ajman,Ajman City,"Motor City, Corniche Road",P.O. Box 23729,Platinum,1990,347,42571,True,False,57,3528,56.0,3.8,25.38419,55.56288
-DLR0055,Premier Toyota Al Jurf,Toyota,Ajman,Al Jurf,"Showroom, Sheikh Zayed Road",P.O. Box 65302,Gold,1993,159,32087,True,False,67,4954,92.9,3.7,25.43614,55.51587
-DLR0056,Ajman City Toyota,Toyota,Ajman,Ajman City,"Showroom, Al Ittihad Road",P.O. Box 50402,Gold,2006,329,17241,True,False,63,2418,74.5,4.0,25.37129,55.49313
-DLR0057,Toyota Centre Ajman City,Toyota,Ajman,Ajman City,"Showroom, Sheikh Zayed Road",P.O. Box 12289,Silver,2004,186,30362,True,True,44,4594,76.6,4.4,25.45242,55.54886
-DLR0058,Mitsubishi Emirates Ajman City,Mitsubishi,Ajman,Ajman City,"Auto Mall, Maliya Street",P.O. Box 24654,Gold,2007,574,21099,True,False,10,5713,67.0,4.8,25.39615,55.52323
-DLR0059,Toyota Centre Al Jurf,Toyota,Ajman,Al Jurf,"Trade Centre, Industrial Area",P.O. Box 40010,Platinum,2008,540,27812,False,False,75,5731,56.4,4.1,25.36932,55.52805
-DLR0060,Al Futtaim Toyota Ajman City,Toyota,Ajman,Ajman City,"Auto Mall, Industrial Area",P.O. Box 2355,Gold,2017,339,21588,False,False,10,1316,91.2,4.6,25.38784,55.54832
-DLR0061,RAK City BMW,BMW,Ras Al Khaimah,RAK City,"Motor City, Maliya Street",P.O. Box 90157,Gold,2009,570,38891,True,False,31,707,65.0,4.3,25.77032,55.98512
-DLR0062,Nissan Al Nakheel,Nissan,Ras Al Khaimah,Al Nakheel,"Showroom, Airport Road",P.O. Box 34908,Platinum,1997,594,14899,True,False,21,1551,67.7,4.6,25.71957,55.98983
-DLR0063,RAK City Ford,Ford,Ras Al Khaimah,RAK City,"Showroom, Maliya Street",P.O. Box 55993,Gold,1994,440,21171,True,True,28,5884,62.6,4.8,25.82824,55.9292
-DLR0064,Gulf MG RAK City,MG,Ras Al Khaimah,RAK City,"Auto Mall, Al Ittihad Road",P.O. Box 35610,Gold,2005,581,13463,True,False,30,3241,89.8,3.6,25.81283,55.97387
-DLR0065,Ford RAK City,Ford,Ras Al Khaimah,RAK City,"Trade Centre, Sheikh Zayed Road",P.O. Box 97742,Silver,1999,224,39469,True,True,44,3237,85.9,4.6,25.7412,55.98742
-DLR0066,Premier Toyota RAK City,Toyota,Ras Al Khaimah,RAK City,"Auto Mall, Industrial Area",P.O. Box 89526,Silver,2009,462,37092,True,False,29,4449,89.6,4.6,25.78637,55.98286
-DLR0067,Al Futtaim Nissan RAK City,Nissan,Ras Al Khaimah,RAK City,"Motor City, Corniche Road",P.O. Box 33793,Silver,1989,356,8801,True,True,50,2674,96.6,3.5,25.83393,55.94635
-DLR0068,Gulf Toyota Al Nakheel,Toyota,Ras Al Khaimah,Al Nakheel,"Trade Centre, Industrial Area",P.O. Box 71605,Gold,1988,510,27453,True,False,45,5040,94.1,3.8,25.78852,55.98431
-DLR0069,Al Futtaim Nissan Al Nakheel,Nissan,Ras Al Khaimah,Al Nakheel,"Auto Mall, Maliya Street",P.O. Box 1567,Gold,2004,200,26197,True,False,29,3813,79.4,3.8,25.74603,55.97234
-DLR0070,Mitsubishi Emirates RAK City,Mitsubishi,Ras Al Khaimah,RAK City,"Motor City, Al Wahda Street",P.O. Box 56145,Gold,2002,546,44964,True,False,25,4197,96.4,4.1,25.76403,55.96924
-DLR0071,Lexus RAK City,Lexus,Ras Al Khaimah,RAK City,"Motor City, Maliya Street",P.O. Box 9802,Silver,2013,354,10218,False,False,60,1640,71.7,4.3,25.79498,55.9837
-DLR0072,Al Nakheel Ford,Ford,Ras Al Khaimah,Al Nakheel,"Motor City, Emirates Road",P.O. Box 7550,Silver,1992,480,19348,True,True,39,4830,90.5,3.5,25.73911,55.94585
-DLR0073,Ford Emirates RAK City,Ford,Ras Al Khaimah,RAK City,"Auto Mall, Sheikh Zayed Road",P.O. Box 25209,Silver,1991,237,33051,True,False,46,2142,65.8,4.5,25.803,55.93181
-DLR0074,Al Futtaim Chevrolet Al Nakheel,Chevrolet,Ras Al Khaimah,Al Nakheel,"Trade Centre, Al Ittihad Road",P.O. Box 91693,Gold,1993,146,33291,True,True,17,4580,76.4,3.6,25.78542,55.97114
-DLR0075,Al Futtaim Toyota Al Nakheel,Toyota,Ras Al Khaimah,Al Nakheel,"Auto Mall, Al Ittihad Road",P.O. Box 91309,Silver,2013,532,35384,True,False,42,5207,76.3,3.7,25.72619,55.93506
-DLR0076,Gulf Toyota Fujairah City,Toyota,Fujairah,Fujairah City,"Auto Mall, Emirates Road",P.O. Box 65488,Silver,1991,587,22508,True,False,71,4830,89.4,3.8,25.13147,56.37449
-DLR0077,Gulf Kia Fujairah City,Kia,Fujairah,Fujairah City,"Motor City, Al Ittihad Road",P.O. Box 31923,Silver,1992,512,37324,True,True,6,1288,95.7,3.4,25.10867,56.33394
-DLR0078,Al Futtaim MG Fujairah City,MG,Fujairah,Fujairah City,"Trade Centre, Airport Road",P.O. Box 22796,Gold,2000,523,24460,True,True,14,5464,95.5,4.5,25.1352,56.32862
-DLR0079,MG Showroom Fujairah City,MG,Fujairah,Fujairah City,"Motor City, Airport Road",P.O. Box 10180,Gold,2005,184,21247,True,False,63,3727,93.7,4.0,25.17142,56.33595
-DLR0080,Hyundai Fujairah City,Hyundai,Fujairah,Fujairah City,"Trade Centre, Al Ittihad Road",P.O. Box 67781,Silver,1990,161,41395,True,True,50,4415,75.6,3.8,25.15533,56.28874
-DLR0081,Toyota Centre Fujairah City,Toyota,Fujairah,Fujairah City,"Trade Centre, Corniche Road",P.O. Box 51468,Gold,2010,189,22047,True,False,20,3864,91.0,4.9,25.13472,56.3125
-DLR0082,Toyota Fujairah City,Toyota,Fujairah,Fujairah City,"Showroom, Airport Road",P.O. Box 85313,Gold,2005,81,17312,True,True,63,1114,86.6,4.4,25.11015,56.36263
-DLR0083,Toyota Fujairah City,Toyota,Fujairah,Fujairah City,"Auto Mall, Corniche Road",P.O. Box 64923,Platinum,1992,125,15271,True,False,18,4737,86.6,4.3,25.09858,56.34635
-DLR0084,Al Futtaim Toyota Dibba,Toyota,Fujairah,Dibba,"Auto Mall, Corniche Road",P.O. Box 12329,Gold,2003,135,37705,True,False,53,5126,63.9,4.2,25.60004,56.30536
-DLR0085,Al Futtaim Toyota Fujairah City,Toyota,Fujairah,Fujairah City,"Trade Centre, Al Ittihad Road",P.O. Box 35281,Silver,1991,457,40085,True,True,66,4684,92.7,3.6,25.1268,56.27876
-DLR0086,Ford Emirates Dibba,Ford,Fujairah,Dibba,"Trade Centre, Maliya Street",P.O. Box 74834,Platinum,2010,439,13172,True,False,14,1644,76.7,4.9,25.60557,56.2622
-DLR0087,Toyota Showroom Fujairah City,Toyota,Fujairah,Fujairah City,"Showroom, Maliya Street",P.O. Box 74516,Silver,1997,514,16744,True,False,48,1910,69.2,4.1,25.12578,56.34266
-DLR0088,Gulf Toyota Dibba,Toyota,Fujairah,Dibba,"Showroom, Al Ittihad Road",P.O. Box 18744,Platinum,1992,525,28077,True,False,58,5121,75.0,4.7,25.59292,56.27518
-DLR0089,Fujairah City Nissan,Nissan,Fujairah,Fujairah City,"Showroom, Al Ittihad Road",P.O. Box 49012,Silver,1993,259,37835,True,True,24,2140,66.2,4.5,25.11629,56.32435
-DLR0090,Al Futtaim BMW Dibba,BMW,Fujairah,Dibba,"Motor City, Al Ittihad Road",P.O. Box 34594,Silver,1988,516,27139,False,False,33,2501,90.8,4.2,25.61531,56.22448
-DLR0091,Al Futtaim Suzuki Al Salamah,Suzuki,Umm Al Quwain,Al Salamah,"Trade Centre, Sheikh Zayed Road",P.O. Box 25018,Platinum,2017,378,8356,True,False,62,2248,97.8,4.5,25.52855,55.66627
-DLR0092,UAQ City Toyota,Toyota,Umm Al Quwain,UAQ City,"Showroom, Al Ittihad Road",P.O. Box 77577,Silver,2005,551,19883,False,True,32,1705,94.5,3.6,25.60078,55.57547
-DLR0093,MG Centre Al Salamah,MG,Umm Al Quwain,Al Salamah,"Trade Centre, Airport Road",P.O. Box 51169,Gold,2015,270,18326,False,True,69,4188,66.8,3.7,25.49972,55.68733
-DLR0094,Nissan Emirates Al Salamah,Nissan,Umm Al Quwain,Al Salamah,"Showroom, Airport Road",P.O. Box 33146,Platinum,1991,482,20953,True,False,6,4853,67.6,4.8,25.57943,55.71503
-DLR0095,UAQ City Toyota,Toyota,Umm Al Quwain,UAQ City,"Trade Centre, Al Ittihad Road",P.O. Box 17893,Gold,2013,330,8314,False,False,74,2611,93.7,4.9,25.56584,55.52763
-DLR0096,Hyundai Showroom UAQ City,Hyundai,Umm Al Quwain,UAQ City,"Motor City, Al Wahda Street",P.O. Box 35901,Gold,2013,208,23146,True,True,27,5972,55.3,4.5,25.59359,55.54557
-DLR0097,Kia Al Salamah,Kia,Umm Al Quwain,Al Salamah,"Showroom, Maliya Street",P.O. Box 71074,Silver,1991,461,29389,False,False,41,1814,84.3,3.8,25.57436,55.69451
-DLR0098,Mercedes-Benz Showroom Al Salamah,Mercedes-Benz,Umm Al Quwain,Al Salamah,"Auto Mall, Maliya Street",P.O. Box 11438,Silver,1989,355,25293,True,False,13,2858,71.5,3.7,25.56503,55.63824
-DLR0099,Premier Nissan UAQ City,Nissan,Umm Al Quwain,UAQ City,"Trade Centre, Al Wahda Street",P.O. Box 70628,Silver,2016,595,14783,True,False,6,5244,85.7,3.5,25.52309,55.58238
-DLR0100,Kia Centre Al Salamah,Kia,Umm Al Quwain,Al Salamah,"Auto Mall, Airport Road",P.O. Box 53811,Platinum,2011,127,38812,True,False,61,4984,76.2,3.5,25.55804,55.686
-DLR0101,Toyota Emirates UAQ City,Toyota,Umm Al Quwain,UAQ City,"Trade Centre, Maliya Street",P.O. Box 34297,Silver,1992,524,24194,False,True,33,2051,57.7,4.5,25.54384,55.54749
-DLR0102,Al Futtaim Honda Al Salamah,Honda,Umm Al Quwain,Al Salamah,"Showroom, Al Wahda Street",P.O. Box 11297,Gold,2012,464,25405,True,True,21,4778,95.2,4.2,25.54505,55.70044
-DLR0103,Lexus UAQ City,Lexus,Umm Al Quwain,UAQ City,"Auto Mall, Emirates Road",P.O. Box 47256,Platinum,2009,168,44731,False,False,6,5881,60.9,4.5,25.568,55.52253
-DLR0104,Gulf Suzuki UAQ City,Suzuki,Umm Al Quwain,UAQ City,"Trade Centre, Al Wahda Street",P.O. Box 82837,Silver,2001,356,25118,True,True,27,3264,57.8,3.4,25.58625,55.53937
-DLR0105,Al Salamah MG,MG,Umm Al Quwain,Al Salamah,"Trade Centre, Al Wahda Street",P.O. Box 61966,Silver,1988,520,35987,False,False,54,3306,66.5,4.0,25.50522,55.64769
+dealer_id,dealer_name,brand,state,city,address,postal_code,tier,established_year,monthly_capacity,showroom_area_sqm,service_center,ev_charging_station,num_salespeople,annual_target_units,performance_score,google_rating,latitude,longitude
+DLR0001,BMW Zentrum Dortmund,BMW,Nordrhein-Westfalen,Dortmund,Am Autohof 46,44106,Gold,2014,352,779,True,True,46,3066,72.4,4.3,51.48894,7.45012
+DLR0002,Opel Niederlassung Köln,Opel,Nordrhein-Westfalen,Köln,Robert-Bosch-Straße 127,50184,Gold,1955,294,2727,True,True,47,1141,97.6,3.8,50.94803,7.00936
+DLR0003,Autohaus Richter Duisburg,Tesla,Nordrhein-Westfalen,Duisburg,Otto-Hahn-Straße 50,47702,Silver,1968,201,1812,True,True,22,3321,58.3,3.7,51.41773,6.71935
+DLR0004,Volkswagen Zentrum Essen,Volkswagen,Nordrhein-Westfalen,Essen,Rudolf-Diesel-Straße 37,45586,Gold,1996,433,422,True,False,40,4070,82.3,3.5,51.43741,6.96439
+DLR0005,Autohaus Schmidt Bochum,Mercedes-Benz,Nordrhein-Westfalen,Bochum,Industriestraße 37,44100,Silver,1967,125,2118,True,True,54,1062,89.2,4.4,51.48651,7.22799
+DLR0006,Autohaus Köln-Wagner,Volkswagen,Nordrhein-Westfalen,Köln,Bundesstraße 171,50743,Gold,2003,445,1937,True,True,10,4041,57.9,3.6,50.95681,6.99151
+DLR0007,Auto Koch Düsseldorf,Seat,Nordrhein-Westfalen,Düsseldorf,Industriestraße 41,40851,Platinum,1970,470,2414,False,True,17,4111,76.7,3.4,51.22197,6.74346
+DLR0008,Hyundai Niederlassung Düsseldorf,Hyundai,Nordrhein-Westfalen,Düsseldorf,Gewerbering 161,40992,Silver,1970,394,1072,False,True,10,705,57.0,4.9,51.23562,6.72895
+DLR0009,Auto Koch Köln,Audi,Nordrhein-Westfalen,Köln,Daimlerstraße 65,50948,Silver,1965,112,1957,True,False,12,4050,86.4,4.3,50.90851,6.99208
+DLR0010,Auto Bauer Essen,Volkswagen,Nordrhein-Westfalen,Essen,Carl-Benz-Straße 85,45488,Gold,2013,227,1693,True,True,13,3073,57.4,3.8,51.40743,7.01561
+DLR0011,Auto Wolf Bochum,BMW,Nordrhein-Westfalen,Bochum,Robert-Bosch-Straße 166,44173,Silver,1983,440,986,True,True,57,3060,67.5,4.6,51.46053,7.2382
+DLR0012,Auto Koch Bochum,BMW,Nordrhein-Westfalen,Bochum,Otto-Hahn-Straße 10,44270,Silver,2002,351,1700,True,True,50,591,66.1,4.3,51.44156,7.23314
+DLR0013,Autohaus Dortmund-Schmidt,MINI,Nordrhein-Westfalen,Dortmund,Gewerbering 145,44177,Silver,1960,467,1438,False,False,15,570,77.4,3.7,51.51555,7.44436
+DLR0014,Volkswagen Zentrum Essen,Volkswagen,Nordrhein-Westfalen,Essen,Rudolf-Diesel-Straße 166,45729,Silver,1959,448,431,True,True,58,1092,80.1,4.0,51.44852,6.98216
+DLR0015,Ford Zentrum Dortmund,Ford,Nordrhein-Westfalen,Dortmund,Carl-Benz-Straße 126,44904,Gold,2011,163,1439,True,False,44,2253,76.7,4.7,51.53088,7.42474
+DLR0016,Autohaus Wolf Nürnberg,Volkswagen,Bayern,Nürnberg,Bundesstraße 54,90417,Platinum,2012,299,436,True,True,55,662,75.3,4.3,49.43393,11.03756
+DLR0017,Autohaus Augsburg-Hoffmann,Seat,Bayern,Augsburg,Otto-Hahn-Straße 32,86541,Platinum,1955,324,1172,False,True,27,3714,59.9,4.2,48.39714,10.92093
+DLR0018,Autohaus Augsburg-Wolf,Mercedes-Benz,Bayern,Augsburg,Bundesstraße 76,86805,Silver,1976,431,2270,True,False,35,3319,77.2,4.7,48.36736,10.89429
+DLR0019,Autohaus Ingolstadt-Klein,Mercedes-Benz,Bayern,Ingolstadt,Carl-Benz-Straße 161,85409,Silver,1990,452,2592,True,False,57,2048,58.2,4.1,48.72145,11.43069
+DLR0020,Auto Becker Regensburg,Volkswagen,Bayern,Regensburg,Gewerbering 108,93175,Gold,2003,330,2647,True,False,28,324,71.0,4.8,48.97528,12.13858
+DLR0021,Opel Zentrum Nürnberg,Opel,Bayern,Nürnberg,Bundesstraße 54,90894,Gold,2013,94,1014,True,True,10,1172,77.1,3.8,49.45703,11.10107
+DLR0022,Auto Müller München,Toyota,Bayern,München,Robert-Bosch-Straße 177,80033,Gold,1979,76,2246,True,False,18,2744,93.2,4.6,48.17202,11.53773
+DLR0023,Autohaus Wagner Ingolstadt,Hyundai,Bayern,Ingolstadt,Robert-Bosch-Straße 117,85591,Gold,1976,323,894,True,True,56,2184,90.2,4.2,48.7677,11.45182
+DLR0024,Ford Niederlassung Nürnberg,Ford,Bayern,Nürnberg,Hauptstraße 83,90413,Platinum,2007,406,1835,True,True,27,1915,80.0,4.3,49.49723,11.06051
+DLR0025,BMW Niederlassung Nürnberg,BMW,Bayern,Nürnberg,Gewerbering 135,90470,Silver,1994,402,651,False,True,31,567,90.7,3.8,49.48684,11.08764
+DLR0026,Autohaus München-Schmidt,Audi,Bayern,München,Carl-Benz-Straße 12,80457,Silver,2012,391,2504,True,True,19,4019,75.6,3.6,48.13495,11.55668
+DLR0027,BMW Niederlassung München,BMW,Bayern,München,Rudolf-Diesel-Straße 43,80161,Silver,1991,260,2301,False,True,31,4373,94.3,4.0,48.11127,11.58759
+DLR0028,Autohaus Wolf Augsburg,Mercedes-Benz,Bayern,Augsburg,Hauptstraße 38,86734,Platinum,1955,122,2108,True,False,31,4053,95.3,3.8,48.32057,10.88656
+DLR0029,MINI Niederlassung Nürnberg,MINI,Bayern,Nürnberg,Hauptstraße 127,90917,Silver,1990,466,1485,False,False,44,4313,59.3,4.5,49.41579,11.06512
+DLR0030,MG Zentrum Nürnberg,MG,Bayern,Nürnberg,Gewerbering 170,90792,Gold,1968,217,2798,False,True,50,1674,60.4,4.8,49.42068,11.0276
+DLR0031,Auto Becker Stuttgart,Renault,Baden-Württemberg,Stuttgart,Am Autohof 9,70042,Silver,2011,98,1616,True,False,31,761,83.3,4.3,48.73044,9.15657
+DLR0032,Autohaus Mannheim-Schmidt,Renault,Baden-Württemberg,Mannheim,Am Autohof 9,68883,Gold,2011,382,811,True,False,44,3318,95.3,4.5,49.47224,8.42353
+DLR0033,Autohaus Freiburg-Hoffmann,Hyundai,Baden-Württemberg,Freiburg,Hauptstraße 21,79176,Silver,1976,253,1449,True,False,33,2355,71.9,4.5,47.99567,7.83341
+DLR0034,Autohaus Hoffmann Mannheim,BMW,Baden-Württemberg,Mannheim,Carl-Benz-Straße 44,68928,Gold,1959,245,1456,True,False,28,3861,69.8,4.3,49.52773,8.45192
+DLR0035,Auto Bauer Mannheim,Skoda,Baden-Württemberg,Mannheim,Am Autohof 135,68138,Silver,1950,465,2336,True,False,41,1881,69.0,4.5,49.46391,8.46687
+DLR0036,Auto Weber Freiburg,Ford,Baden-Württemberg,Freiburg,Rudolf-Diesel-Straße 142,79090,Platinum,2002,199,1997,True,False,37,652,83.5,4.3,48.01072,7.8368
+DLR0037,Mercedes-Benz Niederlassung Freiburg,Mercedes-Benz,Baden-Württemberg,Freiburg,Daimlerstraße 69,79364,Silver,1966,96,722,True,False,34,3034,57.5,4.6,47.97514,7.86182
+DLR0038,BMW Zentrum Freiburg,BMW,Baden-Württemberg,Freiburg,Carl-Benz-Straße 95,79647,Gold,1995,63,1930,True,True,10,3144,69.9,4.3,47.99495,7.84838
+DLR0039,Auto Klein Stuttgart,Volkswagen,Baden-Württemberg,Stuttgart,Robert-Bosch-Straße 48,70073,Gold,2010,335,2303,True,True,54,1620,60.5,4.7,48.73805,9.16909
+DLR0040,Autohaus Schmidt Mannheim,Audi,Baden-Württemberg,Mannheim,Rudolf-Diesel-Straße 50,68353,Gold,1996,202,2767,True,False,41,889,79.9,4.0,49.46632,8.49817
+DLR0041,Autohaus Wolf Freiburg,Kia,Baden-Württemberg,Freiburg,Robert-Bosch-Straße 2,79992,Silver,1963,316,998,False,True,52,4264,64.5,4.0,48.01136,7.88474
+DLR0042,Mercedes-Benz Zentrum Mannheim,Mercedes-Benz,Baden-Württemberg,Mannheim,Industriestraße 125,68417,Platinum,1978,453,2314,True,False,28,3126,75.0,3.7,49.47779,8.4905
+DLR0043,Autohaus Schmidt Mannheim,Volkswagen,Baden-Württemberg,Mannheim,Daimlerstraße 31,68800,Gold,1988,403,610,True,False,56,2572,90.4,4.5,49.51219,8.48574
+DLR0044,Auto Wagner Stuttgart,Toyota,Baden-Württemberg,Stuttgart,Robert-Bosch-Straße 93,70665,Silver,1971,131,1184,True,False,48,1848,73.1,4.7,48.79395,9.20092
+DLR0045,MG Zentrum Karlsruhe,MG,Baden-Württemberg,Karlsruhe,Otto-Hahn-Straße 3,76392,Platinum,1952,459,2296,True,False,8,3268,89.3,4.1,48.99224,8.40427
+DLR0046,Auto Wagner Kassel,Volkswagen,Hessen,Kassel,Carl-Benz-Straße 177,34387,Gold,1971,226,949,False,True,5,4356,91.7,4.4,51.30548,9.44942
+DLR0047,Autohaus Schäfer Darmstadt,Volkswagen,Hessen,Darmstadt,Carl-Benz-Straße 26,64923,Gold,1985,285,1921,True,True,59,4107,61.9,3.5,49.91718,8.63499
+DLR0048,Autohaus Kassel-Schmidt,Volkswagen,Hessen,Kassel,Robert-Bosch-Straße 83,34474,Silver,1950,82,2116,True,False,42,2352,78.0,4.1,51.3303,9.5287
+DLR0049,Autohaus Hoffmann Wiesbaden,Seat,Hessen,Wiesbaden,Daimlerstraße 38,65102,Gold,1982,141,1902,False,False,17,3163,85.0,3.9,50.06731,8.23387
+DLR0050,Autohaus Hoffmann Darmstadt,Mercedes-Benz,Hessen,Darmstadt,Otto-Hahn-Straße 14,64991,Silver,1967,206,1549,True,False,21,3344,59.5,3.7,49.8537,8.62937
+DLR0051,Autohaus Darmstadt-Müller,Kia,Hessen,Darmstadt,Am Autohof 30,64297,Platinum,1963,397,719,True,True,55,3932,82.2,4.7,49.85688,8.62027
+DLR0052,Autohaus Schmidt Wiesbaden,Volkswagen,Hessen,Wiesbaden,Gewerbering 112,65640,Silver,2014,458,566,True,False,34,3077,57.9,4.0,50.09196,8.25858
+DLR0053,Autohaus Klein Frankfurt am Main,Audi,Hessen,Frankfurt am Main,Rudolf-Diesel-Straße 33,60717,Gold,1992,284,1044,True,True,8,3168,63.6,4.0,50.09307,8.66836
+DLR0054,Seat Zentrum Frankfurt am Main,Seat,Hessen,Frankfurt am Main,Am Autohof 145,60212,Platinum,1984,260,1453,True,False,53,1230,91.9,4.6,50.09309,8.63455
+DLR0055,Renault Zentrum Darmstadt,Renault,Hessen,Darmstadt,Am Autohof 178,64798,Silver,1990,422,2333,True,False,31,4231,75.7,3.9,49.89951,8.68437
+DLR0056,Auto Schmidt Wiesbaden,Volkswagen,Hessen,Wiesbaden,Bundesstraße 83,65562,Gold,2012,323,2660,False,False,6,3144,66.6,4.0,50.02847,8.2731
+DLR0057,Autohaus Becker Frankfurt am Main,Mercedes-Benz,Hessen,Frankfurt am Main,Carl-Benz-Straße 106,60723,Gold,1950,62,1064,False,False,16,576,79.0,3.7,50.14841,8.70817
+DLR0058,Autohaus Kassel-Schmidt,Audi,Hessen,Kassel,Am Autohof 68,34427,Gold,1971,310,546,True,True,10,1505,71.5,3.9,51.30038,9.4916
+DLR0059,Autohaus Schmidt Kassel,Audi,Hessen,Kassel,Bundesstraße 87,34458,Gold,1964,359,1316,True,False,46,1428,86.0,3.6,51.33263,9.45515
+DLR0060,Auto Schmidt Kassel,Mercedes-Benz,Hessen,Kassel,Bundesstraße 4,34363,Gold,1992,268,2195,True,True,8,2992,91.0,3.5,51.28204,9.45648
+DLR0061,Autohaus Müller Braunschweig,Audi,Niedersachsen,Braunschweig,Otto-Hahn-Straße 54,38655,Gold,2014,283,2724,True,False,42,1820,86.0,3.5,52.31352,10.53449
+DLR0062,Mercedes-Benz Zentrum Osnabrück,Mercedes-Benz,Niedersachsen,Osnabrück,Robert-Bosch-Straße 93,49374,Gold,1966,140,1035,True,False,42,2137,56.7,4.1,52.25004,7.99844
+DLR0063,MINI Zentrum Osnabrück,MINI,Niedersachsen,Osnabrück,Otto-Hahn-Straße 79,49053,Gold,2007,438,1029,True,True,56,3205,62.2,4.4,52.3081,8.07317
+DLR0064,Autohaus Müller Braunschweig,Ford,Niedersachsen,Braunschweig,Hauptstraße 93,38934,Gold,1995,186,1327,True,False,7,398,66.5,3.8,52.31818,10.49955
+DLR0065,Auto Müller Braunschweig,Volkswagen,Niedersachsen,Braunschweig,Am Autohof 117,38839,Gold,2014,142,2263,True,False,43,2710,86.4,4.7,52.24439,10.48608
+DLR0066,Skoda Zentrum Hannover,Skoda,Niedersachsen,Hannover,Robert-Bosch-Straße 140,30717,Gold,1980,135,1592,True,False,6,2004,61.9,3.8,52.35239,9.70682
+DLR0067,Autohaus Schäfer Hannover,Kia,Niedersachsen,Hannover,Robert-Bosch-Straße 128,30312,Gold,1968,160,2197,True,True,24,3209,91.7,4.0,52.37106,9.72357
+DLR0068,Mercedes-Benz Niederlassung Wolfsburg,Mercedes-Benz,Niedersachsen,Wolfsburg,Bundesstraße 37,38695,Platinum,1993,458,1814,True,False,52,2019,80.6,3.5,52.46179,10.7468
+DLR0069,Autohaus Osnabrück-Schäfer,BMW,Niedersachsen,Osnabrück,Rudolf-Diesel-Straße 157,49827,Silver,2011,157,862,True,True,5,1410,55.4,3.9,52.25023,7.99857
+DLR0070,Audi Zentrum Wolfsburg,Audi,Niedersachsen,Wolfsburg,Carl-Benz-Straße 124,38163,Silver,1974,196,2419,True,True,15,3858,95.0,4.3,52.40788,10.82656
+DLR0071,Tesla Zentrum Wolfsburg,Tesla,Niedersachsen,Wolfsburg,Hauptstraße 10,38664,Silver,2007,157,2073,True,False,35,736,63.4,3.5,52.40695,10.83544
+DLR0072,Mercedes-Benz Niederlassung Braunschweig,Mercedes-Benz,Niedersachsen,Braunschweig,Robert-Bosch-Straße 2,38880,Silver,1969,194,2370,True,False,4,3805,61.2,4.3,52.27445,10.54617
+DLR0073,Mercedes-Benz Zentrum Osnabrück,Mercedes-Benz,Niedersachsen,Osnabrück,Robert-Bosch-Straße 71,49175,Gold,1953,439,1825,True,False,53,3562,67.1,3.9,52.32642,8.03135
+DLR0074,Autohaus Braunschweig-Wolf,Skoda,Niedersachsen,Braunschweig,Robert-Bosch-Straße 145,38045,Gold,1957,85,2159,True,False,4,4395,85.6,4.9,52.24674,10.52896
+DLR0075,Autohaus Schäfer Braunschweig,Volkswagen,Niedersachsen,Braunschweig,Daimlerstraße 25,38778,Silver,2003,67,2225,True,True,56,1181,93.5,4.5,52.25218,10.52308
+DLR0076,Toyota Niederlassung Koblenz,Toyota,Rheinland-Pfalz,Koblenz,Daimlerstraße 140,56211,Silver,1980,395,2551,True,False,47,2986,69.2,4.2,50.3675,7.59268
+DLR0077,Autohaus Ludwigshafen-Wagner,Volkswagen,Rheinland-Pfalz,Ludwigshafen,Rudolf-Diesel-Straße 39,67944,Platinum,1991,283,694,True,True,11,2594,90.6,4.2,49.43237,8.47745
+DLR0078,Auto Klein Koblenz,Ford,Rheinland-Pfalz,Koblenz,Daimlerstraße 141,56334,Gold,2006,192,1252,True,True,31,324,65.0,3.9,50.31774,7.61556
+DLR0079,Auto Koch Koblenz,Audi,Rheinland-Pfalz,Koblenz,Robert-Bosch-Straße 35,56753,Gold,1987,257,2112,True,False,37,2274,66.5,4.2,50.37562,7.54768
+DLR0080,Autohaus Hoffmann Koblenz,MINI,Rheinland-Pfalz,Koblenz,Carl-Benz-Straße 137,56424,Gold,2003,84,1913,False,True,50,2515,86.9,4.8,50.37104,7.59923
+DLR0081,Auto Weber Ludwigshafen,BMW,Rheinland-Pfalz,Ludwigshafen,Otto-Hahn-Straße 178,67827,Silver,1965,369,2756,True,True,55,1588,87.3,3.8,49.47413,8.47766
+DLR0082,Volkswagen Niederlassung Ludwigshafen,Volkswagen,Rheinland-Pfalz,Ludwigshafen,Gewerbering 153,67730,Gold,1967,456,2375,True,True,41,2626,83.1,4.7,49.51535,8.42022
+DLR0083,Kia Niederlassung Koblenz,Kia,Rheinland-Pfalz,Koblenz,Carl-Benz-Straße 46,56897,Silver,1962,261,1142,True,True,55,4452,68.1,4.3,50.35661,7.55358
+DLR0084,Kia Zentrum Koblenz,Kia,Rheinland-Pfalz,Koblenz,Carl-Benz-Straße 47,56114,Platinum,2002,216,2589,False,True,27,1843,74.1,3.7,50.3565,7.56209
+DLR0085,Volkswagen Zentrum Koblenz,Volkswagen,Rheinland-Pfalz,Koblenz,Hauptstraße 153,56696,Gold,2002,333,662,False,False,58,1063,74.1,4.6,50.33535,7.59167
+DLR0086,Autohaus Koblenz-Koch,MINI,Rheinland-Pfalz,Koblenz,Daimlerstraße 141,56361,Gold,1970,119,2394,True,True,53,1044,66.1,4.8,50.30929,7.56887
+DLR0087,Skoda Niederlassung Koblenz,Skoda,Rheinland-Pfalz,Koblenz,Bundesstraße 43,56220,Gold,1976,417,1467,True,True,10,4098,95.5,4.5,50.3633,7.59112
+DLR0088,Auto Koch Ludwigshafen,Ford,Rheinland-Pfalz,Ludwigshafen,Industriestraße 17,67598,Gold,1963,210,2278,True,False,37,486,93.7,4.0,49.52002,8.45465
+DLR0089,Autohaus Mainz-Schmidt,Skoda,Rheinland-Pfalz,Mainz,Am Autohof 17,55157,Silver,2008,313,2350,True,True,23,3003,66.3,4.5,49.95514,8.19868
+DLR0090,Auto Wagner Ludwigshafen,MG,Rheinland-Pfalz,Ludwigshafen,Bundesstraße 38,67379,Gold,1963,458,1365,True,True,59,3816,97.6,4.2,49.4634,8.41859

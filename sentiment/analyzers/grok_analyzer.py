@@ -42,9 +42,19 @@ _BATCH_SIZE: int = 10  # articles per Grok API call
 # Grok system prompt
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You advise a UAE automobile dealer group — 24 rooftops across the seven emirates (concentrated in Dubai, Abu Dhabi and Sharjah). Every vehicle is imported; the group's franchises are mainstream Japanese and Korean volume brands (Toyota, Nissan, Mitsubishi, Hyundai, Kia, Honda, Mazda, Suzuki), value Chinese (MG), American (Chevrolet, Ford) and premium/luxury (Lexus, Mercedes-Benz, BMW, Land Rover). Segment mix is roughly SUV 50%, Sedan 28%, Luxury 7%, Pickup 6%. There is no local car industry and no import-vs-domestic split — every brand pays the same flat 5% GCC customs duty, and the only consumption tax is a flat 5% VAT. Petrol is a regulated monthly pump price. The seasonal calendar that matters is Ramadan / Eid, UAE National Day (December), the Dubai Shopping Festival (January) and the summer travel lull.
+_SYSTEM_PROMPT = """You advise a German automobile dealer group — 24 rooftops (Standorte) across six Bundesländer: Nordrhein-Westfalen, Bayern, Baden-Württemberg, Hessen, Niedersachsen and Rheinland-Pfalz. The group's franchises are the German volume and premium marques (Volkswagen, Mercedes-Benz, BMW, Audi, Opel, Ford), European volume (Skoda, Seat/Cupra, Renault, Dacia), Asian (Toyota, Hyundai, Kia), plus Tesla, MINI and MG. Segment mix is roughly SUV 33%, Kompaktklasse 22%, Kombi 18%, Kleinwagen 13%, Limousine 8%, Van 4%, Oberklasse 2%.
 
-For each news headline, score its effect on RETAIL new-vehicle demand at the group's showrooms and on day-to-day dealership operations (what to stock, how to price, whether to pull forward or hold offers, and finance / Islamic-finance talk-tracks).
+Market facts that matter for your scoring:
+- Germany HAS a large domestic car industry. Plant news, IG Metall disputes, shift cuts and supplier insolvencies are demand and sentiment events here, not foreign news.
+- Roughly 62-68% of new registrations are COMMERCIAL (gewerblich) — fleet, Dienstwagen under the 1%-Regelung. Company-car taxation and corporate capex sentiment move more units than private retail does.
+- Leasing and Schlussratenfinanzierung (balloon) dominate; cash is a minority. That makes the monthly payment, and therefore the ECB policy rate and residual values, the single most sensitive lever.
+- The Umweltbonus BEV subsidy was halted overnight in December 2023; BEV registrations fell roughly a quarter in 2024. There is no purchase subsidy now, so BEV demand rides on list price, residuals and Kfz-Steuer instead.
+- Fuel is an unregulated market price, plus Energiesteuer and the national CO2 price (nEHS).
+- Kfz-Steuer is CO2-based; BEVs are exempt. Diesel pays a much higher displacement rate.
+- Showrooms cannot sell on Sundays (Ladenschlussgesetz).
+- The calendar that matters is the quarter-end registration push (March, June, September), the December year-end run-out, Ostern, the Sommerferien lull and the IAA in September.
+
+For each news headline, score its effect on RETAIL and FLEET new-vehicle demand at the group's Standorte and on day-to-day operations (what to stock, how to price, whether to pull forward or hold offers, and the Leasing / Finanzierung talk-track).
 
 Return a JSON object with this exact schema:
 {
@@ -53,10 +63,10 @@ Return a JSON object with this exact schema:
       "article_index": <integer, 0-based index matching the input list>,
       "sentiment_score": <float -1.0 to 1.0, where -1=very negative for retail demand, 0=neutral, 1=very positive>,
       "impact_score": <float 0.0 to 1.0, how much this news could move the group's showroom demand over the next ~30 days>,
-      "affected_vehicle_category": <one of: "EV", "Luxury", "SUV", "Sedan", "Pickup", "Commercial", "All">,
+      "affected_vehicle_category": <one of: "EV", "Luxury", "SUV", "Sedan", "Estate", "Compact", "Small Car", "Van", "Commercial", "All">,
       "economic_risk": <one of: "low", "medium", "high">,
       "demand_direction": <one of: "up", "down", "neutral">,
-      "estimated_demand_change_pct": <float, estimated % change in the group's retail demand, typically between -6 and +6; reserve larger values for genuine shocks>,
+      "estimated_demand_change_pct": <float, estimated % change in the group's demand, typically between -6 and +6; reserve larger values for genuine shocks>,
       "confidence": <float 0.0 to 1.0, your confidence in this analysis>,
       "summary": <string, one sentence — name the affected segment and the dealership action it implies>
     }
@@ -64,15 +74,44 @@ Return a JSON object with this exact schema:
 }
 
 Rules:
-- Finance cost is the strongest single lever: a higher car-loan rate (CBUAE / EIBOR-linked, and the equivalent Islamic Murabaha profit rate) raises monthly payments and cuts financed demand within weeks (~-3% units per +1 point); rate cuts help luxury, SUV and financed purchases.
-- Petrol price is a regulated monthly number: a rise shifts mix a little away from large SUV / 4x4 toward Sedan, with a smaller drag on total volume; a cut does the reverse. Effect is weaker than in an unregulated market.
-- Customs duty / VAT / registration-fee news is a cost / margin / pricing signal that hits the whole book equally (there is no domestic exemption).
-- Distributor / dealer offer news (0% finance, free registration/insurance, service packages, Ramadan and National Day campaigns) supports demand when offers expand, drags when they are pulled (~+2% per +1 point of incentive spend).
-- EV: UAE adoption is on a steep upward ramp led by Dubai/Abu Dhabi policy, charging build-out and low Chinese-brand pricing; there is no federal purchase credit to expire.
-- Oil price and the non-oil economy, Dubai real estate and tourism are leading demand signals here — a strong property/tourism cycle lifts luxury and SUV demand.
-- Consumer-sentiment / confidence news is a leading, low-magnitude signal (cap around ±2%).
+- Finance cost is the strongest single lever: an ECB rate move feeds the Leasingrate and the effektiver Jahreszins, and reaches showroom traffic within weeks (~-3% units per +1 point). Cuts help Oberklasse, SUV and all financed business.
+- Residual-value news is nearly as strong, because a lease payment is priced off the residual. Falling used values raise payments without any list-price change — treat a used-market collapse as a demand negative even when new-car news looks fine.
+- Company-car / Dienstwagen taxation news hits the commercial book, which is the majority of units. Score it as "Commercial" and weight it heavily.
+- Domestic industry news (Werkschließung, Stellenabbau, IG Metall, supplier insolvency) cuts two ways: it dents regional consumer confidence AND can tighten supply of specific nameplates. Do not treat it as foreign macro noise.
+- Fuel price is an unregulated market price: a rise shifts mix away from large SUV and toward Kompakt / Kombi / Hybrid, with a smaller drag on total volume.
+- Kfz-Steuer, CO2-price and Zulassungskosten news is a running-cost signal that reprices the whole book and shifts mix toward low-CO2 and BEV.
+- Discount / Rabatt / 0%-Finanzierung news supports demand when offers expand and drags when they are pulled (~+2% per +1 point of incentive spend). German list discounting is structurally heavy, so this matters more than in a low-discount market.
+- EV: with the Umweltbonus gone, BEV demand is price- and residual-led. Any new purchase incentive, Kfz-Steuer change or charging build-out is a genuine BEV positive; used-BEV value news is a BEV negative.
+- Consumer-sentiment news (GfK Konsumklima, ifo Geschäftsklima) is a leading, low-magnitude signal (cap around ±2%).
+- Headlines may be in GERMAN. Score them the same way; the summary field follows the OUTPUT LANGUAGE instruction below.
 - Return exactly one signal per input article in the same order.
 - Only return valid JSON, nothing else."""
+
+
+def _language_directive(lang: str) -> str:
+    """
+    Appended to a system prompt so Grok answers in the UI's active language.
+
+    The scored NUMBERS are language-independent; only the prose fields change,
+    so a German session gets German summaries without re-analysing anything.
+    """
+    if lang == "de":
+        return ("\n\nOUTPUT LANGUAGE: Write every prose field (summary, and any "
+                "narrative text) in GERMAN, in the register a German Autohaus "
+                "GM would use. Keep all JSON keys and all enum values "
+                "(\"up\", \"down\", \"neutral\", \"low\", \"medium\", \"high\", and the "
+                "category names) in ENGLISH exactly as specified — they are "
+                "parsed, not displayed.")
+    return ("\n\nOUTPUT LANGUAGE: Write every prose field in ENGLISH.")
+
+
+def _active_lang() -> str:
+    """UI language, defaulting to German outside a Streamlit run."""
+    try:
+        from utils.i18n import get_lang
+        return get_lang()
+    except Exception:
+        return "de"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Mock mode: keyword-based signal generator
@@ -82,32 +121,66 @@ Rules:
 # allies" vs "stocks rally", "interest rate", "new bill", "record deaths") are
 # left out. The keyword scorer only leans when the wording is unambiguous.
 _POSITIVE_WORDS = {
+    # English
     "rose", "risen", "growth", "grew", "surge", "surged", "boost", "boosted",
     "strong", "strength", "rebound", "rebounded", "recovery", "improve", "improved",
     "gains", "optimistic", "upbeat", "affordable", "cheaper", "discount", "incentives",
     "rebate", "rebates", "0%", "outperform", "accelerating",
+    # German. "senkt"/"senkung" are deliberately here: in this domain the thing
+    # being cut is almost always a rate, a price or a tax, all of which help
+    # demand. "billiger", "günstiger" likewise.
+    "steigt", "steigen", "gestiegen", "wächst", "wachstum", "zuwachs",
+    "erholung", "erholt", "aufschwung", "boom", "stark", "stärker",
+    "verbessert", "verbesserung", "optimistisch", "zuversicht",
+    "günstiger", "günstig", "billiger", "preiswert", "erschwinglich",
+    "rabatt", "rabatte", "nachlass", "prämie", "förderung", "entlastung",
+    "senkt", "senkung", "gesenkt", "zinssenkung", "steuersenkung",
+    "rekord", "schub", "nachfrage steigt", "absatzplus",
 }
 
 # "cut" is left out on purpose — "rate cut" is good for auto demand, "job cuts"
 # is bad; the token alone tells us nothing.
 _NEGATIVE_WORDS = {
+    # English
     "falls", "fell", "declines", "declined", "slump", "slumped", "weak", "weakness",
     "concern", "concerns", "crisis", "recession", "downturn", "shortage",
     "unaffordable", "pricey", "expensive", "hike", "hikes", "surcharge",
     "slowdown", "slowing", "plunge", "plunged", "layoffs", "bankruptcy",
     "delinquencies", "repossessions", "pullback",
+    # German
+    "sinkt", "sinken", "gesunken", "bricht ein", "einbruch", "rückgang",
+    "rückläufig", "schwach", "schwäche", "krise", "rezession", "flaute",
+    "sorge", "sorgen", "besorgt", "unsicherheit", "risiko",
+    "teurer", "teuer", "verteuert", "preiserhöhung", "erhöhung", "anstieg der kosten",
+    "insolvenz", "insolvent", "pleite", "stellenabbau", "kurzarbeit",
+    "werkschließung", "werksschließung", "schließt", "abbau", "entlassungen",
+    "zinserhöhung", "belastung", "minus", "absatzminus", "streik", "protest",
+    "zurückgefahren", "gestrichen", "auslaufen", "wegfall",
 }
 
+# German and English tokens both appear, because the RSS feed is the German
+# edition of Google News while GDELT returns English-language coverage.
 _HIGH_IMPACT_WORDS = {
-    "customs", "duty", "vat", "interest rate", "rate cut", "rate hike", "apr",
-    "central bank", "cbuae", "eibor", "fed",
-    "incentive", "incentives", "offer", "rebate", "finance", "murabaha", "recall",
-    "petrol price", "petrol", "diesel", "affordability", "car loan", "policy", "ban",
+    "interest rate", "rate cut", "rate hike", "apr", "central bank", "ecb",
+    "leitzins", "ezb", "zins", "zinsen",
+    "incentive", "incentives", "offer", "rebate", "finance", "leasing", "recall",
+    "rabatt", "prämie", "praemie", "umweltbonus", "kaufprämie", "finanzierung",
+    "leasingrate", "restwert", "residual",
+    "vehicle tax", "kfz-steuer", "co2-preis", "dienstwagen", "company car",
+    "fuel price", "petrol", "diesel", "spritpreis", "benzinpreis", "dieselpreis",
+    "affordability", "car loan", "autokredit", "policy", "ban", "fahrverbot",
+    "werkschließung", "werksschliessung", "plant closure", "stellenabbau",
+    "insolvenz", "insolvent", "neuzulassungen",
 }
 
 _MEDIUM_IMPACT_WORDS = {
+    # English
     "concern", "uncertainty", "risk", "slowdown", "inflation", "economy",
     "demand", "inventory", "prices", "trade", "consumer", "confidence", "lease",
+    # German
+    "sorge", "unsicherheit", "risiko", "abschwung", "inflation", "wirtschaft",
+    "nachfrage", "bestand", "preise", "handel", "verbraucher", "konsumklima",
+    "geschäftsklima", "leasing", "markt", "branche",
 }
 
 _CATEGORY_KEYWORDS = {
@@ -348,7 +421,10 @@ def _analyze_batch_live(client, articles: List[Dict]) -> Tuple[List[Dict], Optio
         response = client.chat.completions.create(
             model=_GROK_MODEL,
             messages=[
-                {"role": "system", "content": _SYSTEM_PROMPT},
+                # Language directive appended per-call so a German session
+                # gets German summaries without re-scoring anything.
+                {"role": "system",
+                 "content": _SYSTEM_PROMPT + _language_directive(_active_lang())},
                 {"role": "user",   "content": f"Analyze these {len(articles)} news article titles:\n\n{numbered_titles}"},
             ],
             response_format={"type": "json_object"},
@@ -538,16 +614,16 @@ def get_unanalyzed_articles(limit: int = 100) -> List[Dict]:
 # Market Briefing Generator
 # ─────────────────────────────────────────────────────────────────────────────
 
-_BRIEFING_SYSTEM_PROMPT = """You advise the leadership of a UAE automobile dealer group (24 rooftops across the seven emirates, all-imported franchises, segment mix SUV 50% / Sedan 28% / Luxury 7% / Pickup 6%).
-Write a short weekly read for the group's GMs and the F&I / used-car desks, using only the signal data provided.
-Talk about the group's own showroom demand, stocking, pricing, offers and finance — not "the market".
+_BRIEFING_SYSTEM_PROMPT = """You advise the leadership of a German automobile dealer group — 24 Standorte across six Bundesländer, German and European volume plus premium franchises, segment mix SUV 33% / Kompaktklasse 22% / Kombi 18% / Kleinwagen 13% / Limousine 8%. Roughly two thirds of units go to commercial (gewerblich) buyers — fleet and Dienstwagen — and the book runs on Leasing and Schlussratenfinanzierung rather than cash.
+Write a short weekly read for the group's Standortleiter and the Finanzierungs- / Gebrauchtwagen desks, using only the signal data provided.
+Talk about the group's own showroom demand, stocking, pricing, offers and financing — not "the market".
 Structure your response with exactly three clearly labeled sections:
 
 WHAT'S MOVING DEMAND
-[2–3 sentences: the net direction over the next ~30 days and the one or two drivers behind it]
+[2-3 sentences: the net direction over the next ~30 days and the one or two drivers behind it]
 
 WHERE THE GROUP IS EXPOSED
-[4–6 bullet points: which segments / rooftops the current signals help or hurt, and by roughly how much]
+[4-6 bullet points: which segments / Standorte the current signals help or hurt, and by roughly how much]
 
 WHAT TO DO THIS WEEK
 [3 specific, numbered actions — stocking, pricing, incentive timing, or a financing talk-track]
@@ -609,7 +685,8 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
             response = client.chat.completions.create(
                 model=_GROK_MODEL,
                 messages=[
-                    {"role": "system", "content": _BRIEFING_SYSTEM_PROMPT},
+                    {"role": "system",
+                     "content": _BRIEFING_SYSTEM_PROMPT + _language_directive(_active_lang())},
                     {"role": "user",   "content": user_msg},
                 ],
                 temperature=0.4,
@@ -693,11 +770,11 @@ if __name__ == "__main__":
     print(f"Model: {_GROK_MODEL}\n")
 
     test_articles = [
-        {"article_id": 1, "title": "UAE new car sales rise as Ramadan offers and 0% finance draw buyers"},
-        {"article_id": 2, "title": "UAE fuel prices held steady for March, easing running-cost worries"},
-        {"article_id": 3, "title": "Dubai luxury car registrations hit record as property boom continues"},
-        {"article_id": 4, "title": "Central Bank of UAE keeps base rate unchanged after Fed hold"},
-        {"article_id": 5, "title": "Nissan Patrol and Toyota Land Cruiser lead UAE SUV demand in Q1"},
+        {"article_id": 1, "title": "Neuzulassungen steigen: Rabatte und 0-Prozent-Finanzierung locken Käufer"},
+        {"article_id": 2, "title": "Spritpreise bleiben stabil — Entlastung bei den Unterhaltskosten"},
+        {"article_id": 3, "title": "EZB senkt den Leitzins erneut, Leasingraten dürften nachgeben"},
+        {"article_id": 4, "title": "Immer mehr Autohäuser insolvent — Autohandel unter Druck"},
+        {"article_id": 5, "title": "IG Metall ruft zu Protest gegen Einschnitte in der Autoindustrie auf"},
     ]
 
     print(f"Analyzing {len(test_articles)} articles...\n")

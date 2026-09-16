@@ -124,8 +124,8 @@ def compute_similarity(target: pd.Series, candidates: pd.DataFrame,
 
     # Price tolerance: a shopper stretches a few thousand dollars, not tens of
     # thousands, so similarity decays exponentially rather than linearly.
-    target_price = float(target["price_aed"]) or 1.0
-    price_gap = (out["price_aed"].astype(float) - target_price).abs()
+    target_price = float(target["price_eur"]) or 1.0
+    price_gap = (out["price_eur"].astype(float) - target_price).abs()
     out["sim_price"] = np.exp(-price_gap / (target_price * 0.22))
 
     # Seating is close to a hard requirement — a family that needs three rows
@@ -133,8 +133,8 @@ def compute_similarity(target: pd.Series, candidates: pd.DataFrame,
     seat_gap = (out["seating_capacity"].fillna(5) - float(target["seating_capacity"] or 5)).abs()
     out["sim_seats"] = np.clip(1.0 - seat_gap * 0.35, 0, 1)
 
-    target_hp = float(target["horsepower"] or 200)
-    hp_gap = (out["horsepower"].astype(float).fillna(target_hp) - target_hp).abs()
+    target_hp = float(target["power_kw"] or 200)
+    hp_gap = (out["power_kw"].astype(float).fillna(target_hp) - target_hp).abs()
     out["sim_power"] = np.exp(-hp_gap / max(target_hp * 0.45, 1))
 
     out["sim_drive"] = np.where(out["drive_type"] == target["drive_type"], 1.0, 0.55)
@@ -179,7 +179,7 @@ def attach_availability(candidates: pd.DataFrame, snapshot: pd.DataFrame,
     out["source_dealer"] = None
     out["distance_km"] = np.nan
     out["days_in_stock"] = np.nan
-    out["holding_cost_aed"] = 0.0
+    out["holding_cost_eur"] = 0.0
 
     if snapshot is None or snapshot.empty:
         return out
@@ -206,7 +206,7 @@ def attach_availability(candidates: pd.DataFrame, snapshot: pd.DataFrame,
             out.at[idx, "source_dealer"] = best.get("dealer_name")
             out.at[idx, "distance_km"] = 0.0
             out.at[idx, "days_in_stock"] = best["days_in_stock"]
-            out.at[idx, "holding_cost_aed"] = float(best["estimated_holding_cost_aed"])
+            out.at[idx, "holding_cost_eur"] = float(best["estimated_holding_cost_eur"])
             continue
 
         # Tier 2 — at another store within driving range.
@@ -235,7 +235,7 @@ def attach_availability(candidates: pd.DataFrame, snapshot: pd.DataFrame,
                 out.at[idx, "source_dealer"] = best.get("dealer_name")
                 out.at[idx, "distance_km"] = dist
                 out.at[idx, "days_in_stock"] = best["days_in_stock"]
-                out.at[idx, "holding_cost_aed"] = float(best["estimated_holding_cost_aed"])
+                out.at[idx, "holding_cost_eur"] = float(best["estimated_holding_cost_eur"])
                 continue
 
         # Tier 3 — already on a truck or a boat.
@@ -331,8 +331,8 @@ def recommend_alternatives(target_vehicle: pd.Series, catalog: pd.DataFrame,
     # perfect spec match sits 100 km away.
     scored["placement_score_pct"] = (scored["match_score"] * 100).round(0)
     scored["match_pct"] = (scored["similarity"] * 100).round(0)
-    scored["price_delta_aed"] = (
-        scored["price_aed"].astype(float) - float(target_vehicle["price_aed"])
+    scored["price_delta_eur"] = (
+        scored["price_eur"].astype(float) - float(target_vehicle["price_eur"])
     )
     scored["match_reasons"] = scored.apply(
         lambda r: _explain(target_vehicle, r), axis=1
@@ -349,7 +349,7 @@ def _explain(target: pd.Series, row: pd.Series) -> str:
         reasons.append(f"same {row['category']} body style")
     if row["fuel_type"] == target["fuel_type"]:
         reasons.append(f"same {row['fuel_type'].lower()} powertrain")
-    if abs(float(row["price_aed"]) - float(target["price_aed"])) <= float(target["price_aed"]) * 0.08:
+    if abs(float(row["price_eur"]) - float(target["price_eur"])) <= float(target["price_eur"]) * 0.08:
         reasons.append("within 8% on price")
     if row["seating_capacity"] == target["seating_capacity"]:
         reasons.append(f"seats {int(row['seating_capacity'])}")
@@ -363,8 +363,8 @@ def _explain(target: pd.Series, row: pd.Series) -> str:
 def _tradeoffs(target: pd.Series, row: pd.Series) -> str:
     """What the customer gives up — stated honestly, not buried."""
     gaps = []
-    delta = float(row["price_aed"]) - float(target["price_aed"])
-    if abs(delta) > float(target["price_aed"]) * 0.08:
+    delta = float(row["price_eur"]) - float(target["price_eur"])
+    if abs(delta) > float(target["price_eur"]) * 0.08:
         gaps.append(f"{'+' if delta > 0 else '-'}AED {abs(delta):,.0f} on price")
     if row["category"] != target["category"]:
         gaps.append(f"{row['category']} instead of {target['category']}")

@@ -21,7 +21,7 @@ from utils.helpers import (
 # Customer Intelligence — the dealer GROUP's own CRM / buyer base, not "the
 # market". Tab 1 is a retention worklist (who to call now + is the base leaking);
 # Tab 2 is a per-lead close score. `nationality` is a segmentation dimension
-# (the UAE resident base is ~88% expatriate) and a KMeans feature, but is
+# shown ONLY as a descriptive mix, never scored on (AGG), and is not a KMeans
 # deliberately kept OUT of the per-lead close score.
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -92,8 +92,8 @@ def _segment_panel(df: pd.DataFrame) -> pd.DataFrame:
             "Avg deal value": round(buyers["avg_deal_value"].mean() or 0),
             "Repeat rate %": round(100 * (buyers["number_of_past_purchases"] >= 2).mean(), 0) if len(buyers) else 0,
             "Lease %": round(100 * g["lease_deals"].sum() / deals, 0) if deals else 0,
-            "Median income": round(g["estimated_monthly_income_aed"].median() or 0),
-            "Avg credit": round(g["credit_score"].mean() or 0),
+            "Median income": round(g["estimated_annual_income_eur"].median() or 0),
+            "Avg credit": round(g["schufa_score"].mean() or 0),
             "Mo. since deal": round(buyers["months_since_last_deal"].median(), 0) if len(buyers) else None,
         })
     return pd.DataFrame(rows)
@@ -142,7 +142,7 @@ def _build_action_queue(book: pd.DataFrame) -> pd.DataFrame:
     q["vehicle"] = q["lease_vehicle"].where(
         is_lease, (q["last_brand"].astype(str) + " " + q["last_model"].astype(str))
     )
-    q["opportunity_usd"] = (
+    q["opportunity_eur"] = (
         q["last_brand"].map(_origin).map(_ORIGIN_GROSS).fillna(_ORIGIN_GROSS["mass"])
     )
     q["_lm_days"] = lm_days.reindex(q.index)
@@ -152,7 +152,7 @@ def _build_action_queue(book: pd.DataFrame) -> pd.DataFrame:
     q["play"] = q["reason"].map(_REASON_PLAY)
     q["_prio"] = q["reason"].map({r: i for i, r in enumerate(_REASON_PRIORITY)})
     # Within lease maturities, soonest first; within the rest, biggest gross first.
-    q["_sort2"] = np.where(is_lease, q["_lm_days"].fillna(999), -q["opportunity_usd"])
+    q["_sort2"] = np.where(is_lease, q["_lm_days"].fillna(999), -q["opportunity_eur"])
     q = q.sort_values(["_prio", "_sort2"], ascending=[True, True])
     return q
 
@@ -258,7 +258,7 @@ def render_customers(filters: dict):
                         "Contact": view["when"],
                         "Vehicle": view["vehicle"],
                         "Mo. since deal": view["months_since_last_deal"].round(0),
-                        "Identified gross (AED)": view["opportunity_usd"].round(0).astype(int),
+                        "Identified gross (AED)": view["opportunity_eur"].round(0).astype(int),
                         "Email OK": view["email_opt_in"].fillna(False).map({True: "yes", False: "no"}),
                     })
                     st.dataframe(
@@ -334,9 +334,9 @@ def render_customers(filters: dict):
             )
 
             dealers = get_dealer_directory(session)
-            dealers = dealers.sort_values(["emirate", "area", "dealer_name"])
+            dealers = dealers.sort_values(["state", "city", "dealer_name"])
             store_opts = {
-                f"{r.dealer_name} — {r.area}, {r.emirate}": (r.emirate, r.dealer_name, r.brand)
+                f"{r.dealer_name} — {r.city}, {r.state}": (r.state, r.dealer_name, r.brand)
                 for r in dealers.itertuples()
             }
             store_pick = st.selectbox("Store handling this lead", options=list(store_opts.keys()))
@@ -348,7 +348,7 @@ def render_customers(filters: dict):
                 occupation = st.selectbox("Occupation", options=_OCCUPATIONS)
                 income = st.number_input("Monthly income (AED)", 3000, 200000, 18000, step=1000)
             with f2:
-                credit_score = st.slider("Credit score (AECB)", 300, 900, 710)
+                schufa_score = st.slider("Credit score (AECB)", 300, 900, 710)
                 vehicle_category = st.selectbox("Vehicle category", options=_CATEGORIES)
                 fuel_type = st.selectbox("Fuel type", options=_FUELS)
             with f3:
@@ -361,15 +361,15 @@ def render_customers(filters: dict):
                 lead = {
                     "age": age,
                     "occupation": occupation,
-                    "estimated_monthly_income_aed": income,
-                    "credit_score": credit_score,
+                    "estimated_annual_income_eur": income,
+                    "schufa_score": schufa_score,
                     "loyalty_score": _RELATIONSHIP[relationship],
                     "vehicle_category": vehicle_category,
                     "fuel_type": fuel_type,
                     "marketing_channel": marketing_channel,
                     "discount_pct": discount_pct,
                     "base_price": base_price,
-                    "emirate": pick_emirate,
+                    "state": pick_emirate,
                 }
                 res = predict_deal_probability(lead)
                 prob = res["close_probability"]

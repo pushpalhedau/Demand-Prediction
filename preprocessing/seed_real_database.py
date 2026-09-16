@@ -1,7 +1,7 @@
 """
 Seed real_demand.db from the realdata-datasets folder.
 
-realdata-datasets and automobile_datasets share the same NA column schema,
+realdata-datasets and automobile_datasets share the same German column schema,
 so this simply cleans and loads each CSV directly (no column renaming needed).
 """
 

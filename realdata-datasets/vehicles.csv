@@ -1,207 +1,201 @@
-vehicle_id,brand,model,variant,category,fuel_type,price_aed,engine_cc,horsepower,mileage_kmpl,range_km,seating_capacity,transmission,drive_type,body_color_options,safety_rating,launch_year,is_active,warranty_years,service_contract_available,gcc_spec,residual_value_36mo
-VH0001,Toyota,Land Cruiser,GX,SUV,Petrol,285000,3444.0,409,9.0,,7,Automatic,4WD,5,5,2022,True,3,True,True,0.7
-VH0002,Toyota,Land Cruiser,GXR,SUV,Petrol,313500,3444.0,409,8.0,,7,Automatic,4WD,8,5,2022,True,3,False,True,0.7
-VH0003,Toyota,Prado,GX,SUV,Petrol,172000,3500.0,278,10.0,,7,Automatic,4WD,7,5,2024,True,3,False,True,0.68
-VH0004,Toyota,Prado,GXR,SUV,Petrol,189000,3500.0,278,9.0,,7,Automatic,4WD,8,5,2024,True,3,True,True,0.68
-VH0005,Toyota,Hilux,GX,Pickup,Petrol,108000,3956.0,235,11.0,,5,Automatic,4WD,7,5,2021,True,3,False,True,0.66
-VH0006,Toyota,Hilux,GXR,Pickup,Petrol,119000,3956.0,235,10.0,,5,Automatic,4WD,6,5,2021,True,3,False,True,0.66
-VH0007,Toyota,Fortuner,GX,SUV,Petrol,135000,3956.0,235,9.0,,7,Automatic,4WD,6,5,2020,True,3,True,True,0.6
-VH0008,Toyota,Fortuner,GXR,SUV,Petrol,148500,3956.0,235,8.0,,7,Automatic,4WD,5,5,2020,True,3,False,True,0.6
-VH0009,Toyota,RAV4,GX,SUV,Petrol,118000,2487.0,203,14.0,,5,Automatic,AWD,5,5,2019,True,3,True,False,0.58
-VH0010,Toyota,RAV4,GXR,SUV,Petrol,130000,2487.0,203,13.0,,5,Automatic,AWD,8,5,2019,True,3,False,True,0.58
-VH0011,Toyota,RAV4 Hybrid,GX,SUV,Hybrid,135000,2487.0,219,21.0,,5,Automatic,AWD,8,5,2021,True,3,True,True,0.6
-VH0012,Toyota,RAV4 Hybrid,GXR,SUV,Hybrid,148500,2487.0,219,20.0,,5,Automatic,AWD,5,5,2021,True,3,True,True,0.6
-VH0013,Toyota,Corolla,GX,Sedan,Petrol,82000,1987.0,170,16.0,,5,Automatic,FWD,8,5,2020,True,3,False,True,0.55
-VH0014,Toyota,Corolla,GXR,Sedan,Petrol,90000,1987.0,170,15.0,,5,Automatic,FWD,7,5,2020,True,3,True,True,0.55
-VH0015,Toyota,Corolla Hybrid,GX,Sedan,Hybrid,92000,1798.0,138,25.0,,5,Automatic,FWD,8,5,2022,True,3,True,True,0.56
-VH0016,Toyota,Corolla Hybrid,GXR,Sedan,Hybrid,101000,1798.0,138,24.0,,5,Automatic,FWD,5,5,2022,True,3,True,True,0.56
-VH0017,Toyota,Camry,GX,Sedan,Petrol,122000,2487.0,203,15.0,,5,Automatic,FWD,8,5,2018,True,3,False,True,0.52
-VH0018,Toyota,Camry,GXR,Sedan,Petrol,134000,2487.0,203,14.0,,5,Automatic,FWD,6,5,2018,True,3,False,True,0.52
-VH0019,Toyota,Camry Hybrid,GX,Sedan,Hybrid,135000,2487.0,225,22.0,,5,Automatic,FWD,8,5,2021,True,3,False,True,0.55
-VH0020,Toyota,Camry Hybrid,GXR,Sedan,Hybrid,148500,2487.0,225,21.0,,5,Automatic,FWD,6,5,2021,True,3,True,True,0.55
-VH0021,Toyota,Yaris,GX,Sedan,Petrol,60000,1496.0,106,18.0,,5,Automatic,FWD,8,5,2022,True,3,False,True,0.5
-VH0022,Toyota,Yaris,GXR,Sedan,Petrol,66000,1496.0,106,17.0,,5,Automatic,FWD,8,5,2022,True,3,True,True,0.5
-VH0023,Toyota,Rush,GX,SUV,Petrol,84000,1496.0,102,14.0,,7,Automatic,RWD,5,5,2019,True,3,True,True,0.52
-VH0024,Toyota,Rush,GXR,SUV,Petrol,92500,1496.0,102,13.0,,7,Automatic,RWD,5,5,2019,True,3,False,True,0.52
-VH0025,Toyota,bZ4X,GX,SUV,Electric,165000,,218,,411.0,5,Single-Speed,AWD,5,4,2023,True,3,True,True,0.42
-VH0026,Toyota,bZ4X,GXR,SUV,Electric,181500,,218,,403.0,5,Single-Speed,AWD,7,4,2023,True,3,True,True,0.42
-VH0027,Nissan,Patrol,S,SUV,Petrol,245000,5552.0,400,8.0,,8,Automatic,4WD,5,5,2020,True,3,True,True,0.68
-VH0028,Nissan,Patrol,SE,SUV,Petrol,269500,5552.0,400,7.0,,8,Automatic,4WD,5,5,2020,True,3,True,True,0.68
-VH0029,Nissan,X-Trail,S,SUV,Petrol,105000,2488.0,181,13.0,,7,Automatic,AWD,5,5,2022,True,3,False,True,0.52
-VH0030,Nissan,X-Trail,SE,SUV,Petrol,115500,2488.0,181,12.0,,7,Automatic,AWD,7,5,2022,True,3,True,True,0.52
-VH0031,Nissan,Sunny,S,Sedan,Petrol,52000,1498.0,99,18.0,,5,Automatic,FWD,5,5,2020,True,3,True,True,0.48
-VH0032,Nissan,Sunny,SE,Sedan,Petrol,57000,1498.0,99,17.0,,5,Automatic,FWD,5,5,2020,True,3,True,True,0.48
-VH0033,Nissan,Altima,S,Sedan,Petrol,92000,2488.0,188,14.0,,5,Automatic,FWD,6,5,2019,True,3,True,True,0.47
-VH0034,Nissan,Altima,SE,Sedan,Petrol,101000,2488.0,188,13.0,,5,Automatic,FWD,6,5,2019,True,3,True,True,0.47
-VH0035,Nissan,Kicks,S,SUV,Petrol,72000,1598.0,118,16.0,,5,Automatic,FWD,6,5,2021,True,3,False,True,0.5
-VH0036,Nissan,Kicks,SE,SUV,Petrol,79000,1598.0,118,15.0,,5,Automatic,FWD,8,5,2021,True,3,False,True,0.5
-VH0037,Nissan,Pathfinder,S,SUV,Petrol,145000,3498.0,284,11.0,,7,Automatic,4WD,8,4,2022,True,3,True,True,0.52
-VH0038,Nissan,Pathfinder,SE,SUV,Petrol,159500,3498.0,284,10.0,,7,Automatic,4WD,6,5,2022,True,3,True,True,0.52
-VH0039,Nissan,Navara,S,Pickup,Diesel,95000,2488.0,190,13.0,,5,Automatic,4WD,8,5,2021,True,3,True,True,0.56
-VH0040,Nissan,Navara,SE,Pickup,Diesel,104500,2488.0,190,12.0,,5,Automatic,4WD,7,5,2021,True,3,False,True,0.56
-VH0041,Nissan,Patrol Nismo,S,SUV,Petrol,320000,5552.0,428,8.0,,5,Automatic,4WD,7,5,2021,True,3,False,True,0.62
-VH0042,Nissan,Patrol Nismo,SE,SUV,Petrol,352000,5552.0,428,7.0,,5,Automatic,4WD,6,5,2021,True,3,False,True,0.62
-VH0043,Mitsubishi,Pajero,GLX,SUV,Petrol,135000,3828.0,190,9.0,,7,Automatic,4WD,8,5,2019,True,5,True,True,0.55
-VH0044,Mitsubishi,Pajero,GLS,SUV,Petrol,148500,3828.0,190,8.0,,7,Automatic,4WD,6,5,2019,True,5,True,True,0.55
-VH0045,Mitsubishi,Montero Sport,GLX,SUV,Petrol,128000,2998.0,220,10.0,,7,Automatic,4WD,7,5,2021,True,5,True,True,0.56
-VH0046,Mitsubishi,Montero Sport,GLS,SUV,Petrol,141000,2998.0,220,9.0,,7,Automatic,4WD,5,5,2021,True,5,False,True,0.56
-VH0047,Mitsubishi,L200,GLX,Pickup,Diesel,92000,2442.0,178,13.0,,5,Automatic,4WD,6,5,2020,True,5,True,True,0.55
-VH0048,Mitsubishi,L200,GLS,Pickup,Diesel,101000,2442.0,178,12.0,,5,Automatic,4WD,6,5,2020,True,5,False,True,0.55
-VH0049,Mitsubishi,Attrage,GLX,Sedan,Petrol,48000,1193.0,78,20.0,,5,Automatic,FWD,6,4,2020,True,5,True,True,0.45
-VH0050,Mitsubishi,Attrage,GLS,Sedan,Petrol,53000,1193.0,78,19.0,,5,Automatic,FWD,8,5,2020,True,5,True,True,0.45
-VH0051,Mitsubishi,Xpander,GLX,SUV,Petrol,72000,1499.0,105,15.0,,7,Automatic,FWD,8,4,2022,True,5,True,True,0.5
-VH0052,Mitsubishi,Xpander,GLS,SUV,Petrol,79000,1499.0,105,14.0,,7,Automatic,FWD,6,4,2022,True,5,False,True,0.5
-VH0053,Mitsubishi,Eclipse Cross,GLX,SUV,Petrol,89000,1499.0,150,13.0,,5,Automatic,AWD,7,5,2022,True,5,True,True,0.48
-VH0054,Mitsubishi,Eclipse Cross,GLS,SUV,Petrol,98000,1499.0,150,12.0,,5,Automatic,AWD,5,4,2022,True,5,False,True,0.48
-VH0055,Hyundai,Tucson,Smart,SUV,Petrol,95000,2497.0,187,13.0,,5,Automatic,AWD,8,4,2022,True,5,False,True,0.53
-VH0056,Hyundai,Tucson,Comfort,SUV,Petrol,104500,2497.0,187,12.0,,5,Automatic,AWD,8,4,2022,True,5,True,True,0.53
-VH0057,Hyundai,Elantra,Smart,Sedan,Petrol,72000,1999.0,147,16.0,,5,Automatic,FWD,6,5,2021,True,5,True,False,0.5
-VH0058,Hyundai,Elantra,Comfort,Sedan,Petrol,79000,1999.0,147,15.0,,5,Automatic,FWD,8,4,2021,True,5,True,True,0.5
-VH0059,Hyundai,Creta,Smart,SUV,Petrol,78000,1497.0,115,15.0,,5,Automatic,FWD,8,4,2020,True,5,True,True,0.51
-VH0060,Hyundai,Creta,Comfort,SUV,Petrol,86000,1497.0,115,14.0,,5,Automatic,FWD,8,5,2020,True,5,False,True,0.51
-VH0061,Hyundai,Santa Fe,Smart,SUV,Petrol,130000,2497.0,277,11.0,,7,Automatic,AWD,8,5,2024,True,5,True,True,0.52
-VH0062,Hyundai,Santa Fe,Comfort,SUV,Petrol,143000,2497.0,277,10.0,,7,Automatic,AWD,8,5,2024,True,5,False,True,0.52
-VH0063,Hyundai,Accent,Smart,Sedan,Petrol,58000,1591.0,123,17.0,,5,Automatic,FWD,8,5,2019,True,5,True,True,0.47
-VH0064,Hyundai,Accent,Comfort,Sedan,Petrol,64000,1591.0,123,16.0,,5,Automatic,FWD,5,4,2019,True,5,True,True,0.47
-VH0065,Hyundai,Sonata,Smart,Sedan,Petrol,105000,2497.0,191,13.0,,5,Automatic,FWD,8,4,2020,True,5,True,True,0.46
-VH0066,Hyundai,Sonata,Comfort,Sedan,Petrol,115500,2497.0,191,12.0,,5,Automatic,FWD,5,4,2020,True,5,True,True,0.46
-VH0067,Hyundai,Palisade,Smart,SUV,Petrol,165000,3778.0,291,10.0,,8,Automatic,AWD,6,5,2023,True,5,True,True,0.55
-VH0068,Hyundai,Palisade,Comfort,SUV,Petrol,181500,3778.0,291,9.0,,8,Automatic,AWD,8,5,2023,True,5,True,True,0.55
-VH0069,Hyundai,Ioniq 5,Smart,SUV,Electric,175000,,225,,481.0,5,Single-Speed,RWD,6,5,2022,True,5,True,True,0.45
-VH0070,Hyundai,Ioniq 5,Comfort,SUV,Electric,192500,,225,,471.0,5,Single-Speed,RWD,5,5,2022,True,5,True,True,0.45
-VH0071,Kia,Sportage,LX,SUV,Petrol,92000,2497.0,187,13.0,,5,Automatic,AWD,8,5,2023,True,5,False,True,0.52
-VH0072,Kia,Sportage,EX,SUV,Petrol,101000,2497.0,187,12.0,,5,Automatic,AWD,8,4,2023,True,5,False,True,0.52
-VH0073,Kia,Cerato,LX,Sedan,Petrol,68000,1999.0,147,16.0,,5,Automatic,FWD,8,5,2022,True,5,False,False,0.49
-VH0074,Kia,Cerato,EX,Sedan,Petrol,75000,1999.0,147,15.0,,5,Automatic,FWD,6,4,2022,True,5,False,True,0.49
-VH0075,Kia,Seltos,LX,SUV,Petrol,78000,1497.0,115,15.0,,5,Automatic,FWD,7,5,2021,True,5,True,True,0.5
-VH0076,Kia,Seltos,EX,SUV,Petrol,86000,1497.0,115,14.0,,5,Automatic,FWD,7,5,2021,True,5,False,True,0.5
-VH0077,Kia,Sorento,LX,SUV,Petrol,128000,2497.0,191,11.0,,7,Automatic,AWD,5,5,2021,True,5,True,True,0.53
-VH0078,Kia,Sorento,EX,SUV,Petrol,141000,2497.0,191,10.0,,7,Automatic,AWD,8,4,2021,True,5,True,True,0.53
-VH0079,Kia,Pegas,LX,Sedan,Petrol,50000,1368.0,94,19.0,,5,Automatic,FWD,6,4,2020,True,5,True,True,0.44
-VH0080,Kia,Pegas,EX,Sedan,Petrol,55000,1368.0,94,18.0,,5,Automatic,FWD,8,5,2020,True,5,False,True,0.44
-VH0081,Kia,Carnival,LX,Minivan,Petrol,145000,3470.0,287,10.0,,8,Automatic,FWD,5,5,2022,True,5,False,True,0.54
-VH0082,Kia,Carnival,EX,Minivan,Petrol,159500,3470.0,287,9.0,,8,Automatic,FWD,6,5,2022,True,5,True,True,0.54
-VH0083,Kia,Telluride,LX,SUV,Petrol,165000,3778.0,291,10.0,,8,Automatic,AWD,8,5,2020,True,5,False,True,0.6
-VH0084,Kia,Telluride,EX,SUV,Petrol,181500,3778.0,291,9.0,,8,Automatic,AWD,7,5,2020,True,5,True,True,0.6
-VH0085,Kia,EV6,LX,SUV,Electric,180000,,225,,528.0,5,Single-Speed,RWD,6,5,2022,True,5,True,True,0.44
-VH0086,Kia,EV6,EX,SUV,Electric,198000,,225,,517.0,5,Single-Speed,RWD,5,5,2022,True,5,True,True,0.44
-VH0087,Honda,CR-V,DX,SUV,Petrol,115000,1498.0,190,13.0,,5,Automatic,AWD,7,5,2023,True,3,True,True,0.55
-VH0088,Honda,CR-V,LX,SUV,Petrol,126500,1498.0,190,12.0,,5,Automatic,AWD,5,5,2023,True,3,True,True,0.55
-VH0089,Honda,Civic,DX,Sedan,Petrol,95000,1996.0,158,16.0,,5,Automatic,FWD,8,5,2022,True,3,False,True,0.54
-VH0090,Honda,Civic,LX,Sedan,Petrol,104500,1996.0,158,15.0,,5,Automatic,FWD,5,4,2022,True,3,True,True,0.54
-VH0091,Honda,Accord,DX,Sedan,Petrol,125000,1498.0,192,14.0,,5,Automatic,FWD,8,4,2023,True,3,True,True,0.5
-VH0092,Honda,Accord,LX,Sedan,Petrol,137500,1498.0,192,13.0,,5,Automatic,FWD,8,4,2023,True,3,True,True,0.5
-VH0093,Honda,Accord Hybrid,DX,Sedan,Hybrid,140000,1993.0,204,22.0,,5,Automatic,FWD,6,5,2023,True,3,True,True,0.51
-VH0094,Honda,Accord Hybrid,LX,Sedan,Hybrid,154000,1993.0,204,21.0,,5,Automatic,FWD,5,5,2023,True,3,True,True,0.51
-VH0095,Honda,City,DX,Sedan,Petrol,68000,1498.0,121,18.0,,5,Automatic,FWD,7,5,2021,True,3,False,False,0.48
-VH0096,Honda,City,LX,Sedan,Petrol,75000,1498.0,121,17.0,,5,Automatic,FWD,5,5,2021,True,3,False,True,0.48
-VH0097,Honda,Pilot,DX,SUV,Petrol,175000,3500.0,285,10.0,,8,Automatic,AWD,7,4,2023,True,3,True,True,0.52
-VH0098,Honda,Pilot,LX,SUV,Petrol,192500,3500.0,285,9.0,,8,Automatic,AWD,8,5,2023,True,3,True,True,0.52
-VH0099,Honda,HR-V,DX,SUV,Petrol,89000,1498.0,121,15.0,,5,Automatic,FWD,7,4,2022,True,3,True,True,0.5
-VH0100,Honda,HR-V,LX,SUV,Petrol,98000,1498.0,121,14.0,,5,Automatic,FWD,7,5,2022,True,3,True,True,0.5
-VH0101,MG,MG5,STD,Sedan,Petrol,62000,1498.0,114,16.0,,5,Automatic,FWD,7,4,2021,True,5,True,True,0.4
-VH0102,MG,MG5,COM,Sedan,Petrol,68000,1498.0,114,15.0,,5,Automatic,FWD,6,4,2021,True,5,False,True,0.4
-VH0103,MG,ZS,STD,SUV,Petrol,68000,1498.0,111,15.0,,5,Automatic,FWD,8,4,2020,True,5,True,True,0.41
-VH0104,MG,ZS,COM,SUV,Petrol,75000,1498.0,111,14.0,,5,Automatic,FWD,6,5,2020,True,5,False,True,0.41
-VH0105,MG,RX5,STD,SUV,Petrol,82000,1998.0,174,12.0,,5,Automatic,FWD,8,4,2022,True,5,False,True,0.4
-VH0106,MG,RX5,COM,SUV,Petrol,90000,1998.0,174,11.0,,5,Automatic,FWD,7,5,2022,True,5,False,True,0.4
-VH0107,MG,HS,STD,SUV,Petrol,88000,1498.0,168,13.0,,5,Automatic,FWD,8,4,2021,True,5,False,True,0.42
-VH0108,MG,HS,COM,SUV,Petrol,97000,1498.0,168,12.0,,5,Automatic,FWD,7,5,2021,True,5,True,False,0.42
-VH0109,MG,MG6,STD,Sedan,Petrol,78000,1498.0,168,14.0,,5,Automatic,FWD,5,5,2021,True,5,False,True,0.39
-VH0110,MG,MG6,COM,Sedan,Petrol,86000,1498.0,168,13.0,,5,Automatic,FWD,8,5,2021,True,5,True,True,0.39
-VH0111,MG,MG4 EV,STD,Hatchback,Electric,110000,,168,,425.0,5,Single-Speed,RWD,5,5,2023,True,5,True,True,0.4
-VH0112,MG,MG4 EV,COM,Hatchback,Electric,121000,,168,,416.0,5,Single-Speed,RWD,5,5,2023,True,5,True,True,0.4
-VH0113,Chevrolet,Tahoe,LS,SUV,Petrol,235000,5328.0,355,8.0,,8,Automatic,4WD,7,5,2021,True,3,False,True,0.58
-VH0114,Chevrolet,Tahoe,LT,SUV,Petrol,258500,5328.0,355,7.0,,8,Automatic,4WD,8,5,2021,True,3,True,True,0.58
-VH0115,Chevrolet,Trailblazer,LS,SUV,Petrol,82000,1341.0,155,14.0,,5,Automatic,FWD,8,4,2021,True,3,True,True,0.46
-VH0116,Chevrolet,Trailblazer,LT,SUV,Petrol,90000,1341.0,155,13.0,,5,Automatic,FWD,5,5,2021,True,3,False,True,0.46
-VH0117,Chevrolet,Groove,LS,SUV,Petrol,68000,1499.0,106,15.0,,5,Automatic,FWD,7,5,2020,True,3,False,True,0.44
-VH0118,Chevrolet,Groove,LT,SUV,Petrol,75000,1499.0,106,14.0,,5,Automatic,FWD,6,5,2020,True,3,True,True,0.44
-VH0119,Chevrolet,Captiva,LS,SUV,Petrol,78000,1499.0,141,14.0,,7,Automatic,FWD,8,5,2019,True,3,True,True,0.44
-VH0120,Chevrolet,Captiva,LT,SUV,Petrol,86000,1499.0,141,13.0,,7,Automatic,FWD,5,5,2019,True,3,True,True,0.44
-VH0121,Chevrolet,Malibu,LS,Sedan,Petrol,92000,1490.0,160,15.0,,5,Automatic,FWD,6,5,2019,True,3,True,False,0.43
-VH0122,Chevrolet,Malibu,LT,Sedan,Petrol,101000,1490.0,160,14.0,,5,Automatic,FWD,8,5,2019,True,3,False,True,0.43
-VH0123,Chevrolet,Silverado,LS,Pickup,Petrol,210000,6162.0,420,7.0,,5,Automatic,4WD,6,5,2022,True,3,False,True,0.55
-VH0124,Chevrolet,Silverado,LT,Pickup,Petrol,231000,6162.0,420,6.0,,5,Automatic,4WD,8,5,2022,True,3,True,True,0.55
-VH0125,Lexus,LX,Base,Luxury,Petrol,470000,3444.0,409,8.0,,7,Automatic,4WD,7,5,2022,True,3,True,True,0.62
-VH0126,Lexus,LX,Prestige,Luxury,Petrol,517000,3444.0,409,7.0,,7,Automatic,4WD,5,5,2022,True,3,True,True,0.62
-VH0127,Lexus,ES,Base,Luxury,Petrol,175000,2487.0,203,14.0,,5,Automatic,FWD,6,4,2019,True,3,False,True,0.52
-VH0128,Lexus,ES,Prestige,Luxury,Petrol,192500,2487.0,203,13.0,,5,Automatic,FWD,6,4,2019,True,3,False,True,0.52
-VH0129,Lexus,ES 300h,Base,Luxury,Hybrid,195000,2487.0,215,23.0,,5,Automatic,FWD,7,5,2020,True,3,True,False,0.53
-VH0130,Lexus,ES 300h,Prestige,Luxury,Hybrid,214500,2487.0,215,22.0,,5,Automatic,FWD,6,5,2020,True,3,False,True,0.53
-VH0131,Lexus,RX,Base,Luxury,Petrol,245000,2393.0,275,11.0,,5,Automatic,AWD,7,5,2023,True,3,True,True,0.55
-VH0132,Lexus,RX,Prestige,Luxury,Petrol,269500,2393.0,275,10.0,,5,Automatic,AWD,8,5,2023,True,3,True,True,0.55
-VH0133,Lexus,NX,Base,Luxury,Petrol,195000,2393.0,275,12.0,,5,Automatic,AWD,8,5,2022,True,3,False,True,0.54
-VH0134,Lexus,NX,Prestige,Luxury,Petrol,214500,2393.0,275,11.0,,5,Automatic,AWD,5,4,2022,True,3,True,True,0.54
-VH0135,Lexus,GX,Base,Luxury,Petrol,305000,3445.0,349,9.0,,7,Automatic,4WD,8,5,2024,True,3,True,True,0.6
-VH0136,Lexus,GX,Prestige,Luxury,Petrol,335500,3445.0,349,8.0,,7,Automatic,4WD,8,5,2024,True,3,True,True,0.6
-VH0137,Ford,Explorer,Ambiente,SUV,Petrol,165000,2264.0,300,11.0,,7,Automatic,4WD,8,5,2020,True,3,False,True,0.5
-VH0138,Ford,Explorer,Trend,SUV,Petrol,181500,2264.0,300,10.0,,7,Automatic,4WD,8,4,2020,True,3,True,True,0.5
-VH0139,Ford,Territory,Ambiente,SUV,Petrol,95000,1496.0,190,13.0,,5,Automatic,FWD,7,5,2023,True,3,False,True,0.44
-VH0140,Ford,Territory,Trend,SUV,Petrol,104500,1496.0,190,12.0,,5,Automatic,FWD,7,4,2023,True,3,False,True,0.44
-VH0141,Ford,F-150,Ambiente,Pickup,Petrol,220000,3500.0,400,8.0,,5,Automatic,4WD,5,5,2021,True,3,False,False,0.55
-VH0142,Ford,F-150,Trend,Pickup,Petrol,242000,3500.0,400,7.0,,5,Automatic,4WD,6,5,2021,True,3,False,True,0.55
-VH0143,Ford,Mustang,Ambiente,Coupe,Petrol,185000,2264.0,315,11.0,,4,Automatic,RWD,5,5,2024,True,3,True,True,0.55
-VH0144,Ford,Mustang,Trend,Coupe,Petrol,203500,2264.0,315,10.0,,4,Automatic,RWD,7,5,2024,True,3,False,True,0.55
-VH0145,Ford,Edge,Ambiente,SUV,Petrol,135000,1997.0,250,11.0,,5,Automatic,AWD,6,4,2019,True,3,False,True,0.46
-VH0146,Ford,Edge,Trend,SUV,Petrol,148500,1997.0,250,10.0,,5,Automatic,AWD,5,5,2019,True,3,False,True,0.46
-VH0147,Ford,Bronco,Ambiente,SUV,Petrol,195000,2264.0,300,10.0,,5,Automatic,4WD,6,5,2022,True,3,False,True,0.62
-VH0148,Ford,Bronco,Trend,SUV,Petrol,214500,2264.0,300,9.0,,5,Automatic,4WD,5,5,2022,True,3,True,True,0.62
-VH0149,Mercedes-Benz,C-Class,Base,Luxury,Petrol,245000,1999.0,258,14.0,,5,Automatic,RWD,6,5,2022,True,3,True,True,0.49
-VH0150,Mercedes-Benz,C-Class,Exclusive,Luxury,Petrol,269500,1999.0,258,13.0,,5,Automatic,RWD,7,5,2022,True,3,True,True,0.49
-VH0151,Mercedes-Benz,E-Class,Base,Luxury,Petrol,320000,1999.0,258,13.0,,5,Automatic,RWD,8,4,2024,True,3,True,True,0.46
-VH0152,Mercedes-Benz,E-Class,Exclusive,Luxury,Petrol,352000,1999.0,258,12.0,,5,Automatic,RWD,5,5,2024,True,3,False,True,0.46
-VH0153,Mercedes-Benz,GLC,Base,Luxury,Petrol,285000,1999.0,258,12.0,,5,Automatic,AWD,5,4,2023,True,3,True,True,0.52
-VH0154,Mercedes-Benz,GLC,Exclusive,Luxury,Petrol,313500,1999.0,258,11.0,,5,Automatic,AWD,6,4,2023,True,3,True,True,0.52
-VH0155,Mercedes-Benz,GLE,Base,Luxury,Petrol,420000,2999.0,375,10.0,,5,Automatic,AWD,5,5,2020,True,3,True,True,0.5
-VH0156,Mercedes-Benz,GLE,Exclusive,Luxury,Petrol,462000,2999.0,375,9.0,,5,Automatic,AWD,5,5,2020,True,3,False,True,0.5
-VH0157,Mercedes-Benz,S-Class,Base,Luxury,Petrol,650000,2999.0,429,10.0,,5,Automatic,AWD,5,5,2021,True,3,True,True,0.45
-VH0158,Mercedes-Benz,S-Class,Exclusive,Luxury,Petrol,715000,2999.0,429,9.0,,5,Automatic,AWD,8,5,2021,True,3,True,True,0.45
-VH0159,Mercedes-Benz,G-Class,Base,Luxury,Petrol,850000,3982.0,585,7.0,,5,Automatic,4WD,7,5,2019,True,3,False,True,0.72
-VH0160,Mercedes-Benz,G-Class,Exclusive,Luxury,Petrol,935000,3982.0,585,6.0,,5,Automatic,4WD,8,5,2019,True,3,True,True,0.72
-VH0161,BMW,3 Series,sDrive,Luxury,Petrol,235000,1998.0,255,15.0,,5,Automatic,RWD,5,5,2019,True,3,True,True,0.48
-VH0162,BMW,3 Series,xDrive,Luxury,Petrol,258500,1998.0,255,14.0,,5,Automatic,RWD,6,4,2019,True,3,False,True,0.48
-VH0163,BMW,5 Series,sDrive,Luxury,Petrol,330000,2998.0,375,13.0,,5,Automatic,RWD,5,4,2024,True,3,True,True,0.46
-VH0164,BMW,5 Series,xDrive,Luxury,Petrol,363000,2998.0,375,12.0,,5,Automatic,RWD,6,5,2024,True,3,True,True,0.46
-VH0165,BMW,X3,sDrive,Luxury,Petrol,255000,1998.0,248,13.0,,5,Automatic,AWD,7,5,2018,True,3,True,True,0.5
-VH0166,BMW,X3,xDrive,Luxury,Petrol,280500,1998.0,248,12.0,,5,Automatic,AWD,8,4,2018,True,3,True,False,0.5
-VH0167,BMW,X5,sDrive,Luxury,Petrol,400000,2998.0,375,11.0,,5,Automatic,AWD,5,5,2019,True,3,True,True,0.52
-VH0168,BMW,X5,xDrive,Luxury,Petrol,440000,2998.0,375,10.0,,5,Automatic,AWD,8,5,2019,True,3,True,True,0.52
-VH0169,BMW,X7,sDrive,Luxury,Petrol,520000,2998.0,375,10.0,,7,Automatic,AWD,6,4,2023,True,3,True,True,0.53
-VH0170,BMW,X7,xDrive,Luxury,Petrol,572000,2998.0,375,9.0,,7,Automatic,AWD,5,4,2023,True,3,False,False,0.53
-VH0171,BMW,i4,sDrive,Luxury,Electric,285000,,340,,493.0,5,Single-Speed,RWD,8,5,2022,True,3,False,True,0.42
-VH0172,BMW,i4,xDrive,Luxury,Electric,313500,,340,,483.0,5,Single-Speed,RWD,7,5,2022,True,3,True,True,0.42
-VH0173,Land Rover,Range Rover Sport,S,Luxury,Petrol,550000,2996.0,400,9.0,,5,Automatic,4WD,8,5,2023,True,3,True,True,0.55
-VH0174,Land Rover,Range Rover Sport,SE,Luxury,Petrol,605000,2996.0,400,8.0,,5,Automatic,4WD,8,5,2023,True,3,True,True,0.55
-VH0175,Land Rover,Range Rover Evoque,S,Luxury,Petrol,260000,1997.0,249,12.0,,5,Automatic,AWD,5,4,2020,True,3,True,True,0.48
-VH0176,Land Rover,Range Rover Evoque,SE,Luxury,Petrol,286000,1997.0,249,11.0,,5,Automatic,AWD,8,5,2020,True,3,True,True,0.48
-VH0177,Land Rover,Defender,S,SUV,Petrol,340000,2996.0,400,9.0,,5,Automatic,4WD,5,5,2021,True,3,True,True,0.6
-VH0178,Land Rover,Defender,SE,SUV,Petrol,374000,2996.0,400,8.0,,5,Automatic,4WD,5,5,2021,True,3,False,True,0.6
-VH0179,Land Rover,Range Rover Velar,S,Luxury,Petrol,320000,1997.0,250,11.0,,5,Automatic,AWD,6,5,2019,True,3,True,True,0.47
-VH0180,Land Rover,Range Rover Velar,SE,Luxury,Petrol,352000,1997.0,250,10.0,,5,Automatic,AWD,7,5,2019,True,3,True,True,0.47
-VH0181,Land Rover,Discovery,S,SUV,Petrol,330000,2996.0,355,9.0,,7,Automatic,4WD,6,5,2021,True,3,False,True,0.48
-VH0182,Land Rover,Discovery,SE,SUV,Petrol,363000,2996.0,355,8.0,,7,Automatic,4WD,6,5,2021,True,3,True,True,0.48
-VH0183,Mazda,CX-5,Core,SUV,Petrol,105000,2488.0,187,13.0,,5,Automatic,AWD,6,5,2022,True,3,True,True,0.5
-VH0184,Mazda,CX-5,Touring,SUV,Petrol,115500,2488.0,187,12.0,,5,Automatic,AWD,6,5,2022,True,3,False,True,0.5
-VH0185,Mazda,Mazda 3,Core,Sedan,Petrol,82000,1998.0,186,15.0,,5,Automatic,FWD,6,4,2021,True,3,True,True,0.48
-VH0186,Mazda,Mazda 3,Touring,Sedan,Petrol,90000,1998.0,186,14.0,,5,Automatic,FWD,5,5,2021,True,3,True,True,0.48
-VH0187,Mazda,CX-9,Core,SUV,Petrol,155000,2488.0,227,11.0,,7,Automatic,AWD,5,4,2020,True,3,True,True,0.5
-VH0188,Mazda,CX-9,Touring,SUV,Petrol,170500,2488.0,227,10.0,,7,Automatic,AWD,7,5,2020,True,3,False,True,0.5
-VH0189,Mazda,Mazda 6,Core,Sedan,Petrol,105000,2488.0,194,14.0,,5,Automatic,FWD,8,5,2019,True,3,False,True,0.46
-VH0190,Mazda,Mazda 6,Touring,Sedan,Petrol,115500,2488.0,194,13.0,,5,Automatic,FWD,6,5,2019,True,3,False,True,0.46
-VH0191,Mazda,CX-30,Core,SUV,Petrol,89000,1998.0,186,14.0,,5,Automatic,AWD,5,5,2021,True,3,True,True,0.48
-VH0192,Mazda,CX-30,Touring,SUV,Petrol,98000,1998.0,186,13.0,,5,Automatic,AWD,5,5,2021,True,3,False,False,0.48
-VH0193,Mazda,CX-60,Core,SUV,Petrol,165000,3283.0,328,11.0,,5,Automatic,AWD,5,5,2023,True,3,False,True,0.5
-VH0194,Mazda,CX-60,Touring,SUV,Petrol,181500,3283.0,328,10.0,,5,Automatic,AWD,6,4,2023,True,3,True,True,0.5
-VH0195,Suzuki,Jimny,GL,SUV,Petrol,82000,1462.0,101,14.0,,4,Automatic,4WD,8,5,2020,True,3,False,True,0.68
-VH0196,Suzuki,Jimny,GLX,SUV,Petrol,90000,1462.0,101,13.0,,4,Automatic,4WD,6,5,2020,True,3,False,True,0.68
-VH0197,Suzuki,Dzire,GL,Sedan,Petrol,44000,1197.0,89,22.0,,5,Automatic,FWD,5,4,2020,True,3,True,True,0.44
-VH0198,Suzuki,Dzire,GLX,Sedan,Petrol,48500,1197.0,89,21.0,,5,Automatic,FWD,8,5,2020,True,3,False,True,0.44
-VH0199,Suzuki,Baleno,GL,Hatchback,Petrol,46000,1197.0,89,21.0,,5,Automatic,FWD,5,4,2022,True,3,True,True,0.43
-VH0200,Suzuki,Baleno,GLX,Hatchback,Petrol,50500,1197.0,89,20.0,,5,Automatic,FWD,6,5,2022,True,3,False,True,0.43
-VH0201,Suzuki,Ertiga,GL,Minivan,Petrol,62000,1462.0,103,17.0,,7,Automatic,FWD,7,5,2019,True,3,True,True,0.46
-VH0202,Suzuki,Ertiga,GLX,Minivan,Petrol,68000,1462.0,103,16.0,,7,Automatic,FWD,7,5,2019,True,3,False,True,0.46
-VH0203,Suzuki,Fronx,GL,SUV,Petrol,58000,1197.0,100,18.0,,5,Automatic,FWD,8,5,2023,True,3,True,True,0.47
-VH0204,Suzuki,Fronx,GLX,SUV,Petrol,64000,1197.0,100,17.0,,5,Automatic,FWD,7,5,2023,True,3,False,True,0.47
-VH0205,Suzuki,Grand Vitara,GL,SUV,Petrol,78000,1462.0,103,16.0,,5,Automatic,AWD,6,4,2023,True,3,False,True,0.48
-VH0206,Suzuki,Grand Vitara,GLX,SUV,Petrol,86000,1462.0,103,15.0,,5,Automatic,AWD,8,5,2023,True,3,True,True,0.48
+vehicle_id,brand,model,variant,category,fuel_type,price_eur,engine_cc,power_kw,consumption_l_per_100km,consumption_kwh_per_100km,range_km,co2_g_per_km,emission_class,annual_vehicle_tax_eur,seating_capacity,transmission,drive_type,body_color_options,safety_rating,launch_year,is_active,warranty_years,service_contract_available,origin,residual_value_36mo
+VH0001,Volkswagen,Golf,Life,Compact,Petrol,32000,1498.0,110,5.6,,,127,Euro 6d,96,5,DSG,FWD,8,5,2020,True,2,False,Domestic,0.52
+VH0002,Volkswagen,Golf,Style,Compact,Petrol,35000,1498.0,110,5.8,,,132,Euro 6d,107,5,DSG,FWD,7,5,2020,True,2,True,Domestic,0.52
+VH0003,Volkswagen,Golf Variant,Life,Estate,Diesel,36000,1968.0,110,4.8,,,126,Euro 6d,251,5,DSG,FWD,8,5,2021,True,2,False,Domestic,0.51
+VH0004,Volkswagen,Golf Variant,Style,Estate,Diesel,39500,1968.0,110,5.0,,,131,Euro 6d,262,5,Manual,FWD,8,5,2021,True,2,True,Domestic,0.51
+VH0005,Volkswagen,Golf GTI,Life,Compact,Petrol,45000,1984.0,195,7.3,,,166,Euro 6d,206,5,Manual,FWD,5,5,2021,True,2,True,Domestic,0.56
+VH0006,Volkswagen,Golf GTI,Style,Compact,Petrol,49500,1984.0,195,7.5,,,173,Euro 6d,226,5,DSG,FWD,9,5,2021,True,2,True,Domestic,0.56
+VH0007,Volkswagen,T-Roc,Life,SUV,Petrol,31000,1498.0,110,6.2,,,141,Euro 6d,129,5,DSG,FWD,5,5,2022,True,2,True,Domestic,0.54
+VH0008,Volkswagen,T-Roc,Style,SUV,Petrol,34000,1498.0,110,6.4,,,147,Euro 6d,144,5,DSG,FWD,7,5,2022,True,2,True,Domestic,0.54
+VH0009,Volkswagen,T-Cross,Life,SUV,Petrol,26000,999.0,85,5.8,,,132,Euro 6d,97,5,DSG,FWD,8,5,2022,True,2,False,Domestic,0.5
+VH0010,Volkswagen,T-Cross,Style,SUV,Petrol,28500,999.0,85,6.0,,,137,Euro 6d,109,5,DSG,FWD,6,5,2022,True,2,False,Domestic,0.5
+VH0011,Volkswagen,Tiguan,Life,SUV,Petrol,40000,1498.0,110,6.5,,,148,Euro 6e,146,5,Manual,FWD,6,5,2024,True,2,True,Domestic,0.55
+VH0012,Volkswagen,Tiguan,Style,SUV,Petrol,44000,1498.0,110,6.7,,,154,Euro 6e,161,5,Manual,FWD,7,5,2024,True,2,True,Domestic,0.55
+VH0013,Volkswagen,Tiguan eHybrid,Life,SUV,Plug-in Hybrid,48000,1395.0,150,1.4,,,32,Euro 6e,28,5,DSG,FWD,6,5,2024,True,2,True,Domestic,0.5
+VH0014,Volkswagen,Tiguan eHybrid,Style,SUV,Plug-in Hybrid,53000,1395.0,150,1.6,,,33,Euro 6e,28,5,DSG,FWD,9,5,2024,True,2,True,Domestic,0.5
+VH0015,Volkswagen,Passat Variant,Life,Estate,Diesel,45000,1968.0,110,5.2,,,137,Euro 6e,276,5,Manual,FWD,7,5,2024,True,2,True,Domestic,0.5
+VH0016,Volkswagen,Passat Variant,Style,Estate,Diesel,49500,1968.0,110,5.4,,,142,Euro 6e,288,5,Manual,FWD,5,5,2024,True,2,True,Domestic,0.5
+VH0017,Volkswagen,Polo,Life,Small Car,Petrol,22000,999.0,70,5.4,,,123,Euro 6d,78,5,Manual,FWD,5,5,2021,True,2,False,Domestic,0.5
+VH0018,Volkswagen,Polo,Style,Small Car,Petrol,24000,999.0,70,5.6,,,128,Euro 6d,89,5,Manual,FWD,9,5,2021,True,2,False,Domestic,0.5
+VH0019,Volkswagen,ID.3,Life,Compact,Electric,37000,,150,,15.8,429.0,0,BEV,0,5,Single-Speed,RWD,7,5,2023,True,2,True,Domestic,0.42
+VH0020,Volkswagen,ID.3,Style,Compact,Electric,40500,,150,,16.1,416.0,0,BEV,0,5,Single-Speed,RWD,9,5,2023,True,2,True,Domestic,0.42
+VH0021,Volkswagen,ID.4,Life,SUV,Electric,45000,,150,,16.9,522.0,0,BEV,0,5,Single-Speed,RWD,9,4,2022,True,2,False,Domestic,0.43
+VH0022,Volkswagen,ID.4,Style,SUV,Electric,49500,,150,,17.2,506.0,0,BEV,0,5,Single-Speed,RWD,5,5,2022,True,2,False,Domestic,0.43
+VH0023,Volkswagen,Touran,Life,Van,Diesel,38000,1968.0,110,5.4,,,142,Euro 6d,288,7,DSG,FWD,7,5,2019,True,2,True,Domestic,0.48
+VH0024,Volkswagen,Touran,Style,Van,Diesel,42000,1968.0,110,5.6,,,148,Euro 6d,303,7,Manual,FWD,7,5,2019,True,2,True,Domestic,0.48
+VH0025,Volkswagen,Caddy,Life,Van,Diesel,32000,1968.0,90,5.6,,,147,Euro 6d,301,5,DSG,FWD,8,5,2021,True,2,True,Domestic,0.49
+VH0026,Volkswagen,Caddy,Style,Van,Diesel,35000,1968.0,90,5.8,,,153,Euro 6d,316,5,DSG,FWD,7,5,2021,True,2,True,Domestic,0.49
+VH0027,Mercedes-Benz,A-Klasse,Basis,Compact,Petrol,36000,1332.0,120,5.9,,,134,Euro 6d,108,5,Automatic,FWD,5,5,2023,True,2,True,Domestic,0.48
+VH0028,Mercedes-Benz,A-Klasse,Avantgarde,Compact,Petrol,39500,1332.0,120,6.1,,,139,Euro 6d,121,5,Manual,FWD,7,5,2023,True,2,True,Domestic,0.48
+VH0029,Mercedes-Benz,C-Klasse,Basis,Sedan,Petrol,52000,1496.0,150,6.5,,,148,Euro 6d,146,5,Automatic,RWD,6,5,2022,True,2,False,Domestic,0.5
+VH0030,Mercedes-Benz,C-Klasse,Avantgarde,Sedan,Petrol,57000,1496.0,150,6.7,,,154,Euro 6d,161,5,Automatic,RWD,7,5,2022,True,2,True,Domestic,0.5
+VH0031,Mercedes-Benz,C-Klasse T-Modell,Basis,Estate,Diesel,55000,1993.0,147,4.9,,,129,Euro 6d,260,5,Automatic,RWD,9,5,2022,True,2,True,Domestic,0.51
+VH0032,Mercedes-Benz,C-Klasse T-Modell,Avantgarde,Estate,Diesel,60500,1993.0,147,5.1,,,134,Euro 6d,271,5,Automatic,RWD,6,5,2022,True,2,False,Domestic,0.51
+VH0033,Mercedes-Benz,GLA,Basis,SUV,Petrol,43000,1332.0,120,6.4,,,146,Euro 6d,138,5,Automatic,FWD,7,5,2023,True,2,False,Domestic,0.5
+VH0034,Mercedes-Benz,GLA,Avantgarde,SUV,Petrol,47500,1332.0,120,6.6,,,152,Euro 6d,153,5,Manual,FWD,7,5,2023,True,2,True,Domestic,0.5
+VH0035,Mercedes-Benz,GLC,Basis,SUV,Diesel,62000,1993.0,145,5.5,,,145,Euro 6d,298,5,Manual,AWD,8,5,2023,True,2,True,Domestic,0.55
+VH0036,Mercedes-Benz,GLC,Avantgarde,SUV,Diesel,68000,1993.0,145,5.7,,,151,Euro 6d,313,5,Manual,AWD,8,5,2023,True,2,True,Domestic,0.55
+VH0037,Mercedes-Benz,E-Klasse,Basis,Luxury,Diesel,62000,1993.0,145,5.1,,,134,Euro 6e,271,5,Automatic,RWD,7,5,2024,True,2,True,Domestic,0.47
+VH0038,Mercedes-Benz,E-Klasse,Avantgarde,Luxury,Diesel,68000,1993.0,145,5.3,,,139,Euro 6e,283,5,Automatic,RWD,8,5,2024,True,2,True,Domestic,0.47
+VH0039,Mercedes-Benz,S-Klasse,Basis,Luxury,Petrol,115000,2999.0,270,8.0,,,182,Euro 6d,276,5,Automatic,AWD,6,5,2021,True,2,False,Domestic,0.44
+VH0040,Mercedes-Benz,S-Klasse,Avantgarde,Luxury,Petrol,126500,2999.0,270,8.2,,,189,Euro 6d,300,5,Automatic,AWD,5,4,2021,True,2,False,Domestic,0.44
+VH0041,Mercedes-Benz,EQA,Basis,SUV,Electric,51000,,140,,16.5,486.0,0,BEV,0,5,Single-Speed,FWD,6,5,2021,True,2,True,Domestic,0.4
+VH0042,Mercedes-Benz,EQA,Avantgarde,SUV,Electric,56000,,140,,16.8,471.0,0,BEV,0,5,Single-Speed,FWD,8,4,2021,True,2,True,Domestic,0.4
+VH0043,Mercedes-Benz,V-Klasse,Basis,Van,Diesel,62000,1950.0,140,6.8,,,178,Euro 6d,387,8,Automatic,RWD,5,5,2020,True,2,True,Domestic,0.52
+VH0044,Mercedes-Benz,V-Klasse,Avantgarde,Van,Diesel,68000,1950.0,140,7.0,,,185,Euro 6d,411,8,Manual,RWD,7,5,2020,True,2,True,Domestic,0.52
+VH0045,BMW,1er,Advantage,Compact,Petrol,36000,1499.0,115,6.0,,,136,Euro 6e,116,5,Manual,FWD,7,5,2024,True,2,False,Domestic,0.48
+VH0046,BMW,1er,Sport Line,Compact,Petrol,39500,1499.0,115,6.2,,,141,Euro 6e,129,5,Automatic,FWD,9,5,2024,True,2,True,Domestic,0.48
+VH0047,BMW,3er,Advantage,Sedan,Diesel,52000,1995.0,140,4.9,,,128,Euro 6d,258,5,Automatic,RWD,5,5,2022,True,2,True,Domestic,0.5
+VH0048,BMW,3er,Sport Line,Sedan,Diesel,57000,1995.0,140,5.1,,,133,Euro 6d,269,5,Manual,RWD,7,5,2022,True,2,True,Domestic,0.5
+VH0049,BMW,3er Touring,Advantage,Estate,Diesel,54000,1995.0,140,5.1,,,133,Euro 6d,269,5,Manual,RWD,5,5,2022,True,2,True,Domestic,0.51
+VH0050,BMW,3er Touring,Sport Line,Estate,Diesel,59500,1995.0,140,5.3,,,138,Euro 6d,281,5,Manual,RWD,7,5,2022,True,2,True,Domestic,0.51
+VH0051,BMW,X1,Advantage,SUV,Petrol,46000,1499.0,125,6.3,,,143,Euro 6d,134,5,Automatic,AWD,8,5,2023,True,2,False,Domestic,0.53
+VH0052,BMW,X1,Sport Line,SUV,Petrol,50500,1499.0,125,6.5,,,149,Euro 6d,149,5,Automatic,AWD,5,5,2023,True,2,True,Domestic,0.53
+VH0053,BMW,X3,Advantage,SUV,Diesel,62000,1995.0,145,5.6,,,147,Euro 6e,304,5,Automatic,AWD,6,5,2024,True,2,False,Domestic,0.54
+VH0054,BMW,X3,Sport Line,SUV,Diesel,68000,1995.0,145,5.8,,,153,Euro 6e,319,5,Automatic,AWD,5,5,2024,True,2,False,Domestic,0.54
+VH0055,BMW,5er,Advantage,Luxury,Diesel,68000,1995.0,145,5.3,,,139,Euro 6e,284,5,Automatic,RWD,6,5,2024,True,2,False,Domestic,0.46
+VH0056,BMW,5er,Sport Line,Luxury,Diesel,75000,1995.0,145,5.5,,,145,Euro 6e,299,5,Automatic,RWD,7,5,2024,True,2,True,Domestic,0.46
+VH0057,BMW,X5,Advantage,Luxury,Diesel,85000,2993.0,220,6.4,,,168,Euro 6d,456,5,Automatic,AWD,7,5,2019,True,2,True,Domestic,0.5
+VH0058,BMW,X5,Sport Line,Luxury,Diesel,93500,2993.0,220,6.6,,,175,Euro 6d,476,5,Automatic,AWD,7,5,2019,True,2,False,Domestic,0.5
+VH0059,BMW,i4,Advantage,Sedan,Electric,58000,,250,,16.1,493.0,0,BEV,0,5,Single-Speed,RWD,5,4,2022,True,2,True,Domestic,0.43
+VH0060,BMW,i4,Sport Line,Sedan,Electric,64000,,250,,16.4,478.0,0,BEV,0,5,Single-Speed,RWD,9,4,2022,True,2,True,Domestic,0.43
+VH0061,BMW,iX1,Advantage,SUV,Electric,55000,,230,,17.0,440.0,0,BEV,0,5,Single-Speed,AWD,5,5,2023,True,2,False,Domestic,0.42
+VH0062,BMW,iX1,Sport Line,SUV,Electric,60500,,230,,17.3,427.0,0,BEV,0,5,Single-Speed,AWD,6,5,2023,True,2,True,Domestic,0.42
+VH0063,Audi,A1,Basis,Small Car,Petrol,27000,999.0,85,5.6,,,127,Euro 6d,86,5,DSG,FWD,9,5,2019,True,2,True,Domestic,0.48
+VH0064,Audi,A1,advanced,Small Car,Petrol,29500,999.0,85,5.8,,,132,Euro 6d,97,5,Manual,FWD,6,5,2019,True,2,True,Domestic,0.48
+VH0065,Audi,A3 Sportback,Basis,Compact,Petrol,36000,1498.0,110,5.5,,,125,Euro 6d,92,5,DSG,FWD,7,5,2021,True,2,True,Domestic,0.5
+VH0066,Audi,A3 Sportback,advanced,Compact,Petrol,39500,1498.0,110,5.7,,,130,Euro 6d,103,5,DSG,FWD,9,5,2021,True,2,True,Domestic,0.5
+VH0067,Audi,A4 Avant,Basis,Estate,Diesel,50000,1968.0,120,4.9,,,129,Euro 6d,258,5,DSG,FWD,9,5,2020,True,2,False,Domestic,0.49
+VH0068,Audi,A4 Avant,advanced,Estate,Diesel,55000,1968.0,120,5.1,,,134,Euro 6d,269,5,Manual,FWD,6,5,2020,True,2,True,Domestic,0.49
+VH0069,Audi,A6 Avant,Basis,Estate,Diesel,65000,1968.0,150,5.4,,,142,Euro 6d,288,5,DSG,FWD,9,5,2019,True,2,False,Domestic,0.46
+VH0070,Audi,A6 Avant,advanced,Estate,Diesel,71500,1968.0,150,5.6,,,148,Euro 6d,303,5,DSG,FWD,9,5,2019,True,2,True,Domestic,0.46
+VH0071,Audi,Q3,Basis,SUV,Petrol,43000,1498.0,110,6.3,,,143,Euro 6d,134,5,DSG,FWD,5,5,2019,True,2,True,Domestic,0.52
+VH0072,Audi,Q3,advanced,SUV,Petrol,47500,1498.0,110,6.5,,,149,Euro 6d,149,5,DSG,FWD,8,5,2019,True,2,True,Domestic,0.52
+VH0073,Audi,Q5,Basis,SUV,Diesel,60000,1968.0,150,5.6,,,147,Euro 6d,301,5,DSG,AWD,6,5,2021,True,2,False,Domestic,0.53
+VH0074,Audi,Q5,advanced,SUV,Diesel,66000,1968.0,150,5.8,,,153,Euro 6d,316,5,DSG,AWD,6,5,2021,True,2,True,Domestic,0.53
+VH0075,Audi,Q7,Basis,Luxury,Diesel,82000,2967.0,170,7.1,,,186,Euro 6d,511,7,DSG,AWD,9,5,2020,True,2,True,Domestic,0.48
+VH0076,Audi,Q7,advanced,Luxury,Diesel,90000,2967.0,170,7.3,,,193,Euro 6d,535,7,DSG,AWD,5,5,2020,True,2,False,Domestic,0.48
+VH0077,Audi,Q4 e-tron,Basis,SUV,Electric,48000,,150,,16.6,522.0,0,BEV,0,5,Single-Speed,RWD,5,4,2022,True,2,False,Domestic,0.42
+VH0078,Audi,Q4 e-tron,advanced,SUV,Electric,53000,,150,,16.9,506.0,0,BEV,0,5,Single-Speed,RWD,5,5,2022,True,2,True,Domestic,0.42
+VH0079,Skoda,Fabia,Essence,Small Car,Petrol,21000,999.0,70,5.2,,,118,Euro 6d,67,5,Manual,FWD,9,5,2021,True,2,True,Import,0.49
+VH0080,Skoda,Fabia,Selection,Small Car,Petrol,23000,999.0,70,5.4,,,123,Euro 6d,78,5,Manual,FWD,5,5,2021,True,2,True,Import,0.49
+VH0081,Skoda,Scala,Essence,Compact,Petrol,25000,999.0,85,5.4,,,123,Euro 6d,78,5,Manual,FWD,6,5,2019,True,2,True,Import,0.47
+VH0082,Skoda,Scala,Selection,Compact,Petrol,27500,999.0,85,5.6,,,128,Euro 6d,89,5,Manual,FWD,7,5,2019,True,2,False,Import,0.47
+VH0083,Skoda,Octavia Combi,Essence,Estate,Diesel,34000,1968.0,110,4.8,,,126,Euro 6d,251,5,DSG,FWD,9,5,2020,True,2,True,Import,0.51
+VH0084,Skoda,Octavia Combi,Selection,Estate,Diesel,37500,1968.0,110,5.0,,,131,Euro 6d,262,5,DSG,FWD,5,5,2020,True,2,True,Import,0.51
+VH0085,Skoda,Superb Combi,Essence,Estate,Diesel,45000,1968.0,142,5.2,,,137,Euro 6e,276,5,DSG,FWD,5,5,2024,True,2,True,Import,0.48
+VH0086,Skoda,Superb Combi,Selection,Estate,Diesel,49500,1968.0,142,5.4,,,142,Euro 6e,288,5,DSG,FWD,7,5,2024,True,2,True,Import,0.48
+VH0087,Skoda,Karoq,Essence,SUV,Petrol,33000,1498.0,110,6.0,,,137,Euro 6d,119,5,DSG,FWD,7,5,2022,True,2,True,Import,0.52
+VH0088,Skoda,Karoq,Selection,SUV,Petrol,36500,1498.0,110,6.2,,,142,Euro 6d,131,5,DSG,FWD,5,5,2022,True,2,True,Import,0.52
+VH0089,Skoda,Kodiaq,Essence,SUV,Diesel,42000,1968.0,110,5.6,,,147,Euro 6e,301,7,Manual,AWD,8,5,2024,True,2,False,Import,0.54
+VH0090,Skoda,Kodiaq,Selection,SUV,Diesel,46000,1968.0,110,5.8,,,153,Euro 6e,316,7,DSG,AWD,7,5,2024,True,2,False,Import,0.54
+VH0091,Skoda,Enyaq,Essence,SUV,Electric,44000,,150,,16.4,534.0,0,BEV,0,5,Single-Speed,RWD,8,5,2021,True,2,False,Import,0.43
+VH0092,Skoda,Enyaq,Selection,SUV,Electric,48500,,150,,16.7,518.0,0,BEV,0,5,Single-Speed,RWD,9,4,2021,True,2,True,Import,0.43
+VH0093,Opel,Corsa,Edition,Small Car,Petrol,21000,1199.0,74,5.5,,,124,Euro 6d,84,5,Automatic,FWD,6,4,2020,True,2,True,Domestic,0.46
+VH0094,Opel,Corsa,Elegance,Small Car,Petrol,23000,1199.0,74,5.7,,,129,Euro 6d,95,5,Manual,FWD,8,5,2020,True,2,True,Domestic,0.46
+VH0095,Opel,Corsa Electric,Edition,Small Car,Electric,33000,,100,,15.3,357.0,0,BEV,0,5,Single-Speed,FWD,6,5,2023,True,2,True,Domestic,0.38
+VH0096,Opel,Corsa Electric,Elegance,Small Car,Electric,36500,,100,,15.6,346.0,0,BEV,0,5,Single-Speed,FWD,7,5,2023,True,2,False,Domestic,0.38
+VH0097,Opel,Astra,Edition,Compact,Petrol,29000,1199.0,81,5.5,,,126,Euro 6d,88,5,Automatic,FWD,7,4,2022,True,2,False,Domestic,0.46
+VH0098,Opel,Astra,Elegance,Compact,Petrol,32000,1199.0,81,5.7,,,131,Euro 6d,99,5,Automatic,FWD,6,4,2022,True,2,True,Domestic,0.46
+VH0099,Opel,Mokka,Edition,SUV,Petrol,27000,1199.0,96,5.8,,,132,Euro 6d,101,5,Automatic,FWD,6,5,2021,True,2,True,Domestic,0.47
+VH0100,Opel,Mokka,Elegance,SUV,Petrol,29500,1199.0,96,6.0,,,137,Euro 6d,113,5,Manual,FWD,5,5,2021,True,2,True,Domestic,0.47
+VH0101,Opel,Grandland,Edition,SUV,Diesel,36000,1499.0,96,5.1,,,133,Euro 6d,222,5,Automatic,FWD,7,4,2022,True,2,True,Domestic,0.45
+VH0102,Opel,Grandland,Elegance,SUV,Diesel,39500,1499.0,96,5.3,,,138,Euro 6d,234,5,Manual,FWD,5,4,2022,True,2,True,Domestic,0.45
+VH0103,Opel,Combo Life,Edition,Van,Diesel,32000,1499.0,96,5.3,,,139,Euro 6d,236,7,Automatic,FWD,7,5,2019,True,2,True,Domestic,0.45
+VH0104,Opel,Combo Life,Elegance,Van,Diesel,35000,1499.0,96,5.5,,,145,Euro 6d,251,7,Automatic,FWD,8,5,2019,True,2,False,Domestic,0.45
+VH0105,Ford,Focus,Trend,Compact,Petrol,28000,999.0,92,5.7,,,129,Euro 6d,91,5,Manual,FWD,7,4,2022,True,2,True,Domestic,0.44
+VH0106,Ford,Focus,Titanium,Compact,Petrol,31000,999.0,92,5.9,,,134,Euro 6d,102,5,Automatic,FWD,5,5,2022,True,2,True,Domestic,0.44
+VH0107,Ford,Focus Turnier,Trend,Estate,Diesel,32000,1499.0,88,4.9,,,128,Euro 6d,211,5,Automatic,FWD,9,4,2022,True,2,False,Domestic,0.44
+VH0108,Ford,Focus Turnier,Titanium,Estate,Diesel,35000,1499.0,88,5.1,,,133,Euro 6d,222,5,Manual,FWD,7,5,2022,True,2,True,Domestic,0.44
+VH0109,Ford,Puma,Trend,SUV,Petrol,28000,999.0,92,5.6,,,127,Euro 6d,86,5,Automatic,FWD,9,5,2020,True,2,False,Domestic,0.47
+VH0110,Ford,Puma,Titanium,SUV,Petrol,31000,999.0,92,5.8,,,132,Euro 6d,97,5,Automatic,FWD,9,5,2020,True,2,False,Domestic,0.47
+VH0111,Ford,Kuga,Trend,SUV,Plug-in Hybrid,42000,2488.0,165,1.4,,,32,Euro 6d,50,5,Manual,FWD,9,5,2020,True,2,False,Domestic,0.46
+VH0112,Ford,Kuga,Titanium,SUV,Plug-in Hybrid,46000,2488.0,165,1.6,,,33,Euro 6d,50,5,Automatic,FWD,7,5,2020,True,2,True,Domestic,0.46
+VH0113,Ford,Transit Custom,Trend,Van,Diesel,42000,1995.0,100,7.1,,,187,Euro 6d,422,3,Manual,FWD,5,5,2023,True,2,True,Domestic,0.48
+VH0114,Ford,Transit Custom,Titanium,Van,Diesel,46000,1995.0,100,7.3,,,194,Euro 6d,446,3,Automatic,FWD,5,5,2023,True,2,True,Domestic,0.48
+VH0115,Ford,Mustang Mach-E,Trend,SUV,Electric,52000,,198,,17.0,600.0,0,BEV,0,5,Single-Speed,RWD,6,5,2021,True,2,True,Domestic,0.38
+VH0116,Ford,Mustang Mach-E,Titanium,SUV,Electric,57000,,198,,17.3,582.0,0,BEV,0,5,Single-Speed,RWD,6,5,2021,True,2,True,Domestic,0.38
+VH0117,Hyundai,i20,Select,Small Car,Petrol,21000,1197.0,74,5.5,,,125,Euro 6d,86,5,Manual,FWD,8,5,2020,True,5,True,Import,0.45
+VH0118,Hyundai,i20,Trend,Small Car,Petrol,23000,1197.0,74,5.7,,,130,Euro 6d,97,5,Manual,FWD,9,5,2020,True,5,False,Import,0.45
+VH0119,Hyundai,i30,Select,Compact,Petrol,26000,1482.0,88,5.9,,,134,Euro 6d,111,5,Automatic,FWD,6,5,2020,True,5,True,Import,0.46
+VH0120,Hyundai,i30,Trend,Compact,Petrol,28500,1482.0,88,6.1,,,139,Euro 6d,124,5,Manual,FWD,9,5,2020,True,5,True,Import,0.46
+VH0121,Hyundai,Tucson,Select,SUV,Hybrid,38000,1598.0,169,5.6,,,127,Euro 6d,98,5,Automatic,FWD,7,5,2021,True,5,True,Import,0.5
+VH0122,Hyundai,Tucson,Trend,SUV,Hybrid,42000,1598.0,169,5.8,,,132,Euro 6d,109,5,Automatic,FWD,9,5,2021,True,5,True,Import,0.5
+VH0123,Hyundai,Santa Fe,Select,SUV,Hybrid,52000,1598.0,158,6.4,,,145,Euro 6e,141,7,Automatic,AWD,7,5,2024,True,5,False,Import,0.48
+VH0124,Hyundai,Santa Fe,Trend,SUV,Hybrid,57000,1598.0,158,6.6,,,151,Euro 6e,156,7,Manual,AWD,5,5,2024,True,5,False,Import,0.48
+VH0125,Hyundai,Kona,Select,SUV,Electric,42000,,160,,16.6,514.0,0,BEV,0,5,Single-Speed,FWD,5,5,2023,True,5,False,Import,0.41
+VH0126,Hyundai,Kona,Trend,SUV,Electric,46000,,160,,16.9,499.0,0,BEV,0,5,Single-Speed,FWD,9,5,2023,True,5,False,Import,0.41
+VH0127,Hyundai,Ioniq 5,Select,SUV,Electric,47000,,168,,16.7,507.0,0,BEV,0,5,Single-Speed,RWD,5,5,2021,True,5,True,Import,0.42
+VH0128,Hyundai,Ioniq 5,Trend,SUV,Electric,51500,,168,,17.0,492.0,0,BEV,0,5,Single-Speed,RWD,6,5,2021,True,5,True,Import,0.42
+VH0129,Kia,Picanto,Edition,Small Car,Petrol,17000,998.0,46,5.1,,,116,Euro 6d,62,5,Manual,FWD,5,5,2020,True,7,True,Import,0.44
+VH0130,Kia,Picanto,Vision,Small Car,Petrol,18500,998.0,46,5.3,,,121,Euro 6d,73,5,Automatic,FWD,7,5,2020,True,7,True,Import,0.44
+VH0131,Kia,Ceed SW,Edition,Estate,Petrol,27000,1482.0,103,6.0,,,136,Euro 6d,116,5,Automatic,FWD,5,4,2019,True,7,True,Import,0.46
+VH0132,Kia,Ceed SW,Vision,Estate,Petrol,29500,1482.0,103,6.2,,,141,Euro 6d,129,5,Manual,FWD,9,5,2019,True,7,True,Import,0.46
+VH0133,Kia,Niro,Edition,SUV,Hybrid,34000,1580.0,104,4.6,,,105,Euro 6d,52,5,Automatic,FWD,6,5,2022,True,7,True,Import,0.48
+VH0134,Kia,Niro,Vision,SUV,Hybrid,37500,1580.0,104,4.8,,,109,Euro 6d,60,5,Automatic,FWD,8,5,2022,True,7,False,Import,0.48
+VH0135,Kia,Sportage,Edition,SUV,Hybrid,38000,1598.0,169,5.7,,,129,Euro 6d,103,5,Automatic,FWD,8,5,2022,True,7,True,Import,0.5
+VH0136,Kia,Sportage,Vision,SUV,Hybrid,42000,1598.0,169,5.9,,,134,Euro 6d,114,5,Manual,FWD,6,5,2022,True,7,True,Import,0.5
+VH0137,Kia,Sorento,Edition,SUV,Diesel,52000,2151.0,148,6.0,,,157,Euro 6d,344,7,Automatic,AWD,7,5,2020,True,7,True,Import,0.5
+VH0138,Kia,Sorento,Vision,SUV,Diesel,57000,2151.0,148,6.2,,,163,Euro 6d,362,7,Automatic,AWD,7,5,2020,True,7,True,Import,0.5
+VH0139,Kia,EV6,Edition,SUV,Electric,49000,,168,,16.5,528.0,0,BEV,0,5,Single-Speed,RWD,9,5,2021,True,7,True,Import,0.43
+VH0140,Kia,EV6,Vision,SUV,Electric,54000,,168,,16.8,512.0,0,BEV,0,5,Single-Speed,RWD,9,5,2021,True,7,False,Import,0.43
+VH0141,Seat,Ibiza,Reference,Small Car,Petrol,21000,999.0,70,5.4,,,122,Euro 6d,75,5,DSG,FWD,9,4,2021,True,2,False,Import,0.46
+VH0142,Seat,Ibiza,Style,Small Car,Petrol,23000,999.0,70,5.6,,,127,Euro 6d,86,5,DSG,FWD,9,4,2021,True,2,True,Import,0.46
+VH0143,Seat,Leon,Reference,Compact,Petrol,27000,1498.0,110,5.5,,,125,Euro 6d,92,5,DSG,FWD,7,5,2020,True,2,False,Import,0.47
+VH0144,Seat,Leon,Style,Compact,Petrol,29500,1498.0,110,5.7,,,130,Euro 6d,103,5,Manual,FWD,5,5,2020,True,2,True,Import,0.47
+VH0145,Seat,Arona,Reference,SUV,Petrol,24000,999.0,85,5.7,,,130,Euro 6d,93,5,DSG,FWD,7,5,2021,True,2,True,Import,0.47
+VH0146,Seat,Arona,Style,SUV,Petrol,26500,999.0,85,5.9,,,135,Euro 6d,104,5,DSG,FWD,9,5,2021,True,2,True,Import,0.47
+VH0147,Seat,Ateca,Reference,SUV,Diesel,33000,1968.0,110,5.2,,,137,Euro 6d,276,5,DSG,FWD,5,5,2020,True,2,False,Import,0.48
+VH0148,Seat,Ateca,Style,SUV,Diesel,36500,1968.0,110,5.4,,,142,Euro 6d,288,5,DSG,FWD,5,5,2020,True,2,True,Import,0.48
+VH0149,Seat,Cupra Formentor,Reference,SUV,Petrol,38000,1498.0,140,6.2,,,141,Euro 6d,129,5,Manual,FWD,8,5,2021,True,2,True,Import,0.5
+VH0150,Seat,Cupra Formentor,Style,SUV,Petrol,42000,1498.0,140,6.4,,,147,Euro 6d,144,5,DSG,FWD,9,5,2021,True,2,True,Import,0.5
+VH0151,Seat,Cupra Born,Reference,Compact,Electric,40000,,170,,16.0,424.0,0,BEV,0,5,Single-Speed,RWD,9,4,2022,True,2,False,Import,0.41
+VH0152,Seat,Cupra Born,Style,Compact,Electric,44000,,170,,16.3,411.0,0,BEV,0,5,Single-Speed,RWD,8,5,2022,True,2,True,Import,0.41
+VH0153,Toyota,Yaris,Basis,Small Car,Hybrid,25000,1490.0,85,4.2,,,96,Euro 6d,32,5,Manual,FWD,5,5,2020,True,3,True,Import,0.52
+VH0154,Toyota,Yaris,Business Edition,Small Car,Hybrid,27500,1490.0,85,4.4,,,100,Euro 6d,40,5,Automatic,FWD,5,5,2020,True,3,True,Import,0.52
+VH0155,Toyota,Yaris Cross,Basis,SUV,Hybrid,28000,1490.0,85,4.4,,,100,Euro 6d,40,5,Automatic,FWD,6,5,2021,True,3,False,Import,0.53
+VH0156,Toyota,Yaris Cross,Business Edition,SUV,Hybrid,31000,1490.0,85,4.6,,,104,Euro 6d,48,5,Automatic,FWD,5,5,2021,True,3,False,Import,0.53
+VH0157,Toyota,Corolla Touring Sports,Basis,Estate,Hybrid,34000,1798.0,103,4.5,,,102,Euro 6d,50,5,Automatic,FWD,9,5,2019,True,3,True,Import,0.53
+VH0158,Toyota,Corolla Touring Sports,Business Edition,Estate,Hybrid,37500,1798.0,103,4.7,,,106,Euro 6d,58,5,Manual,FWD,9,5,2019,True,3,True,Import,0.53
+VH0159,Toyota,C-HR,Basis,SUV,Hybrid,34000,1798.0,103,4.7,,,105,Euro 6d,56,5,Automatic,FWD,7,5,2023,True,3,True,Import,0.52
+VH0160,Toyota,C-HR,Business Edition,SUV,Hybrid,37500,1798.0,103,4.9,,,109,Euro 6d,64,5,Automatic,FWD,8,5,2023,True,3,True,Import,0.52
+VH0161,Toyota,RAV4,Basis,SUV,Plug-in Hybrid,52000,2487.0,225,1.0,,,22,Euro 6d,50,5,Automatic,AWD,5,5,2021,True,3,True,Import,0.55
+VH0162,Toyota,RAV4,Business Edition,SUV,Plug-in Hybrid,57000,2487.0,225,1.2,,,23,Euro 6d,50,5,Automatic,AWD,5,5,2021,True,3,False,Import,0.55
+VH0163,Toyota,Proace City,Basis,Van,Diesel,31000,1499.0,96,5.4,,,142,Euro 6d,244,5,Automatic,FWD,7,5,2020,True,3,True,Import,0.48
+VH0164,Toyota,Proace City,Business Edition,Van,Diesel,34000,1499.0,96,5.6,,,148,Euro 6d,259,5,Manual,FWD,5,5,2020,True,3,False,Import,0.48
+VH0165,Renault,Clio,Evolution,Small Car,Hybrid,24000,1598.0,105,4.3,,,98,Euro 6d,38,5,Automatic,FWD,7,4,2020,True,2,True,Import,0.44
+VH0166,Renault,Clio,Techno,Small Car,Hybrid,26500,1598.0,105,4.5,,,102,Euro 6d,46,5,Automatic,FWD,5,5,2020,True,2,False,Import,0.44
+VH0167,Renault,Captur,Evolution,SUV,Petrol,25000,999.0,67,5.8,,,132,Euro 6d,97,5,Automatic,FWD,9,4,2021,True,2,False,Import,0.45
+VH0168,Renault,Captur,Techno,SUV,Petrol,27500,999.0,67,6.0,,,137,Euro 6d,109,5,Automatic,FWD,7,5,2021,True,2,True,Import,0.45
+VH0169,Renault,Austral,Evolution,SUV,Hybrid,38000,1199.0,147,4.7,,,105,Euro 6d,44,5,Automatic,FWD,7,4,2023,True,2,True,Import,0.44
+VH0170,Renault,Austral,Techno,SUV,Hybrid,42000,1199.0,147,4.9,,,109,Euro 6d,52,5,Automatic,FWD,9,5,2023,True,2,True,Import,0.44
+VH0171,Renault,Kangoo,Evolution,Van,Diesel,30000,1461.0,85,5.3,,,139,Euro 6d,233,5,Manual,FWD,9,4,2021,True,2,True,Import,0.43
+VH0172,Renault,Kangoo,Techno,Van,Diesel,33000,1461.0,85,5.5,,,145,Euro 6d,248,5,Automatic,FWD,6,5,2021,True,2,True,Import,0.43
+VH0173,Renault,Megane E-Tech,Evolution,Compact,Electric,42000,,160,,16.1,470.0,0,BEV,0,5,Single-Speed,FWD,5,4,2022,True,2,True,Import,0.38
+VH0174,Renault,Megane E-Tech,Techno,Compact,Electric,46000,,160,,16.4,456.0,0,BEV,0,5,Single-Speed,FWD,7,4,2022,True,2,True,Import,0.38
+VH0175,Dacia,Sandero,Essential,Small Car,Petrol,14000,999.0,66,5.6,,,127,Euro 6d,86,5,Manual,FWD,7,5,2021,True,3,True,Import,0.52
+VH0176,Dacia,Sandero,Expression,Small Car,Petrol,15500,999.0,66,5.8,,,132,Euro 6d,97,5,Manual,FWD,7,5,2021,True,3,True,Import,0.52
+VH0177,Dacia,Duster,Essential,SUV,Petrol,20000,1333.0,96,6.3,,,143,Euro 6e,131,5,Automatic,FWD,7,5,2024,True,3,True,Import,0.54
+VH0178,Dacia,Duster,Expression,SUV,Petrol,22000,1333.0,96,6.5,,,149,Euro 6e,146,5,Automatic,FWD,8,5,2024,True,3,False,Import,0.54
+VH0179,Dacia,Jogger,Essential,Van,Hybrid,25000,1598.0,103,4.8,,,109,Euro 6d,60,7,Automatic,FWD,5,5,2022,True,3,True,Import,0.5
+VH0180,Dacia,Jogger,Expression,Van,Hybrid,27500,1598.0,103,5.0,,,113,Euro 6d,68,7,Automatic,FWD,7,5,2022,True,3,True,Import,0.5
+VH0181,Dacia,Spring,Essential,Small Car,Electric,18000,,48,,13.2,225.0,0,BEV,0,4,Single-Speed,FWD,9,5,2021,True,3,False,Import,0.36
+VH0182,Dacia,Spring,Expression,Small Car,Electric,20000,,48,,13.5,218.0,0,BEV,0,4,Single-Speed,FWD,8,5,2021,True,3,True,Import,0.36
+VH0183,Tesla,Model 3,Standard,Sedan,Electric,42000,,208,,13.2,513.0,0,BEV,0,5,Single-Speed,RWD,6,4,2021,True,2,False,Domestic,0.41
+VH0184,Tesla,Model 3,Long Range,Sedan,Electric,46000,,208,,13.5,498.0,0,BEV,0,5,Single-Speed,RWD,8,5,2021,True,2,True,Domestic,0.41
+VH0185,Tesla,Model Y,Standard,SUV,Electric,46000,,220,,15.7,565.0,0,BEV,0,5,Single-Speed,RWD,5,5,2022,True,2,True,Domestic,0.4
+VH0186,Tesla,Model Y,Long Range,SUV,Electric,50500,,220,,16.0,548.0,0,BEV,0,5,Single-Speed,RWD,5,4,2022,True,2,True,Domestic,0.4
+VH0187,MINI,Cooper,Essential,Small Car,Petrol,28000,1499.0,115,5.9,,,134,Euro 6e,112,4,Manual,FWD,8,5,2024,True,2,False,Import,0.5
+VH0188,MINI,Cooper,Classic,Small Car,Petrol,31000,1499.0,115,6.1,,,139,Euro 6e,124,4,Manual,FWD,6,5,2024,True,2,False,Import,0.5
+VH0189,MINI,Cooper SE,Essential,Small Car,Electric,35000,,160,,14.8,305.0,0,BEV,0,4,Single-Speed,FWD,8,5,2021,True,2,True,Import,0.42
+VH0190,MINI,Cooper SE,Classic,Small Car,Electric,38500,,160,,15.1,296.0,0,BEV,0,4,Single-Speed,FWD,9,5,2021,True,2,True,Import,0.42
+VH0191,MINI,Countryman,Essential,SUV,Petrol,38000,1499.0,125,6.4,,,146,Euro 6e,141,5,Automatic,AWD,7,5,2024,True,2,False,Import,0.49
+VH0192,MINI,Countryman,Classic,SUV,Petrol,42000,1499.0,125,6.6,,,152,Euro 6e,156,5,Automatic,AWD,9,5,2024,True,2,True,Import,0.49
+VH0193,MG,ZS,Standard,SUV,Petrol,22000,1498.0,78,6.3,,,143,Euro 6d,134,5,Automatic,FWD,5,5,2021,True,7,True,Import,0.35
+VH0194,MG,ZS,Comfort,SUV,Petrol,24000,1498.0,78,6.5,,,149,Euro 6d,149,5,Manual,FWD,8,4,2021,True,7,True,Import,0.35
+VH0195,MG,HS,Standard,SUV,Plug-in Hybrid,38000,1498.0,190,1.8,,,41,Euro 6d,30,5,Manual,FWD,8,5,2023,True,7,False,Import,0.36
+VH0196,MG,HS,Comfort,SUV,Plug-in Hybrid,42000,1498.0,190,2.0,,,43,Euro 6d,30,5,Automatic,FWD,5,5,2023,True,7,False,Import,0.36
+VH0197,MG,MG4 Electric,Standard,Compact,Electric,35000,,150,,16.0,450.0,0,BEV,0,5,Single-Speed,RWD,8,5,2022,True,7,True,Import,0.36
+VH0198,MG,MG4 Electric,Comfort,Compact,Electric,38500,,150,,16.3,436.0,0,BEV,0,5,Single-Speed,RWD,5,4,2022,True,7,False,Import,0.36
+VH0199,MG,MG5 Estate,Standard,Estate,Electric,36000,,115,,17.0,400.0,0,BEV,0,5,Single-Speed,FWD,5,5,2022,True,7,True,Import,0.34
+VH0200,MG,MG5 Estate,Comfort,Estate,Electric,39500,,115,,17.3,388.0,0,BEV,0,5,Single-Speed,FWD,7,4,2022,True,7,False,Import,0.34

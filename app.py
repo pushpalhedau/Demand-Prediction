@@ -10,6 +10,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from database.connection import get_db_session, set_data_mode, get_data_mode
 from database.queries import get_unique_filter_options
 from utils.helpers import inject_custom_css
+from utils.i18n import t, tv, language_selector, get_lang
 from dashboard.overview import render_overview
 from dashboard.forecasting import render_forecasting
 from dashboard.comparison import render_comparison
@@ -64,16 +65,24 @@ try:
 except Exception:
     # Fail-safe fallbacks if DB is not seeded or active
     options = {
-        "regions": ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Fujairah", "Umm Al Quwain"],
+        "regions": ["Nordrhein-Westfalen", "Bayern", "Baden-Württemberg",
+                    "Hessen", "Niedersachsen", "Rheinland-Pfalz"],
         "cities": [
-            "Deira", "Bur Dubai", "Sheikh Zayed Road", "Al Quoz", "Dubai Marina",
-            "Abu Dhabi City", "Musaffah", "Al Ain", "Khalifa City",
-            "Sharjah City", "Industrial Area", "Al Nahda",
-            "Ajman City", "RAK City", "Fujairah City", "UAQ City"
+            "Köln", "Düsseldorf", "Dortmund", "Essen", "Duisburg", "Bochum",
+            "München", "Nürnberg", "Augsburg", "Regensburg", "Ingolstadt",
+            "Stuttgart", "Karlsruhe", "Mannheim", "Freiburg",
+            "Frankfurt am Main", "Wiesbaden", "Kassel", "Darmstadt",
+            "Hannover", "Braunschweig", "Osnabrück", "Wolfsburg",
+            "Mainz", "Ludwigshafen", "Koblenz",
         ],
-        "categories": ["SUV", "Sedan", "Luxury", "Pickup", "Hatchback", "Minivan", "Coupe"],
-        "fuel_types": ["Petrol", "Diesel", "Electric", "Hybrid"],
-        "brands": ["Toyota", "Nissan", "Mitsubishi", "Hyundai", "Kia", "Honda", "MG", "Chevrolet", "Lexus", "Ford", "Mercedes-Benz", "BMW", "Land Rover", "Mazda", "Suzuki"],
+        # Canonical ENGLISH values, exactly as stored in the DB. The selectbox
+        # translates them for DISPLAY via tv(), but filters on these — a German
+        # label would match nothing.
+        "categories": ["SUV", "Compact", "Estate", "Small Car", "Sedan", "Van", "Luxury", "Coupe"],
+        "fuel_types": ["Petrol", "Diesel", "Hybrid", "Plug-in Hybrid", "Electric"],
+        "brands": ["Volkswagen", "Mercedes-Benz", "BMW", "Audi", "Skoda", "Opel",
+                   "Ford", "Hyundai", "Kia", "Seat", "Toyota", "Renault",
+                   "Dacia", "Tesla", "MINI", "MG"],
         "years": [2021, 2022, 2023, 2024, 2025, 2026]
     }
 finally:
@@ -94,14 +103,22 @@ finally:
 st.markdown(f"""
     <div style="text-align: center; margin-top: -30px; margin-bottom: 20px;">
         <h1 class="main-title">
-            <span class="gradient-text">Automobile Demand Intelligence Platform</span>
+            <span class="gradient-text">{t("app.header")}</span>
         </h1>
-        <p style="color: #9ca3af; font-size: 15px; margin-top: -10px;">Enterprise Decision Support Suite — Demand Forecasting & Customer Analytics</p>
+        <p style="color: #9ca3af; font-size: 15px; margin-top: -10px;">{t("app.header_sub")}</p>
     </div>
 """, unsafe_allow_html=True)
 
 # 7. SIDEBAR NAVIGATION & GLOBAL FILTERS
 with st.sidebar:
+
+    # Language toggle renders before anything else in the sidebar: the radio
+    # writes st.session_state["lang"] as it is created, so every t() call
+    # further down this same script run already resolves in the language the
+    # user just picked, with no second rerun needed.
+    language_selector()
+    st.markdown("<hr style='border-color: rgba(255,255,255,0.08); margin: 10px 0;'>",
+                unsafe_allow_html=True)
 
     # ── Data Source Toggle (hidden) ─────────────────────────────────────────
     # st.markdown("""
@@ -157,21 +174,23 @@ with st.sidebar:
     st.image("assets/images/logo.png", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # A page's identity is its KEY, never its label: the label changes with the
+    # language, so routing on it would break the instant someone switches.
+    PAGE_KEYS = [
+        "tab.overview",
+        "tab.forecasting",
+        "tab.comparison",
+        "tab.regional",
+        "tab.customers",
+        "tab.inventory",
+        "tab.sentiment",
+    ]
+    _page_labels = [t(k) for k in PAGE_KEYS]
+
     # Sleek sidebar menu with option_menu
-    selected_page = option_menu(
+    selected_label = option_menu(
         menu_title=None,
-        options=[
-            "Executive Overview",
-            "Demand Forecasting",
-            "Comparative Analytics",
-            "Store Performance",
-            "Customer Intelligence",
-            "Inventory Intelligence",
-            # "Insights & Simulator",
-            "Sentiment Analysis",
-            # "Data Ingestion Engine",
-            # "Model Performance Metrics"
-        ],
+        options=_page_labels,
         icons=[
             "speedometer2",
             "graph-up-arrow",
@@ -186,6 +205,7 @@ with st.sidebar:
         ],
         menu_icon="cast",
         default_index=0,
+        key=f"nav_{get_lang()}",
         styles={
             "container": {"padding": "0!important", "background-color": "transparent", "font-family": "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"},
             "icon": {"color": "#06b6d4", "font-size": "15px"},
@@ -221,27 +241,29 @@ with st.sidebar:
             }
         </style>
     """, unsafe_allow_html=True)
-    st.markdown("<h3 style='color: #f3f4f6; font-size: 15px; margin-bottom: 6px;'>Global Filters</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color: #f3f4f6; font-size: 15px; margin-bottom: 6px;'>{t('app.filters')}</h3>", unsafe_allow_html=True)
 
     # Global Filters — paired into two columns so the whole block fits the
     # sidebar without a long scroll. Dropdown popovers render at body level, so
     # the compact rows don't clip them.
     _dc1, _dc2 = st.columns(2)
     with _dc1:
-        start_date = st.date_input("Start Date", value=date(2021, 1, 1))
+        start_date = st.date_input(t("filter.date_from"), value=date(2021, 1, 1))
     with _dc2:
-        end_date = st.date_input("End Date", value=date(2026, 5, 31))
+        end_date = st.date_input(t("filter.date_to"), value=date(2026, 5, 31))
 
     _fc1, _fc2 = st.columns(2)
     with _fc1:
-        region = st.selectbox("Emirate", options=["All"] + options["regions"])
+        region = st.selectbox(
+            t("filter.state"), options=["All"] + options["regions"],
+            format_func=lambda v: t("filter.all") if v == "All" else v)
 
-    # Filter areas dynamically based on emirate
+    # Filter areas dynamically based on state
     if region != "All":
         session = get_db_session()
         try:
             from database.models import Sale
-            region_cities = [c[0] for c in session.query(Sale.area).filter(Sale.emirate == region).distinct().all() if c[0]]
+            region_cities = [c[0] for c in session.query(Sale.city).filter(Sale.state == region).distinct().all() if c[0]]
             city_options = sorted(region_cities)
         except Exception:
             city_options = options["cities"]
@@ -251,15 +273,23 @@ with st.sidebar:
         city_options = options["cities"]
 
     with _fc2:
-        city = st.selectbox("Area", options=["All"] + city_options)
+        city = st.selectbox(
+            t("filter.city"), options=["All"] + city_options,
+            format_func=lambda v: t("filter.all") if v == "All" else v)
 
     _fc3, _fc4 = st.columns(2)
     with _fc3:
-        brand = st.selectbox("Brand", options=["All"] + options["brands"])
+        brand = st.selectbox(
+            t("filter.brand"), options=["All"] + options["brands"],
+            format_func=lambda v: t("filter.all") if v == "All" else v)
     with _fc4:
-        category = st.selectbox("Category", options=["All"] + options["categories"])
+        category = st.selectbox(
+            t("filter.category"), options=["All"] + options["categories"],
+            format_func=lambda v: t("filter.all") if v == "All" else tv(v))
 
-    fuel_type = st.selectbox("Fuel Type", options=["All"] + options["fuel_types"])
+    fuel_type = st.selectbox(
+        t("filter.fuel"), options=["All"] + options["fuel_types"],
+        format_func=lambda v: t("filter.all") if v == "All" else tv(v))
 
     # Compile global filter dictionary
     filters = {
@@ -273,21 +303,27 @@ with st.sidebar:
     }
 
 # 8. ROUTING MAIN VIEWS
-if selected_page == "Executive Overview":
+# Map the translated label the menu handed back to its stable page key.
+try:
+    selected_page = PAGE_KEYS[_page_labels.index(selected_label)]
+except (ValueError, NameError):
+    selected_page = "tab.overview"
+
+if selected_page == "tab.overview":
     render_overview(filters)
-elif selected_page == "Demand Forecasting":
+elif selected_page == "tab.forecasting":
     render_forecasting(filters)
-elif selected_page == "Comparative Analytics":
+elif selected_page == "tab.comparison":
     render_comparison(filters)
-elif selected_page == "Store Performance":
+elif selected_page == "tab.regional":
     render_regional(filters)
-elif selected_page == "Customer Intelligence":
+elif selected_page == "tab.customers":
     render_customers(filters)
-elif selected_page == "Inventory Intelligence":
+elif selected_page == "tab.inventory":
     render_inventory(filters)
 # elif selected_page == "Insights & Simulator":
 #     render_ai_insights(filters)
-elif selected_page == "Sentiment Analysis":
+elif selected_page == "tab.sentiment":
     render_sentiment_analysis(filters)
 # elif selected_page == "Data Ingestion Engine":
 #     render_upload_data()

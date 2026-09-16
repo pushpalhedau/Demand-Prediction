@@ -4,7 +4,7 @@ import numpy as np
 
 def clean_customers(filepath):
     """
-    Clean customers.csv dataset (UAE schema).
+    Clean customers.csv dataset (German schema).
     """
     df = pd.read_csv(filepath)
 
@@ -13,23 +13,25 @@ def clean_customers(filepath):
     df['age'] = df['age'].fillna(df['age'].median())
     df['gender'] = df['gender'].fillna("Other")
     df['nationality'] = df['nationality'].fillna("Unknown")
-    df['emirate'] = df['emirate'].fillna("Dubai")
-    df['area'] = df['area'].fillna("Unknown")
-    df['occupation'] = df['occupation'].fillna("Salaried Professional")
-    df['years_in_uae'] = df['years_in_uae'].fillna(df['years_in_uae'].median()).astype(int)
+    df['customer_type'] = df['customer_type'].fillna("Private")
+    df['state'] = df['state'].fillna("Nordrhein-Westfalen")
+    df['city'] = df['city'].fillna("Unknown")
+    df['postal_code'] = df['postal_code'].astype(str).str.zfill(5).replace("00nan", None)
+    df['occupation'] = df['occupation'].fillna("Salaried Employee")
+    df['years_at_address'] = df['years_at_address'].fillna(df['years_at_address'].median()).astype(int)
 
     # Financial fields
-    df['monthly_income_bracket'] = df['monthly_income_bracket'].fillna("Unknown")
-    df['estimated_monthly_income_aed'] = df['estimated_monthly_income_aed'].fillna(
-        df['estimated_monthly_income_aed'].median()
+    df['annual_income_bracket'] = df['annual_income_bracket'].fillna("Unknown")
+    df['estimated_annual_income_eur'] = df['estimated_annual_income_eur'].fillna(
+        df['estimated_annual_income_eur'].median()
     )
-    df['credit_score'] = df['credit_score'].fillna(df['credit_score'].median())
-    df['down_payment_capacity_aed'] = df['down_payment_capacity_aed'].fillna(0)
+    df['schufa_score'] = df['schufa_score'].fillna(df['schufa_score'].median())
+    df['down_payment_capacity_eur'] = df['down_payment_capacity_eur'].fillna(0)
 
     # Booleans
     df['email_opt_in'] = df['email_opt_in'].fillna(False).astype(bool)
     df['test_drive_taken'] = df['test_drive_taken'].fillna(False).astype(bool)
-    df['emi_preferred'] = df['emi_preferred'].fillna(False).astype(bool)
+    df['financing_preferred'] = df['financing_preferred'].fillna(False).astype(bool)
 
     # Dates
     df['registration_date'] = pd.to_datetime(df['registration_date']).dt.date
@@ -46,67 +48,81 @@ def clean_customers(filepath):
 
 def clean_vehicles(filepath):
     """
-    Clean vehicles.csv dataset (UAE schema).
+    Clean vehicles.csv dataset (German schema).
     """
     df = pd.read_csv(filepath)
 
     # Strings
     df['brand'] = df['brand'].fillna("Unknown")
     df['model'] = df['model'].fillna("Unknown")
-    df['variant'] = df['variant'].fillna("Base")
-    df['category'] = df['category'].fillna("SUV")
+    df['variant'] = df['variant'].fillna("Basis")
+    df['category'] = df['category'].fillna("Compact")
     df['fuel_type'] = df['fuel_type'].fillna("Petrol")
-    df['transmission'] = df['transmission'].fillna("Automatic")
+    df['transmission'] = df['transmission'].fillna("Manual")
     df['drive_type'] = df['drive_type'].fillna("FWD")
+    df['emission_class'] = df['emission_class'].fillna("Euro 6d")
+    df['origin'] = df['origin'].fillna("Import")
 
-    # Pricing (AED)
-    df['price_aed'] = df['price_aed'].fillna(0).astype(int)
+    # Pricing (EUR, Listenpreis incl. USt)
+    df['price_eur'] = df['price_eur'].fillna(0).astype(int)
 
-    # Technical specs (EV range can be null for ICE; engine_cc null for EV)
+    # Technical specs. These stay NULL where the drivetrain has no such figure:
+    # an ICE car has no kWh/100km or WLTP range, a BEV has no engine size or
+    # l/100km. Filling either with a zero would make a BEV look like the most
+    # economical petrol car on the lot.
     df['engine_cc'] = df['engine_cc'].apply(lambda x: int(x) if pd.notnull(x) else None)
-    df['horsepower'] = df['horsepower'].apply(lambda x: int(x) if pd.notnull(x) else None)
-    df['mileage_kmpl'] = df['mileage_kmpl'].apply(lambda x: float(x) if pd.notnull(x) else None)
+    df['power_kw'] = df['power_kw'].apply(lambda x: int(x) if pd.notnull(x) else None)
+    df['consumption_l_per_100km'] = df['consumption_l_per_100km'].apply(
+        lambda x: float(x) if pd.notnull(x) else None
+    )
+    df['consumption_kwh_per_100km'] = df['consumption_kwh_per_100km'].apply(
+        lambda x: float(x) if pd.notnull(x) else None
+    )
     df['range_km'] = df['range_km'].apply(lambda x: int(x) if pd.notnull(x) else None)
+    df['co2_g_per_km'] = df['co2_g_per_km'].apply(lambda x: int(x) if pd.notnull(x) else None)
+    df['annual_vehicle_tax_eur'] = df['annual_vehicle_tax_eur'].fillna(0).astype(int)
 
     # Standard numbers
     df['seating_capacity'] = df['seating_capacity'].fillna(5).astype(int)
     df['body_color_options'] = df['body_color_options'].fillna(1).astype(int)
     df['safety_rating'] = df['safety_rating'].fillna(3).astype(int)
     df['launch_year'] = df['launch_year'].fillna(2020).astype(int)
-    df['warranty_years'] = df['warranty_years'].fillna(3).astype(int)
+    # German statutory Gewährleistung is two years, so that is the honest
+    # fallback rather than the Gulf build's three.
+    df['warranty_years'] = df['warranty_years'].fillna(2).astype(int)
 
     # Flags
     df['is_active'] = df['is_active'].fillna(True).astype(bool)
     df['service_contract_available'] = df['service_contract_available'].fillna(False).astype(bool)
-    df['gcc_spec'] = df['gcc_spec'].fillna(True).astype(bool)
 
     # Residual curve. Falls back to the market-average 36-month residual so a
     # catalog without the column still prices leases sanely.
     if 'residual_value_36mo' in df.columns:
-        df['residual_value_36mo'] = df['residual_value_36mo'].fillna(0.52).astype(float)
+        df['residual_value_36mo'] = df['residual_value_36mo'].fillna(0.48).astype(float)
     else:
-        df['residual_value_36mo'] = 0.52
+        df['residual_value_36mo'] = 0.48
 
     return df
 
 
 def clean_dealers(filepath):
     """
-    Clean dealers.csv dataset (UAE schema).
+    Clean dealers.csv dataset (German schema).
     """
     df = pd.read_csv(filepath)
 
     # Strings
-    df['dealer_name'] = df['dealer_name'].fillna("Unknown Dealer")
+    df['dealer_name'] = df['dealer_name'].fillna("Unbekanntes Autohaus")
     df['brand'] = df['brand'].fillna("Unknown")
-    df['emirate'] = df['emirate'].fillna("Dubai")
-    df['area'] = df['area'].fillna("Unknown")
+    df['state'] = df['state'].fillna("Nordrhein-Westfalen")
+    df['city'] = df['city'].fillna("Unknown")
+    df['postal_code'] = df['postal_code'].astype(str).str.zfill(5).replace("00nan", None)
     df['tier'] = df['tier'].fillna("Silver")
 
     # Numeric
-    df['established_year'] = df['established_year'].fillna(2010).astype(int)
+    df['established_year'] = df['established_year'].fillna(1995).astype(int)
     df['monthly_capacity'] = df['monthly_capacity'].fillna(df['monthly_capacity'].median()).astype(int)
-    df['showroom_area_sqft'] = df['showroom_area_sqft'].fillna(df['showroom_area_sqft'].median()).astype(int)
+    df['showroom_area_sqm'] = df['showroom_area_sqm'].fillna(df['showroom_area_sqm'].median()).astype(int)
     df['num_salespeople'] = df['num_salespeople'].fillna(df['num_salespeople'].median()).astype(int)
     df['annual_target_units'] = df['annual_target_units'].fillna(df['annual_target_units'].median()).astype(int)
 
@@ -127,7 +143,7 @@ def clean_dealers(filepath):
 
 def clean_sales(filepath):
     """
-    Clean sales.csv dataset (UAE schema).
+    Clean sales.csv dataset (German schema).
     """
     df = pd.read_csv(filepath)
 
@@ -139,30 +155,32 @@ def clean_sales(filepath):
     # Strings
     df['quarter'] = df['quarter'].fillna("Q1")
     df['day_of_week'] = df['day_of_week'].fillna("Monday")
-    df['festival_period'] = df['festival_period'].fillna("None")
+    df['season_period'] = df['season_period'].fillna("None")
     df['brand'] = df['brand'].fillna("Unknown")
     df['model'] = df['model'].fillna("Unknown")
-    df['vehicle_category'] = df['vehicle_category'].fillna("SUV")
+    df['vehicle_category'] = df['vehicle_category'].fillna("Compact")
     df['fuel_type'] = df['fuel_type'].fillna("Petrol")
-    df['emirate'] = df['emirate'].fillna("Dubai")
-    df['area'] = df['area'].fillna("Unknown")
+    df['state'] = df['state'].fillna("Nordrhein-Westfalen")
+    df['city'] = df['city'].fillna("Unknown")
+    df['customer_type'] = df['customer_type'].fillna("Private")
+    df['is_fleet'] = df['is_fleet'].fillna(False).astype(bool)
 
-    # Pricing (AED)
-    df['base_price_aed'] = df['base_price_aed'].fillna(0).astype(int)
+    # Pricing (EUR)
+    df['base_price_eur'] = df['base_price_eur'].fillna(0).astype(int)
     df['discount_pct'] = df['discount_pct'].fillna(0.0)
-    df['selling_price_aed'] = df['selling_price_aed'].fillna(df['base_price_aed']).astype(int)
-    df['vat_amount_aed'] = df['vat_amount_aed'].fillna(0).astype(int)
-    df['accessories_revenue_aed'] = df['accessories_revenue_aed'].fillna(0).astype(int)
-    df['insurance_revenue_aed'] = df['insurance_revenue_aed'].fillna(0).astype(int)
-    df['extended_warranty_aed'] = df['extended_warranty_aed'].fillna(0).astype(int)
-    df['total_revenue_excl_vat'] = df['total_revenue_excl_vat'].fillna(df['selling_price_aed']).astype(int)
+    df['selling_price_eur'] = df['selling_price_eur'].fillna(df['base_price_eur']).astype(int)
+    df['vat_amount_eur'] = df['vat_amount_eur'].fillna(0).astype(int)
+    df['accessories_revenue_eur'] = df['accessories_revenue_eur'].fillna(0).astype(int)
+    df['insurance_revenue_eur'] = df['insurance_revenue_eur'].fillna(0).astype(int)
+    df['extended_warranty_eur'] = df['extended_warranty_eur'].fillna(0).astype(int)
+    df['total_revenue_excl_vat'] = df['total_revenue_excl_vat'].fillna(df['selling_price_eur']).astype(int)
     df['total_revenue_incl_vat'] = df['total_revenue_incl_vat'].fillna(
-        df['total_revenue_excl_vat'] + df['vat_amount_aed']
+        df['total_revenue_excl_vat'] + df['vat_amount_eur']
     ).astype(int)
 
     # Financial details
     df['financing_type'] = df['financing_type'].fillna("Cash")
-    df['loan_amount_aed'] = df['loan_amount_aed'].fillna(0).astype(int)
+    df['loan_amount_eur'] = df['loan_amount_eur'].fillna(0).astype(int)
     df['units_sold'] = df['units_sold'].fillna(1).astype(int)
     df['test_drive_converted'] = df['test_drive_converted'].fillna(False).astype(bool)
     df['lead_to_close_days'] = df['lead_to_close_days'].fillna(0).astype(int)
@@ -178,8 +196,8 @@ def clean_sales(filepath):
         df['lease_maturity_date'] = df['lease_maturity_date'].where(
             pd.notnull(df['lease_maturity_date']), None
         )
-    for col in ['lease_term_months', 'residual_value_aed',
-                'contract_mileage_allowance', 'lease_monthly_payment_aed']:
+    for col in ['lease_term_months', 'residual_value_eur',
+                'contract_mileage_allowance', 'lease_monthly_payment_eur']:
         if col in df.columns:
             df[col] = df[col].apply(lambda x: int(x) if pd.notnull(x) else None)
     if 'residual_value_pct' in df.columns:
@@ -187,36 +205,36 @@ def clean_sales(filepath):
             lambda x: float(x) if pd.notnull(x) else None
         )
 
-    # ── Trade-in activity ────────────────────────────────────────────────────
+    # ── Trade-in activity (Inzahlungnahme) ───────────────────────────────────
     if 'trade_in_flag' in df.columns:
         df['trade_in_flag'] = df['trade_in_flag'].fillna(False).astype(bool)
     for col in ['trade_in_brand', 'trade_in_model']:
         if col in df.columns:
             df[col] = df[col].where(pd.notnull(df[col]), None)
-    for col in ['trade_in_year', 'trade_in_mileage', 'trade_in_appraised_value_aed',
-                'trade_in_allowance_aed', 'trade_in_over_allowance_aed']:
+    for col in ['trade_in_year', 'trade_in_mileage', 'trade_in_appraised_value_eur',
+                'trade_in_allowance_eur', 'trade_in_over_allowance_eur']:
         if col in df.columns:
             df[col] = df[col].apply(lambda x: int(x) if pd.notnull(x) else None)
     # A deal with no trade simply had no bonus, so zero is the honest value.
-    if 'trade_bonus_aed' in df.columns:
-        df['trade_bonus_aed'] = df['trade_bonus_aed'].fillna(0).astype(int)
+    if 'trade_bonus_eur' in df.columns:
+        df['trade_bonus_eur'] = df['trade_bonus_eur'].fillna(0).astype(int)
 
     return df
 
 
 def clean_inventory(filepath):
     """
-    Clean inventory.csv dataset (UAE schema).
+    Clean inventory.csv dataset (German schema).
     """
     df = pd.read_csv(filepath)
 
     df['record_date'] = pd.to_datetime(df['record_date']).dt.date
     df['brand'] = df['brand'].fillna("Unknown")
     df['model'] = df['model'].fillna("Unknown")
-    df['vehicle_category'] = df['vehicle_category'].fillna("SUV")
+    df['vehicle_category'] = df['vehicle_category'].fillna("Compact")
     df['fuel_type'] = df['fuel_type'].fillna("Petrol")
-    df['emirate'] = df['emirate'].fillna("Dubai")
-    df['area'] = df['area'].fillna("Unknown")
+    df['state'] = df['state'].fillna("Nordrhein-Westfalen")
+    df['city'] = df['city'].fillna("Unknown")
 
     df['current_stock'] = df['current_stock'].fillna(0).astype(int)
     df['demand_forecast_30d'] = df['demand_forecast_30d'].fillna(0).astype(int)
@@ -229,25 +247,27 @@ def clean_inventory(filepath):
 
     df['stockout_risk_score'] = df['stockout_risk_score'].fillna(0.0)
     df['overstock_risk_score'] = df['overstock_risk_score'].fillna(0.0)
-    df['holding_cost_per_day_aed'] = df['holding_cost_per_day_aed'].fillna(0.0)
-    df['estimated_holding_cost_aed'] = df['estimated_holding_cost_aed'].fillna(0.0)
+    df['holding_cost_per_day_eur'] = df['holding_cost_per_day_eur'].fillna(0.0)
+    df['estimated_holding_cost_eur'] = df['estimated_holding_cost_eur'].fillna(0.0)
 
     df['units_sold_last_30d'] = df['units_sold_last_30d'].fillna(0).astype(int)
     df['units_ordered'] = df['units_ordered'].fillna(0).astype(int)
     df['transit_stock'] = df['transit_stock'].fillna(0).astype(int)
     df['warehouse_zone'] = df['warehouse_zone'].fillna("Zone A")
-    df['port_of_entry'] = df['port_of_entry'].fillna("Jebel Ali Port")
+    df['origin_hub'] = df['origin_hub'].fillna("Bremerhaven")
+    # EU-built stock needs no customs clearance at all, so True is the correct
+    # default here rather than an optimistic guess.
     df['customs_cleared'] = df['customs_cleared'].fillna(True).astype(bool)
 
     df['last_replenishment_date'] = pd.to_datetime(df['last_replenishment_date']).dt.date
-    df['supplier_lead_time_days'] = df['supplier_lead_time_days'].fillna(30).astype(int)
+    df['supplier_lead_time_days'] = df['supplier_lead_time_days'].fillna(21).astype(int)
 
     return df
 
 
 def clean_external_factors(filepath):
     """
-    Clean external_factors.csv dataset (UAE schema).
+    Clean external_factors.csv dataset (German schema).
     """
     df = pd.read_csv(filepath)
 
@@ -255,46 +275,39 @@ def clean_external_factors(filepath):
     df['year'] = df['year'].fillna(pd.to_datetime(df['date']).dt.year).astype(int)
     df['month'] = df['month'].fillna(pd.to_datetime(df['date']).dt.month).astype(int)
     df['quarter'] = df['quarter'].fillna("Q1")
-    df['emirate'] = df['emirate'].fillna("Dubai")
+    df['state'] = df['state'].fillna("Nordrhein-Westfalen")
 
-    # Fuel prices (AED/litre)
-    df['petrol_95_price_aed_per_litre'] = df['petrol_95_price_aed_per_litre'].fillna(
-        df['petrol_95_price_aed_per_litre'].median()
-    )
-    df['petrol_98_price_aed_per_litre'] = df['petrol_98_price_aed_per_litre'].fillna(
-        df['petrol_98_price_aed_per_litre'].median()
-    )
-    df['diesel_price_aed_per_litre'] = df['diesel_price_aed_per_litre'].fillna(
-        df['diesel_price_aed_per_litre'].median()
-    )
-    df['crude_oil_price_usd'] = df['crude_oil_price_usd'].fillna(df['crude_oil_price_usd'].median())
-
-    # Macro-economic
-    df['gdp_growth_pct'] = df['gdp_growth_pct'].fillna(df['gdp_growth_pct'].median())
-    df['cpi_inflation_pct'] = df['cpi_inflation_pct'].fillna(df['cpi_inflation_pct'].median())
-    df['cbuae_rate_pct'] = df['cbuae_rate_pct'].fillna(df['cbuae_rate_pct'].median())
-    for _col in ('auto_loan_apr_pct', 'incentive_pct_of_atp', 'inventory_days_supply'):
+    # Fuel and energy prices (EUR)
+    for _col in ('super_e10_price_eur_per_litre', 'super_e5_price_eur_per_litre',
+                 'diesel_price_eur_per_litre', 'electricity_price_eur_per_kwh',
+                 'crude_oil_price_usd'):
         if _col in df.columns:
             df[_col] = df[_col].fillna(df[_col].median())
-    df['consumer_confidence_index'] = df['consumer_confidence_index'].fillna(
-        df['consumer_confidence_index'].median()
-    )
-    df['tourism_index'] = df['tourism_index'].fillna(df['tourism_index'].median())
-    df['dubai_re_price_index'] = df['dubai_re_price_index'].fillna(df['dubai_re_price_index'].median())
-    df['luxury_demand_index'] = df['luxury_demand_index'].fillna(df['luxury_demand_index'].median())
+
+    # Macro-economic. NOTE consumer_confidence_index is the GfK Konsumklima and
+    # is genuinely negative for most of this window — median is the right
+    # fallback, and nothing downstream may treat it as a 100-centred index.
+    for _col in ('gdp_growth_pct', 'cpi_inflation_pct', 'ecb_rate_pct',
+                 'auto_loan_apr_pct', 'incentive_pct_of_atp', 'inventory_days_supply',
+                 'consumer_confidence_index', 'ifo_business_climate',
+                 'de_house_price_index', 'luxury_demand_index',
+                 'commercial_registration_share_pct', 'unemployment_rate_pct',
+                 'population_millions'):
+        if _col in df.columns:
+            df[_col] = df[_col].fillna(df[_col].median())
 
     # Event / seasonal flags
-    df['ramadan_month'] = df['ramadan_month'].fillna(0).astype(int)
-    df['national_day_month'] = df['national_day_month'].fillna(0).astype(int)
-    df['dubai_motor_show_month'] = df['dubai_motor_show_month'].fillna(0).astype(int)
-    df['dsf_month'] = df['dsf_month'].fillna(0).astype(int)
+    for _col in ('quarter_end_month', 'year_end_month', 'summer_holiday_month', 'iaa_month'):
+        if _col in df.columns:
+            df[_col] = df[_col].fillna(0).astype(int)
 
-    # Industry
+    # Industry / policy
     df['new_model_launches'] = df['new_model_launches'].fillna(0).astype(int)
-    df['import_duty_pct'] = df['import_duty_pct'].fillna(5.0)
-    df['vat_rate_pct'] = df['vat_rate_pct'].fillna(5.0)
-    df['unemployment_rate_pct'] = df['unemployment_rate_pct'].fillna(df['unemployment_rate_pct'].median())
-    df['population_millions'] = df['population_millions'].fillna(df['population_millions'].median())
-    df['ev_charging_stations_uae'] = df['ev_charging_stations_uae'].fillna(0).astype(int)
+    df['vat_rate_pct'] = df['vat_rate_pct'].fillna(19.0)
+    df['co2_price_eur_per_tonne'] = df['co2_price_eur_per_tonne'].fillna(0.0)
+    # The Umweltbonus is genuinely zero after December 2023, so zero is the
+    # correct fallback, not the median of a series that used to be 6000.
+    df['ev_subsidy_eur'] = df['ev_subsidy_eur'].fillna(0).astype(int)
+    df['ev_charging_points_de'] = df['ev_charging_points_de'].fillna(0).astype(int)
 
     return df

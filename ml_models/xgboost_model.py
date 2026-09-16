@@ -33,16 +33,16 @@ def train_xgboost_pipeline():
         # Join Sales, Customers, and Vehicles to compile a rich feature set
         query = session.query(
             Sale.test_drive_converted,
-            Sale.base_price_aed.label('base_price'),
+            Sale.base_price_eur.label('base_price'),
             Sale.discount_pct,
             Sale.marketing_channel,
             Sale.vehicle_category,
             Sale.fuel_type,
-            Sale.emirate,
+            Sale.state,
             Customer.age,
             Customer.occupation,
-            Customer.estimated_monthly_income_aed,
-            Customer.credit_score,
+            Customer.estimated_annual_income_eur,
+            Customer.schufa_score,
             Customer.loyalty_score
         ).join(Customer, Sale.customer_id == Customer.customer_id) \
          .join(Vehicle, Sale.vehicle_id == Vehicle.vehicle_id)
@@ -74,8 +74,8 @@ def train_xgboost_pipeline():
         # leakage rather than a lever anyone can pull. Financing is still
         # captured on the deal record and drives the lease-return pipeline in
         # Inventory Intelligence, where it genuinely is predictive.
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'emirate', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_monthly_income_aed', 'credit_score', 'loyalty_score']
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_eur', 'schufa_score', 'loyalty_score']
 
         # Handle missing values
         for cat in cat_features:
@@ -173,22 +173,22 @@ def predict_deal_probability(input_data: dict) -> dict:
             
         # Compile input into record
         # Must mirror the training feature set exactly (financing_type excluded).
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'emirate', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_monthly_income_aed', 'credit_score', 'loyalty_score']
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_eur', 'schufa_score', 'loyalty_score']
 
         record = {}
         # Assign values with fallbacks
         record['marketing_channel'] = input_data.get('marketing_channel', 'Referral')
         record['vehicle_category'] = input_data.get('vehicle_category', 'SUV')
         record['fuel_type'] = input_data.get('fuel_type', 'Petrol')
-        record['emirate'] = input_data.get('emirate', 'Dubai')
+        record['state'] = input_data.get('state', 'Dubai')
         record['occupation'] = input_data.get('occupation', 'Salaried Professional')
 
         record['base_price'] = float(input_data.get('base_price', 38000))
         record['discount_pct'] = float(input_data.get('discount_pct', 5.0))
         record['age'] = float(input_data.get('age', 35))
-        record['estimated_monthly_income_aed'] = float(input_data.get('estimated_monthly_income_aed', 18000))
-        record['credit_score'] = float(input_data.get('credit_score', 720))
+        record['estimated_annual_income_eur'] = float(input_data.get('estimated_annual_income_eur', 18000))
+        record['schufa_score'] = float(input_data.get('schufa_score', 720))
         record['loyalty_score'] = float(input_data.get('loyalty_score', 60))
         
         # Build encoded DataFrame
@@ -248,8 +248,8 @@ def predict_deal_probability(input_data: dict) -> dict:
             
             # High discount and high income usually drive conversion positively, while low credit score drives it negatively
             discount = record['discount_pct']
-            income = record['estimated_monthly_income_aed']
-            credit = record['credit_score']
+            income = record['estimated_annual_income_eur']
+            credit = record['schufa_score']
 
             shap_explanations = [
                 {
@@ -259,13 +259,13 @@ def predict_deal_probability(input_data: dict) -> dict:
                     "description": f"Discount rate ({discount}%) drives conversion prospects."
                 },
                 {
-                    "feature": "credit_score",
+                    "feature": "schufa_score",
                     "score": 0.22 if credit > 750 else (-0.25 if credit < 650 else 0.05),
                     "direction": "positive" if credit >= 650 else "negative",
                     "description": f"Credit score ({int(credit)}) affects closing eligibility."
                 },
                 {
-                    "feature": "estimated_monthly_income_aed",
+                    "feature": "estimated_annual_income_eur",
                     "score": 0.12 if income > 25000 else (-0.08 if income < 8000 else 0.01),
                     "direction": "positive" if income >= 8000 else "negative",
                     "description": f"Monthly income (AED {int(income):,}) matches target segment."

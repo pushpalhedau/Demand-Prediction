@@ -242,10 +242,10 @@ def _stock_health_frame(snapshot):
     df["_net_deficit"] = (df["reorder_point"] - df["_net_position"]).clip(lower=0)
     df["_healthy_stock"] = np.ceil(daily * DAYS_SUPPLY_HEALTHY_HIGH)
     df["_surplus_units"] = (df["current_stock"] - df["_healthy_stock"]).clip(lower=0).astype(int)
-    df["_cost_value"] = df["current_stock"] * df["price_aed"].fillna(0) * INVOICE_COST_FACTOR
+    df["_cost_value"] = df["current_stock"] * df["price_eur"].fillna(0) * INVOICE_COST_FACTOR
     df["_gp_at_risk"] = (
         daily * df["supplier_lead_time_days"].fillna(30)
-        * df["price_aed"].fillna(0) * NEW_VEHICLE_GROSS_MARGIN
+        * df["price_eur"].fillna(0) * NEW_VEHICLE_GROSS_MARGIN
         * df["stockout_risk_score"].fillna(0)
     )
     return df
@@ -267,14 +267,14 @@ def _render_stock_health(snapshot, filters, colors):
     net_days_supply = units / daily_demand if daily_demand > 0 else 0
 
     cost_value = float(snap["_cost_value"].sum())
-    total_holding = float(snap["estimated_holding_cost_aed"].sum())
+    total_holding = float(snap["estimated_holding_cost_eur"].sum())
     floorplan_mo = cost_value * FLOORPLAN_APR / 12.0
     fixed_mo = max(total_holding - floorplan_mo, 0.0)
 
     aged = snap[snap["days_in_stock"] > aged_days]
     aged_units = int(aged["current_stock"].sum())
     aged_capital = float(aged["_cost_value"].sum())
-    aged_burn = float(aged["estimated_holding_cost_aed"].sum())
+    aged_burn = float(aged["estimated_holding_cost_eur"].sum())
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -307,7 +307,7 @@ def _render_stock_health(snapshot, filters, colors):
     # overstock as a triage row under the KPI cards.
     # stockouts = snap[snap["stockout_flag"].fillna(False)]
     # so_exposure = float(
-    #     (stockouts["_daily_demand"] * 30 * stockouts["price_aed"].fillna(0)
+    #     (stockouts["_daily_demand"] * 30 * stockouts["price_eur"].fillna(0)
     #      * NEW_VEHICLE_GROSS_MARGIN).sum()
     # )
     # below = snap[snap["reorder_needed"].fillna(False)]
@@ -383,7 +383,7 @@ def _render_stock_health(snapshot, filters, colors):
                 ytext = [f"{u:,}" for u in aging["units"]]
                 ytitle = "Units"
             else:
-                y = aging["capital_aed"] / 1e6
+                y = aging["capital_eur"] / 1e6
                 ytext = [f"AED {v:,.1f}M" for v in y]
                 ytitle = "Capital (AED, millions)"
             fig = go.Figure()
@@ -392,7 +392,7 @@ def _render_stock_health(snapshot, filters, colors):
                 marker_color=[colors["success"], colors["secondary"],
                               colors["warning"], colors["danger"]],
                 text=ytext, textposition="outside",
-                customdata=np.stack([aging["units"], aging["capital_aed"] / 1e6,
+                customdata=np.stack([aging["units"], aging["capital_eur"] / 1e6,
                                      aging["lines"]], axis=-1),
                 hovertemplate="<b>%{x}</b><br>%{customdata[0]:,} units"
                               "<br>AED %{customdata[1]:.1f}M capital"
@@ -413,9 +413,9 @@ def _render_stock_health(snapshot, filters, colors):
             )
             fig = px.scatter(
                 pos_df, x="demand_forecast_30d", y="current_stock",
-                color="Position", size="inventory_value_aed", size_max=26,
+                color="Position", size="inventory_value_eur", size_max=26,
                 hover_data={"brand": True, "model": True, "dealer_name": True,
-                            "days_of_supply": ":.0f", "inventory_value_aed": ":,.0f"},
+                            "days_of_supply": ":.0f", "inventory_value_eur": ":,.0f"},
                 color_discrete_map={"Healthy": colors["success"],
                                     "Below reorder point": colors["warning"],
                                     "Overstocked": colors["danger"]},
@@ -521,7 +521,7 @@ def _render_stock_health(snapshot, filters, colors):
             "Dealer": reorder["dealer_name"],
             "Vehicle": (reorder["brand"] + " " + reorder["model"] + " "
                         + reorder["variant"].fillna("")).str.strip(),
-            "Emirate": reorder["emirate"],
+            "State": reorder["state"],
             "On Hand": reorder["current_stock"].astype(int),
             "Inbound": reorder["_inbound"].astype(int),
             "Reorder Pt": reorder["reorder_point"].astype(int),
@@ -570,12 +570,12 @@ def _render_stock_health(snapshot, filters, colors):
             "Dealer": aged_tbl["dealer_name"],
             "Vehicle": (aged_tbl["brand"] + " " + aged_tbl["model"] + " "
                         + aged_tbl["variant"].fillna("")).str.strip(),
-            "Emirate": aged_tbl["emirate"],
+            "State": aged_tbl["state"],
             "Units": aged_tbl["current_stock"].astype(int),
             "Days on Lot": aged_tbl["days_in_stock"].astype(int),
             "Days of Supply": aged_tbl["days_of_supply"].astype(int),
             "Capital": (aged_tbl["_cost_value"] / 1e3).round(0).apply(lambda v: f"AED {v:,.0f}K"),
-            "Monthly Burn": aged_tbl["estimated_holding_cost_aed"].round(-1).apply(lambda v: f"AED {v:,.0f}"),
+            "Monthly Burn": aged_tbl["estimated_holding_cost_eur"].round(-1).apply(lambda v: f"AED {v:,.0f}"),
             "Suggested Action": aged_tbl["_action"],
         })
         st.dataframe(table.head(15), use_container_width=True, hide_index=True)
@@ -599,7 +599,7 @@ def _render_flow(snapshot, filters, colors):
 
     itm = returns[returns["in_the_money"]]
     uw = returns[~returns["in_the_money"]]
-    itm_equity = float(itm["equity_aed"].sum())
+    itm_equity = float(itm["equity_eur"].sum())
     next_90 = returns[
         returns["lease_maturity_date"] <= pd.Timestamp.today() + pd.Timedelta(days=90)
     ]
@@ -759,7 +759,7 @@ def _render_flow(snapshot, filters, colors):
             "Segment": tbl["customer_segment"],
             "Current Vehicle": tbl["brand"] + " " + tbl["model"],
             "Matures": pd.to_datetime(tbl["lease_maturity_date"]).dt.strftime("%d %b %Y"),
-            "Monthly Pmt": tbl["lease_monthly_payment_aed"].apply(
+            "Monthly Pmt": tbl["lease_monthly_payment_eur"].apply(
                 lambda v: f"AED {v:,.0f}" if pd.notnull(v) else "-"),
             "Loyalty /100": tbl["loyalty_score"].apply(
                 lambda v: f"{v:,.0f}" if pd.notnull(v) else "-"),
@@ -842,7 +842,7 @@ def _remarketing_lanes(returns, snapshot):
     df["model_days"] = df["model"].map(turn).fillna(70)
 
     fast = df["model_days"] <= 60
-    equity = df["equity_aed"].fillna(0)
+    equity = df["equity_eur"].fillna(0)
     df["lane"] = np.where(
         (equity > 1500) & fast, "Retail on lot",
         np.where(equity > 0, "Certified pre-owned", "Wholesale / auction"),
@@ -850,8 +850,8 @@ def _remarketing_lanes(returns, snapshot):
     order = ["Retail on lot", "Certified pre-owned", "Wholesale / auction"]
     summary = (df.groupby("lane")
                .agg(units=("sale_id", "size"),
-                    est_value=("est_market_value_aed", "sum"),
-                    avg_equity=("equity_aed", "mean"))
+                    est_value=("est_market_value_eur", "sum"),
+                    avg_equity=("equity_eur", "mean"))
                .reindex(order).dropna(how="all").reset_index())
     return summary
 
@@ -875,9 +875,9 @@ def _render_trade_in(filters, colors):
     sale_dates = pd.to_datetime(with_trade["sale_date"])
     ttm_cutoff = sale_dates.max() - pd.DateOffset(months=12)
     ttm = with_trade[sale_dates >= ttm_cutoff]
-    acquired_value = float(ttm["trade_in_appraised_value_aed"].fillna(0).sum())
+    acquired_value = float(ttm["trade_in_appraised_value_eur"].fillna(0).sum())
 
-    avg_concession = float(trades["true_concession_aed"].mean())
+    avg_concession = float(trades["true_concession_eur"].mean())
     reported_disc = float(trades["discount_pct"].mean())
     true_disc = float(trades["true_concession_pct"].mean())
 
@@ -910,9 +910,9 @@ def _render_trade_in(filters, colors):
         _section("True Concession Waterfall",
                  "What the store actually gives away per unit, versus what the "
                  "reported discount rate shows.")
-        sticker = float(trades["sticker_discount_aed"].mean())
-        over = float(trades["over_allowance_aed"].mean())
-        bonus = float(trades["trade_bonus_aed"].mean())
+        sticker = float(trades["sticker_discount_eur"].mean())
+        over = float(trades["over_allowance_eur"].mean())
+        bonus = float(trades["trade_bonus_eur"].mean())
         fig = go.Figure(go.Waterfall(
             orientation="v",
             measure=["relative", "relative", "relative", "total"],
@@ -932,7 +932,7 @@ def _render_trade_in(filters, colors):
         _section("Incentive Elasticity",
                  "Whether trade bonus money actually buys deal velocity — and "
                  "where it does not.")
-        band = pd.cut(with_trade["trade_bonus_aed"].fillna(0),
+        band = pd.cut(with_trade["trade_bonus_eur"].fillna(0),
                       [-1, 0, 2000, 4000, 8000],
                       labels=["No bonus", "AED 1-2K", "AED 2-4K", "AED 4-8K"])
         elas = (with_trade.assign(band=band)
@@ -954,11 +954,11 @@ def _render_trade_in(filters, colors):
         _section("Over-Allowance by Segment",
                  "Slow-turning segments need more help closing, and that shows "
                  "up as money credited above appraised value.")
-        seg = (with_trade.groupby("vehicle_category")["over_allowance_aed"]
-               .mean().reset_index().sort_values("over_allowance_aed", ascending=True))
-        fig = px.bar(seg, x="over_allowance_aed", y="vehicle_category", orientation="h",
-                     color="over_allowance_aed", color_continuous_scale="Oranges",
-                     labels={"over_allowance_aed": "Avg over-allowance (AED)",
+        seg = (with_trade.groupby("vehicle_category")["over_allowance_eur"]
+               .mean().reset_index().sort_values("over_allowance_eur", ascending=True))
+        fig = px.bar(seg, x="over_allowance_eur", y="vehicle_category", orientation="h",
+                     color="over_allowance_eur", color_continuous_scale="Oranges",
+                     labels={"over_allowance_eur": "Avg over-allowance (AED)",
                              "vehicle_category": ""})
         fig.update_layout(coloraxis_showscale=False)
         st.plotly_chart(_style(fig, height=300, showlegend=False), use_container_width=True)
@@ -968,7 +968,7 @@ def _render_trade_in(filters, colors):
                  "What is flowing into used inventory through trade, by make.")
         intake = (with_trade.groupby("trade_in_brand")
                   .agg(units=("sale_id", "size"),
-                       value=("trade_in_appraised_value_aed", "sum"))
+                       value=("trade_in_appraised_value_eur", "sum"))
                   .reset_index().sort_values("units", ascending=False).head(10))
         fig = px.bar(intake, x="trade_in_brand", y="units",
                      color="units", color_continuous_scale="Teal",
@@ -1091,9 +1091,9 @@ def _render_placement(snapshot, filters, colors):
         return
 
     st.markdown("<br>", unsafe_allow_html=True)
-    _note(f"Requested: <b>{brand} {model} {trim}</b> — AED {target['price_aed']:,} · "
+    _note(f"Requested: <b>{brand} {model} {trim}</b> — AED {target['price_eur']:,} · "
           f"{target['category']} · {target['fuel_type']} · {target['drive_type']} · "
-          f"{int(target['horsepower'])} hp · seats {int(target['seating_capacity'])}")
+          f"{int(target['power_kw'])} hp · seats {int(target['seating_capacity'])}")
 
     tier_label = {
         "in_stock_here": ("On your lot", colors["success"]),
@@ -1104,7 +1104,7 @@ def _render_placement(snapshot, filters, colors):
 
     for _, r in recs.iterrows():
         label, tone = tier_label.get(r["availability"], ("Unavailable", colors["muted"]))
-        delta = r["price_delta_aed"]
+        delta = r["price_delta_eur"]
         delta_txt = (f"+AED {delta:,.0f}" if delta > 0 else
                      (f"-AED {abs(delta):,.0f}" if delta < 0 else "same price"))
         aged_txt = ""
@@ -1128,7 +1128,7 @@ def _render_placement(snapshot, filters, colors):
             <span style="background:{tone}22;color:{tone};border-radius:5px;padding:2px 8px;
                          font-size:11px;font-weight:600;">{label}</span>
             <span style="color:#9ca3af;"> {r['availability_detail']}</span>
-            · AED {r['price_aed']:,.0f} ({delta_txt})
+            · AED {r['price_eur']:,.0f} ({delta_txt})
             · spec match {r['match_pct']:.0f}%{aged_txt}
           </div>
           <div style="color:#10b981;font-size:12px;margin-top:7px;">Matches: {r['match_reasons']}</div>
@@ -1142,11 +1142,11 @@ def _render_placement(snapshot, filters, colors):
     compare = pd.DataFrame({
         "Vehicle": ["REQUESTED: " + f"{target['brand']} {target['model']} {target['variant']}"]
                    + [f"{r['brand']} {r['model']} {r['variant']}" for _, r in recs.iterrows()],
-        "Price": [target["price_aed"]] + recs["price_aed"].tolist(),
+        "Price": [target["price_eur"]] + recs["price_eur"].tolist(),
         "Category": [target["category"]] + recs["category"].tolist(),
         "Fuel": [target["fuel_type"]] + recs["fuel_type"].tolist(),
         "Drive": [target["drive_type"]] + recs["drive_type"].tolist(),
-        "HP": [target["horsepower"]] + recs["horsepower"].tolist(),
+        "HP": [target["power_kw"]] + recs["power_kw"].tolist(),
         "Seats": [target["seating_capacity"]] + recs["seating_capacity"].tolist(),
         "Availability": ["-"] + [tier_label.get(a, ("Unavailable",))[0]
                                  for a in recs["availability"]],

@@ -50,26 +50,27 @@ def _pct(v, nd=1):
 
 
 def _money(v):
-    """Compact AED for big totals: AED 2.96B / AED 53.2M / AED 652K."""
+    """Compact EUR for big totals, in the UI's active language.
+      EN: EUR 2.96B / EUR 53.2M      DE: 2,96 Mrd. EUR / 53,2 Mio. EUR"""
     try:
         v = float(v)
     except (TypeError, ValueError):
         return "n/a"
-    if abs(v) >= 1e9:
-        return f"AED {v / 1e9:.2f}B"
-    if abs(v) >= 1e6:
-        return f"AED {v / 1e6:.1f}M"
-    if abs(v) >= 1e3:
-        return f"AED {v / 1e3:.0f}K"
-    return f"AED {v:,.0f}"
+    from utils.i18n import fmt_money
+    return fmt_money(v, compact=True)
 
 
-def _usd(v):
-    """Exact AED for per-unit / small figures: AED 5,296."""
+def _eur(v):
+    """Exact EUR for per-unit / small figures: EUR 1,296 / 1.296 EUR."""
     try:
-        return f"AED {float(v):,.0f}"
+        from utils.i18n import fmt_money
+        return fmt_money(float(v), compact=False)
     except (TypeError, ValueError):
         return "n/a"
+
+
+# Back-compat alias: this used to be _usd, then AED. Call sites still use it.
+_usd = _eur
 
 
 def _get(d, *path, default=None):
@@ -220,8 +221,9 @@ def _comparative(s, filters, ctx):
     except Exception as e:
         ctx["errors"].append(f"comparative.attribution: {e}")
 
-    # No import-vs-domestic tariff exposure in the UAE build (every vehicle is
-    # imported and pays the same flat 5% GCC customs duty, always in the price).
+    # No tariff / import-duty exposure section in this build — deliberately
+    # scoped out. Vehicle.origin still splits Domestic vs Import, but it drives
+    # logistics lead time only, not a duty view.
 
     ctx["comparative"] = c
 
@@ -326,7 +328,7 @@ def _inventory(s, filters, ctx):
                     old = ab[ab["bucket"].str.contains("90")]
                     if not old.empty:
                         inv["aging_90plus_units"] = int(old["units"].sum())
-                        inv["aging_90plus_capital"] = round(float(old["capital_aed"].sum()))
+                        inv["aging_90plus_capital"] = round(float(old["capital_eur"].sum()))
             except Exception:
                 pass
         try:
@@ -335,7 +337,7 @@ def _inventory(s, filters, ctx):
                 inv["lease_returns_90d"] = int(len(lrp))
                 inv["lease_returns_in_money"] = int(lrp["in_the_money"].sum())
                 inv["lease_returns_equity"] = round(
-                    float(lrp.loc[lrp["in_the_money"], "equity_aed"].sum()))
+                    float(lrp.loc[lrp["in_the_money"], "equity_eur"].sum()))
         except Exception:
             pass
         try:
@@ -384,11 +386,34 @@ def _sentiment(ctx, sent, articles):
 # Report generation
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SYSTEM = """You advise the leadership of a UAE automobile dealer group — a single regional group of 24 rooftops across the seven emirates (concentrated in Dubai, Abu Dhabi and Sharjah). Every vehicle is imported (no domestic industry, flat 5% GCC customs duty, flat 5% VAT); segment mix is roughly SUV 50%, Sedan 28%, Luxury 7%, Pickup 6%.
+def _lang_directive() -> str:
+    """Make the briefing come back in the UI's active language."""
+    try:
+        from utils.i18n import get_lang
+        lang = get_lang()
+    except Exception:
+        lang = "de"
+    if lang == "de":
+        return ("\n\nOUTPUT LANGUAGE: Write the entire briefing in GERMAN, in the "
+                "register a German Autohaus-Geschäftsführung would use. Keep the "
+                "SECTION HEADINGS exactly as specified in English, because the UI "
+                "parses them to split the briefing into blocks.")
+    return "\n\nOUTPUT LANGUAGE: Write the entire briefing in ENGLISH."
+
+
+_SYSTEM = """You advise the leadership of a German automobile dealer group — a single regional group of 24 Standorte across six Bundesländer (Nordrhein-Westfalen, Bayern, Baden-Württemberg, Hessen, Niedersachsen, Rheinland-Pfalz). Franchises are the German volume and premium marques plus European and Asian volume brands; segment mix is roughly SUV 33%, Kompaktklasse 22%, Kombi 18%, Kleinwagen 13%, Limousine 8%, Van 4%, Oberklasse 2%.
+
+Structural facts you must reason with:
+- Roughly two thirds of units go to COMMERCIAL buyers (gewerblich — fleet, Dienstwagen under the 1%-Regelung). Private retail is the minority.
+- The book runs on Leasing and Schlussratenfinanzierung, so the monthly payment — and therefore the ECB rate and residual values — drives demand more than list price does.
+- German front-end gross is thin; the back end (Finanzierung, Leasing, Versicherung, Anschlussgarantie) carries a large share of the deal.
+- The Umweltbonus ended in December 2023, so BEV demand is now price- and residual-led with no subsidy support.
+- Showrooms cannot sell on Sundays (Ladenschlussgesetz); the calendar peaks are the quarter-end registration pushes (March, June, September) and the December run-out.
+- There is a domestic industry, so plant, IG Metall and supplier news is local demand and sentiment news.
 
 You are given a data snapshot covering every part of the business — Executive Overview, Demand Forecasting, Comparative Analytics (vs last year), Store Performance, Customer Intelligence and Inventory Intelligence — plus the current news read.
 
-Write a detailed operating briefing for the group's GMs, F&I desk and used-car desk. For EACH section below, give: (a) where the group stands (the numbers, in plain terms), (b) what's notable — triggers, risks and opportunities, (c) concrete recommendations. Then close with a single ranked "This week — priority actions" list (P1…P6), each naming who acts and on what. Be specific, use the numbers you're given, and do not invent figures that aren't in the snapshot.
+Write a detailed operating briefing for the group's Standortleiter, the Finanzierungs-/Leasing desk and the Gebrauchtwagen desk. For EACH section below, give: (a) where the group stands (the numbers, in plain terms), (b) what's notable — triggers, risks and opportunities, (c) concrete recommendations. Then close with a single ranked "This week — priority actions" list (P1…P6), each naming who acts and on what. Be specific, use the numbers you're given, and do not invent figures that aren't in the snapshot.
 
 Sections, in order:
 1. HEADLINE READ
@@ -411,7 +436,7 @@ def generate_group_briefing(context: dict) -> str:
             resp = client.chat.completions.create(
                 model=_GROK_MODEL,
                 messages=[
-                    {"role": "system", "content": _SYSTEM},
+                    {"role": "system", "content": _SYSTEM + _lang_directive()},
                     {"role": "user", "content": f"DATA SNAPSHOT\n\n{payload}\n\nWrite the briefing."},
                 ],
                 temperature=0.4,

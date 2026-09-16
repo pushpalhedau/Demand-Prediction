@@ -34,10 +34,10 @@ LEVERS = {
     "crude_oil_price_usd": dict(
         label="Crude oil price", unit="USD/barrel", step=1.0, fmt="{:.0f}",
     ),
-    "petrol_95_price_aed_per_litre": dict(
+    "super_e10_price_eur_per_litre": dict(
         label="Petrol price (Special 95)", unit="AED/litre", step=0.05, fmt="{:.2f}",
     ),
-    "diesel_price_aed_per_litre": dict(
+    "diesel_price_eur_per_litre": dict(
         label="Diesel price", unit="AED/litre", step=0.05, fmt="{:.2f}",
     ),
     "auto_loan_apr_pct": dict(
@@ -58,8 +58,8 @@ LEVERS = {
 #   loan APR    ~ -3%   units per +1pt
 GROUP_DEMAND_RESPONSE = {
     "crude_oil_price_usd": -0.15,
-    "petrol_95_price_aed_per_litre": -3.0,
-    "diesel_price_aed_per_litre": -2.0,
+    "super_e10_price_eur_per_litre": -3.0,
+    "diesel_price_eur_per_litre": -2.0,
     "auto_loan_apr_pct": -3.0,
 }
 

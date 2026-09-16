@@ -18,22 +18,22 @@ def get_external_factor_stats(region: str = None) -> dict:
     try:
         query = session.query(ExternalFactor)
         if region:
-            query = query.filter(ExternalFactor.emirate == region)
+            query = query.filter(ExternalFactor.state == region)
         df = pd.read_sql(query.statement, session.bind)
         if df.empty:
             return {}
         numeric_cols = [
             # Dealer-facing what-if levers (what the group's customers actually feel)
-            'petrol_95_price_aed_per_litre', 'auto_loan_apr_pct',
+            'super_e10_price_eur_per_litre', 'auto_loan_apr_pct',
             'incentive_pct_of_atp', 'inventory_days_supply',
             # Retained for other consumers / backward compatibility
-            'diesel_price_aed_per_litre', 'crude_oil_price_usd', 'gdp_growth_pct',
-            'cpi_inflation_pct', 'cbuae_rate_pct', 'consumer_confidence_index',
-            'tourism_index', 'luxury_demand_index', 'import_duty_pct',
-            'unemployment_rate_pct', 'new_model_launches', 'ev_charging_stations_uae',
+            'diesel_price_eur_per_litre', 'crude_oil_price_usd', 'gdp_growth_pct',
+            'cpi_inflation_pct', 'ecb_rate_pct', 'consumer_confidence_index',
+            'ifo_business_climate', 'luxury_demand_index', 'import_duty_pct',
+            'unemployment_rate_pct', 'new_model_launches', 'ev_charging_points_de',
         ]
         binary_cols = [
-            'ramadan_month', 'national_day_month', 'dubai_motor_show_month', 'dsf_month',
+            'quarter_end_month', 'year_end_month', 'iaa_month', 'summer_holiday_month',
         ]
         stats = {}
         for col in numeric_cols + binary_cols:
@@ -82,7 +82,7 @@ def train_prophet_model(
         if category:
             sale_query = sale_query.filter(Sale.vehicle_category == category)
         if region:
-            sale_query = sale_query.filter(Sale.emirate == region)
+            sale_query = sale_query.filter(Sale.state == region)
         if fuel_type:
             sale_query = sale_query.filter(Sale.fuel_type == fuel_type)
         if brand:
@@ -114,14 +114,14 @@ def train_prophet_model(
         # stock it has to sell from, and the year-end holiday selling season.
         ext_query = session.query(
             ExternalFactor.date,
-            ExternalFactor.petrol_95_price_aed_per_litre,
+            ExternalFactor.super_e10_price_eur_per_litre,
             ExternalFactor.auto_loan_apr_pct,
             ExternalFactor.incentive_pct_of_atp,
             ExternalFactor.inventory_days_supply,
-            ExternalFactor.ramadan_month,
+            ExternalFactor.quarter_end_month,
         )
         if region:
-            ext_query = ext_query.filter(ExternalFactor.emirate == region)
+            ext_query = ext_query.filter(ExternalFactor.state == region)
             
         ext_df = pd.read_sql(ext_query.statement, session.bind)
         if not ext_df.empty:
@@ -180,9 +180,9 @@ def train_prophet_model(
         
         # Add external regressors if they exist in dataframe
         regressors = [
-            'petrol_95_price_aed_per_litre', 'auto_loan_apr_pct',
+            'super_e10_price_eur_per_litre', 'auto_loan_apr_pct',
             'incentive_pct_of_atp', 'inventory_days_supply',
-            'ramadan_month',
+            'quarter_end_month',
         ] + sentiment_regressor_candidates  # appended when use_sentiment=True
 
         active_regressors = []

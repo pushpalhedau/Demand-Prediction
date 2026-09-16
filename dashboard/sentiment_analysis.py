@@ -25,6 +25,7 @@ from sentiment.signal_processor import (
 )
 from sentiment.fetchers.gdelt_fetcher import get_stored_articles, TIMESPAN_OPTIONS
 from sentiment.group_briefing import build_briefing_context, generate_group_briefing
+from utils.i18n import t, tv, tseg, fmt_num, fmt_pct, is_de
 from utils.helpers import (
     _section,
     _base_layout,
@@ -42,32 +43,51 @@ from utils.helpers import (
 # Framing constants
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SEGMENT_LABEL = {
-    "SUV": "SUV", "Pickup": "pickup", "Sedan": "sedan", "Luxury": "luxury",
-    "EV": "EV", "Commercial": "commercial", "All": "all segments",
-}
+# Segment and theme labels are resolved through the catalog at RENDER time, so
+# they follow the language toggle. `_SEGMENT_LABEL` / `_THEME_LABEL` are kept as
+# callables with a dict-like .get() so the existing call sites are unchanged.
+_THEME_NAMES = [
+    "de_auto_demand", "ev_market_de", "tax_policy", "fuel_prices",
+    "de_macro_economy", "auto_industry_de", "auto_financing", "incentives_offers",
+]
 
-# get_stored_articles() returns `theme` = the GDELT query name.
-_THEME_LABEL = {
-    "uae_auto_demand": "Auto demand",
-    "ev_market_uae": "EV market",
-    "customs_vat": "Customs, VAT & imports",
-    "fuel_prices": "Fuel prices",
-    "uae_macro_economy": "Economy & rates",
-    "luxury_suv_uae": "Luxury / SUV",
-    "auto_financing": "Car finance",
-    "incentives_offers": "Offers & promotions",
-}
 
-# What a signal on this theme is mostly about, for the exposure line.
-_THEME_EXPOSURE = {
-    "customs_vat": "moves landed cost on the whole book — every unit is imported",
-    "auto_financing": "moves financed demand across the whole book — fastest-acting driver",
-    "uae_macro_economy": "moves financed demand across the whole book",
-    "fuel_prices": "shifts mix a little between large SUV / 4x4 and sedan",
-    "incentives_offers": "changes the offer backdrop the desk is working against",
-    "ev_market_uae": "affects the group's EV demand (MG, Hyundai/Kia BEVs, Tesla/BYD cross-shop)",
-}
+class _Lookup:
+    """dict-like façade that resolves through t() on every access, so a
+    language switch is picked up without rebuilding any module-level map."""
+
+    def __init__(self, prefix, keys, fallback=None):
+        self._prefix, self._keys, self._fallback = prefix, set(keys), fallback
+
+    def get(self, key, default=None):
+        if key in self._keys:
+            return t(f"{self._prefix}{key}")
+        if self._fallback is not None:
+            return self._fallback(key)
+        return default if default is not None else key
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __contains__(self, key):
+        return key in self._keys
+
+    # Callable so `Series.map(_THEME_LABEL)` works: pandas accepts a dict or a
+    # callable, and this is deliberately neither a real dict nor a static one.
+    def __call__(self, key):
+        return self.get(key)
+
+
+# Segment names as they read inside a sentence ("lands on the group's Kombi
+# demand"), which is a different casing from the title-case VALUE_MAP.
+_SEGMENT_LABEL = _Lookup("", [], fallback=tseg)
+_THEME_LABEL = _Lookup("sa.theme.", _THEME_NAMES)
+_THEME_EXPOSURE = _Lookup(
+    "sa.exp.",
+    ["tax_policy", "auto_financing", "de_macro_economy", "fuel_prices",
+     "incentives_offers", "ev_market_de", "auto_industry_de"],
+    fallback=lambda k: None,
+)
 
 _DIR_ARROW = {"up": "▲", "down": "▼", "neutral": "■"}
 
@@ -114,10 +134,10 @@ def _empty_state(msg: str):
 
 def _signal_word(net_pct: float) -> tuple:
     if net_pct > 0.75:
-        return "tailwind", _HUE_UP
+        return t("sa.word.tailwind"), _HUE_UP
     if net_pct < -0.75:
-        return "headwind", _HUE_DOWN
-    return "roughly flat", _INK_MUTED
+        return t("sa.word.headwind"), _HUE_DOWN
+    return t("sa.word.flat"), _INK_MUTED
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -126,7 +146,7 @@ def _signal_word(net_pct: float) -> tuple:
 
 def render_sentiment_analysis(filters: dict):
     st.markdown(
-        "<h2 class='gradient-text' style='margin-bottom:12px;'>Sentiment Analysis</h2>",
+        f"<h2 class='gradient-text' style='margin-bottom:12px;'>{t('sa.title')}</h2>",
         unsafe_allow_html=True,
     )
 
@@ -134,19 +154,21 @@ def render_sentiment_analysis(filters: dict):
     c1, c2, _ = st.columns([2, 2, 4])
     with c1:
         timespan_label = st.selectbox(
-            "News window", options=list(TIMESPAN_OPTIONS.keys()), index=1, key="sentiment_timespan"
+            t("sa.window"), options=list(TIMESPAN_OPTIONS.keys()), index=1,
+            key="sentiment_timespan"
         )
         timespan = TIMESPAN_OPTIONS[timespan_label]
     running = st.session_state.get("sentiment_pipeline_running", False)
     with c2:
         st.markdown("<div style='margin-top:28px;'>", unsafe_allow_html=True)
-        refresh = st.button("Refresh news", type="primary", use_container_width=True, disabled=running)
+        refresh = st.button(t("sa.refresh"), type="primary", use_container_width=True,
+                            disabled=running)
         st.markdown("</div>", unsafe_allow_html=True)
 
     if refresh and not running:
         st.session_state["sentiment_pipeline_running"] = True
         try:
-            with st.spinner("Fetching the latest UAE auto news and scoring signals…"):
+            with st.spinner(t("sa.fetching")):
                 status = run_full_pipeline(timespan=timespan, max_articles_per_query=50, analyze_limit=200)
             st.session_state["sentiment_pipeline_status"] = status
         finally:
@@ -164,10 +186,7 @@ def render_sentiment_analysis(filters: dict):
     st.markdown("<br>", unsafe_allow_html=True)
 
     if stats.get("total_articles", 0) == 0 or not articles:
-        _empty_state(
-            "No recent signals yet.<br>Click <b>Refresh news</b> above to pull the latest "
-            "UAE auto headlines and score them for the group's demand."
-        )
+        _empty_state(t("sa.empty"))
         return
 
     _headline_block(stats)
@@ -175,7 +194,7 @@ def render_sentiment_analysis(filters: dict):
     _bottom_line(stats, articles)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    tab_watch, tab_fc = st.tabs(["Demand Watch", "Does news improve our forecast?"])
+    tab_watch, tab_fc = st.tabs([t("sa.tab_watch"), t("sa.tab_fc")])
     with tab_watch:
         _render_demand_watch(stats, articles, filters)
     with tab_fc:
@@ -196,12 +215,14 @@ def _headline_block(stats: dict):
     with left:
         st.markdown(
             f"<div style='color:{_INK_MUTED};font-size:12px;letter-spacing:.4px;"
-            f"text-transform:uppercase;margin-bottom:2px;'>Expected demand impact · next ~30 days</div>"
+            f"text-transform:uppercase;margin-bottom:2px;'>{t('sa.headline.label')}</div>"
             f"<div style='font-size:44px;font-weight:800;color:{color};line-height:1.1;'>"
             f"{_pct_label(net, 1)}</div>"
             f"<div style='color:{_INK};font-size:14px;margin-top:2px;'>"
-            f"{word.capitalize()}"
-            + (f" &nbsp;·&nbsp; about {unit_est:+,} units vs a normal month" if runrate else "")
+            f"{word}"
+            + (" &nbsp;·&nbsp; " + t("sa.headline.units",
+                                     v=fmt_pct(unit_est, 0, signed=True).rstrip(" %").rstrip("%"))
+               if runrate else "")
             + "</div>",
             unsafe_allow_html=True,
         )
@@ -226,7 +247,7 @@ def _headline_block(stats: dict):
         st.plotly_chart(g, use_container_width=True, config={"displayModeBar": False})
         st.markdown(
             f"<div style='text-align:center;color:{_INK_MUTED};font-size:11px;margin-top:-8px;'>"
-            "headwind &nbsp;·&nbsp; flat &nbsp;·&nbsp; tailwind</div>",
+            f"{t('sa.gauge.scale').replace(' · ', ' &nbsp;·&nbsp; ')}</div>",
             unsafe_allow_html=True,
         )
 
@@ -263,67 +284,62 @@ def _bottom_line(stats: dict, articles: list):
 
     if n_signal == 0:
         color = _INK_MUTED
-        body = (
-            "No single story is moving the group's demand right now — the news nets out "
-            "<b>roughly neutral</b> over the next ~30 days. Nothing here calls for a change "
-            "to stocking or pricing; run the standard demand forecast and keep scanning the "
-            "feed for a rate move, a customs/VAT change, or a fuel-price swing that would."
-        )
+        body = t("sa.bl.none")
     elif abs(net) < 0.5:
         color = _INK_MUTED
         _t = df.assign(_t=df["theme"].map(_THEME_LABEL).fillna(df["theme"]))
-        up_theme = ", ".join(sorted(_t[_t["_dir"] == "up"]["_t"].dropna().unique())[:2]).lower() or "supportive news"
-        dn_theme = ", ".join(sorted(_t[_t["_dir"] == "down"]["_t"].dropna().unique())[:2]).lower() or "headwind news"
-        body = (
-            f"The news is <b>mixed and nets out roughly flat</b> over the next ~30 days — "
-            f"{up_n} supportive signal{'s' if up_n != 1 else ''} ({up_theme}) roughly offset "
-            f"{dn_n} headwind{'s' if dn_n != 1 else ''} ({dn_theme}). No net stocking or "
-            "pricing call for the group; work the individual signals below on their own merits."
-        )
+        # Do NOT lowercase in German — every one of these theme labels is a
+        # noun ("Kraftstoffpreise", "Rabatte"), and German capitalises nouns
+        # mid-sentence.
+        def _join_themes(direction, fallback_key):
+            names = sorted(_t[_t["_dir"] == direction]["_t"].dropna().unique())[:2]
+            if not names:
+                return t(fallback_key)
+            joined = ", ".join(names)
+            return joined if is_de() else joined.lower()
+
+        up_theme = _join_themes("up", "sa.bl.supportive_news")
+        dn_theme = _join_themes("down", "sa.bl.headwind_news")
+        body = t("sa.bl.mixed", up_n=up_n, up_theme=up_theme,
+                 dn_n=dn_n, dn_theme=dn_theme)
     else:
-        word = "headwind" if net < 0 else "tailwind"
+        word = t("sa.word.headwind") if net < 0 else t("sa.word.tailwind")
         color = _HUE_DOWN if net < 0 else _HUE_UP
         rr = _group_monthly_runrate()
         _u = round(rr * net / 100.0)
-        unit_hint = f", roughly {f'{_u:+,}'.replace('-', '−')} units against a normal month" if rr else ""
-        parts = [
-            f"The news adds up to a mild <b>{word}</b> ({_pct_label(net, 1)}{unit_hint}) for "
-            "the group's showroom demand over the next ~30 days."
-        ]
+        unit_hint = (t("sa.bl.units_hint",
+                        v=fmt_pct(_u, 0, signed=True).rstrip(" %").rstrip("%"))
+                     if rr else "")
+        parts = [t("sa.bl.net", word=word, pct=_pct_label(net, 1), units=unit_hint)]
         if drivers:
             d_theme, d_val = drivers[0]
             exp = _THEME_EXPOSURE.get(d_theme)
             d_lbl = _THEME_LABEL.get(d_theme, d_theme)
             parts.append(
-                f"The leading driver is <b>{d_lbl.lower()}</b>"
+                t("sa.bl.driver", label=d_lbl)
                 + (f" — {exp}." if exp else f" ({_pct_label(d_val, 1)}).")
             )
         if segs:
             parts.append(
-                "Most exposed: "
-                + " and ".join(f"{_SEGMENT_LABEL.get(s, s)} ({_pct_label(v, 1)})" for s, v in segs)
+                t("sa.bl.exposed")
+                + ", ".join(f"{_SEGMENT_LABEL.get(s, s)} ({_pct_label(v, 1)})" for s, v in segs)
                 + "."
             )
         if net < 0:
-            dn = _SEGMENT_LABEL.get(segs[0][0], "the affected segments") if segs and segs[0][1] < 0 else "the affected segments"
-            parts.append(
-                f"<b>This week:</b> protect days'-supply on {dn}, keep the desk leading with "
-                "monthly-payment and trade-equity talk-tracks, and be ready to pull incentive "
-                "spend forward if showroom traffic softens."
-            )
+            dn = (_SEGMENT_LABEL.get(segs[0][0]) if segs and segs[0][1] < 0
+                  else t("sa.bl.seg_affected"))
+            parts.append(f"<b>{t('sa.bl.week')}</b> " + t("sa.bl.week_down", seg=dn))
         else:
-            up = _SEGMENT_LABEL.get(segs[0][0], "the segments in favour") if segs and segs[0][1] > 0 else "the segments in favour"
-            parts.append(
-                f"<b>This week:</b> keep {up} stock full at the higher-volume rooftops and hold "
-                "margin — you shouldn't need extra discount while this holds."
-            )
+            up = (_SEGMENT_LABEL.get(segs[0][0]) if segs and segs[0][1] > 0
+                  else t("sa.bl.seg_favour"))
+            parts.append(f"<b>{t('sa.bl.week')}</b> " + t("sa.bl.week_up", seg=up))
         body = " ".join(parts)
 
     st.markdown(
         f"""<div style="border:1px solid {color}44;border-left:4px solid {color};
         background:{color}12;border-radius:12px;padding:16px 18px;">
           <div style="color:{color};font-size:12px;font-weight:700;letter-spacing:.4px;
-          text-transform:uppercase;margin-bottom:6px;">Bottom line</div>
+          text-transform:uppercase;margin-bottom:6px;">{t('sa.bottom_line')}</div>
           <div style="color:{_INK};font-size:13.5px;line-height:1.65;">{body}</div>
         </div>""",
         unsafe_allow_html=True,
@@ -344,7 +360,7 @@ def _render_demand_watch(stats: dict, articles: list, filters: dict):
 
     if not quiet:
         # ── Drivers: mean signal by news theme ────────────────────────
-        _section("What's driving the signal")
+        _section(t("sa.drivers.title"))
         by_theme = (
             df.dropna(subset=["demand_change_pct"])
             .assign(theme_label=df["theme"].map(_THEME_LABEL).fillna(df["theme"]))
@@ -370,10 +386,7 @@ def _render_demand_watch(stats: dict, articles: list, filters: dict):
     # ── Segment view: mix-weighted ─────────────────────────────────────
     seg_changes = {k: v for k, v in (stats.get("segment_changes") or {}).items() if k != "All"}
     if seg_changes and max(abs(v) for v in seg_changes.values()) >= 0.05:
-        _section(
-            "By segment",
-            "News-driven demand change per vehicle segment. The headline weights these by the group's own sales mix.",
-        )
+        _section(t("sa.segment.title"), t("sa.segment.caption"))
         ser = pd.Series(seg_changes).sort_values()
         span = max(abs(ser.min()), abs(ser.max()), 0.5) * 1.25
         fig = go.Figure(go.Bar(
@@ -393,24 +406,23 @@ def _render_demand_watch(stats: dict, articles: list, filters: dict):
     df["rank"] = (df["impact_score"].fillna(0) * df["demand_change_pct"].abs().fillna(0))
     actionable = df[df["_dir"] != "neutral"].sort_values("rank", ascending=False).head(8)
     if actionable.empty:
-        _section(
-            "Latest headlines scanned",
-            "None carry a clear demand read this window — shown so you can see what's in the feed.",
-        )
+        _section(t("sa.latest.title"), t("sa.latest.caption"))
         for _, a in df.sort_values("published_date", ascending=False).head(5).iterrows():
             _signal_card(a)
     else:
-        _section("Signals to work")
+        _section(t("sa.signals.title"))
         for _, a in actionable.iterrows():
             _signal_card(a)
 
     # ── This week's read (full cross-module briefing) ─────────────────
     st.markdown("<br>", unsafe_allow_html=True)
-    _section("This week's read for the group")
-    if st.button("Generate read", key="gen_briefing"):
-        with st.spinner("Reading every module and writing the briefing…"):
+    _section(t("sa.read.title"))
+    if st.button(t("sa.read.button"), key="gen_briefing"):
+        with st.spinner(t("sa.read.spinner")):
             import json
-            fk = json.dumps({k: str(v) for k, v in (filters or {}).items()}, sort_keys=True)
+            from utils.i18n import get_lang
+            fk = json.dumps({k: str(v) for k, v in (filters or {}).items()},
+                            sort_keys=True) + f"|lang={get_lang()}"
             ctx = _cached_briefing_context(fk, filters, stats, articles)
             st.session_state["sentiment_briefing"] = generate_group_briefing(ctx)
     if st.session_state.get("sentiment_briefing"):
@@ -428,10 +440,10 @@ def _signal_card(a: pd.Series):
     exposure = _THEME_EXPOSURE.get(theme)
     if not exposure:
         if seg in ("All", None):
-            exposure = "affects showroom traffic across the whole book"
+            exposure = t("sa.card.exposure_all")
         else:
-            exposure = f"lands on the group's {_SEGMENT_LABEL.get(seg, seg)} demand"
-    title = (a.get("title") or "Untitled")[:150]
+            exposure = t("sa.card.exposure_seg", seg=_SEGMENT_LABEL.get(seg, seg))
+    title = (a.get("title") or t("sa.card.untitled"))[:150]
     url = a.get("url") or ""
     title_html = f"<a href='{url}' target='_blank' style='color:{_INK};text-decoration:none;'>{title}</a>" if url else title
     chg_txt = f"{_DIR_ARROW.get(direction,'■')} {_pct_label(chg,1)}" if pd.notna(chg) else _DIR_ARROW.get(direction, "■")
@@ -460,27 +472,27 @@ def _signal_card(a: pd.Series):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _render_forecast_verdict(filters: dict):
-    _section("Does watching the news actually improve our forecast?")
+    _section(t("sa.fc.title"))
 
     try:
         from forecasting.prophet_forecasting import train_prophet_model
     except Exception as e:
-        _empty_state(f"Forecast engine unavailable: {e}")
+        _empty_state(t("sa.fc.unavailable", e=e))
         return
 
     c1, c2, _ = st.columns([2, 2, 4])
     with c1:
-        horizon = st.selectbox("Look ahead", [30, 60, 90, 180], index=2, key="fc_v_horizon",
+        horizon = st.selectbox(t("sa.fc.horizon"), [30, 60, 90, 180], index=2, key="fc_v_horizon",
                                format_func=lambda d: f"{d} days")
     with c2:
-        target = st.selectbox("Measure", ["units_sold", "total_revenue_incl_vat"],
-                              format_func=lambda x: "Units" if x == "units_sold" else "Revenue",
+        target = st.selectbox(t("sa.fc.measure"), ["units_sold", "total_revenue_incl_vat"],
+                              format_func=lambda x: t("sa.fc.units") if x == "units_sold" else t("sa.fc.revenue"),
                               key="fc_v_target")
     with c1:
-        run = st.button("Run check", type="primary", key="fc_v_run")
+        run = st.button(t("sa.fc.run"), type="primary", key="fc_v_run")
 
     if run:
-        with st.spinner("Training both models…"):
+        with st.spinner(t("sa.fc.training")):
             base_res, base_err = train_prophet_model(
                 category=filters.get("vehicle_category"), region=filters.get("region"),
                 fuel_type=filters.get("fuel_type"), brand=filters.get("brand"),
@@ -494,12 +506,12 @@ def _render_forecast_verdict(filters: dict):
         st.session_state["fc_v"] = (base_res, base_err, sent_res, sent_err, target)
 
     if "fc_v" not in st.session_state:
-        st.info("Click **Run check** to compare.")
+        st.info(t("sa.fc.prompt"))
         return
 
     base_res, base_err, sent_res, sent_err, _target = st.session_state["fc_v"]
     if base_err or not base_res:
-        st.error(f"Baseline forecast failed: {base_err}")
+        st.error(t("sa.fc.base_failed", e=base_err))
         return
 
     # ── One chart (monthly, to match the Demand Forecasting tab) ─────
@@ -526,21 +538,22 @@ def _render_forecast_verdict(filters: dict):
 
     fig = go.Figure()
     act = fc[fc["actual"].notna()]
-    fig.add_trace(go.Scatter(x=act["m"], y=act["actual"], name="Actual", mode="lines+markers",
+    fig.add_trace(go.Scatter(x=act["m"], y=act["actual"], name=t("sa.fc.actual"), mode="lines+markers",
                              line=dict(color=_HUE_HISTORY, width=2), marker=dict(size=5)))
-    fig.add_trace(go.Scatter(x=fc["m"], y=fc["yhat"], name="Standard forecast", mode="lines",
+    fig.add_trace(go.Scatter(x=fc["m"], y=fc["yhat"], name=t("sa.fc.standard"), mode="lines",
                              line=dict(color=_HUE_FORECAST, width=2.5)))
     if sent_res and not sent_err:
         sfc = _monthly(sent_res["forecast"])
         sfc = sfc[sfc["m"] >= start]
-        fig.add_trace(go.Scatter(x=sfc["m"], y=sfc["yhat"], name="News-aware forecast", mode="lines",
+        fig.add_trace(go.Scatter(x=sfc["m"], y=sfc["yhat"], name=t("sa.fc.news_aware"), mode="lines",
                                  line=dict(color="#ec4899", width=2.5, dash="dot")))
     if split is not None:
         fig.add_vline(x=split.timestamp() * 1000, line_dash="dash",
                       line_color=_HUE_MARKER, annotation_text="forecast starts",
                       annotation_font_color=_HUE_MARKER)
     fig.update_layout(**_base_layout(height=360, legend=True,
-                                     yaxis=dict(title="Units / month" if _target == "units_sold" else "Revenue / month (AED)")))
+                                     yaxis=dict(title=t("sa.fc.yaxis_units") if _target == "units_sold"
+                                                else t("sa.fc.yaxis_revenue"))))
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 
@@ -567,7 +580,7 @@ def _show_pipeline_status(status: dict):
     hard = [e for e in errors if "Google News RSS" not in e]
 
     if hard:
-        st.warning(f"Refresh finished with warnings: {'; '.join(hard)}\n\n{msg}")
+        st.warning(t("sa.status.warn", msg="; ".join(hard)) + f"\n\n{msg}")
     else:
         st.success(f"Refresh complete — {msg}")
     for n in notes:

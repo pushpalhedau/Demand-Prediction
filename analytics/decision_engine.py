@@ -32,16 +32,25 @@ from database.queries import (
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Benchmark constants (UAE new-vehicle retail, rough Gulf-market figures, AED).
+# Benchmark constants (German new-vehicle retail, EUR).
+#
 # These are the ONLY non-data inputs to a money figure on a card; a dealer
 # replaces them with their own actuals once real gross / F&I data is connected
 # (see DEALER_INTEGRATION_REQUIREMENTS).
+#
+# German new-car front-end gross is structurally THIN — heavy list-price
+# discounting on volume brands, and roughly two thirds of units going to
+# commercial buyers who negotiate on fleet terms. So these are deliberately
+# NOT the Gulf figures converted at spot: a straight AED->EUR conversion of the
+# UAE numbers would materially overstate what a German rooftop makes per car.
+# The back end (Finanzierung, Leasing, Versicherung, Garantieverlängerung)
+# carries proportionally more of the deal here than it does in the Gulf.
 # ─────────────────────────────────────────────────────────────────────────────
-GROSS_PER_NEW_UNIT = 9_000      # blended front-end + F&I gross per new unit (AED)
-FNI_GROSS_PER_DEAL = 4_500      # incremental F&I gross on one more financed deal (AED)
+GROSS_PER_NEW_UNIT = 1_900      # blended front-end + F&I gross per new unit (EUR)
+FNI_GROSS_PER_DEAL = 1_100      # incremental F&I gross on one more financed deal (EUR)
 RECOVERABLE_SHARE = 0.5        # share of an identified gap realistically closable
 TURN_ON_TRANSFER = 0.6        # prob. a transferred unit actually sells in 60d
-AGED_MARKUP_PER_UNIT_MONTH = 900   # extra markdown taken per aged unit per month (AED)
+AGED_MARKUP_PER_UNIT_MONTH = 220   # extra markdown taken per aged unit per month (EUR)
 
 _CONF_WEIGHT = {"High": 1.0, "Medium": 0.65, "Low": 0.4}
 
@@ -51,7 +60,7 @@ class Play:
     category: str            # Allocation | Target | Margin | Inventory | F&I
     title: str               # the action, imperative
     detail: str              # one or two sentences with the specific numbers
-    impact_usd: float        # modelled gross impact / gross at stake
+    impact_eur: float        # modelled gross impact / gross at stake
     horizon: str             # e.g. "next 60 days"
     confidence: str          # High | Medium | Low
     store: str | None = None
@@ -59,7 +68,7 @@ class Play:
 
     @property
     def rank_score(self) -> float:
-        return self.impact_usd * _CONF_WEIGHT.get(self.confidence, 0.5)
+        return self.impact_eur * _CONF_WEIGHT.get(self.confidence, 0.5)
 
 
 _CATEGORY_ACCENT = {
@@ -131,9 +140,9 @@ def _annual_target(session, filters: dict) -> int:
     q = session.query(func.coalesce(func.sum(Dealer.annual_target_units), 0))
     f = filters or {}
     if f.get("region"):
-        q = q.filter(Dealer.emirate == f["region"])
+        q = q.filter(Dealer.state == f["region"])
     if f.get("city"):
-        q = q.filter(Dealer.area == f["city"])
+        q = q.filter(Dealer.city == f["city"])
     if f.get("brand"):
         q = q.filter(Dealer.brand == f["brand"])
     return int(q.scalar() or 0)
@@ -151,9 +160,9 @@ def project_year_end(session, filters: dict) -> dict:
     n_stores = session.query(func.count(Dealer.dealer_id))
     f = filters or {}
     if f.get("region"):
-        n_stores = n_stores.filter(Dealer.emirate == f["region"])
+        n_stores = n_stores.filter(Dealer.state == f["region"])
     if f.get("city"):
-        n_stores = n_stores.filter(Dealer.area == f["city"])
+        n_stores = n_stores.filter(Dealer.city == f["city"])
     if f.get("brand"):
         n_stores = n_stores.filter(Dealer.brand == f["brand"])
     n_stores = int(n_stores.scalar() or 1)
@@ -223,7 +232,7 @@ def _play_allocation(snap: pd.DataFrame) -> list[Play]:
                 f"overstocked store to the short one puts them in front of buyers instead "
                 f"of ageing on the lot."
             ),
-            impact_usd=impact,
+            impact_eur=impact,
             horizon="next 60 days",
             confidence="High" if tight and sup["dos"] > 95 else "Medium",
             store=defc["dealer_name"],
@@ -268,7 +277,7 @@ def _play_targets(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]
                 f"roughly {gap / 12:,.0f} more sales a month — for example through more "
                 f"advertising, a change of sales manager, or sending it more stock."
             ),
-            impact_usd=gap * GROSS_PER_NEW_UNIT,
+            impact_eur=gap * GROSS_PER_NEW_UNIT,
             horizon="this plan year",
             confidence="High" if strong else "Medium",
             store=r["dealer_name"],
@@ -287,7 +296,7 @@ def _play_targets(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]
                 f"{r['target']:,.0f} plan. Send it more stock now, or raise its target for "
                 f"next year — it is currently set too low."
             ),
-            impact_usd=surplus * GROSS_PER_NEW_UNIT * 0.5,
+            impact_eur=surplus * GROSS_PER_NEW_UNIT * 0.5,
             horizon="this plan year",
             confidence="Medium",
             store=r["dealer_name"],
@@ -304,9 +313,9 @@ def _play_margin(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
         Sale.dealer_id, Sale.vehicle_category,
         func.sum(Sale.units_sold).label("units"),
         func.sum(
-            Sale.discount_pct / 100.0 * Sale.base_price_aed
-            + func.coalesce(Sale.trade_in_over_allowance_aed, 0)
-            + func.coalesce(Sale.trade_bonus_aed, 0)
+            Sale.discount_pct / 100.0 * Sale.base_price_eur
+            + func.coalesce(Sale.trade_in_over_allowance_eur, 0)
+            + func.coalesce(Sale.trade_bonus_eur, 0)
         ).label("concession"),
     )
     q = _apply_sale_filters(q, tf).filter(
@@ -345,7 +354,7 @@ def _play_margin(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
                 f"AED {annual:,.0f} a year. This is about tighter deal approval and clear "
                 f"pricing limits, not about selling more cars."
             ),
-            impact_usd=annual * RECOVERABLE_SHARE,
+            impact_eur=annual * RECOVERABLE_SHARE,
             horizon="ongoing",
             confidence="High" if excess > 1200 and units > 250 else "Medium",
             store=nm,
@@ -362,8 +371,8 @@ def _play_aged_inventory(snap: pd.DataFrame) -> list[Play]:
         return []
     grp = aged.groupby("dealer_name").agg(
         units=("current_stock", "sum"),
-        value=("inventory_value_aed", "sum"),
-        daily_hold=("holding_cost_per_day_aed", "sum"),
+        value=("inventory_value_eur", "sum"),
+        daily_hold=("holding_cost_per_day_eur", "sum"),
     ).reset_index().sort_values("value", ascending=False)
 
     plays: list[Play] = []
@@ -382,7 +391,7 @@ def _play_aged_inventory(snap: pd.DataFrame) -> list[Play]:
                 f"and losing value the longer they sit. Move them to a store that is selling "
                 f"that model, or discount them now while there is still profit to protect."
             ),
-            impact_usd=impact,
+            impact_eur=impact,
             horizon="next 90 days",
             confidence="High",
             store=r["dealer_name"],
@@ -431,7 +440,7 @@ def _play_fni(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
                 f"Closing half of that gap would add about {deals:,.0f} finance or lease "
                 f"deals a year, each worth roughly AED {FNI_GROSS_PER_DEAL:,} in profit."
             ),
-            impact_usd=deals * FNI_GROSS_PER_DEAL,
+            impact_eur=deals * FNI_GROSS_PER_DEAL,
             horizon="next 12 months",
             confidence="Medium",
             store=name.get(r["dealer_id"], r["dealer_id"]),
@@ -466,7 +475,7 @@ def _play_velocity(scorecard: pd.DataFrame) -> list[Play]:
             f"worth roughly {lost:,.0f} lost sales a year as buyers go elsewhere — a "
             f"follow-up and sales-process fix."
         ),
-        impact_usd=lost * GROSS_PER_NEW_UNIT * RECOVERABLE_SHARE,
+        impact_eur=lost * GROSS_PER_NEW_UNIT * RECOVERABLE_SHARE,
         horizon="ongoing",
         confidence="Medium" if extra > 10 else "Low",
         store=worst["dealer_name"],
@@ -515,7 +524,7 @@ def _play_category_momentum(session, filters: dict, snap: pd.DataFrame) -> list[
                     f"days of supply. Reduce the next order, or move the stock now with a "
                     f"targeted offer before demand drops."
                 ),
-                impact_usd=recent * (abs(change) / 100) * GROSS_PER_NEW_UNIT * 0.4,
+                impact_eur=recent * (abs(change) / 100) * GROSS_PER_NEW_UNIT * 0.4,
                 horizon="next two quarters",
                 confidence="Medium",
                 store=None,
@@ -545,7 +554,10 @@ def generate_plays(session, filters: dict, limit: int = 5) -> list[Play]:
             continue
 
     # An executive brief shouldn't carry sub-scale items next to six-figure ones.
-    plays = [p for p in plays if p.impact_usd >= 20_000] or plays
+    # Noise floor, rebased with the gross benchmarks: EUR 4k of gross is
+    # about two cars' worth of margin, the same order the AED 20k floor
+    # represented against the Gulf numbers.
+    plays = [p for p in plays if p.impact_eur >= 4_000] or plays
 
     plays.sort(key=lambda p: p.rank_score, reverse=True)
 

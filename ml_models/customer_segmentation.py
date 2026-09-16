@@ -21,7 +21,7 @@ _BASE_MODEL_DIR = "models/clustering"
 # The model clusters on behavioural / financial features a dealer actually
 # groups a customer base by: age, monthly income, credit tier, how many times
 # they've bought from the group, how long since the last deal, deal size, and
-# `years_in_uae` (residency tenure — a genuine Gulf signal: a resident of two
+# `years_at_address` (tenure at the current address — a stable-household signal:
 # years and one of fifteen shop, finance and trade-cycle very differently).
 #
 # `nationality` itself is NOT a clustering feature — one-hot-encoding ~18
@@ -31,9 +31,9 @@ _BASE_MODEL_DIR = "models/clustering"
 # for a UAE market where ~88% of residents are expatriate.
 FEATURES = [
     "age",
-    "estimated_monthly_income_aed",
-    "credit_score",
-    "years_in_uae",
+    "estimated_annual_income_eur",
+    "schufa_score",
+    "years_at_address",
     "number_of_past_purchases",
     "recency_days",
     "avg_deal_value",
@@ -71,9 +71,9 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
         session.query(
             Customer.customer_id,
             Customer.age,
-            Customer.estimated_monthly_income_aed,
-            Customer.credit_score,
-            Customer.years_in_uae,
+            Customer.estimated_annual_income_eur,
+            Customer.schufa_score,
+            Customer.years_at_address,
             Customer.number_of_past_purchases,
             Customer.last_activity_date,
         ).statement,
@@ -99,11 +99,11 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
     df["avg_deal_value"] = df["avg_deal_value"].fillna(buyer_median)
 
     df["age"] = df["age"].fillna(df["age"].median())
-    df["estimated_monthly_income_aed"] = df["estimated_monthly_income_aed"].fillna(
-        df["estimated_monthly_income_aed"].median()
+    df["estimated_annual_income_eur"] = df["estimated_annual_income_eur"].fillna(
+        df["estimated_annual_income_eur"].median()
     )
-    df["credit_score"] = df["credit_score"].fillna(df["credit_score"].median())
-    df["years_in_uae"] = df["years_in_uae"].fillna(df["years_in_uae"].median())
+    df["schufa_score"] = df["schufa_score"].fillna(df["schufa_score"].median())
+    df["years_at_address"] = df["years_at_address"].fillna(df["years_at_address"].median())
     df["number_of_past_purchases"] = df["number_of_past_purchases"].fillna(0)
 
     return df
@@ -128,7 +128,7 @@ def _assign_labels(cluster_means: pd.DataFrame) -> dict:
     remaining.remove(c)
 
     # High-Value / Prime — highest income of what's left.
-    c = cluster_means.loc[remaining, "estimated_monthly_income_aed"].idxmax()
+    c = cluster_means.loc[remaining, "estimated_annual_income_eur"].idxmax()
     mapping[c] = "High-Value / Prime"
     remaining.remove(c)
 
@@ -206,7 +206,7 @@ def train_customer_segmentation(n_clusters: int = 5):
 def predict_customer_segment(customer_data: dict) -> str:
     """
     Predict the segment for a customer profile given the seven features
-    (age, estimated_monthly_income_aed, credit_score, years_in_uae,
+    (age, estimated_annual_income_eur, schufa_score, years_at_address,
     number_of_past_purchases, recency_days, avg_deal_value). Falls back to
     "Core Mainstream" on any error.
     """
@@ -221,9 +221,9 @@ def predict_customer_segment(customer_data: dict) -> str:
 
         row = [
             customer_data.get("age", 39),
-            customer_data.get("estimated_monthly_income_aed", 15000.0),
-            customer_data.get("credit_score", 700),
-            customer_data.get("years_in_uae", 6),
+            customer_data.get("estimated_annual_income_eur", 15000.0),
+            customer_data.get("schufa_score", 700),
+            customer_data.get("years_at_address", 6),
             customer_data.get("number_of_past_purchases", 1),
             customer_data.get("recency_days", 540),
             customer_data.get("avg_deal_value", 120000.0),
