@@ -6,7 +6,7 @@ dollar impact and a confidence, plus a forward 12-month landing vs. plan.
 This is what makes the Executive Overview a decision tab rather than a set of
 charts: BI tools show what happened; this joins a forward projection with the
 current stock position, each store's own economics and plan, and turns it into
-"do this, it's worth roughly AED X".
+"do this, it's worth roughly EUR X".
 
 Deliberately NOT Prophet: the Overview tab retrains nothing and must stay
 responsive, so projections here are a fast seasonal run-rate model in pandas.
@@ -346,12 +346,12 @@ def _play_margin(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
         annual = excess * units
         plays.append(Play(
             category="Margin",
-            title=f"{nm} is discounting about AED {excess:,.0f} more per car than other stores",
+            title=f"{nm} is discounting about €{excess:,.0f} more per car than other stores",
             detail=(
                 f"Allowing for the mix of vehicles it sells, {nm} gives away about "
-                f"AED {excess:,.0f} more per car than the group average once discounts, "
+                f"€{excess:,.0f} more per car than the group average once discounts, "
                 f"trade-in over-payments and trade-in bonuses are added up — roughly "
-                f"AED {annual:,.0f} a year. This is about tighter deal approval and clear "
+                f"€{annual:,.0f} a year. This is about tighter deal approval and clear "
                 f"pricing limits, not about selling more cars."
             ),
             impact_eur=annual * RECOVERABLE_SHARE,
@@ -384,10 +384,10 @@ def _play_aged_inventory(snap: pd.DataFrame) -> list[Play]:
         impact = r["value"] * 0.06 + r["daily_hold"] * 90
         plays.append(Play(
             category="Inventory",
-            title=f"AED {r['value']:,.0f} tied up in slow-moving stock at {r['dealer_name']}",
+            title=f"€{r['value']:,.0f} tied up in slow-moving stock at {r['dealer_name']}",
             detail=(
                 f"{int(r['units'])} vehicles have been in stock more than 90 days at "
-                f"{r['dealer_name']}, costing about AED {r['daily_hold']:,.0f} a day to hold "
+                f"{r['dealer_name']}, costing about €{r['daily_hold']:,.0f} a day to hold "
                 f"and losing value the longer they sit. Move them to a store that is selling "
                 f"that model, or discount them now while there is still profit to protect."
             ),
@@ -438,7 +438,7 @@ def _play_fni(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
                 f"{name.get(r['dealer_id'], r['dealer_id'])} arranges finance or leasing on "
                 f"{r['pen']:.0f}% of its sales, against {median:.0f}% across the group. "
                 f"Closing half of that gap would add about {deals:,.0f} finance or lease "
-                f"deals a year, each worth roughly AED {FNI_GROSS_PER_DEAL:,} in profit."
+                f"deals a year, each worth roughly €{FNI_GROSS_PER_DEAL:,} in profit."
             ),
             impact_eur=deals * FNI_GROSS_PER_DEAL,
             horizon="next 12 months",

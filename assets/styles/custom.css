@@ -111,6 +111,91 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid var(--border-color) !important;
 }
 
+/* Global Language Toggle - pinned to the top-right of the main screen,
+   clear of Streamlit's own toolbar (deploy button / "..." menu). */
+div.st-key-lang {
+    position: fixed;
+    top: 14px;
+    right: 60px;
+    z-index: 1000000;
+    width: auto;
+}
+div.st-key-lang > label {
+    display: none;
+}
+div.st-key-lang div[role="radiogroup"] {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 4px !important;
+    gap: 2px !important;
+    flex-wrap: nowrap !important;
+}
+div.st-key-lang div[role="radiogroup"] label {
+    padding: 3px 12px !important;
+    border-radius: 16px !important;
+    margin: 0 !important;
+    transition: background 0.15s ease;
+}
+div.st-key-lang div[role="radiogroup"] label p {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--text-muted) !important;
+}
+div.st-key-lang div[role="radiogroup"] label:has(input:checked) {
+    background: var(--primary-glow);
+}
+div.st-key-lang div[role="radiogroup"] label:has(input:checked) p {
+    color: var(--text-main) !important;
+}
+
+/* Collapsed-Sidebar Icon Rail - lives at the sidebar's own left edge, one
+   z-index layer below it (999991), so the expanded sidebar paints over it
+   and it is revealed automatically the instant the sidebar collapses
+   (Streamlit slides the sidebar off-screen via transform, it doesn't remove
+   it). Gives a persistent, icon-only way to see and switch the active tab
+   no matter the sidebar's state. */
+div.st-key-nav_rail {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    width: 60px;
+    z-index: 999989;
+    background: #080c14;
+    border-right: 1px solid var(--border-color);
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    overflow-y: auto;
+}
+div.st-key-nav_rail button {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: var(--text-muted) !important;
+}
+div.st-key-nav_rail button p {
+    display: none;
+}
+div.st-key-nav_rail button:hover {
+    background: rgba(99, 102, 241, 0.12) !important;
+    color: var(--text-main) !important;
+}
+div.st-key-nav_rail button[kind="primary"] {
+    background: rgba(99, 102, 241, 0.18) !important;
+    border: 1px solid #6366f1 !important;
+    color: #f3f4f6 !important;
+}
+
 /* Alert Boxes Styling */
 div[data-testid="stNotification"] {
     border-radius: 12px !important;

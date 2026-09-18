@@ -7,6 +7,40 @@ from streamlit_option_menu import option_menu
 # Add current path to python path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
+# A page's identity is its KEY, never its (language-dependent) label. The
+# sidebar nav, the floating top-left tab menu that stays visible when the
+# sidebar is collapsed, and the view router at the bottom of this file all
+# key off PAGE_KEYS so routing never breaks when someone switches language.
+PAGE_KEYS = [
+    "tab.overview",
+    "tab.forecasting",
+    "tab.comparison",
+    "tab.regional",
+    "tab.customers",
+    "tab.inventory",
+    "tab.sentiment",
+]
+PAGE_ICONS = [
+    "speedometer2",
+    "graph-up-arrow",
+    "columns-gap",
+    "shop",
+    "people",
+    "box-seam",
+    "chat-left-quote",
+]
+# Material Symbols equivalents of PAGE_ICONS, for the icon-only nav rail
+# (st.button only speaks Material icons, not the Bootstrap set option_menu uses).
+PAGE_RAIL_ICONS = [
+    "space_dashboard",
+    "trending_up",
+    "grid_view",
+    "storefront",
+    "group",
+    "inventory_2",
+    "forum",
+]
+
 from database.connection import get_db_session, set_data_mode, get_data_mode
 from database.queries import get_unique_filter_options
 from utils.helpers import inject_custom_css
@@ -38,6 +72,8 @@ inject_custom_css()
 #    automatically hits the right database.
 if "data_mode" not in st.session_state:
     st.session_state.data_mode = "real"
+
+st.session_state.setdefault("active_page", PAGE_KEYS[0])
 
 set_data_mode(st.session_state.data_mode)
 
@@ -88,7 +124,35 @@ except Exception:
 finally:
     session.close()
 
-# 6. HEADER BRANDING
+# 6. GLOBAL LANGUAGE TOGGLE
+# Pinned to the top-right of the main screen via CSS (div.st-key-lang in
+# custom.css). Rendered before the header so every t() call below already
+# resolves in the language the user just picked, with no second rerun needed.
+language_selector(label_visibility="collapsed")
+
+# 6b. COLLAPSED-SIDEBAR ICON RAIL
+# Streamlit's native sidebar collapse works by translating the whole sidebar
+# off-screen (transform: translateX(-100%)) rather than removing it — so a
+# thin rail rendered at that same left edge, one z-index layer below the
+# sidebar (div.st-key-nav_rail in custom.css), sits hidden behind the
+# expanded sidebar and is revealed automatically the instant it collapses.
+# No Python-side collapse detection needed. Buttons mirror
+# st.session_state["active_page"], so the active tab stays visible (icon
+# highlighted) and every tab stays one click away regardless of sidebar state.
+_page_labels = [t(k) for k in PAGE_KEYS]
+with st.container(key="nav_rail"):
+    for _pk, _micon, _label in zip(PAGE_KEYS, PAGE_RAIL_ICONS, _page_labels):
+        if st.button(
+            " ",
+            icon=f":material/{_micon}:",
+            key=f"railbtn_{_pk}",
+            help=_label,
+            type="primary" if _pk == st.session_state["active_page"] else "secondary",
+        ):
+            st.session_state["active_page"] = _pk
+            st.rerun()
+
+# 7. HEADER BRANDING
 # is_real = st.session_state.data_mode == "real"
 # mode_badge = (
 #     '<span style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.35);'
@@ -109,16 +173,8 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 7. SIDEBAR NAVIGATION & GLOBAL FILTERS
+# 8. SIDEBAR NAVIGATION & GLOBAL FILTERS
 with st.sidebar:
-
-    # Language toggle renders before anything else in the sidebar: the radio
-    # writes st.session_state["lang"] as it is created, so every t() call
-    # further down this same script run already resolves in the language the
-    # user just picked, with no second rerun needed.
-    language_selector()
-    st.markdown("<hr style='border-color: rgba(255,255,255,0.08); margin: 10px 0;'>",
-                unsafe_allow_html=True)
 
     # ── Data Source Toggle (hidden) ─────────────────────────────────────────
     # st.markdown("""
@@ -174,37 +230,16 @@ with st.sidebar:
     st.image("assets/images/logo.png", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # A page's identity is its KEY, never its label: the label changes with the
-    # language, so routing on it would break the instant someone switches.
-    PAGE_KEYS = [
-        "tab.overview",
-        "tab.forecasting",
-        "tab.comparison",
-        "tab.regional",
-        "tab.customers",
-        "tab.inventory",
-        "tab.sentiment",
-    ]
-    _page_labels = [t(k) for k in PAGE_KEYS]
-
-    # Sleek sidebar menu with option_menu
+    # Sleek sidebar menu with option_menu. manual_select keeps it mirroring
+    # st.session_state["active_page"] — shared with the floating top-left tab
+    # menu rendered above (visible even when this sidebar is collapsed) —
+    # including across the key change that happens when the language toggles.
     selected_label = option_menu(
         menu_title=None,
         options=_page_labels,
-        icons=[
-            "speedometer2",
-            "graph-up-arrow",
-            "columns-gap",
-            "shop",
-            "people",
-            "box-seam",
-            # "cpu",
-            "chat-left-quote",
-            # "cloud-arrow-up",
-            # "bar-chart-steps"
-        ],
+        icons=PAGE_ICONS,
         menu_icon="cast",
-        default_index=0,
+        manual_select=PAGE_KEYS.index(st.session_state["active_page"]),
         key=f"nav_{get_lang()}",
         styles={
             "container": {"padding": "0!important", "background-color": "transparent", "font-family": "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"},
@@ -225,6 +260,7 @@ with st.sidebar:
             }
         }
     )
+    st.session_state["active_page"] = PAGE_KEYS[_page_labels.index(selected_label)]
 
     st.markdown("<hr style='border-color: rgba(255,255,255,0.08); margin: 15px 0;'>", unsafe_allow_html=True)
 
@@ -302,12 +338,8 @@ with st.sidebar:
         "fuel_type": None if fuel_type == "All" else fuel_type
     }
 
-# 8. ROUTING MAIN VIEWS
-# Map the translated label the menu handed back to its stable page key.
-try:
-    selected_page = PAGE_KEYS[_page_labels.index(selected_label)]
-except (ValueError, NameError):
-    selected_page = "tab.overview"
+# 9. ROUTING MAIN VIEWS
+selected_page = st.session_state["active_page"]
 
 if selected_page == "tab.overview":
     render_overview(filters)
