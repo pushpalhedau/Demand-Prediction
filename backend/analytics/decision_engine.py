@@ -25,12 +25,9 @@ from sqlalchemy import func, case
 
 from backend.db.models import Sale, Dealer
 from backend.core.formatting import fmt_money
-from backend.repositories.queries import (
-    _apply_sale_filters,
-    _shift_years,
-    get_inventory_snapshot,
-    get_dealer_performance_leaderboard,
-)
+from backend.repositories._filters import apply_sale_filters, shift_years
+from backend.repositories.dealers import get_dealer_performance_leaderboard
+from backend.repositories.inventory import get_inventory_snapshot
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Benchmark ratios (new-vehicle retail).
@@ -57,7 +54,7 @@ class Bench:
     noise_floor: float
 
 
-def _bench(session) -> Bench:
+def bench_for(session) -> Bench:
     asp = session.query(func.avg(Sale.selling_price)).scalar() or 0.0
     return Bench(asp * GROSS_PCT_OF_ASP, asp * FNI_PCT_OF_ASP, asp * NOISE_FLOOR_PCT_OF_ASP)
 
@@ -108,7 +105,7 @@ def _monthly_units(session, filters: dict, by_store: bool = False) -> pd.DataFra
     if by_store:
         cols = [Sale.dealer_id] + cols
     q = session.query(*cols, func.sum(Sale.units_sold).label("units"))
-    q = _apply_sale_filters(q, tf).group_by(*cols)
+    q = apply_sale_filters(q, tf).group_by(*cols)
     df = pd.read_sql(q.statement, session.bind)
     if df.empty:
         return df
@@ -116,7 +113,7 @@ def _monthly_units(session, filters: dict, by_store: bool = False) -> pd.DataFra
     return df.sort_values("date")
 
 
-def _project_series(s: pd.Series, months_ahead: int = 12) -> pd.Series:
+def project_series(s: pd.Series, months_ahead: int = 12) -> pd.Series:
     """s: monthly values indexed by month-start Timestamp, sorted ascending.
     Returns a Series of `months_ahead` future months (seasonal run-rate)."""
     s = s.astype(float).sort_index()
@@ -165,7 +162,7 @@ def project_year_end(session, filters: dict) -> dict:
     if m.empty:
         return {}
     s = m.set_index("date")["units"]
-    proj = _project_series(s, 12)
+    proj = project_series(s, 12)
 
     n_stores = session.query(func.count(Dealer.dealer_id))
     f = filters or {}
@@ -181,7 +178,7 @@ def project_year_end(session, filters: dict) -> dict:
     proj_units = float(proj.sum())
     attainment = (100.0 * proj_units / target) if target else None
     gap = (target - proj_units) if target else 0.0
-    ttm = float(s[s.index > pd.Timestamp(_shift_years(s.index.max().date(), 1))].sum())
+    ttm = float(s[s.index > pd.Timestamp(shift_years(s.index.max().date(), 1))].sum())
 
     # tidy history for the chart (last 18 months of complete data)
     hist = s.copy()
@@ -261,7 +258,7 @@ def _play_targets(session, filters: dict, scorecard: pd.DataFrame, bm: Bench) ->
           if k not in ("start_date", "end_date")}
     end = (filters or {}).get("end_date") or session.query(func.max(Sale.sale_date)).scalar() or date.today()
     q = session.query(Sale.dealer_id, func.sum(Sale.units_sold).label("u90"))
-    q = _apply_sale_filters(q, tf).filter(
+    q = apply_sale_filters(q, tf).filter(
         Sale.sale_date > end - pd.Timedelta(days=90), Sale.sale_date <= end
     ).group_by(Sale.dealer_id)
     pace90 = dict(pd.read_sql(q.statement, session.bind).itertuples(index=False, name=None))
@@ -328,8 +325,8 @@ def _play_margin(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
             + func.coalesce(Sale.trade_bonus, 0)
         ).label("concession"),
     )
-    q = _apply_sale_filters(q, tf).filter(
-        Sale.sale_date > _shift_years(end, 1), Sale.sale_date <= end
+    q = apply_sale_filters(q, tf).filter(
+        Sale.sale_date > shift_years(end, 1), Sale.sale_date <= end
     ).group_by(Sale.dealer_id, Sale.vehicle_category)
     df = pd.read_sql(q.statement, session.bind)
     if df.empty:
@@ -421,8 +418,8 @@ def _play_fni(session, filters: dict, scorecard: pd.DataFrame, bm: Bench) -> lis
         func.sum(Sale.units_sold).label("units"),
         func.sum(case((Sale.financing_type == "Cash", 0), else_=Sale.units_sold)).label("noncash"),
     )
-    q = _apply_sale_filters(q, tf).filter(
-        Sale.sale_date > _shift_years(end, 1), Sale.sale_date <= end
+    q = apply_sale_filters(q, tf).filter(
+        Sale.sale_date > shift_years(end, 1), Sale.sale_date <= end
     ).group_by(Sale.dealer_id)
     df = pd.read_sql(q.statement, session.bind)
     if df.empty:
@@ -502,7 +499,7 @@ def _play_category_momentum(session, filters: dict, snap: pd.DataFrame, bm: Benc
         Sale.year, Sale.month, Sale.vehicle_category,
         func.sum(Sale.units_sold).label("units"),
     )
-    q = _apply_sale_filters(q, tf).group_by(Sale.year, Sale.month, Sale.vehicle_category)
+    q = apply_sale_filters(q, tf).group_by(Sale.year, Sale.month, Sale.vehicle_category)
     m = pd.read_sql(q.statement, session.bind)
     if m.empty:
         return []
@@ -520,7 +517,7 @@ def _play_category_momentum(session, filters: dict, snap: pd.DataFrame, bm: Benc
         s = sub.sort_values("date").set_index("date")["units"]
         if s.tail(12).sum() < 200:
             continue
-        proj = _project_series(s, 12).sum()
+        proj = project_series(s, 12).sum()
         recent = s.tail(12).sum()
         change = (proj / recent - 1) * 100 if recent else 0
         dos = dos_by_cat.get(cat, 0)
@@ -547,7 +544,7 @@ def generate_plays(session, filters: dict, limit: int = 5) -> list[Play]:
     """Run every generator, rank by (impact × confidence), return the top `limit`."""
     snap = get_inventory_snapshot(session, filters)
     scorecard = get_dealer_performance_leaderboard(session, filters)
-    bm = _bench(session)
+    bm = bench_for(session)
 
     plays: list[Play] = []
     for gen in (

@@ -1,13 +1,9 @@
-from datetime import date
 
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 
-from backend.db.connection import get_db_session
-from backend.repositories.queries import get_scope_monthly_trend
-from backend.analytics import yoy_attribution as ya
-from backend.analytics.decision_engine import _project_series
+from backend.services import comparison as comparison_service
 from frontend.shared.ui import (
     _section,
     _base_layout,
@@ -32,21 +28,17 @@ def _signed(value, fmt) -> str:
 
 
 def render_comparison(filters: dict):
-    session = get_db_session()
-
     try:
         st.markdown(
             "<h2 class='gradient-text' style='margin-bottom:14px;'>Comparative Analytics</h2>",
             unsafe_allow_html=True,
         )
-        _render_tracking(session, filters)
+        _render_tracking(filters)
 
     except Exception as e:  # noqa: BLE001 — surface, don't crash the tab
         st.error(f"Error rendering Comparative Analytics: {e}")
         import traceback
         st.code(traceback.format_exc())
-    finally:
-        session.close()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -57,7 +49,7 @@ def render_comparison(filters: dict):
 # the retail price. The old "Tariff exposure by franchise" subtab was
 # removed in the UAE conversion, so this tab is a single view.
 # ─────────────────────────────────────────────────────────────────────────────
-def _render_tracking(session, filters: dict):
+def _render_tracking(filters: dict):
     measure = st.radio(
         "Measure", ["Units", "Revenue"], horizontal=True, key="cmp_measure",
     )
@@ -71,7 +63,7 @@ def _render_tracking(session, filters: dict):
     # whole-sidebar-window one: the attribution module anchors to the window's
     # end date and always compares the last 12 whole calendar months to the 12
     # before.
-    summ = ya.summary(session, filters, m_key)
+    summ = comparison_service.yoy_summary(filters, m_key)
     if summ is None:
         st.info("No booked sales in the last 12 months for this scope.")
         return
@@ -85,7 +77,7 @@ def _render_tracking(session, filters: dict):
 
     # ── Trend: last calendar year vs the current year on a Jan–Dec axis, with
     #    the rest of the current year filled in as a seasonal forecast ────────
-    mt = get_scope_monthly_trend(session, filters)
+    mt = comparison_service.scope_monthly_trend(filters)
     if mt.empty:
         st.info("No booked sales history for this scope.")
         return
@@ -101,7 +93,7 @@ def _render_tracking(session, filters: dict):
     cy = s_all[s_all.index.year == cur_year]
 
     n_ahead = 12 - len(cy)
-    fc = _project_series(s_all, n_ahead) if n_ahead > 0 else pd.Series(dtype=float)
+    fc = comparison_service.project_series(s_all, n_ahead) if n_ahead > 0 else pd.Series(dtype=float)
     fc = fc[fc.index.year == cur_year]
 
     def _by_month(s):
@@ -166,13 +158,13 @@ def _render_tracking(session, filters: dict):
     fig.update_yaxes(title=("Units / month" if is_units else "Revenue / month"))
     st.plotly_chart(fig, use_container_width=True)
 
-    _render_drivers(session, filters, m_key, is_units, fmt, vword)
+    _render_drivers(filters, m_key, is_units, fmt, vword)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Driver split (structural vs specific) + significance
 # ─────────────────────────────────────────────────────────────────────────────
-def _render_drivers(session, filters, m_key, is_units, fmt, vword):
+def _render_drivers(filters, m_key, is_units, fmt, vword):
     dim_label = st.radio(
         "Break the change down by", ["Store", "Franchise", "Segment"],
         horizontal=True, key="cmp_dim",
@@ -182,7 +174,7 @@ def _render_drivers(session, filters, m_key, is_units, fmt, vword):
         dim_label = "Store"
     dim = {"Store": "store", "Franchise": "brand", "Segment": "category"}[dim_label]
 
-    split = ya.driver_split(session, filters, dim, m_key)
+    split = comparison_service.driver_split(filters, dim, m_key)
     if split is None or split.empty:
         st.info("No comparable prior-year period for this scope.")
         return
@@ -202,7 +194,7 @@ def _render_drivers(session, filters, m_key, is_units, fmt, vword):
     cap = 16 if dim == "store" else 12
     d = d.head(cap).sort_values("specific")
 
-    spec_label = ya.SPECIFIC_LABEL.get(dim, "Specific")
+    spec_label = comparison_service.SPECIFIC_LABEL.get(dim, "Specific")
     _section(
         f"What moved it — by {dim_label.lower()}",
         "★ = unusual move for that {}".format(dim_label.lower()) if n_sig else None,
@@ -233,5 +225,5 @@ def _render_drivers(session, filters, m_key, is_units, fmt, vword):
     fig.update_yaxes(title="")
     st.plotly_chart(fig, use_container_width=True)
 
-    for line in ya.movement_sentences(split, dim, m_key, fmt, limit=3):
+    for line in comparison_service.movement_sentences(split, dim, m_key, fmt, limit=3):
         st.markdown(f"- {line}")

@@ -22,24 +22,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from frontend.shared.i18n import cur, cur_code, fmt_money
-from backend.core.cache import tenant_cache
 
-from backend.db.connection import get_db_session
-from backend.repositories.queries import (
-    DAYS_SUPPLY_HEALTHY_HIGH,
-    DAYS_SUPPLY_HEALTHY_LOW,
-    get_aging_buckets,
-    get_dealer_directory,
-    get_inventory_snapshot,
-    get_inventory_trend,
-    get_lease_maturity_recapture,
-    get_lease_return_pipeline,
-    get_substitution_history,
-    get_trade_in_activity,
-    get_trade_replacement_flow,
-    get_vehicle_catalog,
-)
-from backend.ml.vehicle_placement import recommend_alternatives
+from backend.services import inventory as inventory_service
+from backend.services.inventory import DAYS_SUPPLY_HEALTHY_HIGH, DAYS_SUPPLY_HEALTHY_LOW
 from frontend.shared.ui import get_color_palette, render_kpi_card
 
 FONT = "Plus Jakarta Sans"
@@ -105,77 +90,6 @@ def _pill(color, label, value, sub):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Cached loaders. Streamlit reruns the whole script on every widget change, and
-# the trade-in view reads the full sales table, so these are cached on the
-# filter set rather than re-queried per interaction.
-# ─────────────────────────────────────────────────────────────────────────────
-
-@tenant_cache(ttl=600)
-def _load_snapshot(filters):
-    s = get_db_session()
-    try:
-        return get_inventory_snapshot(s, filters)
-    finally:
-        s.close()
-
-
-@tenant_cache(ttl=600)
-def _load_trend(filters):
-    s = get_db_session()
-    try:
-        return get_inventory_trend(s, filters)
-    finally:
-        s.close()
-
-
-@tenant_cache(ttl=600)
-def _load_lease_returns(filters, months_ahead):
-    s = get_db_session()
-    try:
-        return get_lease_return_pipeline(s, filters, months_ahead=months_ahead)
-    finally:
-        s.close()
-
-
-@tenant_cache(ttl=600)
-def _load_recapture(filters, days_ahead):
-    s = get_db_session()
-    try:
-        return get_lease_maturity_recapture(s, filters, days_ahead=days_ahead)
-    finally:
-        s.close()
-
-
-@tenant_cache(ttl=600)
-def _load_trades(filters):
-    s = get_db_session()
-    try:
-        return get_trade_in_activity(s, filters)
-    finally:
-        s.close()
-
-
-@tenant_cache(ttl=600)
-def _load_replacement_flow(filters):
-    s = get_db_session()
-    try:
-        return get_trade_replacement_flow(s, filters)
-    finally:
-        s.close()
-
-
-@tenant_cache(ttl=600)
-def _load_placement_reference(filters):
-    s = get_db_session()
-    try:
-        return (get_vehicle_catalog(s),
-                get_dealer_directory(s),
-                get_substitution_history(s, filters))
-    finally:
-        s.close()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -188,7 +102,7 @@ def render_inventory(filters: dict):
     )
 
     try:
-        snapshot = _load_snapshot(filters)
+        snapshot = inventory_service.snapshot(filters)
     except Exception as exc:
         st.error(f"Could not load inventory snapshot: {exc}")
         return
@@ -378,7 +292,7 @@ def _render_stock_health(snapshot, filters, colors):
         _section("Inventory Aging Ladder")
         metric = st.radio("Aging ladder metric", ["Units", "Capital"], horizontal=True,
                           label_visibility="collapsed", key="aging_metric")
-        aging = get_aging_buckets(snapshot)
+        aging = inventory_service.aging_buckets(snapshot)
         if not aging.empty:
             if metric == "Units":
                 y = aging["units"]
@@ -453,7 +367,7 @@ def _render_stock_health(snapshot, filters, colors):
 
     # ── Network trend charts: commented out for now. Re-enable to show month-end
     # stock vs sales and the network days-of-supply trend with the healthy band.
-    # trend = _load_trend(filters)
+    # trend = inventory_service.trend(filters)
     # if not trend.empty:
     #     trend["record_date"] = pd.to_datetime(trend["record_date"])
     #     tl, tr = st.columns([1, 1])
@@ -593,7 +507,7 @@ def _render_flow(snapshot, filters, colors):
         "Forward horizon", options=[3, 6, 9, 12, 18, 24], value=6,
         format_func=lambda m: f"{m} months",
     )
-    returns = _load_lease_returns(filters, horizon)
+    returns = inventory_service.lease_returns(filters, horizon)
 
     if returns.empty:
         st.info("No lease contracts mature inside this horizon under the current filters.")
@@ -737,7 +651,7 @@ def _render_flow(snapshot, filters, colors):
     _section("Re-Capture Pipeline",
              "Every maturing lease is both a returning vehicle and a shopper who "
              "needs a replacement this quarter.")
-    recapture = _load_recapture(filters, 90)
+    recapture = inventory_service.lease_recapture(filters, 90)
     if recapture.empty:
         st.info("No lease maturities inside 90 days under the current filters.")
     else:
@@ -863,7 +777,7 @@ def _remarketing_lanes(returns, snapshot):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _render_trade_in(filters, colors):
-    trades = _load_trades(filters)
+    trades = inventory_service.trade_in_activity(filters)
     if trades.empty:
         st.warning("No sales records match the current filters.")
         return
@@ -992,7 +906,7 @@ def _render_trade_in(filters, colors):
     _section("Trade-In to Replacement Flow",
              "What customers traded against what they drove away in. This is "
              "revealed substitution behaviour, and it feeds the placement engine.")
-    flow = _load_replacement_flow(filters)
+    flow = inventory_service.trade_replacement_flow(filters)
     if flow.empty:
         st.info("No trade-in flows under the current filters.")
     else:
@@ -1037,7 +951,7 @@ def _render_placement(snapshot, filters, colors):
              "When the exact vehicle a customer asked for is unavailable, rank "
              "what the network can actually deliver.")
 
-    catalog, dealers, history = _load_placement_reference(filters)
+    catalog, dealers, history = inventory_service.placement_reference(filters)
     if catalog.empty:
         st.warning("Vehicle catalog is empty.")
         return
@@ -1085,11 +999,11 @@ def _render_placement(snapshot, filters, colors):
             f"Ranked alternatives below."
         )
 
-    returns = _load_lease_returns(filters, 3)
+    returns = inventory_service.lease_returns(filters, 3)
     share = history[history["vehicle_category"] == target["category"]]
     market_share = share.groupby("model")["units"].sum() if not share.empty else None
 
-    recs = recommend_alternatives(
+    recs = inventory_service.alternatives(
         target, catalog, snapshot, dealers=dealers, dealer_id=dealer_id,
         lease_returns=returns, market_share=market_share, top_n=6,
         max_km=max_km,

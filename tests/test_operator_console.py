@@ -11,7 +11,7 @@ import requests
 from streamlit.testing.v1 import AppTest
 
 from backend.auth import client as auth_client
-from frontend.customer_app.auth import _load_active_tenant
+from backend.services.identity import load_active_tenant as _load_active_tenant
 from backend.auth.client import AuthError, Operator
 from backend.db.connection import get_admin_session, init_all_tables
 from backend.db.models import Tenant

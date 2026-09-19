@@ -40,3 +40,4 @@ demo_script-UAE-v2.txt
 data/
 *.log
 models/*/[0-9a-f]*-*-*-*-*/
+scripts/_dev/

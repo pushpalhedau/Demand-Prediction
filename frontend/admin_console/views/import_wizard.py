@@ -11,16 +11,13 @@ import uuid
 import pandas as pd
 import streamlit as st
 
-from backend.ingestion.jobs import create_job, enqueue_job, get_job, job_dir, load_saved_mapping
-from backend.ingestion.mapping import AUTO_CONFIDENCE, propose_mapping
-from backend.ingestion.pipeline import IngestError, transform_table
-from backend.ingestion.catalog import (
-    GAL_TO_L, HP_TO_KW, L100_FROM_MPG, LOAD_ORDER, MI_TO_KM, PS_TO_KW, SQFT_TO_SQM, TABLES,
+from backend.services import imports as imports_service
+from backend.services.imports import (
+    AUTO_CONFIDENCE, GAL_TO_L, HP_TO_KW, L100_FROM_MPG, LOAD_ORDER, MI_TO_KM, PS_TO_KW, SQFT_TO_SQM, TABLES,
+    IngestError,
 )
-from backend.tenancy.capabilities import get_capabilities
 
 _NOT_MAPPED = "(not mapped)"
-_PREVIEW_ROWS = 3000
 
 _TABLE_HELP = {
     "sales": "Required. One row per sale: a date, a price or revenue, and ideally brand, model, dealer and region.",
@@ -90,8 +87,7 @@ def _step_upload(ds, tenant_id):
             continue
         sig = (up.name, up.size)
         if ds["sizes"].get(table) != sig:
-            path = job_dir(tenant_id, ds["job"]) / f"{table}.csv"
-            path.write_bytes(up.getbuffer())
+            path = imports_service.save_upload(tenant_id, ds["job"], table, up.getbuffer())
             ds["files"][table] = str(path)
             ds["sizes"][table] = sig
             ds["props"].pop(table, None)
@@ -100,9 +96,9 @@ def _step_upload(ds, tenant_id):
 
 def _proposal(ds, tenant_id, table):
     if table not in ds["props"]:
-        cols = list(pd.read_csv(ds["files"][table], nrows=1, dtype=str).columns)
-        prop = propose_mapping(table, cols)
-        saved = load_saved_mapping(tenant_id, table)
+        cols = imports_service.read_header(ds["files"][table])
+        prop = imports_service.propose(table, cols)
+        saved = imports_service.saved_mapping(tenant_id, table)
         if saved and all(c["source"] in cols for c in saved["columns"].values()):
             ds["props"][table] = {"prop": prop, "cols": cols, "saved": saved["columns"]}
         else:
@@ -166,8 +162,7 @@ def _step_map(ds, tenant_id):
     if st.button("Check the data"):
         for table, mp in mappings.items():
             try:
-                raw = pd.read_csv(ds["files"][table], nrows=_PREVIEW_ROWS, dtype=str, keep_default_na=False, na_values=[""])
-                _, rep = transform_table(table, raw, mp, units, dayfirst, decimal)
+                rep = imports_service.dry_run(table, ds["files"][table], mp, units, dayfirst, decimal)
                 bad = rep["coercion_failures"]
                 msg = f"{table}: looks good ({rep['rows_out']:,} of {rep['rows_in']:,} sample rows usable)"
                 if bad:
@@ -182,7 +177,7 @@ def _step_map(ds, tenant_id):
 
 
 def _render_progress(ds, tenant_id):
-    job = get_job(tenant_id, uuid.UUID(ds["job"]))
+    job = imports_service.job_status(tenant_id, ds["job"])
     if job is None:
         _reset(tenant_id)
         st.rerun()
@@ -202,7 +197,7 @@ def _render_progress(ds, tenant_id):
             for w in r.get("warnings", []):
                 st.caption(f"{t}: {w}")
         if st.button("Done", type="primary", key=f"done_{tenant_id}"):
-            get_capabilities.clear()
+            imports_service.publish_data_changes()
             _reset(tenant_id)
             st.rerun()
     else:
@@ -228,10 +223,9 @@ def render_import(tenant_id, operator_email: str):
     st.subheader("3. Import")
     st.caption("Models retrain automatically once the data is loaded.")
     if st.button("Import and train", type="primary", disabled=not ok, key=f"go_{tenant_id}"):
-        create_job(tenant_id, {
+        imports_service.start_import(tenant_id, ds["job"], {
             "files": ds["files"], "mappings": mappings, "units": units, "dayfirst": dayfirst,
             "decimal": decimal, "replace": replace, "train": True,
-        }, created_by=operator_email, job_id=uuid.UUID(ds["job"]))
-        enqueue_job(tenant_id, uuid.UUID(ds["job"]))
+        }, created_by=operator_email)
         ds["started"] = True
         st.rerun()

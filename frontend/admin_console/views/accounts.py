@@ -1,19 +1,10 @@
-import re
-import secrets
+"""Accounts list and account creation."""
+from __future__ import annotations
 
 import streamlit as st
 
-from backend.auth.client import AuthError
-from backend.tenancy.provision import all_tenants, create_tenant
-from backend.tenancy.settings import InvalidSetting, validate_config
-
-SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£", "INR": "₹", "AED": "AED", "SAR": "SAR", "CHF": "CHF",
-           "CAD": "$", "AUD": "$", "JPY": "¥", "CNY": "¥"}
-REGION_LABELS = ["Region", "State", "Province", "Emirate", "Bundesland", "County"]
-
-
-def slugify(name: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:60]
+from backend.services import accounts as accounts_service
+from backend.services.accounts import CURRENCY_SYMBOLS, REGION_LABELS, AuthError, InvalidSetting
 
 
 def show_flash() -> None:
@@ -49,20 +40,17 @@ def _create_form() -> None:
     if not name.strip() or not email.strip():
         st.error("Account name and the first admin's email are required.")
         return
-    slug = slug.strip() or slugify(name)
-    cfg = {"currency": currency, "currency_symbol": symbol.strip() or SYMBOLS.get(currency, currency),
-           "language": language, "region_label": region_label, "country_name": country.strip(),
-           "news_gl": gl, "news_hl": language}
+    config = {"currency": currency, "currency_symbol": symbol.strip() or CURRENCY_SYMBOLS.get(currency, currency),
+              "language": language, "region_label": region_label, "country_name": country.strip(),
+              "news_gl": gl, "news_hl": language}
     try:
-        cfg = validate_config(cfg)
-        password = password or secrets.token_urlsafe(12)
-        r = create_tenant(slug, name.strip(), email.strip(), password, config=cfg)
+        created = accounts_service.create_account(name, slug.strip(), email, password, config)
     except (InvalidSetting, ValueError, AuthError) as e:
         st.error(str(e))
         return
     st.session_state["flash"] = {"title": f"Account '{name.strip()}' created. Next: upload their data.",
-                                 "email": r["email"], "password": r["password"]}
-    st.session_state["selected_slug"] = r["slug"]
+                                 "email": created["email"], "password": created["password"]}
+    st.session_state["selected_slug"] = created["slug"]
     st.rerun()
 
 
@@ -72,17 +60,17 @@ def render_accounts() -> None:
     with st.expander("Create a new account", expanded=False):
         _create_form()
 
-    tenants = all_tenants()
-    if not tenants:
+    accounts = accounts_service.list_accounts()
+    if not accounts:
         st.info("No accounts yet. Create the first one above.")
         return
     st.dataframe(
-        [{"Name": t["name"], "Id": t["slug"], "Status": t["status"],
-          "Currency": t["config"].get("currency", ""), "Language": t["config"].get("language", ""),
-          "Created": t["created_at"].strftime("%Y-%m-%d")} for t in tenants],
+        [{"Name": a["name"], "Id": a["slug"], "Status": a["status"],
+          "Currency": a["config"].get("currency", ""), "Language": a["config"].get("language", ""),
+          "Created": a["created_at"].strftime("%Y-%m-%d")} for a in accounts],
         use_container_width=True, hide_index=True,
     )
-    labels = {f"{t['name']}  ({t['slug']})": t["slug"] for t in tenants}
+    labels = {f"{a['name']}  ({a['slug']})": a["slug"] for a in accounts}
     c1, c2 = st.columns([3, 1])
     pick = c1.selectbox("Open an account", list(labels), label_visibility="collapsed")
     if c2.button("Open", type="primary", use_container_width=True):

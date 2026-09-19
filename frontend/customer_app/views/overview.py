@@ -1,26 +1,14 @@
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
-from backend.db.connection import get_db_session
-from backend.repositories.queries import (
-    get_executive_kpis,
-    get_monthly_revenue_trend,
-    get_sales_by_category,
-    get_sales_by_fuel_type,
-    get_sales_by_store,
-)
+from backend.services import overview as overview_service
 from frontend.shared.ui import (
     render_kpi_card, get_color_palette,
-    _fmt_money, _compact, _section, _base_layout,
+    _fmt_money, _section, _base_layout,
     _INK, _INK_MUTED, _HUE_HISTORY, _HUE_FORECAST, _HUE_MARKER,
 )
 from frontend.shared.i18n import t, tv, tv_series, fmt_num, fmt_pct, hover_money, hover_month
-from backend.analytics.decision_engine import (
-    project_year_end, generate_plays, category_accent, _bench,
-    _project_series,
-)
 
 _CONF_DOT = {"High": "#10b981", "Medium": "#f59e0b", "Low": "#9ca3af"}
 
@@ -41,8 +29,8 @@ def _yoy_pts(delta) -> str:
 # ═════════════════════════════════════════════════════════════════════════════
 # Tab 1 — Overview (the 10-second glance)
 # ═════════════════════════════════════════════════════════════════════════════
-def _render_glance(session, filters: dict, colors: dict) -> None:
-    kpis = get_executive_kpis(session, filters)
+def _render_glance(filters: dict, colors: dict) -> None:
+    kpis = overview_service.executive_kpis(filters)
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -80,7 +68,7 @@ def _render_glance(session, filters: dict, colors: dict) -> None:
     st.markdown("<br>", unsafe_allow_html=True)
 
     _section(t("ov.trend.title"), t("ov.trend.caption"))
-    trend_df = get_monthly_revenue_trend(session, filters)
+    trend_df = overview_service.monthly_revenue_trend(filters)
     if not trend_df.empty:
         td = trend_df.sort_values("date").set_index("date")
         rev = td["revenue"].astype(float)
@@ -91,8 +79,8 @@ def _render_glance(session, filters: dict, colors: dict) -> None:
             rev, units = rev.iloc[:-1], units.iloc[:-1]
 
         rev, units = rev.tail(36), units.tail(36)          # 3 years of history
-        rev_fc = _project_series(rev, 6)                   # 6-month projection
-        units_fc = _project_series(units, 6)
+        rev_fc = overview_service.project_series(rev, 6)                   # 6-month projection
+        units_fc = overview_service.project_series(units, 6)
         rev_join = pd.concat([rev.iloc[[-1]], rev_fc])
 
         _mo = hover_month()
@@ -136,7 +124,7 @@ def _render_glance(session, filters: dict, colors: dict) -> None:
     left, right = st.columns(2)
     with left:
         _section(t("ov.mix.category"))
-        cat_df = get_sales_by_category(session, filters)
+        cat_df = overview_service.sales_by_category(filters)
         if not cat_df.empty:
             # Translate the category labels ONLY here, at the render boundary —
             # the aggregation above ran on the canonical English values.
@@ -158,7 +146,7 @@ def _render_glance(session, filters: dict, colors: dict) -> None:
             st.plotly_chart(fig, use_container_width=True)
     with right:
         _section(t("ov.mix.fuel"))
-        fuel_df = get_sales_by_fuel_type(session, filters)
+        fuel_df = overview_service.sales_by_fuel_type(filters)
         if not fuel_df.empty:
             fuel_df = fuel_df.sort_values("sales", ascending=False)
             seq = colors["colors_seq"]
@@ -179,7 +167,7 @@ def _render_glance(session, filters: dict, colors: dict) -> None:
             st.plotly_chart(fig, use_container_width=True)
 
     _section(t("ov.store.title"), t("ov.store.caption"))
-    store_all = get_sales_by_store(session, filters, limit=500)
+    store_all = overview_service.sales_by_store(filters, limit=500)
     if not store_all.empty:
         grp_avg = float(store_all["units"].mean())
         store_df = store_all.head(5).sort_values("units")
@@ -208,7 +196,7 @@ def _render_glance(session, filters: dict, colors: dict) -> None:
 # Tab 2 — Recommendations (the decision brief)
 # ═════════════════════════════════════════════════════════════════════════════
 def _render_play(idx: int, play) -> None:
-    accent = category_accent(play.category)
+    accent = overview_service.category_accent(play.category)
     dot = _CONF_DOT.get(play.confidence, "#9ca3af")
     conf = t("ov.rec.confidence", level=t(f"conf.{play.confidence}"))
     st.markdown(
@@ -279,10 +267,10 @@ def _render_landing_chart(landing: dict) -> None:
     st.plotly_chart(fig, use_container_width=True)
 
 
-def _render_recommendations(session, filters: dict) -> None:
+def _render_recommendations(filters: dict) -> None:
     try:
-        landing = project_year_end(session, filters)
-        plays = generate_plays(session, filters, limit=5)
+        landing = overview_service.year_end_projection(filters)
+        plays = overview_service.recommended_plays(filters, limit=5)
     except Exception as e:
         landing, plays = {}, []
         st.warning(t("ov.rec.unavailable", e=e))
@@ -305,7 +293,7 @@ def _render_recommendations(session, filters: dict) -> None:
                 delta=t("ov.rec.landing_delta",
                         sign=("−" if short else "+"),
                         units=fmt_num(abs(gap)),
-                        money=_fmt_money(abs(gap) * _bench(session).gross_per_unit)),
+                        money=_fmt_money(abs(gap) * overview_service.gross_per_unit())),
                 is_positive=not short,
             )
     with k2:
@@ -338,7 +326,6 @@ def render_overview(filters: dict):
     """Executive Overview — two views of the group: the 10-second performance
     read (Overview) and the ranked list of decisions to act on (Recommendations).
     Everything is the group's own data, no market extrapolation."""
-    session = get_db_session()
     colors = get_color_palette()
 
     try:
@@ -350,14 +337,12 @@ def render_overview(filters: dict):
         tab_glance, tab_recs = st.tabs([t("ov.tab_glance"), t("ov.tab_recs")])
 
         with tab_glance:
-            _render_glance(session, filters, colors)
+            _render_glance(filters, colors)
 
         with tab_recs:
-            _render_recommendations(session, filters)
+            _render_recommendations(filters)
 
     except Exception as e:
         st.error(t("ov.err.render", e=e))
         import traceback
         st.code(traceback.format_exc())
-    finally:
-        session.close()

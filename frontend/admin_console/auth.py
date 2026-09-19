@@ -1,37 +1,46 @@
+"""
+Operator sign-in gate for the admin console. Operators only: a customer login is rejected with the same
+generic message as a wrong password, so the console does not reveal which accounts exist.
+"""
+from __future__ import annotations
+
 import time
 
 import streamlit as st
 
-from backend.auth import client as auth_client
-from backend.auth.client import AuthError, Operator
+from backend.services import identity as identity_service
+from backend.services.identity import AuthError, Operator, OperatorSession
 
 _REFRESH_MARGIN_S = 60
+_IDLE_TIMEOUT_S = 30 * 60       # an unattended console signs itself out
 
 
-def _establish(tokens: dict) -> Operator:
-    claims = auth_client.verify_access_token(tokens["access_token"])
-    operator = auth_client.operator_from_claims(claims)      # rejects customer accounts
+def _store(session: OperatorSession) -> None:
     ss = st.session_state
-    ss["operator"] = operator
-    ss["op_refresh"] = tokens.get("refresh_token")
-    ss["op_exp"] = claims["exp"]
-    return operator
+    ss["operator"] = session.operator
+    ss["op_refresh"] = session.refresh_token
+    ss["op_exp"] = session.expires_at
 
 
-def sign_out():
+def sign_out() -> None:
     st.session_state.clear()
     st.rerun()
 
 
-def _refresh_if_needed() -> None:
+def _keep_session_valid() -> None:
     ss = st.session_state
-    if time.time() < ss.get("op_exp", 0) - _REFRESH_MARGIN_S:
-        return
-    try:
-        _establish(auth_client.refresh(ss["op_refresh"]))
-    except AuthError:
+    now = time.time()
+    if now - ss.get("op_last_seen", now) > _IDLE_TIMEOUT_S:
         st.session_state.clear()
+        st.session_state["login_notice"] = "Signed out after 30 minutes of inactivity."
         st.rerun()
+    ss["op_last_seen"] = now
+    if now >= ss.get("op_exp", 0) - _REFRESH_MARGIN_S:
+        try:
+            _store(identity_service.refresh_operator(ss["op_refresh"]))
+        except AuthError:
+            st.session_state.clear()
+            st.rerun()
 
 
 def _render_login() -> None:
@@ -40,7 +49,10 @@ def _render_login() -> None:
         st.markdown("<div style='height:8vh'></div>", unsafe_allow_html=True)
         st.markdown("<h2 style='text-align:center'>PredictaX Admin Console</h2>", unsafe_allow_html=True)
         st.caption("Operators only.")
-        if not auth_client.is_configured():
+        notice = st.session_state.pop("login_notice", None)
+        if notice:
+            st.warning(notice)
+        if not identity_service.auth_configured():
             st.error("Authentication is not configured. Set AUTH_BASE_URL (or SUPABASE_URL and SUPABASE_ANON_KEY).")
             return
         with st.form("operator_login"):
@@ -49,17 +61,19 @@ def _render_login() -> None:
             submitted = st.form_submit_button("Sign in", type="primary", use_container_width=True)
         if submitted:
             try:
-                _establish(auth_client.sign_in(email.strip(), password))
-                st.rerun()
+                _store(identity_service.sign_in_operator(email.strip(), password))
             except AuthError as e:
                 # A customer account gets the same generic message as a wrong password.
                 st.error("Invalid email or password." if "cannot use" in str(e) else str(e))
+            else:
+                st.session_state["op_last_seen"] = time.time()
+                st.rerun()
 
 
 def require_operator() -> Operator:
     """Return the signed-in operator, or render the login page and halt the script."""
     if st.session_state.get("operator") is not None:
-        _refresh_if_needed()
+        _keep_session_valid()
         return st.session_state["operator"]
     _render_login()
     st.stop()

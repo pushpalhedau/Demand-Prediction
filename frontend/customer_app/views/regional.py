@@ -3,10 +3,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from frontend.shared.i18n import cur_code
-from backend.analytics.benchmarks import gross_series
 
-from backend.db.connection import get_db_session
-from backend.repositories.queries import get_dealer_performance_leaderboard
+from backend.services import stores as stores_service
 from frontend.shared.ui import (
     _section, _base_layout, _fmt_money, _compact, _pct_label,
     _INK,
@@ -36,14 +34,13 @@ def render_regional(filters: dict):
     annual target, year-over-year growth, and showroom conversion. One regional
     group's own stores, not a market or a territory map.
     """
-    session = get_db_session()
     try:
         st.markdown(
             "<h2 class='gradient-text' style='margin-bottom:18px;'>Store Performance</h2>",
             unsafe_allow_html=True,
         )
 
-        df = get_dealer_performance_leaderboard(session, filters)
+        df = stores_service.dealer_leaderboard(filters)
         if df.empty:
             st.warning("No store sales for the active filters.")
             return
@@ -51,7 +48,7 @@ def render_regional(filters: dict):
         df = df.copy()
         df["units_sold"] = df["units_sold"].fillna(0).astype(int)
         df["revenue"] = df["revenue"].fillna(0)
-        df["est_gross"] = df["units_sold"] * gross_series(df["brand"])
+        df["est_gross"] = df["units_sold"] * stores_service.estimated_gross(df["brand"])
         df["label"] = df["dealer_name"].astype(str) + df["city"].map(lambda c: f" · {c}" if pd.notna(c) and c else "")
         has_target = df["attainment_pct"].notna()
 
@@ -203,5 +200,3 @@ def render_regional(filters: dict):
         st.error(f"Error rendering Store Performance: {e}")
         import traceback
         st.code(traceback.format_exc())
-    finally:
-        session.close()

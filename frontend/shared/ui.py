@@ -2,8 +2,8 @@ import streamlit as st
 from pathlib import Path
 
 from frontend.shared.i18n import (
-    t, tv, tv_series, is_de,
-    fmt_money, fmt_num, fmt_pct, fmt_date, plotly_number_format,
+    is_de,
+    fmt_money, fmt_num, fmt_pct, plotly_number_format,
 )
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"

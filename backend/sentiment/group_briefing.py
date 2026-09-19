@@ -22,7 +22,10 @@ import pandas as pd
 from backend.core.request_context import current_language, current_profile
 from backend.db.connection import get_db_session
 from backend.db.models import Dealer
-import backend.repositories.queries as Q
+from backend.repositories import customers as customers_repo
+from backend.repositories import dealers as dealers_repo
+from backend.repositories import inventory as inventory_repo
+from backend.repositories import sales as sales_repo
 from backend.sentiment.analyzers.grok_analyzer import (
     is_live_mode, _build_grok_client, _GROK_MODEL,
 )
@@ -102,10 +105,10 @@ def build_briefing_context(filters: dict, sentiment_stats: dict = None,
     s = get_db_session()
     try:
         from sqlalchemy import func
-        from backend.repositories.queries import _apply_dealer_scope
+        from backend.repositories._filters import apply_dealer_scope
         try:
             ctx["rooftops"] = int(
-                _apply_dealer_scope(s.query(func.count(Dealer.dealer_id)), filters).scalar() or 0
+                apply_dealer_scope(s.query(func.count(Dealer.dealer_id)), filters).scalar() or 0
             )
         except Exception as e:
             ctx["rooftops"] = 24
@@ -126,7 +129,7 @@ def build_briefing_context(filters: dict, sentiment_stats: dict = None,
 
 def _executive(s, filters, ctx):
     try:
-        k = Q.get_executive_kpis(s, filters)
+        k = sales_repo.get_executive_kpis(s, filters)
         ctx["executive"] = {
             "units": k.get("total_sales"),
             "units_yoy_pct": k.get("total_sales_delta"),
@@ -144,7 +147,7 @@ def _executive(s, filters, ctx):
             "total_customers": k.get("total_customers"),
         }
         try:
-            cat = Q.get_sales_by_category(s, filters)
+            cat = sales_repo.get_sales_by_category(s, filters)
             if not cat.empty:
                 tot = cat["sales"].sum()
                 ctx["executive"]["category_mix"] = {
@@ -154,7 +157,7 @@ def _executive(s, filters, ctx):
         except Exception:
             pass
         try:
-            tm = Q.get_top_models(s, filters, limit=5)
+            tm = sales_repo.get_top_models(s, filters, limit=5)
             ctx["executive"]["top_models"] = [
                 f"{r['brand']} {r['model']} ({_num(r['units'])})" for _, r in tm.iterrows()
             ]
@@ -166,7 +169,7 @@ def _executive(s, filters, ctx):
 
 def _demand_outlook(s, filters, ctx, sent):
     try:
-        tr = Q.get_monthly_revenue_trend(s, filters)
+        tr = sales_repo.get_monthly_revenue_trend(s, filters)
         out = {}
         if not tr.empty and "sales" in tr:
             tr = tr.sort_values(["year", "month"])
@@ -190,7 +193,7 @@ def _demand_outlook(s, filters, ctx, sent):
 def _comparative(s, filters, ctx):
     c = {}
     try:
-        d = Q.get_yoy_drivers(s, filters, "store")
+        d = sales_repo.get_yoy_drivers(s, filters, "store")
         if not d.empty and "delta_units" in d:
             d = d.sort_values("delta_units", ascending=False)
             c["gainers"] = [
@@ -237,7 +240,7 @@ def _pct_signed_int(v):
 
 def _store_performance(s, filters, ctx):
     try:
-        lb = Q.get_dealer_performance_leaderboard(s, filters)
+        lb = dealers_repo.get_dealer_performance_leaderboard(s, filters)
         p = {}
         if not lb.empty:
             att = lb["attainment_pct"].dropna()
@@ -272,7 +275,7 @@ def _store_performance(s, filters, ctx):
 
 def _customer(s, filters, ctx):
     try:
-        book = Q.get_customer_book(s, filters)
+        book = customers_repo.get_customer_book(s, filters)
         c = {}
         if not book.empty:
             buyers = book[book["n_deals"] > 0]
@@ -300,7 +303,7 @@ def _customer(s, filters, ctx):
                     )
         # due back in market — lease maturities in the next quarter
         try:
-            lm = Q.get_lease_maturity_recapture(s, filters, days_ahead=90)
+            lm = inventory_repo.get_lease_maturity_recapture(s, filters, days_ahead=90)
             c["lease_returns_next_90d"] = int(len(lm)) if lm is not None else 0
         except Exception:
             pass
@@ -311,7 +314,7 @@ def _customer(s, filters, ctx):
 
 def _inventory(s, filters, ctx):
     try:
-        snap = Q.get_inventory_snapshot(s, filters)
+        snap = inventory_repo.get_inventory_snapshot(s, filters)
         inv = {}
         if not snap.empty:
             stock = float(snap["current_stock"].sum())
@@ -322,7 +325,7 @@ def _inventory(s, filters, ctx):
             inv["overstock_lines"] = int(snap.get("overstock_flag", pd.Series(dtype=bool)).sum())
             inv["reorder_lines"] = int(snap.get("reorder_needed", pd.Series(dtype=bool)).sum())
             try:
-                ab = Q.get_aging_buckets(snap)
+                ab = inventory_repo.get_aging_buckets(snap)
                 if not ab.empty:
                     old = ab[ab["bucket"].str.contains("90")]
                     if not old.empty:
@@ -331,7 +334,7 @@ def _inventory(s, filters, ctx):
             except Exception:
                 pass
         try:
-            lrp = Q.get_lease_return_pipeline(s, filters, months_ahead=3)
+            lrp = inventory_repo.get_lease_return_pipeline(s, filters, months_ahead=3)
             if lrp is not None and not lrp.empty:
                 inv["lease_returns_90d"] = int(len(lrp))
                 inv["lease_returns_in_money"] = int(lrp["in_the_money"].sum())
@@ -340,7 +343,7 @@ def _inventory(s, filters, ctx):
         except Exception:
             pass
         try:
-            ti = Q.get_trade_in_activity(s, filters)
+            ti = inventory_repo.get_trade_in_activity(s, filters)
             if ti is not None and not ti.empty and "sale_date" in ti:
                 ti["sale_date"] = pd.to_datetime(ti["sale_date"], errors="coerce")
                 cut = ti["sale_date"].max() - pd.Timedelta(days=90)

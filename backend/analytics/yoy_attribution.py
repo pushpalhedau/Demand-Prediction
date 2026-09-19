@@ -36,7 +36,7 @@ import pandas as pd
 from sqlalchemy import func
 
 from backend.db.models import Sale, Dealer
-from backend.repositories.queries import _apply_sale_filters
+from backend.repositories._filters import apply_sale_filters
 
 # ── Statistical constants (not data) ─────────────────────────────────────────
 _SIGNIF_Z = 1.5          # |z| beyond which a YoY move is "outside normal variation"
@@ -96,7 +96,7 @@ def _period_frame(session, filters: dict, start, end) -> pd.DataFrame:
         func.coalesce(func.sum(Sale.units_sold), 0).label("units"),
         func.coalesce(func.sum(Sale.total_revenue_incl_tax), 0).label("revenue"),
     ).join(Dealer, Sale.dealer_id == Dealer.dealer_id)
-    q = _apply_sale_filters(q, {**_scope(filters), "start_date": start, "end_date": end})
+    q = apply_sale_filters(q, {**_scope(filters), "start_date": start, "end_date": end})
     q = q.group_by(Dealer.dealer_name, Sale.brand, Sale.vehicle_category)
     df = pd.read_sql(q.statement, session.bind)
     for c in ("units", "revenue"):
@@ -106,7 +106,7 @@ def _period_frame(session, filters: dict, start, end) -> pd.DataFrame:
 
 def _selling_days(session, filters: dict, start, end) -> int:
     q = session.query(func.count(func.distinct(Sale.sale_date)))
-    q = _apply_sale_filters(q, {**_scope(filters), "start_date": start, "end_date": end})
+    q = apply_sale_filters(q, {**_scope(filters), "start_date": start, "end_date": end})
     return int(q.scalar() or 0)
 
 
@@ -350,7 +350,7 @@ def _monthly_entity_units(session, filters: dict, dimension: str) -> pd.DataFram
     )
     if dimension == "store":
         q = q.join(Dealer, Sale.dealer_id == Dealer.dealer_id)
-    q = _apply_sale_filters(q, _scope(filters))          # all history, scope only
+    q = apply_sale_filters(q, _scope(filters))          # all history, scope only
     q = q.group_by(dim_sql, Sale.year, Sale.month)
     df = pd.read_sql(q.statement, session.bind)
     if df.empty:

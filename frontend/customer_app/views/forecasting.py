@@ -1,14 +1,10 @@
 import streamlit as st
 from frontend.shared.i18n import cur, cur_code
-from sqlalchemy import func
-from backend.core.cache import tenant_cache
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 
-from backend.db.connection import get_db_session
-from backend.db.models import Sale
-from backend.ml.demand_forecast import train_prophet_model, get_external_factor_stats
+from backend.services import forecasting as forecasting_service
 from frontend.shared.ui import (
     get_color_palette,
     _section,
@@ -17,7 +13,6 @@ from frontend.shared.ui import (
     _compact,
     _pct_label,
     _INK,
-    _INK_MUTED,
     _HUE_HISTORY,
     _HUE_FORECAST,
     _HUE_BAND,
@@ -48,80 +43,6 @@ LEVERS = {
     ),
 }
 
-# Group demand response to each lever, held one-at-a-time, relative to the
-# recent baseline. Fuel and crude levers are elasticities: % change in units per
-# +1% change in the price, so they hold in any currency (an absolute "per +1
-# currency unit" figure would not). Crude is upstream of the pump price, so its
-# direct effect is deliberately mild to avoid double-counting the petrol/diesel
-# move it usually feeds. Loan APR is % change in units per +1 percentage point.
-#   crude oil   ~ -0.12% units per +1% price
-#   petrol      ~ -0.08% units per +1% price
-#   diesel      ~ -0.05% units per +1% price  (pickup / commercial buyers)
-#   loan APR    ~ -3%    units per +1pt
-RELATIVE_ELASTICITY = {
-    "crude_oil_price_usd": -0.12,
-    "petrol_price_per_litre": -0.08,
-    "diesel_price_per_litre": -0.05,
-}
-POINT_RESPONSE = {"auto_loan_apr_pct": -3.0}
-
-_LOAN_MONTHS = 60
-
-
-def _supply_drag_pct(days_supply: float) -> float:
-    """Percent of demand the group loses to thin stock. Zero at/above ~55 days'
-    supply; roughly -1.1%/day below that as shoppers can't find the car."""
-    if days_supply >= 55:
-        return 0.0
-    return (days_supply - 55) * 1.1
-
-
-@tenant_cache(ttl=600)
-def _avg_loan() -> float:
-    """Typical financed amount for this tenant, for the monthly-payment translation."""
-    s = get_db_session()
-    try:
-        v = s.query(func.avg(Sale.loan_amount)).filter(Sale.loan_amount > 0).scalar()
-        return float(v or 0.0)
-    finally:
-        s.close()
-
-
-def _monthly_payment(apr_pct: float, loan: float) -> float:
-    r = apr_pct / 100 / 12
-    if r <= 0:
-        return loan / _LOAN_MONTHS
-    return loan * r / (1 - (1 + r) ** -_LOAN_MONTHS)
-
-
-@tenant_cache(ttl=600)
-def _brand_options():
-    s = get_db_session()
-    try:
-        rows = s.query(Sale.brand).distinct().all()
-        return sorted(b[0] for b in rows if b[0])
-    finally:
-        s.close()
-
-
-def _net_response_pct(overrides: dict, factor_stats: dict) -> float:
-    """Combine the active levers into one % shift vs the recent baseline."""
-    if not overrides or not factor_stats:
-        return 0.0
-    pct = 0.0
-    for col, val in overrides.items():
-        if col not in factor_stats:
-            continue
-        base = factor_stats[col]["last"]
-        if col == "inventory_days_supply":
-            pct += _supply_drag_pct(float(val)) - _supply_drag_pct(float(base))
-        elif col in RELATIVE_ELASTICITY and float(base) > 0:
-            pct += (float(val) / float(base) - 1) * 100 * RELATIVE_ELASTICITY[col]
-        elif col in POINT_RESPONSE:
-            pct += (float(val) - float(base)) * POINT_RESPONSE[col]
-    return pct
-
-
 def render_forecasting(filters: dict):
     colors = get_color_palette()
 
@@ -147,7 +68,7 @@ def render_forecasting(filters: dict):
         # months below so the chart total matches the headline number exactly.
         horizon = horizon_months * 31 + 15
     with c3:
-        brand_opts = ["All brands (group total)"] + _brand_options()
+        brand_opts = ["All brands (group total)"] + forecasting_service.brand_options()
         default_ix = brand_opts.index(filters["brand"]) if filters.get("brand") in brand_opts else 0
         brand_pick = st.selectbox("Brand", brand_opts, index=default_ix)
         brand = None if brand_pick.startswith("All brands") else brand_pick
@@ -168,7 +89,7 @@ def render_forecasting(filters: dict):
     unit_word = "units" if is_units else "revenue"
 
     # ── What-if levers ───────────────────────────────────────────────────────
-    factor_stats = get_external_factor_stats(region=region)
+    factor_stats = forecasting_service.external_factor_stats(region=region)
     available = {k: v for k, v in LEVERS.items() if k in factor_stats}
 
     if "fc_overrides" not in st.session_state:
@@ -198,9 +119,9 @@ def render_forecasting(filters: dict):
                         step=float(step), key=f"fc_{col}",
                     )
                     if col == "auto_loan_apr_pct":
-                        loan = _avg_loan()
-                        base_pay = _monthly_payment(s["last"], loan)
-                        new_pay = _monthly_payment(pending[col], loan)
+                        loan = forecasting_service.average_loan()
+                        base_pay = forecasting_service.monthly_payment(s["last"], loan)
+                        new_pay = forecasting_service.monthly_payment(pending[col], loan)
                         delta_pay = new_pay - base_pay
                         sign = "+" if delta_pay >= 0 else "−"
                         cap = (
@@ -225,7 +146,7 @@ def render_forecasting(filters: dict):
 
     # ── Train (baseline; levers are applied as a documented response, below) ──
     with st.spinner("Training the forecast on the group's sales history…"):
-        result, err = train_prophet_model(
+        result, err = forecasting_service.train_forecast(
             category=category, region=region, fuel_type=fuel_type, brand=brand,
             target=target, horizon_days=horizon,
             interval_width=confidence_level / 100, use_sentiment=False,
@@ -245,7 +166,7 @@ def render_forecasting(filters: dict):
     fc = result["forecast"].copy()
     fc["ds"] = pd.to_datetime(fc["ds"])
 
-    net_pct = _net_response_pct(overrides, factor_stats)
+    net_pct = forecasting_service.net_response_pct(overrides, factor_stats)
     future_mask = fc["actual"].isnull()
     if abs(net_pct) >= 0.1:
         mult = float(np.clip(1 + net_pct / 100.0, 0.4, 2.5))

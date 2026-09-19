@@ -6,15 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from frontend.shared.i18n import cur, cur_code
-from backend.analytics.benchmarks import gross_series
-from backend.ml.lead_scoring import get_lead_form_context
-
-from backend.db.connection import get_db_session
-from backend.repositories.queries import (
-    get_customer_segments_data, get_customer_book, get_repeat_contribution,
-    get_dealer_directory,
-)
-from backend.ml.lead_scoring import predict_deal_probability
+from backend.services import customers as customers_service
 from frontend.shared.ui import (
     _section, _base_layout, _compact, _fmt_money,
     _INK, _INK_MUTED, _HUE_UP, _HUE_DOWN, _HUE_FORECAST, _HUE_MARKER,
@@ -122,7 +114,7 @@ def _build_action_queue(book: pd.DataFrame) -> pd.DataFrame:
         is_lease, (q["last_brand"].astype(str) + " " + q["last_model"].astype(str))
     )
     q["opportunity_amt"] = (
-        gross_series(q["last_brand"])
+        customers_service.estimated_gross(q["last_brand"])
     )
     q["_lm_days"] = lm_days.reindex(q.index)
     q["when"] = np.where(
@@ -177,7 +169,6 @@ def render_customers(filters: dict):
     action queue (who to contact now, ranked by identified gross) plus whether the
     base is leaking. Tab 2: a per-lead close score for the sales desk.
     """
-    session = get_db_session()
     try:
         st.markdown(
             "<h2 class='gradient-text' style='margin-bottom:18px;'>Customer Intelligence</h2>",
@@ -190,11 +181,11 @@ def render_customers(filters: dict):
         # TAB 1 — Retention & Actions
         # ================================================================
         with tab1:
-            book = get_customer_book(session, filters)
+            book = customers_service.customer_book(filters)
             if book.empty:
                 st.warning("No customer records found. Please seed the database first.")
             else:
-                rc = get_repeat_contribution(session, filters)
+                rc = customers_service.repeat_contribution(filters)
                 buyers = book[book["n_deals"] > 0]
                 repeat_rate = 100 * (buyers["n_deals"] >= 2).mean() if len(buyers) else 0
                 queue = _build_action_queue(book)
@@ -283,7 +274,7 @@ def render_customers(filters: dict):
 
                 # ── 3. Segment detail (expander) ──────────────────────────
                 with st.expander("Segment detail — for campaign planning"):
-                    seg_df = get_customer_segments_data(session, filters)
+                    seg_df = customers_service.segment_data(filters)
                     if seg_df.empty:
                         st.info("No customer data.")
                     else:
@@ -312,7 +303,7 @@ def render_customers(filters: dict):
                 "closing probability, what is moving it, and the next action.",
             )
 
-            dealers = get_dealer_directory(session)
+            dealers = customers_service.dealer_directory()
             dealers = dealers.sort_values(["region", "city", "dealer_name"])
             store_opts = {
                 f"{r.dealer_name} — {r.city}, {r.region}": (r.region, r.dealer_name, r.brand)
@@ -321,7 +312,7 @@ def render_customers(filters: dict):
             store_pick = st.selectbox("Store handling this lead", options=list(store_opts.keys()))
             pick_region, pick_store, pick_brand = store_opts[store_pick]
 
-            ctx = get_lead_form_context()
+            ctx = customers_service.lead_form_context()
             if ctx is None:
                 st.info("The lead-scoring model has not been trained on this account's data yet.")
                 return
@@ -366,7 +357,7 @@ def render_customers(filters: dict):
                     "base_price": base_price,
                     "region": pick_region,
                 }
-                res = predict_deal_probability(lead)
+                res = customers_service.score_lead(lead)
                 prob = res["close_probability"]
                 explanations = res.get("explanations", [])
                 explainer = res.get("explainer_used", "none")
@@ -433,8 +424,6 @@ def render_customers(filters: dict):
         st.error(f"Error rendering Customer Intelligence: {e}")
         import traceback
         st.code(traceback.format_exc())
-    finally:
-        session.close()
 
 
 def _lead_recommendation(prob: float, store: str, channel: str):

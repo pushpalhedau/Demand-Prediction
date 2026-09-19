@@ -13,20 +13,13 @@ Two sub-tabs:
 """
 
 import streamlit as st
-from backend.core.cache import tenant_cache
 import plotly.graph_objects as go
 import pandas as pd
 
-from backend.db.connection import get_db_session
-from backend.db.models import Sale
-from backend.sentiment.signal_processor import (
-    run_full_pipeline,
-    ensure_recent_articles_analyzed,
-    compute_live_overall_stats,
-)
-from backend.sentiment.fetchers.gdelt_fetcher import get_stored_articles, TIMESPAN_OPTIONS
-from backend.sentiment.group_briefing import build_briefing_context, generate_group_briefing
-from frontend.shared.i18n import t, tv, tseg, fmt_num, fmt_pct, is_de
+from backend.services import forecasting as forecasting_service
+from backend.services import sentiment as sentiment_service
+from backend.services.sentiment import TIMESPAN_OPTIONS
+from frontend.shared.i18n import cur_code, fmt_pct, is_de, t, tseg
 from frontend.shared.ui import (
     _section,
     _base_layout,
@@ -97,34 +90,6 @@ _DIR_ARROW = {"up": "▲", "down": "▼", "neutral": "■"}
 # Small helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-@tenant_cache(ttl=600)
-def _cached_briefing_context(filters_key: str, _filters, _stats, _articles):
-    """The context build sweeps every module's queries (~10s). Cache it on the
-    filter set so re-clicking 'Generate read' in the same session is instant."""
-    return build_briefing_context(_filters, sentiment_stats=_stats,
-                                  sentiment_articles=_articles)
-
-
-@tenant_cache(ttl=600)
-def _group_monthly_runrate() -> float:
-    """Group's average booked units per month over the last 12 months of data —
-    so the headline % can be expressed as a rough unit count."""
-    s = get_db_session()
-    try:
-        rows = s.query(Sale.sale_date, Sale.units_sold).all()
-        if not rows:
-            return 0.0
-        df = pd.DataFrame(rows, columns=["sale_date", "units"])
-        df["sale_date"] = pd.to_datetime(df["sale_date"])
-        cutoff = df["sale_date"].max() - pd.DateOffset(months=12)
-        last12 = df[df["sale_date"] >= cutoff]["units"].sum()
-        return float(last12) / 12.0
-    except Exception:
-        return 0.0
-    finally:
-        s.close()
-
-
 def _empty_state(msg: str):
     st.markdown(
         f"<div style='background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.2);"
@@ -170,7 +135,7 @@ def render_sentiment_analysis(filters: dict):
         st.session_state["sentiment_pipeline_running"] = True
         try:
             with st.spinner(t("sa.fetching")):
-                status = run_full_pipeline(timespan=timespan, max_articles_per_query=50, analyze_limit=200)
+                status = sentiment_service.refresh_news(timespan)
             st.session_state["sentiment_pipeline_status"] = status
         finally:
             st.session_state["sentiment_pipeline_running"] = False
@@ -180,9 +145,9 @@ def render_sentiment_analysis(filters: dict):
         _show_pipeline_status(st.session_state["sentiment_pipeline_status"])
 
     # ── Pull the current signal picture ─────────────────────────────────
-    ensure_recent_articles_analyzed(limit=30)
-    stats = compute_live_overall_stats(days_back=30)
-    articles = get_stored_articles(days_back=45, analyzed_only=True, limit=400)
+    sentiment_service.analyze_pending_articles(limit=30)
+    stats = sentiment_service.live_overall_stats(days_back=30)
+    articles = sentiment_service.stored_articles(days_back=45, analyzed_only=True, limit=400)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -209,7 +174,7 @@ def render_sentiment_analysis(filters: dict):
 def _headline_block(stats: dict):
     net = float(stats.get("net_demand_signal_pct", 0.0))
     word, color = _signal_word(net)
-    runrate = _group_monthly_runrate()
+    runrate = sentiment_service.group_monthly_runrate()
     unit_est = round(runrate * net / 100.0)
 
     left, right = st.columns([3, 2])
@@ -306,7 +271,7 @@ def _bottom_line(stats: dict, articles: list):
     else:
         word = t("sa.word.headwind") if net < 0 else t("sa.word.tailwind")
         color = _HUE_DOWN if net < 0 else _HUE_UP
-        rr = _group_monthly_runrate()
+        rr = sentiment_service.group_monthly_runrate()
         _u = round(rr * net / 100.0)
         unit_hint = (t("sa.bl.units_hint",
                         v=fmt_pct(_u, 0, signed=True).rstrip(" %").rstrip("%"))
@@ -424,8 +389,8 @@ def _render_demand_watch(stats: dict, articles: list, filters: dict):
             from frontend.shared.i18n import get_lang
             fk = json.dumps({k: str(v) for k, v in (filters or {}).items()},
                             sort_keys=True) + f"|lang={get_lang()}"
-            ctx = _cached_briefing_context(fk, filters, stats, articles)
-            st.session_state["sentiment_briefing"] = generate_group_briefing(ctx)
+            ctx = sentiment_service.briefing_context(fk, filters, stats, articles)
+            st.session_state["sentiment_briefing"] = sentiment_service.generate_briefing(ctx)
     if st.session_state.get("sentiment_briefing"):
         # st.text (not markdown) so "1." / "-" line starts render literally,
         # not as auto-numbered / bulleted lists.
@@ -475,11 +440,6 @@ def _signal_card(a: pd.Series):
 def _render_forecast_verdict(filters: dict):
     _section(t("sa.fc.title"))
 
-    try:
-        from backend.ml.demand_forecast import train_prophet_model
-    except Exception as e:
-        _empty_state(t("sa.fc.unavailable", e=e))
-        return
 
     c1, c2, _ = st.columns([2, 2, 4])
     with c1:
@@ -494,12 +454,12 @@ def _render_forecast_verdict(filters: dict):
 
     if run:
         with st.spinner(t("sa.fc.training")):
-            base_res, base_err = train_prophet_model(
+            base_res, base_err = forecasting_service.train_forecast(
                 category=filters.get("vehicle_category"), region=filters.get("region"),
                 fuel_type=filters.get("fuel_type"), brand=filters.get("brand"),
                 target=target, horizon_days=horizon, use_sentiment=False,
             )
-            sent_res, sent_err = train_prophet_model(
+            sent_res, sent_err = forecasting_service.train_forecast(
                 category=filters.get("vehicle_category"), region=filters.get("region"),
                 fuel_type=filters.get("fuel_type"), brand=filters.get("brand"),
                 target=target, horizon_days=horizon, use_sentiment=True,

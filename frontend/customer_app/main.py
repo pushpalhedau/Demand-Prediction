@@ -1,5 +1,4 @@
 import streamlit as st
-from datetime import date
 from streamlit_option_menu import option_menu
 
 
@@ -37,11 +36,8 @@ PAGE_RAIL_ICONS = [
     "forum",
 ]
 
-from backend.db.connection import get_db_session
-from backend.db.models import Sale
+from backend.services import workspace
 from frontend.customer_app.auth import require_login, render_account_menu
-from backend.tenancy.capabilities import get_capabilities, tab_available
-from backend.repositories.queries import get_unique_filter_options
 from frontend.shared.session import bind_backend_scope, reset_backend_scope
 from frontend.shared.ui import ASSETS_DIR, inject_custom_css
 from frontend.shared.i18n import t, tv, language_selector, get_lang
@@ -73,7 +69,7 @@ inject_custom_css()
 reset_backend_scope()
 identity = require_login()
 bind_backend_scope()
-caps = get_capabilities()
+caps = workspace.get_capabilities()
 
 # Accounts are set up by the operator (admin console). Until their data is loaded there is nothing to show.
 if not caps["sales"]:
@@ -85,21 +81,18 @@ if not caps["sales"]:
     st.stop()
 
 # Show only the tabs this tenant has data for.
-_keep = [i for i, k in enumerate(PAGE_KEYS) if tab_available(k, caps)]
+_keep = [i for i, k in enumerate(PAGE_KEYS) if workspace.tab_available(k, caps)]
 PAGE_KEYS = [PAGE_KEYS[i] for i in _keep]
 PAGE_ICONS = [PAGE_ICONS[i] for i in _keep]
 PAGE_RAIL_ICONS = [PAGE_RAIL_ICONS[i] for i in _keep]
 if st.session_state.get("active_page") not in PAGE_KEYS:
     st.session_state["active_page"] = PAGE_KEYS[0]
 
-# 5. Fetch unique sidebar filter choices dynamically from DB
-session = get_db_session()
+# 5. Sidebar filter choices, from the tenant's own data
 try:
-    options = get_unique_filter_options(session)
-except Exception:
+    options = workspace.filter_options()
+except Exception:  # noqa: BLE001 - a broken lookup must not take the whole page down
     options = {"regions": [], "cities": [], "categories": [], "fuel_types": [], "brands": [], "years": []}
-finally:
-    session.close()
 
 # 6. GLOBAL LANGUAGE TOGGLE
 # Pinned to the top-right of the main screen via CSS (div.st-key-lang in
@@ -273,15 +266,10 @@ with st.sidebar:
 
     # Filter areas dynamically based on state
     if region != "All":
-        session = get_db_session()
         try:
-            from backend.db.models import Sale
-            region_cities = [c[0] for c in session.query(Sale.city).filter(Sale.region == region).distinct().all() if c[0]]
-            city_options = sorted(region_cities)
-        except Exception:
+            city_options = workspace.cities_in_region(region)
+        except Exception:  # noqa: BLE001
             city_options = options["cities"]
-        finally:
-            session.close()
     else:
         city_options = options["cities"]
 
