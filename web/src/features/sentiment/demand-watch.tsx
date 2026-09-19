@@ -1,12 +1,12 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Loader2, Minus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ReferenceLine, XAxis, YAxis } from "recharts";
 import { Panel } from "@/components/data/chart-card";
+import { Insight } from "@/components/data/insight";
 import { ErrorState } from "@/components/data/states";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart";
 import { useFilters } from "@/lib/filters";
@@ -17,7 +17,6 @@ import { useFormat, usePresentation } from "@/lib/session";
 import type { Article, SentimentOverview } from "@/lib/types";
 import { actionable, direction, latest, themeDrivers } from "./signals";
 
-const ICON = { up: ArrowUp, down: ArrowDown, neutral: Minus } as const;
 const COLOR = { up: "var(--success)", down: "var(--destructive)", neutral: "var(--muted-foreground)" } as const;
 
 export function DemandWatch({ stats, articles }: { stats: SentimentOverview["stats"]; articles: Article[] }) {
@@ -47,11 +46,11 @@ export function DemandWatch({ stats, articles }: { stats: SentimentOverview["sta
       )}
 
       <Panel title={signals.length ? t("sa.signals.title") : t("sa.latest.title")} description={signals.length ? undefined : t("sa.latest.caption")}>
-        <ul className="space-y-3">
+        <div>
           {(signals.length ? signals : latest(articles)).map((a, i) => (
-            <SignalCard key={`${a.url ?? a.title}-${i}`} article={a} themeName={themeName} />
+            <SignalRow key={`${a.url ?? a.title}-${i}`} rank={i + 1} article={a} themeName={themeName} />
           ))}
-        </ul>
+        </div>
       </Panel>
 
       <Panel title={t("sa.read.title")}>
@@ -68,37 +67,31 @@ export function DemandWatch({ stats, articles }: { stats: SentimentOverview["sta
   );
 }
 
-function SignalCard({ article: a, themeName: nameOf }: { article: Article; themeName: (k: string | null) => string }) {
+function SignalRow({ rank, article: a, themeName: nameOf }: { rank: number; article: Article; themeName: (k: string | null) => string }) {
   const { t, tv, lang } = usePresentation();
   const fmt = useFormat();
   const dir = direction(a);
-  const Icon = ICON[dir];
   const seg = a.affected_category ?? "All";
   const exposureKey = `sa.exp.${a.theme}`;
   const exposure = hasTranslation(lang, exposureKey) ? t(exposureKey) : seg === "All" ? t("sa.card.exposure_all") : t("sa.card.exposure_seg", { seg: tv(seg) });
   const href = safeUrl(a.url);
   const title = (a.title ?? t("sa.card.untitled")).slice(0, 150);
   return (
-    <li className="rounded-lg border border-l-4 p-4" style={{ borderLeftColor: COLOR[dir] }}>
-      <div className="flex items-start justify-between gap-4">
-        <h3 className="text-sm leading-snug font-medium">
-          {href ? (
-            <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{title}</a>
-          ) : (
-            title
-          )}
-        </h3>
-        <span className="tabular flex shrink-0 items-center gap-1 text-sm font-semibold" style={{ color: COLOR[dir] }}>
-          <Icon className="size-3.5" aria-hidden />
-          {typeof a.demand_change_pct === "number" ? fmt.pct(a.demand_change_pct, 1, true) : null}
+    <Insight
+      rank={rank}
+      tag={nameOf(a.theme)}
+      accent={COLOR[dir]}
+      title={href ? <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{title}</a> : title}
+      detail={a.signal_summary ?? `${tv(seg)}: ${exposure}`}
+      value={typeof a.demand_change_pct === "number" ? fmt.pct(a.demand_change_pct, 1, true) : undefined}
+      valueCaption={t("sa.card.impact")}
+      valueTone={dir === "up" ? "positive" : dir === "down" ? "negative" : "neutral"}
+      meta={
+        <span className="text-muted-foreground text-xs">
+          {[a.domain, a.published_date, `${tv(seg)}: ${exposure}`].filter(Boolean).join(" · ")}
         </span>
-      </div>
-      <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-        <span>{a.domain ?? "—"}</span>·<span>{a.published_date ?? "—"}</span>·<Badge variant="secondary" className="font-normal">{nameOf(a.theme)}</Badge>
-        <span>{tv(seg)} — {exposure}</span>
-      </div>
-      {a.signal_summary && <p className="mt-2 text-sm">{a.signal_summary}</p>}
-    </li>
+      }
+    />
   );
 }
 

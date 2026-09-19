@@ -2,12 +2,14 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, PolarAngleAxis, RadialBar, RadialBarChart, ReferenceLine, XAxis, YAxis } from "recharts";
 import { Panel, PanelSkeleton } from "@/components/data/chart-card";
+import { Insight } from "@/components/data/insight";
+import { PageHeading } from "@/components/data/page-heading";
 import { QueryBoundary } from "@/components/data/query-boundary";
+import { Section } from "@/components/data/section";
 import { EmptyState, ErrorState } from "@/components/data/states";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart";
 import { Input } from "@/components/ui/input";
@@ -54,13 +56,17 @@ function initialDraft(form: LeadForm): Draft | null {
 
 const range = (r: NumericRange) => ({ min: Math.floor(r.lo), max: Math.ceil(Math.max(r.hi, r.lo + 1)) });
 
-export function LeadScoring() {
+export function LeadScoring({ nav }: { nav: ReactNode }) {
   const { t } = usePresentation();
   const query = useQuery({ queryKey: ["cu-lead-form"], queryFn: () => api<LeadForm>("/api/customers/lead-form"), staleTime: 10 * 60_000 });
   return (
-    <QueryBoundary query={query} skeleton={<PanelSkeleton height={420} />}>
-      {(form) => (form.model ? <LeadFormView form={form} /> : <EmptyState title={t("cu.lead.untrained")} />)}
-    </QueryBoundary>
+    <div className="space-y-8">
+      {nav}
+      <PageHeading eyebrow={t("tab.customers")} headline={t("cu.head.lead")} />
+      <QueryBoundary query={query} skeleton={<PanelSkeleton height={420} />}>
+        {(form) => (form.model ? <LeadFormView form={form} /> : <EmptyState title={t("cu.lead.untrained")} />)}
+      </QueryBoundary>
+    </div>
   );
 }
 
@@ -124,7 +130,7 @@ function LeadFormView({ form }: { form: LeadForm }) {
   const relationshipLabel = { new: t("cu.rel.new"), service: t("cu.rel.service"), repeat: t("cu.rel.repeat") };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Panel title={t("cu.lead.title")} description={t("cu.lead.caption")}>
         <div className="space-y-6">
           {pick(
@@ -185,8 +191,8 @@ function Result({ result, store, channel }: { result: LeadScore; store: string; 
   const internetChannel = ["Online Ad", "Social Media", "Search Engine"].includes(channel);
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+    <div className="space-y-8">
+      <div className="grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Panel title={t("cu.res.prob")} footer={t(`cu.zone.${z}`)}>
           <div className="relative">
             <ChartContainer config={{ value: { label: t("cu.res.prob"), color } }} className="mx-auto h-[190px] w-full">
@@ -226,10 +232,19 @@ function Result({ result, store, channel }: { result: LeadScore; store: string; 
         </Panel>
       </div>
 
-      <Alert variant={z === "cold" ? "destructive" : "default"}>
-        <AlertTitle>{t(`cu.rec.${z}.title`)}</AlertTitle>
-        <AlertDescription>{t(`cu.rec.${z}.body`, { store })}{z === "cold" && internetChannel ? ` ${t("cu.rec.cold.internet")}` : ""}</AlertDescription>
-      </Alert>
+      <Section title={t("cu.tag.action")}>
+        <Insight
+          rank={1}
+          tag={t(`cu.zone.${z}`)}
+          accent={color}
+          title={t(`cu.rec.${z}.title`)}
+          detail={`${t(`cu.rec.${z}.body`, { store })}${z === "cold" && internetChannel ? ` ${t("cu.rec.cold.internet")}` : ""}`}
+          value={fmt.pct(p * 100, 0)}
+          valueCaption={t("cu.res.prob")}
+          valueTone={z === "hot" ? "positive" : z === "cold" ? "negative" : "neutral"}
+          meta={<span className="text-muted-foreground text-xs">{store}</span>}
+        />
+      </Section>
     </div>
   );
 }

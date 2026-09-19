@@ -1,28 +1,23 @@
 "use client";
 
-import { PageHeader } from "@/components/data/page-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePresentation } from "@/lib/session";
 import { LeadScoring } from "./lead-scoring";
 import { Retention } from "./retention";
 
+type View = "retention" | "lead";
+
 export function CustomersPage() {
   const { t } = usePresentation();
-  return (
-    <>
-      <PageHeader title={t("tab.customers")} description={t("cu.subtitle")} />
-      <Tabs defaultValue="retention" className="gap-6">
-        <TabsList>
-          <TabsTrigger value="retention">{t("cu.tab.retention")}</TabsTrigger>
-          <TabsTrigger value="lead">{t("cu.tab.lead")}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="retention">
-          <Retention />
-        </TabsContent>
-        <TabsContent value="lead">
-          <LeadScoring />
-        </TabsContent>
-      </Tabs>
-    </>
+  const [view, setView] = useState<View>("retention");
+  const nav = (
+    <Tabs value={view} onValueChange={(v) => setView(v as View)}>
+      <TabsList variant="line" className="h-auto gap-6 border-b p-0" aria-label={t("tab.customers")}>
+        <TabsTrigger value="retention" className="flex-none px-0 pb-2.5">{t("cu.tab.retention")}</TabsTrigger>
+        <TabsTrigger value="lead" className="flex-none px-0 pb-2.5">{t("cu.tab.lead")}</TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
+  return view === "retention" ? <Retention nav={nav} /> : <LeadScoring nav={nav} />;
 }

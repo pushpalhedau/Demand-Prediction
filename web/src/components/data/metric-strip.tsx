@@ -75,3 +75,7 @@ export function MetricStrip({ metrics }: { metrics: Metric[] }) {
     </div>
   );
 }
+
+export function MetricStripSkeleton() {
+  return <div className="bg-muted h-[132px] animate-pulse rounded-lg" aria-hidden />;
+}

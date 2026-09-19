@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import type { ReactNode } from "react";
 import { useFilters, type Filters } from "@/lib/filters";
 import { formatDate } from "@/lib/format";
 import { useMe, usePresentation } from "@/lib/session";
@@ -9,7 +10,7 @@ import { useMe, usePresentation } from "@/lib/session";
  * Every dashboard opens the same way: what this is, the one-sentence answer, and where the numbers come from
  * (data date, currency) with the active scope as removable chips.
  */
-export function PageHeading({ eyebrow, headline, meta = [] }: { eyebrow: string; headline: string; meta?: string[] }) {
+export function PageHeading({ eyebrow, headline, meta = [], actions }: { eyebrow: string; headline: string; meta?: string[]; actions?: ReactNode }) {
   const { t, lang } = usePresentation();
   const { data: me } = useMe();
   const { filters, update } = useFilters();
@@ -29,7 +30,10 @@ export function PageHeading({ eyebrow, headline, meta = [] }: { eyebrow: string;
   return (
     <header className="space-y-3">
       <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.1em] uppercase">{eyebrow}</p>
-      <h1 className="font-heading max-w-4xl text-[1.65rem] leading-[1.2] font-semibold tracking-[-0.02em] text-balance sm:text-3xl">{headline}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <h1 className="font-heading max-w-3xl min-w-[16rem] flex-1 text-[1.65rem] leading-[1.2] font-semibold tracking-[-0.02em] text-balance sm:text-3xl">{headline}</h1>
+        {actions && <div className="flex shrink-0 items-center gap-2 pt-1">{actions}</div>}
+      </div>
       <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-2 text-xs">
         {facts.map((f, i) => (
           <span key={f} className="flex items-center gap-2">

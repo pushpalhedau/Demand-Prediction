@@ -2,11 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 import { Panel, PanelSkeleton } from "@/components/data/chart-card";
 import { DataTable, type Column } from "@/components/data/data-table";
-import { KpiCard, KpiSkeletonRow } from "@/components/data/kpi-card";
+import { MetricStrip, MetricStripSkeleton } from "@/components/data/metric-strip";
+import { PageHeading } from "@/components/data/page-heading";
 import { QueryBoundary } from "@/components/data/query-boundary";
 import { EmptyState, ErrorState } from "@/components/data/states";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -30,69 +32,94 @@ const BAND_COLOR: Record<string, string> = {
   "Likely lost": "var(--destructive)",
 };
 
-export function Retention() {
+export function Retention({ nav }: { nav: ReactNode }) {
   const { t } = usePresentation();
   const fmt = useFormat();
   const query = useDashboardQuery<RetentionData>("cu-retention", "/api/customers/retention");
   return (
-    <QueryBoundary query={query} skeleton={<div className="space-y-6"><KpiSkeletonRow /><PanelSkeleton height={420} /></div>}>
+    <QueryBoundary
+      query={query}
+      skeleton={
+        <div className="space-y-8">
+          {nav}
+          <PanelSkeleton height={110} />
+          <MetricStripSkeleton />
+          <PanelSkeleton height={420} />
+        </div>
+      }
+    >
       {(d) => {
-        if (d.status !== "ok") return <EmptyState title={t("cu.no_customers")} />;
-        const book = (d.book ?? []).filter((b) => b.customers > 0).map((b) => ({ ...b, fill: BAND_COLOR[b.band] ?? "var(--chart-1)" }));
+        if (d.status !== "ok") {
+          return (
+            <div className="space-y-8">
+              {nav}
+              <PageHeading eyebrow={t("tab.customers")} headline={t("cu.no_customers")} />
+            </div>
+          );
+        }
+        const bands = d.book ?? [];
+        const book = bands.filter((b) => b.customers > 0).map((b) => ({ ...b, fill: BAND_COLOR[b.band] ?? "var(--chart-1)" }));
+        const dueBack = bands.find((b) => b.band === "In cycle — due back")?.customers ?? 0;
         const bookConfig = { customers: { label: t("cu.buyers"), color: "var(--chart-1)" } } satisfies ChartConfig;
         return (
-          <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <KpiCard label={t("cu.kpi.buyers")} value={fmt.num(d.buyers)} note={t("cu.kpi.buyers_help", { n: fmt.num(d.records) })} />
-              <KpiCard label={t("cu.kpi.repeat")} value={fmt.pct(d.repeat_rate_pct, 0)} note={t("cu.kpi.repeat_help")} />
-              <KpiCard label={t("cu.kpi.share")} value={fmt.pct(d.repeat_share_pct, 0)} note={t("cu.kpi.share_help")} />
-              <KpiCard label={t("cu.kpi.flagged")} value={fmt.num(d.queue_total)} note={t("cu.kpi.flagged_help")} />
-            </div>
+          <div className="space-y-8">
+            {nav}
+            <PageHeading eyebrow={t("tab.customers")} headline={t("cu.head", { flagged: fmt.num(d.queue_total), repeat: fmt.pct(d.repeat_rate_pct, 0) })} />
+            <MetricStrip
+              metrics={[
+                { label: t("cu.kpi.buyers"), value: fmt.num(d.buyers), note: t("cu.kpi.buyers_help", { n: fmt.num(d.records) }) },
+                { label: t("cu.kpi.repeat"), value: fmt.pct(d.repeat_rate_pct, 0), note: t("cu.kpi.repeat_help") },
+                { label: t("cu.kpi.share"), value: fmt.pct(d.repeat_share_pct, 0), note: t("cu.kpi.share_help") },
+                { label: t("cu.kpi.flagged"), value: fmt.num(d.queue_total), note: t("cu.kpi.flagged_help") },
+              ]}
+            />
 
             <ActionQueue stores={d.queue_stores ?? []} reasons={d.queue_reasons ?? {}} />
 
             {book.length > 0 && (
-              <Panel title={t("cu.book.title")} description={t("cu.book.caption")}>
-                <ChartContainer config={bookConfig} className="h-[250px] w-full">
-                  <BarChart data={book} layout="vertical" margin={{ left: 0, right: 150, top: 4 }}>
-                    <CartesianGrid horizontal={false} />
-                    <XAxis type="number" tickFormatter={(v: number) => fmt.compact(v)} tickLine={false} axisLine={false} />
-                    <YAxis dataKey="band" type="category" tickLine={false} axisLine={false} width={150} />
-                    <ChartTooltip
-                      cursor={{ fill: "var(--muted)", opacity: 0.5 }}
-                      content={({ active, payload }) => {
-                        const r = payload?.[0]?.payload as (typeof book)[number] | undefined;
-                        if (!active || !r) return null;
-                        return (
-                          <div className="bg-background grid gap-0.5 rounded-lg border px-3 py-2 text-xs shadow-xl">
-                            <p className="text-sm font-medium">{r.band}</p>
-                            <p className="text-muted-foreground">{t(`cu.band.${r.band}`)}</p>
-                            <p className="tabular">{fmt.num(r.customers)} · {fmt.money(r.lifetime_value)} {t("cu.lifetime")}</p>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Bar dataKey="customers" radius={4} barSize={22}>
-                      {book.map((b) => (
-                        <Cell key={b.band} fill={b.fill} />
-                      ))}
-                      <LabelList
-                        dataKey="customers"
-                        position="right"
-                        fontSize={12}
-                        className="fill-foreground"
-                        formatter={(v: unknown) => fmt.compact(Number(v))}
+              <ChartFrame
+                headline={t("cu.book.head", { n: fmt.num(dueBack) })}
+                description={t("cu.book.caption")}
+                csv={{ filename: "customer_book.csv", headers: [t("cu.book.title"), t("cu.buyers"), t("cu.lifetime")], rows: book.map((b) => [b.band, b.customers, b.lifetime_value]) }}
+              >
+                {(height) => (
+                  <ChartContainer config={bookConfig} className="w-full" style={{ height: Math.max(220, height - 90) }}>
+                    <BarChart data={book} layout="vertical" margin={{ left: 0, right: 150, top: 4 }}>
+                      <CartesianGrid horizontal={false} strokeOpacity={0.6} />
+                      <XAxis type="number" tickFormatter={(v: number) => fmt.compact(v)} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="band" type="category" tickLine={false} axisLine={false} width={150} />
+                      <ChartTooltip
+                        cursor={{ fill: "var(--muted)", opacity: 0.5 }}
+                        content={({ active, payload }) => {
+                          const r = payload?.[0]?.payload as (typeof book)[number] | undefined;
+                          if (!active || !r) return null;
+                          return (
+                            <div className="bg-background grid gap-0.5 rounded-lg border px-3 py-2 text-xs shadow-xl">
+                              <p className="text-sm font-medium">{r.band}</p>
+                              <p className="text-muted-foreground">{t(`cu.band.${r.band}`)}</p>
+                              <p className="tabular">
+                                {fmt.num(r.customers)} · {fmt.money(r.lifetime_value)} {t("cu.lifetime")}
+                              </p>
+                            </div>
+                          );
+                        }}
                       />
-                    </Bar>
-                  </BarChart>
-                </ChartContainer>
-              </Panel>
+                      <Bar dataKey="customers" radius={3} barSize={22}>
+                        {book.map((b) => (
+                          <Cell key={b.band} fill={b.fill} />
+                        ))}
+                        <LabelList dataKey="customers" position="right" fontSize={12} className="fill-foreground" formatter={(v: unknown) => fmt.compact(Number(v))} />
+                      </Bar>
+                    </BarChart>
+                  </ChartContainer>
+                )}
+              </ChartFrame>
             )}
 
             {d.segments && d.segments.length > 0 && (
-              <Accordion type="single" collapsible className="rounded-xl border px-5">
+              <Accordion type="single" collapsible className="border-t">
                 <AccordionItem value="segments" className="border-0">
-                  <AccordionTrigger className="text-base font-semibold hover:no-underline">{t("cu.segments.title")}</AccordionTrigger>
+                  <AccordionTrigger className="font-heading py-5 text-[17px] font-semibold hover:no-underline">{t("cu.segments.title")}</AccordionTrigger>
                   <AccordionContent>
                     <DataTable
                       rows={d.segments}

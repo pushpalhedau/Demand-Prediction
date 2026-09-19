@@ -1,14 +1,14 @@
 "use client";
 
-import { Award, TriangleAlert } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, LabelList, Scatter, ScatterChart, XAxis, YAxis, ZAxis } from "recharts";
-import { Panel, PanelSkeleton } from "@/components/data/chart-card";
+import { ChartFrame } from "@/components/charts/chart-frame";
+import { PanelSkeleton } from "@/components/data/chart-card";
 import { DataTable, type Column } from "@/components/data/data-table";
-import { KpiCard, KpiSkeletonRow } from "@/components/data/kpi-card";
-import { PageHeader } from "@/components/data/page-header";
+import { Insight } from "@/components/data/insight";
+import { MetricStrip, MetricStripSkeleton } from "@/components/data/metric-strip";
+import { PageHeading } from "@/components/data/page-heading";
 import { QueryBoundary } from "@/components/data/query-boundary";
-import { EmptyState } from "@/components/data/states";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Section } from "@/components/data/section";
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart";
 import { attainmentColor } from "@/lib/attainment";
 import { useDashboardQuery } from "@/lib/query";
@@ -20,15 +20,15 @@ const chartConfig = { units: { label: "Units", color: "var(--chart-1)" } } satis
 function Legend() {
   const { t } = usePresentation();
   return (
-    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+    <span className="text-muted-foreground inline-flex items-center gap-2 text-xs">
       <span>{t("rg.pace.behind")}</span>
       <span
-        className="h-2 w-28 rounded-full"
+        className="h-1.5 w-24 rounded-full"
         style={{ background: `linear-gradient(90deg, ${attainmentColor(84)}, ${attainmentColor(95)}, ${attainmentColor(104)})` }}
         aria-hidden
       />
       <span>{t("rg.pace.ahead")}</span>
-    </div>
+    </span>
   );
 }
 
@@ -36,12 +36,18 @@ export function RegionalPage() {
   const { t } = usePresentation();
   const query = useDashboardQuery<Scorecard>("regional", "/api/regional/scorecard");
   return (
-    <>
-      <PageHeader title={t("tab.regional")} description={t("rg.subtitle")} />
-      <QueryBoundary query={query} skeleton={<div className="space-y-6"><KpiSkeletonRow count={3} /><PanelSkeleton height={420} /></div>}>
-        {(data) => (data.rows.length ? <Content data={data} /> : <EmptyState title={t("rg.empty")} />)}
-      </QueryBoundary>
-    </>
+    <QueryBoundary
+      query={query}
+      skeleton={
+        <div className="space-y-8">
+          <PanelSkeleton height={110} />
+          <MetricStripSkeleton />
+          <PanelSkeleton height={420} />
+        </div>
+      }
+    >
+      {(data) => (data.rows.length ? <Content data={data} /> : <PageHeading eyebrow={t("tab.regional")} headline={t("rg.empty")} />)}
+    </QueryBoundary>
   );
 }
 
@@ -54,8 +60,7 @@ function Content({ data }: { data: Scorecard }) {
   const totalUnits = rows.reduce((sum, r) => sum + r.units_sold, 0);
 
   const located = rows.filter((r) => r.latitude !== null && r.longitude !== null && r.units_sold > 0);
-  const label = (r: StoreRow) => r.dealer_name;
-  const ranking = [...rows].sort((a, b) => b.units_sold - a.units_sold).map((r) => ({ ...r, label: label(r), fill: attainmentColor(r.attainment_pct) }));
+  const ranking = [...rows].sort((a, b) => b.units_sold - a.units_sold).map((r) => ({ ...r, label: r.dealer_name, fill: attainmentColor(r.attainment_pct) }));
 
   const ranked = [...withTarget].sort((a, b) => (a.attainment_pct ?? 0) - (b.attainment_pct ?? 0));
   const weakest = ranked[0];
@@ -97,116 +102,153 @@ function Content({ data }: { data: Scorecard }) {
     { key: "top", header: t("rg.col.top"), cell: (r) => (r.top_category ? tv(r.top_category) : "–"), sort: (r) => r.top_category },
   ];
 
+  const headline =
+    weakest && strongest
+      ? t(behind > 0 ? "rg.head.behind" : "rg.head.ok", { n: behind, total: withTarget.length, best: strongest.dealer_name, pct: fmt.pct(strongest.attainment_pct, 0) })
+      : t("rg.head.none", { n: rows.length, units: fmt.num(totalUnits) });
+
+  const meta = (r: StoreRow) => <span className="text-muted-foreground text-xs">{[r.brand, r.region].filter(Boolean).join(" · ")}</span>;
+  const summary = (r: StoreRow) => t("rg.summary", { units: fmt.num(r.units_sold), pace: fmt.pct(r.attainment_pct, 0), yoy: yoy(r.yoy_units_pct) });
+
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <KpiCard label={t("rg.kpi.rooftops")} value={fmt.num(rows.length)} />
-        <KpiCard label={t("rg.kpi.units")} value={fmt.num(totalUnits)} />
-        <KpiCard
-          label={t("rg.kpi.behind")}
-          value={t("rg.kpi.behind_value", { n: behind, total: withTarget.length })}
-          note={t("rg.kpi.behind_help", { pct: data.behind_plan_pct })}
-          tone={behind > 0 ? "negative" : "positive"}
-        />
-      </div>
+    <div className="space-y-8">
+      <PageHeading eyebrow={t("tab.regional")} headline={headline} />
+      <MetricStrip
+        metrics={[
+          { label: t("rg.kpi.rooftops"), value: fmt.num(rows.length) },
+          { label: t("rg.kpi.units"), value: fmt.num(totalUnits) },
+          {
+            label: t("rg.kpi.behind"),
+            value: t("rg.kpi.behind_value", { n: behind, total: withTarget.length }),
+            delta: behind > 0 ? { text: t("rg.kpi.behind_flag", { n: behind }), tone: "negative" } : { text: t("ov.rec.on_track"), tone: "positive" },
+            note: t("rg.kpi.behind_help", { pct: data.behind_plan_pct }),
+          },
+        ]}
+      />
+
+      {weakest && strongest && (
+        <Section title={t("rg.read.title")}>
+          <div>
+            <Insight
+              rank={1}
+              tag={t("rg.tag.weak")}
+              accent="var(--warning)"
+              title={weakest.dealer_name}
+              detail={`${summary(weakest)}${alsoDown.length > 0 ? ` ${t("rg.also_down", { names: alsoDown.map((r) => r.dealer_name).join(", ") })}` : ""}`}
+              value={fmt.pct(weakest.attainment_pct, 0)}
+              valueCaption={t("rg.value.pace")}
+              valueTone="negative"
+              meta={meta(weakest)}
+            />
+            <Insight
+              rank={2}
+              tag={t("rg.tag.strong")}
+              accent="var(--success)"
+              title={strongest.dealer_name}
+              detail={summary(strongest)}
+              value={fmt.pct(strongest.attainment_pct, 0)}
+              valueCaption={t("rg.value.pace")}
+              meta={meta(strongest)}
+            />
+          </div>
+        </Section>
+      )}
 
       {located.length > 0 && (
-        <Panel title={t("rg.map.title")} description={t("rg.map.caption")} action={<Legend />}>
-          <ChartContainer config={chartConfig} className="h-[420px] w-full">
-            <ScatterChart margin={{ top: 16, right: 24, bottom: 16, left: 24 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" dataKey="longitude" name="Longitude" domain={["dataMin - 0.3", "dataMax + 0.3"]} hide />
-              <YAxis type="number" dataKey="latitude" name="Latitude" domain={["dataMin - 0.3", "dataMax + 0.3"]} hide />
-              <ZAxis type="number" dataKey="units_sold" range={[90, 900]} />
+        <ChartFrame
+          headline={t("rg.map.title")}
+          description={
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              {t("rg.map.caption")}
+              <Legend />
+            </span>
+          }
+        >
+          {(height) => (
+            <ChartContainer config={chartConfig} className="w-full" style={{ height: height + 80 }}>
+              <ScatterChart margin={{ top: 16, right: 24, bottom: 16, left: 24 }}>
+                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.6} />
+                <XAxis type="number" dataKey="longitude" name="Longitude" domain={["dataMin - 0.3", "dataMax + 0.3"]} hide />
+                <YAxis type="number" dataKey="latitude" name="Latitude" domain={["dataMin - 0.3", "dataMax + 0.3"]} hide />
+                <ZAxis type="number" dataKey="units_sold" range={[90, 900]} />
+                <ChartTooltip
+                  cursor={false}
+                  content={({ active, payload }) => {
+                    const r = payload?.[0]?.payload as StoreRow | undefined;
+                    if (!active || !r) return null;
+                    return (
+                      <div className="bg-background grid gap-1 rounded-lg border px-3 py-2 text-xs shadow-xl">
+                        <p className="text-sm font-medium">{r.dealer_name}</p>
+                        <p className="text-muted-foreground">
+                          {r.brand} · {r.city}, {r.region}
+                        </p>
+                        <p className="tabular">
+                          {fmt.num(r.units_sold)} {t("ov.trend.units").toLowerCase()} · {fmt.money(r.revenue)}
+                        </p>
+                        <p className="tabular">
+                          {r.attainment_pct === null ? t("rg.no_target") : t("rg.of_target", { v: fmt.pct(r.attainment_pct, 0) })} · {yoy(r.yoy_units_pct)} {t("rg.yoy")}
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
+                <Scatter
+                  data={located}
+                  shape={(props: { cx?: number; cy?: number; size?: number; payload?: StoreRow }) => (
+                    <circle
+                      cx={props.cx}
+                      cy={props.cy}
+                      r={Math.sqrt((props.size ?? 100) / Math.PI)}
+                      fill={attainmentColor(props.payload?.attainment_pct)}
+                      fillOpacity={0.8}
+                      stroke="var(--background)"
+                      strokeWidth={1.5}
+                    />
+                  )}
+                />
+              </ScatterChart>
+            </ChartContainer>
+          )}
+        </ChartFrame>
+      )}
+
+      <ChartFrame
+        headline={t("rg.rank.title")}
+        description={<Legend />}
+        csv={{ filename: "stores_by_units.csv", headers: [t("rg.col.store"), t("rg.col.units"), t("rg.col.pace")], rows: ranking.map((r) => [r.dealer_name, r.units_sold, r.attainment_pct]) }}
+      >
+        {(height) => (
+          <ChartContainer config={chartConfig} className="w-full" style={{ height: Math.max(height - 20, 26 * ranking.length + 24) }}>
+            <BarChart data={ranking} layout="vertical" margin={{ left: 0, right: 56, top: 4 }}>
+              <CartesianGrid horizontal={false} strokeOpacity={0.6} />
+              <XAxis type="number" hide />
+              <YAxis dataKey="label" type="category" tickLine={false} axisLine={false} width={200} interval={0} tick={{ fontSize: 12 }} />
               <ChartTooltip
-                cursor={false}
+                cursor={{ fill: "var(--muted)", opacity: 0.5 }}
                 content={({ active, payload }) => {
-                  const r = payload?.[0]?.payload as StoreRow | undefined;
+                  const r = payload?.[0]?.payload as (StoreRow & { label: string }) | undefined;
                   if (!active || !r) return null;
                   return (
-                    <div className="bg-background grid gap-1 rounded-lg border px-3 py-2 text-xs shadow-xl">
-                      <p className="text-sm font-medium">{r.dealer_name}</p>
-                      <p className="text-muted-foreground">
-                        {r.brand} · {r.city}, {r.region}
-                      </p>
+                    <div className="bg-background grid gap-0.5 rounded-lg border px-3 py-2 text-xs shadow-xl">
+                      <p className="text-sm font-medium">{r.label}</p>
                       <p className="tabular">
-                        {fmt.num(r.units_sold)} {t("ov.trend.units").toLowerCase()} · {fmt.money(r.revenue)}
-                      </p>
-                      <p className="tabular">
-                        {r.attainment_pct === null ? t("rg.no_target") : t("rg.of_target", { v: fmt.pct(r.attainment_pct, 0) })} · {yoy(r.yoy_units_pct)} {t("rg.yoy")}
+                        {fmt.num(r.units_sold)} {t("ov.trend.units").toLowerCase()} · {r.attainment_pct === null ? t("rg.no_target") : t("rg.of_target", { v: fmt.pct(r.attainment_pct, 0) })}
                       </p>
                     </div>
                   );
                 }}
               />
-              <Scatter
-                data={located}
-                shape={(props: { cx?: number; cy?: number; size?: number; payload?: StoreRow }) => (
-                  <circle
-                    cx={props.cx}
-                    cy={props.cy}
-                    r={Math.sqrt((props.size ?? 100) / Math.PI)}
-                    fill={attainmentColor(props.payload?.attainment_pct)}
-                    fillOpacity={0.8}
-                    stroke="var(--background)"
-                    strokeWidth={1.5}
-                  />
-                )}
-              />
-            </ScatterChart>
+              <Bar dataKey="units_sold" radius={3} barSize={14}>
+                <LabelList dataKey="units_sold" position="right" fontSize={12} className="fill-foreground" formatter={(v: unknown) => fmt.num(Number(v))} />
+              </Bar>
+            </BarChart>
           </ChartContainer>
-        </Panel>
-      )}
+        )}
+      </ChartFrame>
 
-      <Panel title={t("rg.rank.title")} action={<Legend />}>
-        <ChartContainer config={chartConfig} className="w-full" style={{ height: Math.max(320, 26 * ranking.length + 24) }}>
-          <BarChart data={ranking} layout="vertical" margin={{ left: 0, right: 56, top: 4 }}>
-            <CartesianGrid horizontal={false} />
-            <XAxis type="number" hide />
-            <YAxis dataKey="label" type="category" tickLine={false} axisLine={false} width={200} interval={0} tick={{ fontSize: 12 }} />
-            <ChartTooltip
-              cursor={{ fill: "var(--muted)", opacity: 0.5 }}
-              content={({ active, payload }) => {
-                const r = payload?.[0]?.payload as (StoreRow & { label: string }) | undefined;
-                if (!active || !r) return null;
-                return (
-                  <div className="bg-background grid gap-0.5 rounded-lg border px-3 py-2 text-xs shadow-xl">
-                    <p className="text-sm font-medium">{r.label}</p>
-                    <p className="tabular">{fmt.num(r.units_sold)} {t("ov.trend.units").toLowerCase()} · {r.attainment_pct === null ? t("rg.no_target") : t("rg.of_target", { v: fmt.pct(r.attainment_pct, 0) })}</p>
-                  </div>
-                );
-              }}
-            />
-            <Bar dataKey="units_sold" radius={4} barSize={14}>
-              <LabelList dataKey="units_sold" position="right" fontSize={12} className="fill-foreground" formatter={(v: unknown) => fmt.num(Number(v))} />
-            </Bar>
-          </BarChart>
-        </ChartContainer>
-      </Panel>
-
-      <Panel title={t("rg.score.title")}>
+      <Section title={t("rg.score.title")}>
         <DataTable columns={columns} rows={rows} rowKey={(r) => r.dealer_id} initialSort={{ key: "units", dir: "desc" }} />
-      </Panel>
-
-      {weakest && strongest && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <Alert>
-            <Award className="text-success" />
-            <AlertTitle>{t("rg.strong", { name: strongest.dealer_name })}</AlertTitle>
-            <AlertDescription>
-              {t("rg.summary", { units: fmt.num(strongest.units_sold), pace: fmt.pct(strongest.attainment_pct, 0), yoy: yoy(strongest.yoy_units_pct) })}
-            </AlertDescription>
-          </Alert>
-          <Alert>
-            <TriangleAlert className="text-warning" />
-            <AlertTitle>{t("rg.weak", { name: weakest.dealer_name })}</AlertTitle>
-            <AlertDescription>
-              {t("rg.summary", { units: fmt.num(weakest.units_sold), pace: fmt.pct(weakest.attainment_pct, 0), yoy: yoy(weakest.yoy_units_pct) })}
-              {alsoDown.length > 0 && ` ${t("rg.also_down", { names: alsoDown.map((r) => r.dealer_name).join(", ") })}`}
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
+      </Section>
     </div>
   );
 }

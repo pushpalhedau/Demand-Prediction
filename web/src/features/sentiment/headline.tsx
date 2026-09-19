@@ -1,12 +1,12 @@
 "use client";
 
 import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
-import { Card, CardContent } from "@/components/ui/card";
+import { Insight } from "@/components/data/insight";
+import { Section } from "@/components/data/section";
 import { ChartContainer } from "@/components/ui/chart";
 import { hasTranslation } from "@/lib/i18n";
 import { useFormat, usePresentation } from "@/lib/session";
 import type { Article, SentimentOverview } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import { RichText } from "@/components/data/rich-text";
 import { direction, signalWord, themeDrivers } from "./signals";
 
@@ -26,10 +26,10 @@ export function Headline({ stats, runrate }: { stats: Stats; runrate: number }) 
   const arc = ((Math.max(-GAUGE_LIMIT, Math.min(GAUGE_LIMIT, net)) + GAUGE_LIMIT) / (2 * GAUGE_LIMIT)) * 100;
 
   return (
-    <Card>
-      <CardContent className="grid items-center gap-6 md:grid-cols-[3fr_2fr]">
+    <div className="bg-card rounded-lg border p-5">
+      <div className="grid items-center gap-6 md:grid-cols-[3fr_2fr]">
         <div className="space-y-1">
-          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{t("sa.headline.label")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium tracking-[0.08em] uppercase">{t("sa.headline.label")}</p>
           <p className="font-heading tabular text-5xl font-semibold tracking-[-0.03em]" style={{ color }}>{fmt.pct(net, 1, true)}</p>
           <p className="text-sm">
             {t(`sa.word.${word}`)}
@@ -45,8 +45,8 @@ export function Headline({ stats, runrate }: { stats: Stats; runrate: number }) 
           </ChartContainer>
           <p className="text-muted-foreground -mt-1 text-center text-xs">{t("sa.gauge.scale")}</p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -100,11 +100,12 @@ export function BottomLine({ stats, articles, runrate }: { stats: Stats; article
   }
 
   return (
-    <div className={cn("rounded-xl border border-l-4 p-5")} style={{ borderLeftColor: TONE[tone] }}>
-      <p className="text-xs font-semibold tracking-wide uppercase" style={{ color: TONE[tone] }}>{t("sa.bottom_line")}</p>
-      <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-        <RichText text={body} />
-      </p>
-    </div>
+    <Section title={t("sa.bottom_line")}>
+      <Insight
+        tag={t(`sa.word.${tone}`)}
+        accent={TONE[tone]}
+        detail={<RichText text={body} />}
+      />
+    </Section>
   );
 }

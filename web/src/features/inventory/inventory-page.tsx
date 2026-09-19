@@ -1,12 +1,13 @@
 "use client";
 
 import { CircleCheck, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, Scatter, ScatterChart, XAxis, YAxis, ZAxis } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 import { Panel, PanelSkeleton } from "@/components/data/chart-card";
 import { DataTable, type Column } from "@/components/data/data-table";
-import { KpiCard, KpiSkeletonRow } from "@/components/data/kpi-card";
-import { PageHeader } from "@/components/data/page-header";
+import { MetricStrip, MetricStripSkeleton } from "@/components/data/metric-strip";
+import { PageHeading } from "@/components/data/page-heading";
 import { QueryBoundary } from "@/components/data/query-boundary";
 import { EmptyState } from "@/components/data/states";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -29,61 +30,74 @@ export function InventoryPage() {
   const { t } = usePresentation();
   const [agedDays, setAgedDays] = useState(90);
   const query = useDashboardQuery<StockHealth>("inv-health", "/api/inventory/stock-health", { params: { aged_days: agedDays } });
+
+  const threshold = (
+    <div className="flex items-center gap-2">
+      <span className="text-muted-foreground text-xs">{t("inv.aged_threshold")}</span>
+      <Select value={String(agedDays)} onValueChange={(v) => setAgedDays(Number(v))}>
+        <SelectTrigger size="sm" className="w-32"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {(query.data?.thresholds ?? [45, 60, 75, 90, 120]).map((d) => (
+            <SelectItem key={d} value={String(d)}>{t("inv.days", { n: d })}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   return (
-    <>
-      <PageHeader
-        title={t("tab.inventory")}
-        description={t("inv.subtitle")}
-        actions={
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-xs">{t("inv.aged_threshold")}</span>
-            <Select value={String(agedDays)} onValueChange={(v) => setAgedDays(Number(v))}>
-              <SelectTrigger size="sm" className="w-32"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {(query.data?.thresholds ?? [45, 60, 75, 90, 120]).map((d) => (
-                  <SelectItem key={d} value={String(d)}>{t("inv.days", { n: d })}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        }
-      />
-      <QueryBoundary query={query} skeleton={<div className="space-y-6"><KpiSkeletonRow /><PanelSkeleton height={340} /></div>}>
-        {(d) => (d.status === "ok" ? <Content data={d as Health} /> : <EmptyState title={t("inv.empty")} />)}
-      </QueryBoundary>
-    </>
+    <QueryBoundary
+      query={query}
+      skeleton={
+        <div className="space-y-8">
+          <PanelSkeleton height={110} />
+          <MetricStripSkeleton />
+          <PanelSkeleton height={340} />
+        </div>
+      }
+    >
+      {(d) => (d.status === "ok" ? <Content data={d as Health} threshold={threshold} /> : <PageHeading eyebrow={t("tab.inventory")} headline={t("inv.empty")} actions={threshold} />)}
+    </QueryBoundary>
   );
 }
 
-function Content({ data }: { data: Health }) {
+function Content({ data, threshold }: { data: Health; threshold: ReactNode }) {
   const { t } = usePresentation();
   const fmt = useFormat();
   const k = data.kpis;
-  const healthy = k.net_days_supply >= k.healthy_low && k.net_days_supply <= k.healthy_high;
+  const state = k.net_days_supply < k.healthy_low ? "below" : k.net_days_supply > k.healthy_high ? "above" : "inside";
   const supplyNote =
-    k.net_days_supply < k.healthy_low
+    state === "below"
       ? t("inv.kpi.below", { n: fmt.num(k.healthy_low - k.net_days_supply) })
-      : k.net_days_supply > k.healthy_high
+      : state === "above"
         ? t("inv.kpi.above", { n: fmt.num(k.net_days_supply - k.healthy_high) })
         : t("inv.kpi.inside", { low: k.healthy_low, high: k.healthy_high });
+  const headline = t(`inv.head.${state}`, { units: fmt.num(k.units), days: fmt.num(k.net_days_supply), low: k.healthy_low, high: k.healthy_high, aged: fmt.num(k.aged_units), n: k.aged_days });
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label={t("inv.kpi.units")} value={fmt.num(k.units)} note={t("inv.kpi.pipeline", { transit: fmt.num(k.in_transit), order: fmt.num(k.on_order) })} />
-        <KpiCard label={t("inv.kpi.supply")} value={t("inv.days", { n: fmt.num(k.net_days_supply) })} note={supplyNote} tone={healthy ? "positive" : "negative"} />
-        <KpiCard label={t("inv.kpi.cost")} value={fmt.money(k.cost_value)} note={t("inv.kpi.carry", { carry: fmt.money(k.carry_per_month), floor: fmt.money(k.floorplan_per_month) })} />
-        <KpiCard
-          label={t("inv.kpi.aged", { n: k.aged_days })}
-          value={t("inv.units", { n: fmt.num(k.aged_units) })}
-          note={t("inv.kpi.aged_note", { capital: fmt.money(k.aged_capital), burn: fmt.money(k.aged_burn_per_month) })}
-          tone="negative"
-        />
-      </div>
+    <div className="space-y-8">
+      <PageHeading eyebrow={t("tab.inventory")} headline={headline} actions={threshold} />
+      <MetricStrip
+        metrics={[
+          { label: t("inv.kpi.units"), value: fmt.num(k.units), note: t("inv.kpi.pipeline", { transit: fmt.num(k.in_transit), order: fmt.num(k.on_order) }) },
+          {
+            label: t("inv.kpi.supply"),
+            value: t("inv.days", { n: fmt.num(k.net_days_supply) }),
+            delta: { text: supplyNote, tone: state === "inside" ? "positive" : "negative" },
+            bullet: { value: k.net_days_supply, target: k.healthy_high, targetLabel: t("inv.healthy_max") },
+          },
+          { label: t("inv.kpi.cost"), value: fmt.money(k.cost_value), note: t("inv.kpi.carry", { carry: fmt.money(k.carry_per_month), floor: fmt.money(k.floorplan_per_month) }) },
+          {
+            label: t("inv.kpi.aged", { n: k.aged_days }),
+            value: t("inv.units", { n: fmt.num(k.aged_units) }),
+            note: t("inv.kpi.aged_note", { capital: fmt.money(k.aged_capital), burn: fmt.money(k.aged_burn_per_month) }),
+          },
+        ]}
+      />
 
       <Coverage coverage={data.coverage} />
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-x-10 gap-y-8 xl:grid-cols-2">
         <AgingLadder aging={data.aging} />
         <StockVsDemand data={data.stock_vs_demand} />
       </div>
@@ -101,30 +115,35 @@ function Coverage({ coverage }: { coverage: Health["coverage"] }) {
   const config = { units: { label: t("inv.cov.demand"), color: "var(--chart-1)" } } satisfies ChartConfig;
   const rows = coverage.demand.map((d) => ({ label: t("inv.cov.next", { n: d.days }), units: d.units }));
   const top = Math.max(coverage.with_pipeline, ...coverage.demand.map((d) => d.units)) * 1.18;
+  const d30 = coverage.demand[0]?.units ?? 0;
+  const d90 = coverage.demand[coverage.demand.length - 1]?.units ?? 0;
+  const headline = t("inv.cov.head", { now: fmt.num((coverage.on_hand / (d30 || 1)) * 100), pipe: fmt.num((coverage.with_pipeline / (d90 || 1)) * 100) });
   return (
-    <Panel title={t("inv.cov.title")} description={t("inv.cov.caption")}>
-      <ChartContainer config={config} className="h-[320px] w-full">
-        <BarChart data={rows} margin={{ left: 4, right: 12, top: 24 }}>
-          <CartesianGrid vertical={false} />
-          <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
-          <YAxis domain={[0, top]} tickFormatter={(v: number) => fmt.compact(v)} tickLine={false} axisLine={false} width={52} />
-          <ChartTooltip
-            cursor={{ fill: "var(--muted)", opacity: 0.5 }}
-            content={({ active, payload }) => {
-              const r = payload?.[0]?.payload as (typeof rows)[number] | undefined;
-              return active && r ? (
-                <div className="bg-background rounded-lg border px-3 py-2 text-xs shadow-xl">
-                  <span className="font-medium">{r.label}</span> <span className="tabular ml-2">{t("inv.cov.tip", { n: fmt.num(r.units) })}</span>
-                </div>
-              ) : null;
-            }}
-          />
-          <ReferenceLine y={coverage.on_hand} stroke="var(--success)" strokeWidth={2} label={{ value: t("inv.cov.now", { n: fmt.num(coverage.on_hand) }), position: "insideTopLeft", fill: "var(--success)", fontSize: 11 }} />
-          <ReferenceLine y={coverage.with_pipeline} stroke="var(--foreground)" strokeDasharray="5 4" label={{ value: t("inv.cov.pipeline", { n: fmt.num(coverage.with_pipeline) }), position: "insideTopLeft", fill: "var(--foreground)", fontSize: 11 }} />
-          <Bar dataKey="units" fill="var(--color-units)" radius={[4, 4, 0, 0]} maxBarSize={88} />
-        </BarChart>
-      </ChartContainer>
-    </Panel>
+    <ChartFrame headline={headline} description={t("inv.cov.caption")} csv={{ filename: "forecast_coverage.csv", headers: [t("inv.cov.title"), t("inv.cov.demand")], rows: rows.map((r) => [r.label, r.units]) }}>
+      {(height) => (
+        <ChartContainer config={config} className="w-full" style={{ height: height - 20 }}>
+          <BarChart data={rows} margin={{ left: 0, right: 12, top: 24 }}>
+            <CartesianGrid vertical={false} strokeOpacity={0.6} />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={10} />
+            <YAxis domain={[0, top]} tickFormatter={(v: number) => fmt.compact(v)} tickLine={false} axisLine={false} width={52} />
+            <ChartTooltip
+              cursor={{ fill: "var(--muted)", opacity: 0.5 }}
+              content={({ active, payload }) => {
+                const r = payload?.[0]?.payload as (typeof rows)[number] | undefined;
+                return active && r ? (
+                  <div className="bg-background rounded-lg border px-3 py-2 text-xs shadow-xl">
+                    <span className="font-medium">{r.label}</span> <span className="tabular ml-2">{t("inv.cov.tip", { n: fmt.num(r.units) })}</span>
+                  </div>
+                ) : null;
+              }}
+            />
+            <ReferenceLine y={coverage.on_hand} stroke="var(--success)" strokeWidth={2} label={{ value: t("inv.cov.now", { n: fmt.num(coverage.on_hand) }), position: "insideTopLeft", fill: "var(--success)", fontSize: 11, fontWeight: 600 }} />
+            <ReferenceLine y={coverage.with_pipeline} stroke="var(--foreground)" strokeOpacity={0.7} strokeDasharray="5 4" label={{ value: t("inv.cov.pipeline", { n: fmt.num(coverage.with_pipeline) }), position: "insideTopLeft", fill: "var(--foreground)", fontSize: 11, fontWeight: 600 }} />
+            <Bar dataKey="units" fill="var(--color-units)" radius={[3, 3, 0, 0]} maxBarSize={88} />
+          </BarChart>
+        </ChartContainer>
+      )}
+    </ChartFrame>
   );
 }
 
@@ -242,7 +261,7 @@ function Reorder({ rows }: { rows: Health["reorder"] }) {
       key: "urgency",
       header: t("inv.col.urgency"),
       cell: (r) => (
-        <div className="flex w-28 items-center gap-2">
+        <div className="flex w-20 items-center gap-2">
           <Progress value={r.urgency} className="h-1.5" />
           <span className="tabular text-xs">{fmt.num(r.urgency)}</span>
         </div>
