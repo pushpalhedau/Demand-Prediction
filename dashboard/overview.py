@@ -18,7 +18,7 @@ from utils.helpers import (
 )
 from utils.i18n import t, tv, tv_series, fmt_num, fmt_pct, hover_money, hover_month
 from analytics.decision_engine import (
-    project_year_end, generate_plays, category_accent, GROSS_PER_NEW_UNIT,
+    project_year_end, generate_plays, category_accent, _bench,
     _project_series,
 )
 
@@ -227,7 +227,7 @@ def _render_play(idx: int, play) -> None:
           </div>
           <div style="font-size:13px;color:{_INK_MUTED};line-height:1.7;">{play.detail}</div>
           <div style="font-size:17px;font-weight:700;color:#10b981;margin-top:10px;">
-            {_fmt_money(play.impact_eur)}
+            {_fmt_money(play.impact_amt)}
             <span style="font-size:11px;color:{_INK_MUTED};font-weight:400;"> {t("ov.rec.est_value")}</span>
           </div>
         </div>
@@ -287,7 +287,7 @@ def _render_recommendations(session, filters: dict) -> None:
         landing, plays = {}, []
         st.warning(t("ov.rec.unavailable", e=e))
 
-    gross_at_stake = sum(p.impact_eur for p in plays)
+    gross_at_stake = sum(p.impact_amt for p in plays)
     att = landing.get("attainment_pct")
     gap = landing.get("unit_gap", 0.0)
     gpm = landing.get("gap_per_store_month", 0.0)
@@ -305,7 +305,7 @@ def _render_recommendations(session, filters: dict) -> None:
                 delta=t("ov.rec.landing_delta",
                         sign=("−" if short else "+"),
                         units=fmt_num(abs(gap)),
-                        money=_fmt_money(abs(gap) * GROSS_PER_NEW_UNIT)),
+                        money=_fmt_money(abs(gap) * _bench(session).gross_per_unit)),
                 is_positive=not short,
             )
     with k2:

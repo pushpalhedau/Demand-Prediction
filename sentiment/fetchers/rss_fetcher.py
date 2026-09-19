@@ -1,5 +1,5 @@
 """
-Google News RSS fetcher for German auto-demand news.
+Google News RSS fetcher for local auto-demand news (any country, free, no API key).
 
 Why this exists
 ---------------
@@ -23,6 +23,8 @@ produces, so ``save_articles_to_db`` and everything downstream is unchanged:
 
 import logging
 import re
+import threading
+import time
 from datetime import datetime, timezone, date
 from email.utils import parsedate_to_datetime
 from typing import Dict, List, Optional
@@ -30,6 +32,8 @@ from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
 
 import requests
+
+from utils.i18n import tenant_config
 
 from sentiment.fetchers.gdelt_fetcher import (
     DE_AUTO_QUERIES,
@@ -58,7 +62,39 @@ _RSS_QUERIES: Dict[str, str] = {
     "incentives_offers": 'Neuwagen Rabatt OR "0 Prozent Finanzierung" OR Umweltbonus OR Kaufprämie OR Inzahlungnahme',
 }
 
+# The same eight themes for an English-language edition. Keys are the internal theme ids
+# (kept from the original German build); only the search text changes per edition.
+_RSS_QUERIES_EN: Dict[str, str] = {
+    "de_auto_demand":    '("new car sales" OR "car registrations" OR "auto sales" OR "car market") {country}',
+    "ev_market_de":      '("electric vehicle" OR "EV charging" OR "electric car" OR "battery plant") {country}',
+    "tax_policy":        '("vehicle tax" OR "car prices" OR "registration fee" OR "import duty" OR "car tariffs") {country}',
+    "fuel_prices":       '("fuel prices" OR "petrol prices" OR "gas prices" OR "diesel prices") {country}',
+    "de_macro_economy":  '("interest rates" OR inflation OR "central bank" OR recession OR "consumer confidence") {country}',
+    "auto_industry_de":  '("auto industry" OR "car production" OR "plant closure" OR "automaker") {country}',
+    "auto_financing":    '("car loan" OR "auto financing" OR "car lease" OR "auto loan rates") {country}',
+    "incentives_offers": '("new car deals" OR "car incentives" OR "0% financing" OR "car rebate") {country}',
+}
+
 _GDELT_DATE_FMT = "%Y%m%dT%H%M%SZ"
+_CACHE_TTL_S = 1800
+_cache: Dict[tuple, tuple] = {}
+_cache_lock = threading.Lock()
+
+
+def _edition() -> Dict:
+    """
+    The news edition for the CURRENT tenant: Google News language/country and which
+    query pack to use. Explicit tenant config wins; otherwise it follows the tenant's UI language.
+    """
+    cfg = tenant_config()
+    lang = (cfg.get("language") or "en").lower()
+    hl = cfg.get("news_hl") or lang
+    gl = cfg.get("news_gl") or ("DE" if lang == "de" else "US")
+    return {
+        "hl": hl, "gl": gl, "ceid": f"{gl}:{hl.split('-')[0]}",
+        "pack": "de" if hl.lower().startswith("de") else "en",
+        "country": cfg.get("country_name") or "",
+    }
 
 
 def _q_by_name(name: str) -> Optional[Dict]:
@@ -95,10 +131,10 @@ def _split_title(raw_title: str) -> str:
     return raw_title.rsplit(" - ", 1)[0].strip() if " - " in raw_title else raw_title.strip()
 
 
-def _fetch_one(rss_query: str, days: int, max_records: int) -> List[Dict]:
+def _fetch_one(rss_query: str, days: int, max_records: int, ed: Dict) -> List[Dict]:
     params = {
-        "q": f"{rss_query} when:{days}d",
-        "hl": "de", "gl": "DE", "ceid": "DE:de",
+        "q": f"{rss_query.replace('{country}', ed['country'])} when:{days}d",
+        "hl": ed["hl"], "gl": ed["gl"], "ceid": ed["ceid"],
     }
     resp = requests.get(_GOOGLE_NEWS_RSS, params=params, headers=_HEADERS, timeout=20)
     resp.raise_for_status()
@@ -118,8 +154,8 @@ def _fetch_one(rss_query: str, days: int, max_records: int) -> List[Dict]:
             "title": _split_title(item.findtext("title") or ""),
             "domain": _domain_from(src_url, src_name),
             "seendate": _to_seendate(item.findtext("pubDate") or ""),
-            "language": "german",
-            "sourcecountry": "Germany",
+            "language": "german" if ed["pack"] == "de" else "english",
+            "sourcecountry": ed["country"] or ed["gl"],
             "socialimage": None,
         })
     return out
@@ -135,19 +171,35 @@ def fetch_all_themes_rss(
     return a flat, deduplicated, relevance-gated list of article dicts shaped
     like ``gdelt_fetcher.fetch_all_themes``.
     """
+    ed = _edition()
     days = _timespan_days(timespan)
+    # News is public and identical for everyone on the same edition, so fetch it once per
+    # (country, language) and share it across tenants: request volume scales with editions, not tenants.
+    key = (ed["hl"], ed["gl"], ed["country"], days, max_records_per_query, one_per_day)
+    with _cache_lock:
+        hit = _cache.get(key)
+        if hit and time.time() - hit[0] < _CACHE_TTL_S:
+            return [dict(a) for a in hit[1]]
+    articles = _fetch_edition(ed, days, max_records_per_query, one_per_day)
+    with _cache_lock:
+        _cache[key] = (time.time(), articles)
+    return [dict(a) for a in articles]
+
+
+def _fetch_edition(ed: Dict, days: int, max_records_per_query: int, one_per_day: bool) -> List[Dict]:
+    queries = _RSS_QUERIES if ed["pack"] == "de" else _RSS_QUERIES_EN
     seen_urls: set = set()
     seen_titles: set = set()
     seen_days: set = set()
     all_articles: List[Dict] = []
     dropped_noise = 0
 
-    for name, rss_query in _RSS_QUERIES.items():
+    for name, rss_query in queries.items():
         q = _q_by_name(name)
         if q is None:
             continue
         try:
-            raw = _fetch_one(rss_query, days, max_records_per_query)
+            raw = _fetch_one(rss_query, days, max_records_per_query, ed)
         except Exception as e:
             logger.warning("Google News RSS | theme '%s' failed: %s", name, e)
             continue

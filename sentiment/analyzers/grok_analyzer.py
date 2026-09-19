@@ -24,7 +24,7 @@ from typing import List, Dict, Optional, Tuple
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from database.connection import get_db_session, init_all_tables
+from database.connection import get_db_session
 from database.models import NewsArticle, SentimentSignal
 
 logger = logging.getLogger(__name__)
@@ -487,8 +487,11 @@ def _analyze_live(articles: List[Dict]) -> List[Dict]:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def is_live_mode() -> bool:
-    """Return True if XAI_API_KEY is configured and Grok will be called."""
-    return bool(_XAI_API_KEY)
+    """
+    True only when a key is configured AND paid scoring is explicitly enabled
+    (ALLOW_PAID_SENTIMENT=1). The default is the free offline scorer, so tenants cost nothing.
+    """
+    return bool(_XAI_API_KEY) and os.getenv("ALLOW_PAID_SENTIMENT", "").strip().lower() in ("1", "true", "yes")
 
 
 def analyze_articles(articles: List[Dict]) -> List[Dict]:
@@ -532,7 +535,6 @@ def save_signals_to_db(
             f"article_dicts ({len(article_dicts)}) and signal_dicts ({len(signal_dicts)}) must be same length"
         )
 
-    init_all_tables()
     session = get_db_session()
     inserted = skipped = errors = 0
 

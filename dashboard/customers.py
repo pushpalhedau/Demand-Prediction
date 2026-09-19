@@ -5,6 +5,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from utils.i18n import cur, cur_code
+from utils.benchmarks import gross_series
+from ml_models.xgboost_model import get_lead_form_context
 
 from database.connection import get_db_session
 from database.queries import (
@@ -30,13 +33,6 @@ _SEG_ORDER = [
     "Value Buyers", "Lapsed / At-Risk",
 ]
 
-# Benchmark gross per new unit (front-end + F&I) by franchise origin — the same
-# figures Store Performance uses for "Est. gross" (NADA 2024 / Presidio-NCM
-# FY2024). Used only to size the *identified* opportunity on the action queue.
-_ORIGIN_GROSS = {"luxury": 22_000, "premium": 9_000, "mass": 6_500}
-_LUX_BRANDS = {"Mercedes-Benz", "BMW", "Lexus", "Land Rover"}
-_PREMIUM_BRANDS = {"Toyota", "Honda", "Mazda", "Ford", "Chevrolet"}
-
 _REASON_PRIORITY = [
     "Lease maturing",
     "Overdue for next vehicle",
@@ -50,28 +46,11 @@ _REASON_PLAY = {
     "Churn-risk spike": "Retention save call",
 }
 
-# Lead-form option lists — MUST match the values the model was trained on
-# (unseen labels are silently coerced to the encoder's first class).
-_CHANNELS = ["Showroom Walk-in", "Referral", "Marketplace Portal", "TV/Radio",
-             "Search Engine", "Online Ad", "Social Media"]
-_CATEGORIES = ["SUV", "Sedan", "Pickup", "Hatchback", "Minivan", "Luxury", "Coupe"]
-_FUELS = ["Petrol", "Hybrid", "Electric", "Diesel"]
-_OCCUPATIONS = ["Salaried Professional", "Self-Employed", "Business Owner",
-                "Government Employee", "Free Zone Employee", "Public Sector",
-                "Retired", "Contract Worker"]
 _RELATIONSHIP = {
     "Brand-new lead": 22.0,
     "Prior service customer": 46.0,
     "Repeat buyer with the group": 72.0,
 }
-
-
-def _origin(brand: str) -> str:
-    if brand in _LUX_BRANDS:
-        return "luxury"
-    if brand in _PREMIUM_BRANDS:
-        return "premium"
-    return "mass"
 
 
 def _segment_panel(df: pd.DataFrame) -> pd.DataFrame:
@@ -88,12 +67,12 @@ def _segment_panel(df: pd.DataFrame) -> pd.DataFrame:
             "Segment": seg,
             "Customers": len(g),
             "% of base": round(100 * len(g) / total, 1),
-            "Lifetime revenue (AED M)": round(g["lifetime_revenue"].sum() / 1e6, 1),
+            f"Lifetime revenue ({cur_code()} M)": round(g["lifetime_revenue"].sum() / 1e6, 1),
             "Avg deal value": round(buyers["avg_deal_value"].mean() or 0),
             "Repeat rate %": round(100 * (buyers["number_of_past_purchases"] >= 2).mean(), 0) if len(buyers) else 0,
             "Lease %": round(100 * g["lease_deals"].sum() / deals, 0) if deals else 0,
-            "Median income": round(g["estimated_annual_income_eur"].median() or 0),
-            "Avg credit": round(g["schufa_score"].mean() or 0),
+            "Median income": round(g["annual_income"].median() or 0),
+            "Avg credit": round(g["credit_score"].mean() or 0),
             "Mo. since deal": round(buyers["months_since_last_deal"].median(), 0) if len(buyers) else None,
         })
     return pd.DataFrame(rows)
@@ -142,8 +121,8 @@ def _build_action_queue(book: pd.DataFrame) -> pd.DataFrame:
     q["vehicle"] = q["lease_vehicle"].where(
         is_lease, (q["last_brand"].astype(str) + " " + q["last_model"].astype(str))
     )
-    q["opportunity_eur"] = (
-        q["last_brand"].map(_origin).map(_ORIGIN_GROSS).fillna(_ORIGIN_GROSS["mass"])
+    q["opportunity_amt"] = (
+        gross_series(q["last_brand"])
     )
     q["_lm_days"] = lm_days.reindex(q.index)
     q["when"] = np.where(
@@ -152,7 +131,7 @@ def _build_action_queue(book: pd.DataFrame) -> pd.DataFrame:
     q["play"] = q["reason"].map(_REASON_PLAY)
     q["_prio"] = q["reason"].map({r: i for i, r in enumerate(_REASON_PRIORITY)})
     # Within lease maturities, soonest first; within the rest, biggest gross first.
-    q["_sort2"] = np.where(is_lease, q["_lm_days"].fillna(999), -q["opportunity_eur"])
+    q["_sort2"] = np.where(is_lease, q["_lm_days"].fillna(999), -q["opportunity_amt"])
     q = q.sort_values(["_prio", "_sort2"], ascending=[True, True])
     return q
 
@@ -258,14 +237,14 @@ def render_customers(filters: dict):
                         "Contact": view["when"],
                         "Vehicle": view["vehicle"],
                         "Mo. since deal": view["months_since_last_deal"].round(0),
-                        "Identified gross (AED)": view["opportunity_eur"].round(0).astype(int),
+                        f"Identified gross ({cur_code()})": view["opportunity_amt"].round(0).astype(int),
                         "Email OK": view["email_opt_in"].fillna(False).map({True: "yes", False: "no"}),
                     })
                     st.dataframe(
                         disp, use_container_width=True, hide_index=True, height=430,
                         column_config={
                             "Mo. since deal": st.column_config.NumberColumn(format="%.0f"),
-                            "Identified gross (AED)": st.column_config.NumberColumn(format="%d"),
+                            f"Identified gross ({cur_code()})": st.column_config.NumberColumn(format="%d"),
                         },
                     )
                     dl1, _dl = st.columns([1, 3])
@@ -313,11 +292,11 @@ def render_customers(filters: dict):
                             column_config={
                                 "Customers": st.column_config.NumberColumn(format="%d"),
                                 "% of base": st.column_config.NumberColumn(format="%.1f%%"),
-                                "Lifetime revenue (AED M)": st.column_config.NumberColumn(format="%.1f"),
-                                "Avg deal value": st.column_config.NumberColumn(format="AED %d"),
+                                f"Lifetime revenue ({cur_code()} M)": st.column_config.NumberColumn(format="%.1f"),
+                                "Avg deal value": st.column_config.NumberColumn(format=f"{cur()} %d"),
                                 "Repeat rate %": st.column_config.NumberColumn(format="%.0f%%"),
                                 "Lease %": st.column_config.NumberColumn(format="%.0f%%"),
-                                "Median income": st.column_config.NumberColumn(format="AED %d"),
+                                "Median income": st.column_config.NumberColumn(format=f"{cur()} %d"),
                                 "Avg credit": st.column_config.NumberColumn(format="%d"),
                                 "Mo. since deal": st.column_config.NumberColumn(format="%.0f"),
                             },
@@ -334,42 +313,58 @@ def render_customers(filters: dict):
             )
 
             dealers = get_dealer_directory(session)
-            dealers = dealers.sort_values(["state", "city", "dealer_name"])
+            dealers = dealers.sort_values(["region", "city", "dealer_name"])
             store_opts = {
-                f"{r.dealer_name} — {r.city}, {r.state}": (r.state, r.dealer_name, r.brand)
+                f"{r.dealer_name} — {r.city}, {r.region}": (r.region, r.dealer_name, r.brand)
                 for r in dealers.itertuples()
             }
             store_pick = st.selectbox("Store handling this lead", options=list(store_opts.keys()))
-            pick_emirate, pick_store, pick_brand = store_opts[store_pick]
+            pick_region, pick_store, pick_brand = store_opts[store_pick]
+
+            ctx = get_lead_form_context()
+            if ctx is None:
+                st.info("The lead-scoring model has not been trained on this account's data yet.")
+                return
+            opts, stats = ctx["options"], ctx["stats"]
+
+            def _rng(col):
+                st_ = stats[col]
+                return st_["lo"], max(st_["hi"], st_["lo"] + 1), st_["p50"]
 
             f1, f2, f3 = st.columns(3)
             with f1:
-                age = st.slider("Customer age", 21, 75, 38)
-                occupation = st.selectbox("Occupation", options=_OCCUPATIONS)
-                income = st.number_input("Monthly income (AED)", 3000, 200000, 18000, step=1000)
+                lo, hi, mid = _rng("age")
+                age = st.slider("Customer age", int(lo), int(hi), int(mid))
+                occupation = st.selectbox("Occupation", options=opts["occupation"])
+                lo, hi, mid = _rng("annual_income")
+                income = st.number_input(f"Annual income ({cur_code()})", float(lo), float(hi), float(mid),
+                                         step=float(max(round(mid / 50, -2), 100)))
             with f2:
-                schufa_score = st.slider("Credit score (AECB)", 300, 900, 710)
-                vehicle_category = st.selectbox("Vehicle category", options=_CATEGORIES)
-                fuel_type = st.selectbox("Fuel type", options=_FUELS)
+                lo, hi, mid = _rng("credit_score")
+                credit_score = st.slider("Credit score", int(lo), int(hi), int(mid))
+                vehicle_category = st.selectbox("Vehicle category", options=opts["vehicle_category"])
+                fuel_type = st.selectbox("Fuel type", options=opts["fuel_type"])
             with f3:
-                marketing_channel = st.selectbox("Lead source", options=_CHANNELS)
+                marketing_channel = st.selectbox("Lead source", options=opts["marketing_channel"])
                 relationship = st.selectbox("Prior relationship", options=list(_RELATIONSHIP.keys()))
                 discount_pct = st.slider("Discount you can offer (%)", 0.0, 20.0, 6.0, step=0.5)
-                base_price = st.number_input("Vehicle base price (AED)", 40000, 900000, 120000, step=5000)
+                lo, hi, mid = _rng("base_price")
+                base_price = st.number_input(f"Vehicle base price ({cur_code()})", float(lo), float(hi), float(mid),
+                                             step=float(max(round(mid / 40, -2), 100)))
 
             if st.button("Score this lead", type="primary"):
                 lead = {
                     "age": age,
                     "occupation": occupation,
-                    "estimated_annual_income_eur": income,
-                    "schufa_score": schufa_score,
+                    "annual_income": income,
+                    "credit_score": credit_score,
                     "loyalty_score": _RELATIONSHIP[relationship],
                     "vehicle_category": vehicle_category,
                     "fuel_type": fuel_type,
                     "marketing_channel": marketing_channel,
                     "discount_pct": discount_pct,
                     "base_price": base_price,
-                    "state": pick_emirate,
+                    "region": pick_region,
                 }
                 res = predict_deal_probability(lead)
                 prob = res["close_probability"]

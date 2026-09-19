@@ -10,7 +10,8 @@ from sklearn.preprocessing import StandardScaler
 # Add the project root to python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from database.connection import get_db_session, get_data_mode
+from database.connection import get_db_session
+from database.tenant_context import require_tenant_id
 from database.models import Customer, Sale
 from sqlalchemy import func
 
@@ -31,8 +32,8 @@ _BASE_MODEL_DIR = "models/clustering"
 # for a UAE market where ~88% of residents are expatriate.
 FEATURES = [
     "age",
-    "estimated_annual_income_eur",
-    "schufa_score",
+    "annual_income",
+    "credit_score",
     "years_at_address",
     "number_of_past_purchases",
     "recency_days",
@@ -49,8 +50,8 @@ SEGMENT_LABELS = [
 
 
 def _model_dir() -> str:
-    """Return mode-specific model directory: models/clustering/test or .../real"""
-    d = os.path.join(_BASE_MODEL_DIR, get_data_mode())
+    """Per-tenant model directory: models/<kind>/<tenant_id>"""
+    d = os.path.join(_BASE_MODEL_DIR, str(require_tenant_id()))
     os.makedirs(d, exist_ok=True)
     return d
 
@@ -60,7 +61,7 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
     One row per customer with the six segmentation features, joining each
     customer's real deal history from the sales table:
       recency_days   — days since the customer's last activity / last deal
-      avg_deal_value — mean total_revenue_incl_vat across their deals
+      avg_deal_value — mean total_revenue_incl_tax across their deals
     Customers with no deal on file get recency from last_activity_date and the
     buyer-median deal value (so they still cluster somewhere sensible).
     """
@@ -71,8 +72,8 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
         session.query(
             Customer.customer_id,
             Customer.age,
-            Customer.estimated_annual_income_eur,
-            Customer.schufa_score,
+            Customer.annual_income,
+            Customer.credit_score,
             Customer.years_at_address,
             Customer.number_of_past_purchases,
             Customer.last_activity_date,
@@ -83,7 +84,7 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
     deals = pd.read_sql(
         session.query(
             Sale.customer_id.label("customer_id"),
-            func.avg(Sale.total_revenue_incl_vat).label("avg_deal_value"),
+            func.avg(Sale.total_revenue_incl_tax).label("avg_deal_value"),
         ).group_by(Sale.customer_id).statement,
         session.bind,
     )
@@ -99,10 +100,10 @@ def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
     df["avg_deal_value"] = df["avg_deal_value"].fillna(buyer_median)
 
     df["age"] = df["age"].fillna(df["age"].median())
-    df["estimated_annual_income_eur"] = df["estimated_annual_income_eur"].fillna(
-        df["estimated_annual_income_eur"].median()
+    df["annual_income"] = df["annual_income"].fillna(
+        df["annual_income"].median()
     )
-    df["schufa_score"] = df["schufa_score"].fillna(df["schufa_score"].median())
+    df["credit_score"] = df["credit_score"].fillna(df["credit_score"].median())
     df["years_at_address"] = df["years_at_address"].fillna(df["years_at_address"].median())
     df["number_of_past_purchases"] = df["number_of_past_purchases"].fillna(0)
 
@@ -128,7 +129,7 @@ def _assign_labels(cluster_means: pd.DataFrame) -> dict:
     remaining.remove(c)
 
     # High-Value / Prime — highest income of what's left.
-    c = cluster_means.loc[remaining, "estimated_annual_income_eur"].idxmax()
+    c = cluster_means.loc[remaining, "annual_income"].idxmax()
     mapping[c] = "High-Value / Prime"
     remaining.remove(c)
 
@@ -168,10 +169,11 @@ def train_customer_segmentation(n_clusters: int = 5):
         df["assigned_segment"] = df["cluster"].map(cluster_mapping)
 
         print("Writing segmentations back to database customers table...")
+        tenant_id = require_tenant_id()
         session.bulk_update_mappings(
             Customer,
             [
-                {"customer_id": cid, "customer_segment": seg}
+                {"tenant_id": tenant_id, "customer_id": cid, "customer_segment": seg}
                 for cid, seg in zip(df["customer_id"], df["assigned_segment"])
             ],
         )
@@ -206,7 +208,7 @@ def train_customer_segmentation(n_clusters: int = 5):
 def predict_customer_segment(customer_data: dict) -> str:
     """
     Predict the segment for a customer profile given the seven features
-    (age, estimated_annual_income_eur, schufa_score, years_at_address,
+    (age, annual_income, credit_score, years_at_address,
     number_of_past_purchases, recency_days, avg_deal_value). Falls back to
     "Core Mainstream" on any error.
     """
@@ -221,8 +223,8 @@ def predict_customer_segment(customer_data: dict) -> str:
 
         row = [
             customer_data.get("age", 39),
-            customer_data.get("estimated_annual_income_eur", 15000.0),
-            customer_data.get("schufa_score", 700),
+            customer_data.get("annual_income", 15000.0),
+            customer_data.get("credit_score", 700),
             customer_data.get("years_at_address", 6),
             customer_data.get("number_of_past_purchases", 1),
             customer_data.get("recency_days", 540),

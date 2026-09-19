@@ -13,6 +13,7 @@ Two sub-tabs:
 """
 
 import streamlit as st
+from utils.tenant_cache import tenant_cache_data
 import plotly.graph_objects as go
 import pandas as pd
 
@@ -96,7 +97,7 @@ _DIR_ARROW = {"up": "▲", "down": "▼", "neutral": "■"}
 # Small helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=600, show_spinner=False)
+@tenant_cache_data(ttl=600, show_spinner=False)
 def _cached_briefing_context(filters_key: str, _filters, _stats, _articles):
     """The context build sweeps every module's queries (~10s). Cache it on the
     filter set so re-clicking 'Generate read' in the same session is instant."""
@@ -104,7 +105,7 @@ def _cached_briefing_context(filters_key: str, _filters, _stats, _articles):
                                   sentiment_articles=_articles)
 
 
-@st.cache_data(ttl=600, show_spinner=False)
+@tenant_cache_data(ttl=600, show_spinner=False)
 def _group_monthly_runrate() -> float:
     """Group's average booked units per month over the last 12 months of data —
     so the headline % can be expressed as a rough unit count."""
@@ -485,7 +486,7 @@ def _render_forecast_verdict(filters: dict):
         horizon = st.selectbox(t("sa.fc.horizon"), [30, 60, 90, 180], index=2, key="fc_v_horizon",
                                format_func=lambda d: f"{d} days")
     with c2:
-        target = st.selectbox(t("sa.fc.measure"), ["units_sold", "total_revenue_incl_vat"],
+        target = st.selectbox(t("sa.fc.measure"), ["units_sold", "total_revenue_incl_tax"],
                               format_func=lambda x: t("sa.fc.units") if x == "units_sold" else t("sa.fc.revenue"),
                               key="fc_v_target")
     with c1:
@@ -553,7 +554,7 @@ def _render_forecast_verdict(filters: dict):
                       annotation_font_color=_HUE_MARKER)
     fig.update_layout(**_base_layout(height=360, legend=True,
                                      yaxis=dict(title=t("sa.fc.yaxis_units") if _target == "units_sold"
-                                                else t("sa.fc.yaxis_revenue"))))
+                                                else t("sa.fc.yaxis_revenue", cur=cur_code()))))
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 

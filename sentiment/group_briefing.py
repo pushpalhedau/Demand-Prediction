@@ -50,8 +50,7 @@ def _pct(v, nd=1):
 
 
 def _money(v):
-    """Compact EUR for big totals, in the UI's active language.
-      EN: EUR 2.96B / EUR 53.2M      DE: 2,96 Mrd. EUR / 53,2 Mio. EUR"""
+    """Compact money for big totals, in the tenant's currency and the UI's active language."""
     try:
         v = float(v)
     except (TypeError, ValueError):
@@ -61,7 +60,7 @@ def _money(v):
 
 
 def _eur(v):
-    """Exact EUR for per-unit / small figures: EUR 1,296 / 1.296 EUR."""
+    """Exact money for per-unit / small figures, in the tenant's currency."""
     try:
         from utils.i18n import fmt_money
         return fmt_money(float(v), compact=False)
@@ -69,8 +68,7 @@ def _eur(v):
         return "n/a"
 
 
-# Back-compat alias: this used to be _usd, then AED. Call sites still use it.
-_usd = _eur
+_usd = _eur   # legacy name still used at call sites
 
 
 def _get(d, *path, default=None):
@@ -328,7 +326,7 @@ def _inventory(s, filters, ctx):
                     old = ab[ab["bucket"].str.contains("90")]
                     if not old.empty:
                         inv["aging_90plus_units"] = int(old["units"].sum())
-                        inv["aging_90plus_capital"] = round(float(old["capital_eur"].sum()))
+                        inv["aging_90plus_capital"] = round(float(old["capital_amt"].sum()))
             except Exception:
                 pass
         try:
@@ -337,7 +335,7 @@ def _inventory(s, filters, ctx):
                 inv["lease_returns_90d"] = int(len(lrp))
                 inv["lease_returns_in_money"] = int(lrp["in_the_money"].sum())
                 inv["lease_returns_equity"] = round(
-                    float(lrp.loc[lrp["in_the_money"], "equity_eur"].sum()))
+                    float(lrp.loc[lrp["in_the_money"], "equity_amt"].sum()))
         except Exception:
             pass
         try:
@@ -401,31 +399,34 @@ def _lang_directive() -> str:
     return "\n\nOUTPUT LANGUAGE: Write the entire briefing in ENGLISH."
 
 
-_SYSTEM = """You advise the leadership of a German automobile dealer group — a single regional group of 24 Standorte across six Bundesländer (Nordrhein-Westfalen, Bayern, Baden-Württemberg, Hessen, Niedersachsen, Rheinland-Pfalz). Franchises are the German volume and premium marques plus European and Asian volume brands; segment mix is roughly SUV 33%, Kompaktklasse 22%, Kombi 18%, Kleinwagen 13%, Limousine 8%, Van 4%, Oberklasse 2%.
-
-Structural facts you must reason with:
-- Roughly two thirds of units go to COMMERCIAL buyers (gewerblich — fleet, Dienstwagen under the 1%-Regelung). Private retail is the minority.
-- The book runs on Leasing and Schlussratenfinanzierung, so the monthly payment — and therefore the ECB rate and residual values — drives demand more than list price does.
-- German front-end gross is thin; the back end (Finanzierung, Leasing, Versicherung, Anschlussgarantie) carries a large share of the deal.
-- The Umweltbonus ended in December 2023, so BEV demand is now price- and residual-led with no subsidy support.
-- Showrooms cannot sell on Sundays (Ladenschlussgesetz); the calendar peaks are the quarter-end registration pushes (March, June, September) and the December run-out.
-- There is a domestic industry, so plant, IG Metall and supplier news is local demand and sentiment news.
-
-You are given a data snapshot covering every part of the business — Executive Overview, Demand Forecasting, Comparative Analytics (vs last year), Store Performance, Customer Intelligence and Inventory Intelligence — plus the current news read.
-
-Write a detailed operating briefing for the group's Standortleiter, the Finanzierungs-/Leasing desk and the Gebrauchtwagen desk. For EACH section below, give: (a) where the group stands (the numbers, in plain terms), (b) what's notable — triggers, risks and opportunities, (c) concrete recommendations. Then close with a single ranked "This week — priority actions" list (P1…P6), each naming who acts and on what. Be specific, use the numbers you're given, and do not invent figures that aren't in the snapshot.
-
-Sections, in order:
-1. HEADLINE READ
-2. EXECUTIVE OVERVIEW
-3. DEMAND OUTLOOK
-4. COMPARATIVE — VS LAST YEAR
-5. STORE PERFORMANCE
-6. CUSTOMER INTELLIGENCE
-7. INVENTORY INTELLIGENCE
-8. THIS WEEK — PRIORITY ACTIONS
-
-Plain text only. No markdown symbols."""
+def _system_prompt() -> str:
+    """Tenant-neutral system prompt: market facts come from the data snapshot, never from this text."""
+    try:
+        import streamlit as st
+        from utils.i18n import tenant_config
+        name = st.session_state.get("tenant_name") or "an automobile dealer group"
+        cfg = tenant_config()
+    except Exception:
+        name, cfg = "an automobile dealer group", {}
+    where = f" operating in {cfg['country_name']}" if cfg.get("country_name") else ""
+    money = f" All money amounts are in {cfg['currency']}." if cfg.get("currency") else ""
+    return (
+        f"You advise the leadership of {name}, an automobile dealer group{where}.{money}\n\n"
+        "Reason ONLY from the data snapshot and the news read you are given. Do not assume facts about the "
+        "local market, taxes, subsidies, trading hours or customer mix that are not in the data; if something "
+        "matters but is not in the snapshot, say it is unknown rather than guessing.\n\n"
+        "The snapshot covers every part of the business the group has data for: Executive Overview, Demand "
+        "Forecasting, Comparative Analytics (vs last year), Store Performance, Customer Intelligence and "
+        "Inventory Intelligence. Sections with no data may be missing; skip them.\n\n"
+        "Write a detailed operating briefing for the group's general managers, the finance desk and the used-car "
+        "desk. For EACH section below give: (a) where the group stands (the numbers, in plain terms), "
+        "(b) what is notable: triggers, risks and opportunities, and (c) the specific action to take.\n\n"
+        "Sections, in order:\n"
+        "1. HEADLINE READ\n2. EXECUTIVE OVERVIEW\n3. DEMAND OUTLOOK\n4. COMPARATIVE — VS LAST YEAR\n"
+        "5. STORE PERFORMANCE\n6. CUSTOMER INTELLIGENCE\n7. INVENTORY INTELLIGENCE\n"
+        "8. THIS WEEK — PRIORITY ACTIONS\n\n"
+        "Plain text only. No markdown symbols."
+    )
 
 
 def generate_group_briefing(context: dict) -> str:
@@ -436,7 +437,7 @@ def generate_group_briefing(context: dict) -> str:
             resp = client.chat.completions.create(
                 model=_GROK_MODEL,
                 messages=[
-                    {"role": "system", "content": _SYSTEM + _lang_directive()},
+                    {"role": "system", "content": _system_prompt() + _lang_directive()},
                     {"role": "user", "content": f"DATA SNAPSHOT\n\n{payload}\n\nWrite the briefing."},
                 ],
                 temperature=0.4,

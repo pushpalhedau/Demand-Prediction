@@ -1,98 +1,78 @@
 import os
-import shutil
-import tempfile
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
+
+from database.tenant_context import current_tenant_id
 
 load_dotenv()
 
-# Active data mode: "test" → automobile_demand.db, "real" → real_demand.db
-_data_mode = "real"
-
-
-def _resolve_writable_sqlite_path(filename: str) -> str:
-    """
-    Return a writable path for a sqlite db file that ships committed in the repo.
-
-    Some hosts (e.g. Streamlit Community Cloud) clone the repo into a
-    filesystem where existing (committed) files are read-only even though
-    *new* files can still be created in the same directory — so a probe that
-    just creates and deletes a sibling file isn't a reliable test. Instead,
-    try to actually open the target file itself for read+write (or create it,
-    if it doesn't exist yet). If that fails, copy the committed baseline into
-    a writable temp directory and use that copy instead. Writes then succeed
-    for the life of the session — they just won't survive an app restart,
-    since the committed file (the source of truth on redeploy) is never
-    modified.
-    """
-    local_path = os.path.abspath(filename)
-    try:
-        if os.path.exists(local_path):
-            with open(local_path, "r+b"):
-                pass
-        else:
-            with open(local_path, "wb"):
-                pass
-        return local_path
-    except OSError:
-        pass
-
-    tmp_path = os.path.join(tempfile.gettempdir(), filename)
-    if not os.path.exists(tmp_path) and os.path.exists(local_path):
-        shutil.copy2(local_path, tmp_path)
-    return tmp_path
-
-
-_TEST_DB_URL = os.getenv("DATABASE_URL") or f"sqlite:///{_resolve_writable_sqlite_path('automobile_demand.db')}"
-_REAL_DB_URL = os.getenv("REAL_DATABASE_URL") or f"sqlite:///{_resolve_writable_sqlite_path('real_demand.db')}"
-
-
-def _build_engine(url):
-    if url.startswith("sqlite"):
-        return create_engine(url, connect_args={"check_same_thread": False})
-    return create_engine(url)
-
-
-_test_engine = _build_engine(_TEST_DB_URL)
-_real_engine = _build_engine(_REAL_DB_URL)
-
-# `engine` stays as test engine alias — backward-compatible with seed_database.py
-engine = _test_engine
-
 Base = declarative_base()
 
-_TestSession = sessionmaker(autocommit=False, autoflush=False, bind=_test_engine)
-_RealSession = sessionmaker(autocommit=False, autoflush=False, bind=_real_engine)
+_DEFAULT_APP_URL = "postgresql+psycopg2://predictax_app:predictax_app_dev@localhost:5432/predictax"
+_DEFAULT_ADMIN_URL = "postgresql+psycopg2://predictax_owner:predictax_owner_dev@localhost:5432/predictax"
+
+_APP_URL = os.getenv("DATABASE_URL") or _DEFAULT_APP_URL
+_ADMIN_URL = os.getenv("ADMIN_DATABASE_URL") or _DEFAULT_ADMIN_URL
 
 
-def set_data_mode(mode: str):
-    """Switch active data source: 'test' → automobile_demand.db, 'real' → real_demand.db."""
-    global _data_mode
-    if mode not in ("test", "real"):
-        raise ValueError(f"Invalid data mode: {mode!r}. Use 'test' or 'real'.")
-    _data_mode = mode
+def _build_engine(url: str):
+    return create_engine(
+        url,
+        pool_pre_ping=True,
+        pool_size=int(os.getenv("DB_POOL_SIZE", "10")),
+        max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "20")),
+        pool_recycle=1800,
+    )
 
 
-def get_data_mode() -> str:
-    return _data_mode
+# App engine: restricted role, row-level security enforced.
+_app_engine = _build_engine(_APP_URL)
+# Admin engine: table owner. Migrations and tenant provisioning ONLY.
+_admin_engine = _build_engine(_ADMIN_URL)
+
+# Kept so `from database.connection import engine` in scripts still resolves.
+engine = _app_engine
+
+
+@event.listens_for(_app_engine, "begin")
+def _bind_tenant_to_transaction(conn):
+    """
+    Pin the transaction to the active tenant. set_config(..., true) is
+    transaction-local, so it is safe with pooled/PgBouncer connections: it can
+    never leak to the next borrower of the same physical connection.
+    """
+    tid = current_tenant_id()
+    if tid is not None:
+        conn.exec_driver_sql("SELECT set_config('app.current_tenant_id', %s, true)", (str(tid),))
+
+
+_AppSession = sessionmaker(autocommit=False, autoflush=False, bind=_app_engine)
+_AdminSession = sessionmaker(autocommit=False, autoflush=False, bind=_admin_engine)
 
 
 def get_engine():
-    return _test_engine if _data_mode == "test" else _real_engine
+    """Tenant-scoped engine (RLS enforced). Use for pd.read_sql and raw SQL."""
+    return _app_engine
+
+
+def get_admin_engine():
+    return _admin_engine
 
 
 def get_db_session():
-    factory = _TestSession if _data_mode == "test" else _RealSession
-    db = factory()
-    try:
-        return db
-    except Exception as e:
-        db.close()
-        raise e
+    """Tenant-scoped session. The tenant comes from tenant_context() or the logged-in Streamlit session."""
+    return _AppSession()
+
+
+def get_admin_session():
+    """Owner session for provisioning. Bypasses RLS on `tenants`; still subject to it on data tables."""
+    return _AdminSession()
 
 
 def init_all_tables():
-    """Create all tables in the currently active database (idempotent)."""
+    """Create all tables and (re)apply row-level security (idempotent). Runs as the table owner."""
     import database.models  # noqa: F401
-    Base.metadata.create_all(get_engine())
+    from database.rls import apply_rls
+    Base.metadata.create_all(_admin_engine)
+    apply_rls(_admin_engine)

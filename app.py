@@ -41,7 +41,10 @@ PAGE_RAIL_ICONS = [
     "forum",
 ]
 
-from database.connection import get_db_session, set_data_mode, get_data_mode
+from database.connection import get_db_session
+from database.models import Sale
+from auth.gate import require_login, render_account_menu
+from tenancy.capabilities import get_capabilities, tab_available
 from database.queries import get_unique_filter_options
 from utils.helpers import inject_custom_css
 from utils.i18n import t, tv, language_selector, get_lang
@@ -53,7 +56,6 @@ from dashboard.customers import render_customers
 from dashboard.inventory import render_inventory
 # from dashboard.ai_insights import render_ai_insights
 from dashboard.sentiment_analysis import render_sentiment_analysis
-# from dashboard.upload_data import render_upload_data
 # from dashboard.metrics import render_metrics
 
 # 1. Page Configuration
@@ -67,60 +69,36 @@ st.set_page_config(
 # 2. Styling Injection
 inject_custom_css()
 
-# 3. Initialise data-mode session state and activate the correct DB engine
-#    This must happen before any database query so every render function
-#    automatically hits the right database.
-if "data_mode" not in st.session_state:
-    st.session_state.data_mode = "real"
+# 3. AUTH GATE
+#    Nothing below runs for an unauthenticated visitor. A successful login sets
+#    st.session_state["tenant_id"], which pins every DB transaction to that
+#    tenant (Postgres row-level security), so all queries below are tenant-scoped.
+identity = require_login()
+caps = get_capabilities()
 
-st.session_state.setdefault("active_page", PAGE_KEYS[0])
+# Accounts are set up by the operator (admin console). Until their data is loaded there is nothing to show.
+if not caps["sales"]:
+    with st.sidebar:
+        render_account_menu()
+    st.markdown("<h2 class='gradient-text'>Your account is being set up</h2>", unsafe_allow_html=True)
+    st.info("Your data is being prepared. Your dashboards will appear here as soon as it is ready. "
+            "If this takes longer than expected, please contact support.")
+    st.stop()
 
-set_data_mode(st.session_state.data_mode)
-
-# 4. Auto-seed real_demand.db on first switch to Real mode
-if st.session_state.data_mode == "real":
-    from preprocessing.seed_real_database import main as _seed_real
-    from database.models import Sale
-    _chk_session = get_db_session()
-    try:
-        _needs_seed = _chk_session.query(Sale).count() == 0
-    except Exception:
-        _needs_seed = True
-    finally:
-        _chk_session.close()
-
-    if _needs_seed:
-        with st.spinner("First-time setup: seeding Real data source… this takes ~30s"):
-            _seed_real()
-        st.rerun()
+# Show only the tabs this tenant has data for.
+_keep = [i for i, k in enumerate(PAGE_KEYS) if tab_available(k, caps)]
+PAGE_KEYS = [PAGE_KEYS[i] for i in _keep]
+PAGE_ICONS = [PAGE_ICONS[i] for i in _keep]
+PAGE_RAIL_ICONS = [PAGE_RAIL_ICONS[i] for i in _keep]
+if st.session_state.get("active_page") not in PAGE_KEYS:
+    st.session_state["active_page"] = PAGE_KEYS[0]
 
 # 5. Fetch unique sidebar filter choices dynamically from DB
 session = get_db_session()
 try:
     options = get_unique_filter_options(session)
 except Exception:
-    # Fail-safe fallbacks if DB is not seeded or active
-    options = {
-        "regions": ["Nordrhein-Westfalen", "Bayern", "Baden-Württemberg",
-                    "Hessen", "Niedersachsen", "Rheinland-Pfalz"],
-        "cities": [
-            "Köln", "Düsseldorf", "Dortmund", "Essen", "Duisburg", "Bochum",
-            "München", "Nürnberg", "Augsburg", "Regensburg", "Ingolstadt",
-            "Stuttgart", "Karlsruhe", "Mannheim", "Freiburg",
-            "Frankfurt am Main", "Wiesbaden", "Kassel", "Darmstadt",
-            "Hannover", "Braunschweig", "Osnabrück", "Wolfsburg",
-            "Mainz", "Ludwigshafen", "Koblenz",
-        ],
-        # Canonical ENGLISH values, exactly as stored in the DB. The selectbox
-        # translates them for DISPLAY via tv(), but filters on these — a German
-        # label would match nothing.
-        "categories": ["SUV", "Compact", "Estate", "Small Car", "Sedan", "Van", "Luxury", "Coupe"],
-        "fuel_types": ["Petrol", "Diesel", "Hybrid", "Plug-in Hybrid", "Electric"],
-        "brands": ["Volkswagen", "Mercedes-Benz", "BMW", "Audi", "Skoda", "Opel",
-                   "Ford", "Hyundai", "Kia", "Seat", "Toyota", "Renault",
-                   "Dacia", "Tesla", "MINI", "MG"],
-        "years": [2021, 2022, 2023, 2024, 2025, 2026]
-    }
+    options = {"regions": [], "cities": [], "categories": [], "fuel_types": [], "brands": [], "years": []}
 finally:
     session.close()
 
@@ -284,9 +262,9 @@ with st.sidebar:
     # the compact rows don't clip them.
     _dc1, _dc2 = st.columns(2)
     with _dc1:
-        start_date = st.date_input(t("filter.date_from"), value=date(2021, 1, 1))
+        start_date = st.date_input(t("filter.date_from"), value=caps["first_sale"])
     with _dc2:
-        end_date = st.date_input(t("filter.date_to"), value=date(2026, 5, 31))
+        end_date = st.date_input(t("filter.date_to"), value=caps["last_sale"])
 
     _fc1, _fc2 = st.columns(2)
     with _fc1:
@@ -299,7 +277,7 @@ with st.sidebar:
         session = get_db_session()
         try:
             from database.models import Sale
-            region_cities = [c[0] for c in session.query(Sale.city).filter(Sale.state == region).distinct().all() if c[0]]
+            region_cities = [c[0] for c in session.query(Sale.city).filter(Sale.region == region).distinct().all() if c[0]]
             city_options = sorted(region_cities)
         except Exception:
             city_options = options["cities"]
@@ -338,6 +316,9 @@ with st.sidebar:
         "fuel_type": None if fuel_type == "All" else fuel_type
     }
 
+    st.markdown("<hr style='border-color: rgba(255,255,255,0.08); margin: 15px 0;'>", unsafe_allow_html=True)
+    render_account_menu()
+
 # 9. ROUTING MAIN VIEWS
 selected_page = st.session_state["active_page"]
 
@@ -357,7 +338,5 @@ elif selected_page == "tab.inventory":
 #     render_ai_insights(filters)
 elif selected_page == "tab.sentiment":
     render_sentiment_analysis(filters)
-# elif selected_page == "Data Ingestion Engine":
-#     render_upload_data()
 # elif selected_page == "Model Performance Metrics":
 #     render_metrics()

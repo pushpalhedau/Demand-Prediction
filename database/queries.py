@@ -25,7 +25,7 @@ def _period_aggregates(session: Session, filters: dict) -> dict:
     average discount, average lead-to-close."""
     q = session.query(
         func.coalesce(func.sum(Sale.units_sold), 0).label("units"),
-        func.coalesce(func.sum(Sale.total_revenue_incl_vat), 0).label("revenue"),
+        func.coalesce(func.sum(Sale.total_revenue_incl_tax), 0).label("revenue"),
         func.coalesce(func.avg(Sale.discount_pct), 0.0).label("avg_discount"),
         func.coalesce(func.avg(Sale.lead_to_close_days), 0.0).label("avg_lead_close"),
         func.coalesce(
@@ -121,7 +121,7 @@ def _apply_dealer_scope(query, filters: dict):
     if not filters:
         return query
     if filters.get("region"):
-        query = query.filter(Dealer.state == filters["region"])
+        query = query.filter(Dealer.region == filters["region"])
     if filters.get("city"):
         query = query.filter(Dealer.city == filters["city"])
     if filters.get("brand"):
@@ -176,7 +176,7 @@ def get_top_models(session: Session, filters: dict = None, limit: int = 8) -> pd
         Sale.brand,
         Sale.model,
         func.sum(Sale.units_sold).label("units"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.brand, Sale.model).order_by(desc("units")).limit(limit)
@@ -188,14 +188,14 @@ def get_sales_by_store(session: Session, filters: dict = None, limit: int = 20) 
     query = session.query(
         Dealer.dealer_name,
         Dealer.city,
-        Dealer.state,
+        Dealer.region,
         Dealer.brand,
         func.sum(Sale.units_sold).label("units"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
     ).join(Sale, Sale.dealer_id == Dealer.dealer_id)
     query = _apply_sale_filters(query, filters)
     query = query.group_by(
-        Dealer.dealer_name, Dealer.city, Dealer.state, Dealer.brand
+        Dealer.dealer_name, Dealer.city, Dealer.region, Dealer.brand
     ).order_by(desc("units")).limit(limit)
     return pd.read_sql(query.statement, session.bind)
 
@@ -207,7 +207,7 @@ def get_monthly_revenue_trend(session: Session, filters: dict = None) -> pd.Data
     query = session.query(
         Sale.year,
         Sale.month,
-        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
         func.sum(Sale.units_sold).label("sales")
     )
     query = _apply_sale_filters(query, filters)
@@ -226,7 +226,7 @@ def get_sales_by_category(session: Session, filters: dict = None) -> pd.DataFram
     query = session.query(
         Sale.vehicle_category,
         func.sum(Sale.units_sold).label("sales"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue")
+        func.sum(Sale.total_revenue_incl_tax).label("revenue")
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.vehicle_category).order_by(desc("sales"))
@@ -242,7 +242,7 @@ def get_sales_by_fuel_type(session: Session, filters: dict = None) -> pd.DataFra
     query = session.query(
         Sale.fuel_type,
         func.sum(Sale.units_sold).label("sales"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue")
+        func.sum(Sale.total_revenue_incl_tax).label("revenue")
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.fuel_type).order_by(desc("sales"))
@@ -256,12 +256,12 @@ def get_sales_by_region(session: Session, filters: dict = None) -> pd.DataFrame:
     Get sales distribution by state.
     """
     query = session.query(
-        Sale.state,
+        Sale.region,
         func.sum(Sale.units_sold).label("sales"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue")
+        func.sum(Sale.total_revenue_incl_tax).label("revenue")
     )
     query = _apply_sale_filters(query, filters)
-    query = query.group_by(Sale.state).order_by(desc("sales"))
+    query = query.group_by(Sale.region).order_by(desc("sales"))
 
     df = pd.read_sql(query.statement, session.bind)
     return df
@@ -301,7 +301,7 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
         Dealer.dealer_name,
         Dealer.brand,
         Dealer.city,
-        Dealer.state,
+        Dealer.region,
         Dealer.latitude,
         Dealer.longitude,
         Dealer.annual_target_units,
@@ -310,7 +310,7 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
     query = session.query(
         *group_cols,
         func.sum(Sale.units_sold).label("units_sold"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
         func.count(Sale.sale_id).label("deal_rows"),
         func.sum(case((Sale.test_drive_converted == True, 1), else_=0)).label("td_converted"),
         func.avg(Sale.lead_to_close_days).label("avg_days_to_close"),
@@ -373,6 +373,13 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
     else:
         df["top_category"] = None
 
+    # Stores built from a sales-only upload have no targets/ratings, which arrive as all-None
+    # object columns; make every metric numeric so .round() and comparisons work downstream.
+    for c in ("yoy_units_pct", "attainment_pct", "close_rate", "avg_days_to_close", "annual_target_units",
+              "performance_score", "google_rating", "revenue", "units_sold"):
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+
     return df
 
 
@@ -388,7 +395,7 @@ def get_yoy_comparison(session: Session, filters: dict = None) -> pd.DataFrame:
     query = session.query(
         Sale.year,
         Sale.month,
-        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
         func.sum(Sale.units_sold).label("sales")
     )
     query = _apply_sale_filters(query, filters)
@@ -420,10 +427,10 @@ def get_customer_segments_data(session: Session, filters: dict = None) -> pd.Dat
             Customer.customer_id,
             Customer.age,
             Customer.nationality,
-            Customer.state,
-            Customer.annual_income_bracket,
-            Customer.estimated_annual_income_eur,
-            Customer.schufa_score,
+            Customer.region,
+            Customer.income_bracket,
+            Customer.annual_income,
+            Customer.credit_score,
             Customer.number_of_past_purchases,
             Customer.loyalty_score,
             Customer.churn_risk_score,
@@ -433,14 +440,14 @@ def get_customer_segments_data(session: Session, filters: dict = None) -> pd.Dat
         session.bind,
     )
     if filters and filters.get("region"):
-        cust = cust[cust["state"] == filters["region"]]
+        cust = cust[cust["region"] == filters["region"]]
 
     deals = pd.read_sql(
         session.query(
             Sale.customer_id.label("customer_id"),
             func.count(Sale.sale_id).label("lifetime_deals"),
-            func.sum(Sale.total_revenue_incl_vat).label("lifetime_revenue"),
-            func.avg(Sale.total_revenue_incl_vat).label("avg_deal_value"),
+            func.sum(Sale.total_revenue_incl_tax).label("lifetime_revenue"),
+            func.avg(Sale.total_revenue_incl_tax).label("avg_deal_value"),
             func.max(Sale.sale_date).label("last_deal_date"),
             func.sum(case((Sale.financing_type == "Lease", 1), else_=0)).label("lease_deals"),
             func.sum(case((Sale.financing_type == "Cash", 1), else_=0)).label("cash_deals"),
@@ -477,11 +484,11 @@ def get_customer_book(session: Session, filters: dict = None) -> pd.DataFrame:
             Customer.name,
             Customer.age,
             Customer.nationality,
-            Customer.state,
+            Customer.region,
             Customer.city,
-            Customer.annual_income_bracket,
-            Customer.estimated_annual_income_eur,
-            Customer.schufa_score,
+            Customer.income_bracket,
+            Customer.annual_income,
+            Customer.credit_score,
             Customer.customer_segment,
             Customer.churn_risk_score,
             Customer.email_opt_in,
@@ -489,7 +496,7 @@ def get_customer_book(session: Session, filters: dict = None) -> pd.DataFrame:
         session.bind,
     )
     if filters and filters.get("region"):
-        cust = cust[cust["state"] == filters["region"]]
+        cust = cust[cust["region"] == filters["region"]]
 
     sales = pd.read_sql(
         session.query(
@@ -500,7 +507,7 @@ def get_customer_book(session: Session, filters: dict = None) -> pd.DataFrame:
             Sale.vehicle_category,
             Sale.financing_type,
             Sale.lease_maturity_date,
-            Sale.total_revenue_incl_vat.label("deal_revenue"),
+            Sale.total_revenue_incl_tax.label("deal_revenue"),
             Dealer.dealer_name.label("store"),
         ).join(Dealer, Sale.dealer_id == Dealer.dealer_id).statement,
         session.bind,
@@ -555,10 +562,10 @@ def get_repeat_contribution(session: Session, filters: dict = None) -> dict:
     last 12 months' deals that went to a customer who had bought from the group
     before, plus the all-time share. `filters['region']` scopes by the store's
     state (same as the other Sale-based queries)."""
-    q = session.query(Sale.customer_id, Sale.sale_date, Sale.state)
+    q = session.query(Sale.customer_id, Sale.sale_date, Sale.region)
     df = pd.read_sql(q.statement, session.bind)
     if filters and filters.get("region"):
-        df = df[df["state"] == filters["region"]]
+        df = df[df["region"] == filters["region"]]
     if df.empty:
         return {"ttm_total": 0, "ttm_repeat": 0, "ttm_pct": 0.0, "all_pct": 0.0}
 
@@ -593,7 +600,7 @@ def get_inventory_status(session: Session, filters: dict = None) -> pd.DataFrame
         Inventory.inventory_id,
         Inventory.dealer_id,
         Inventory.city,
-        Inventory.state,
+        Inventory.region,
         Inventory.brand,
         Inventory.model,
         Inventory.vehicle_category,
@@ -606,8 +613,8 @@ def get_inventory_status(session: Session, filters: dict = None) -> pd.DataFrame
         Inventory.reorder_needed,
         Inventory.stockout_risk_score,
         Inventory.overstock_risk_score,
-        Inventory.holding_cost_per_day_eur,
-        Inventory.estimated_holding_cost_eur,
+        Inventory.holding_cost_per_day,
+        Inventory.estimated_holding_cost,
         Inventory.units_sold_last_30d,
         Inventory.units_ordered,
         Inventory.transit_stock,
@@ -616,7 +623,7 @@ def get_inventory_status(session: Session, filters: dict = None) -> pd.DataFrame
 
     if filters:
         if filters.get("region"):
-            query = query.filter(Inventory.state == filters["region"])
+            query = query.filter(Inventory.region == filters["region"])
         if filters.get("city"):
             query = query.filter(Inventory.city == filters["city"])
         if filters.get("vehicle_category"):
@@ -646,7 +653,7 @@ def get_ecb_rate_kpi(session: Session, filters: dict = None) -> dict:
     monthly payment — and the showroom — within weeks.
     """
     def _period_end_rate(start_date, end_date):
-        q = session.query(ExternalFactor.ecb_rate_pct, ExternalFactor.year, ExternalFactor.month)
+        q = session.query(ExternalFactor.policy_rate_pct, ExternalFactor.year, ExternalFactor.month)
         if start_date and end_date:
             sy, sm = start_date.year, start_date.month
             ey, em = end_date.year, end_date.month
@@ -655,7 +662,7 @@ def get_ecb_rate_kpi(session: Session, filters: dict = None) -> dict:
                 (ExternalFactor.year * 100 + ExternalFactor.month) <= (ey * 100 + em),
             )
         row = q.order_by(ExternalFactor.year.desc(), ExternalFactor.month.desc()).first()
-        return row.ecb_rate_pct if row else None
+        return row.policy_rate_pct if row else None
 
     current_rate = _period_end_rate(
         filters.get("start_date") if filters else None,
@@ -711,7 +718,7 @@ def get_unique_filter_options(session: Session) -> dict:
     Gets lists of unique states, cities, categories, fuel types, brands and years
     to populate filters in the Streamlit sidebar.
     """
-    regions = [r[0] for r in session.query(Sale.state).distinct().all() if r[0]]
+    regions = [r[0] for r in session.query(Sale.region).distinct().all() if r[0]]
     cities = [c[0] for c in session.query(Sale.city).distinct().all() if c[0]]
     categories = [cat[0] for cat in session.query(Sale.vehicle_category).distinct().all() if cat[0]]
     fuels = [f[0] for f in session.query(Sale.fuel_type).distinct().all() if f[0]]
@@ -736,7 +743,7 @@ def _apply_sale_filters(query, filters: dict = None):
         return query
 
     if filters.get("region"):
-        query = query.filter(Sale.state == filters["region"])
+        query = query.filter(Sale.region == filters["region"])
     if filters.get("city"):
         query = query.filter(Sale.city == filters["city"])
 
@@ -785,7 +792,7 @@ def get_period_trend(session: Session, filters: dict = None) -> pd.DataFrame:
         q = session.query(
             Sale.year, Sale.month,
             func.sum(Sale.units_sold).label("units"),
-            func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+            func.sum(Sale.total_revenue_incl_tax).label("revenue"),
         )
         q = _apply_sale_filters(q, f)
         q = q.group_by(Sale.year, Sale.month).order_by(Sale.year, Sale.month)
@@ -824,7 +831,7 @@ def get_scope_monthly_trend(session: Session, filters: dict = None) -> pd.DataFr
     q = session.query(
         Sale.year, Sale.month,
         func.sum(Sale.units_sold).label("units"),
-        func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+        func.sum(Sale.total_revenue_incl_tax).label("revenue"),
     )
     q = _apply_sale_filters(q, f)
     q = q.group_by(Sale.year, Sale.month).order_by(Sale.year, Sale.month)
@@ -854,7 +861,7 @@ def get_yoy_drivers(session: Session, filters: dict = None,
         q = session.query(
             dim_col.label("name"),
             func.sum(Sale.units_sold).label("units"),
-            func.sum(Sale.total_revenue_incl_vat).label("revenue"),
+            func.sum(Sale.total_revenue_incl_tax).label("revenue"),
         )
         if dimension == "store":
             q = q.join(Dealer, Sale.dealer_id == Dealer.dealer_id)
@@ -919,7 +926,7 @@ def _apply_inventory_filters(query, filters: dict = None):
     if not filters:
         return query
     if filters.get("region"):
-        query = query.filter(Inventory.state == filters["region"])
+        query = query.filter(Inventory.region == filters["region"])
     if filters.get("city"):
         query = query.filter(Inventory.city == filters["city"])
     if filters.get("brand"):
@@ -952,7 +959,7 @@ def get_inventory_snapshot(session: Session, filters: dict = None) -> pd.DataFra
             Inventory.model,
             Inventory.vehicle_category,
             Inventory.fuel_type,
-            Inventory.state,
+            Inventory.region,
             Inventory.city,
             Inventory.current_stock,
             Inventory.demand_forecast_30d,
@@ -963,8 +970,8 @@ def get_inventory_snapshot(session: Session, filters: dict = None) -> pd.DataFra
             Inventory.reorder_needed,
             Inventory.stockout_risk_score,
             Inventory.overstock_risk_score,
-            Inventory.holding_cost_per_day_eur,
-            Inventory.estimated_holding_cost_eur,
+            Inventory.holding_cost_per_day,
+            Inventory.estimated_holding_cost,
             Inventory.units_sold_last_30d,
             Inventory.units_ordered,
             Inventory.transit_stock,
@@ -976,7 +983,7 @@ def get_inventory_snapshot(session: Session, filters: dict = None) -> pd.DataFra
             Dealer.latitude,
             Dealer.longitude,
             Vehicle.variant,
-            Vehicle.price_eur,
+            Vehicle.price,
             Vehicle.residual_value_36mo,
         )
         .outerjoin(Dealer, Inventory.dealer_id == Dealer.dealer_id)
@@ -997,7 +1004,7 @@ def get_inventory_snapshot(session: Session, filters: dict = None) -> pd.DataFra
     df["days_of_supply"] = (
         df["current_stock"] / daily_demand.replace(0, float("nan"))
     ).fillna(999).clip(upper=999).round(0)
-    df["inventory_value_eur"] = df["current_stock"] * df["price_eur"].fillna(0)
+    df["inventory_value_amt"] = df["current_stock"] * df["price"].fillna(0)
     return df
 
 
@@ -1007,7 +1014,7 @@ def get_inventory_trend(session: Session, filters: dict = None) -> pd.DataFrame:
         Inventory.record_date,
         func.sum(Inventory.current_stock).label("units_in_stock"),
         func.sum(Inventory.transit_stock).label("units_in_transit"),
-        func.sum(Inventory.estimated_holding_cost_eur).label("holding_cost_eur"),
+        func.sum(Inventory.estimated_holding_cost).label("holding_cost_amt"),
         func.avg(Inventory.days_in_stock).label("avg_days_in_stock"),
         func.sum(Inventory.units_sold_last_30d).label("units_sold_30d"),
     )
@@ -1029,8 +1036,8 @@ def get_aging_buckets(snapshot_df: pd.DataFrame) -> pd.DataFrame:
             "bucket": label,
             "units": int(sel["current_stock"].sum()),
             "lines": int(len(sel)),
-            "capital_eur": float(sel["inventory_value_eur"].sum()),
-            "holding_cost_eur": float(sel["estimated_holding_cost_eur"].sum()),
+            "capital_amt": float(sel["inventory_value_amt"].sum()),
+            "holding_cost_amt": float(sel["estimated_holding_cost"].sum()),
         })
     return pd.DataFrame(rows)
 
@@ -1065,19 +1072,19 @@ def get_lease_return_pipeline(session: Session, filters: dict = None,
             Sale.model,
             Sale.vehicle_category,
             Sale.fuel_type,
-            Sale.state,
+            Sale.region,
             Sale.city,
             Sale.lease_term_months,
             Sale.lease_maturity_date,
             Sale.residual_value_pct,
-            Sale.residual_value_eur,
+            Sale.residual_value,
             Sale.contract_mileage_allowance,
-            Sale.lease_monthly_payment_eur,
-            Sale.selling_price_eur,
-            Sale.base_price_eur,
+            Sale.lease_monthly_payment,
+            Sale.selling_price,
+            Sale.base_price,
             Dealer.dealer_name,
             Vehicle.variant,
-            Vehicle.price_eur.label("current_msrp"),
+            Vehicle.price.label("current_msrp"),
             Vehicle.residual_value_36mo,
         )
         .outerjoin(Dealer, Sale.dealer_id == Dealer.dealer_id)
@@ -1090,7 +1097,7 @@ def get_lease_return_pipeline(session: Session, filters: dict = None,
 
     if filters:
         if filters.get("region"):
-            query = query.filter(Sale.state == filters["region"])
+            query = query.filter(Sale.region == filters["region"])
         if filters.get("city"):
             query = query.filter(Sale.city == filters["city"])
         if filters.get("brand"):
@@ -1111,10 +1118,10 @@ def get_lease_return_pipeline(session: Session, filters: dict = None,
     # applied to today's MSRP. Where that exceeds the contractual buyout the unit
     # comes back "in the money" and is worth retaining rather than grounding to
     # auction.
-    est_market = df["current_msrp"].fillna(df["base_price_eur"]) * df["residual_value_36mo"].fillna(0.55)
-    df["est_market_value_eur"] = est_market.round(0)
-    df["equity_eur"] = (df["est_market_value_eur"] - df["residual_value_eur"]).round(0)
-    df["in_the_money"] = df["equity_eur"] > 0
+    est_market = df["current_msrp"].fillna(df["base_price"]) * df["residual_value_36mo"].fillna(0.55)
+    df["est_market_value_amt"] = est_market.round(0)
+    df["equity_amt"] = (df["est_market_value_amt"] - df["residual_value"]).round(0)
+    df["in_the_money"] = df["equity_amt"] > 0
     return df
 
 
@@ -1137,15 +1144,15 @@ def get_lease_maturity_recapture(session: Session, filters: dict = None,
             Sale.brand,
             Sale.model,
             Sale.vehicle_category,
-            Sale.state,
+            Sale.region,
             Sale.lease_maturity_date,
-            Sale.lease_monthly_payment_eur,
-            Sale.residual_value_eur,
+            Sale.lease_monthly_payment,
+            Sale.residual_value,
             Customer.name.label("customer_name"),
             Customer.customer_segment,
             Customer.loyalty_score,
             Customer.churn_risk_score,
-            Customer.estimated_annual_income_eur,
+            Customer.annual_income,
             Customer.preferred_vehicle_category,
             Dealer.dealer_name,
         )
@@ -1158,7 +1165,7 @@ def get_lease_maturity_recapture(session: Session, filters: dict = None,
     )
     if filters:
         if filters.get("region"):
-            query = query.filter(Sale.state == filters["region"])
+            query = query.filter(Sale.region == filters["region"])
         if filters.get("brand"):
             query = query.filter(Sale.brand == filters["brand"])
         if filters.get("vehicle_category"):
@@ -1180,12 +1187,12 @@ def get_trade_in_activity(session: Session, filters: dict = None) -> pd.DataFram
         Sale.brand,
         Sale.model,
         Sale.vehicle_category,
-        Sale.state,
+        Sale.region,
         Sale.city,
         Sale.dealer_id,
         Sale.financing_type,
-        Sale.base_price_eur,
-        Sale.selling_price_eur,
+        Sale.base_price,
+        Sale.selling_price,
         Sale.discount_pct,
         Sale.lead_to_close_days,
         Sale.season_period,
@@ -1194,10 +1201,10 @@ def get_trade_in_activity(session: Session, filters: dict = None) -> pd.DataFram
         Sale.trade_in_model,
         Sale.trade_in_year,
         Sale.trade_in_mileage,
-        Sale.trade_in_appraised_value_eur,
-        Sale.trade_in_allowance_eur,
-        Sale.trade_in_over_allowance_eur,
-        Sale.trade_bonus_eur,
+        Sale.trade_in_appraised_value,
+        Sale.trade_in_allowance,
+        Sale.trade_in_over_allowance,
+        Sale.trade_bonus,
     )
     query = _apply_sale_filters(query, filters)
     df = pd.read_sql(query.statement, session.bind)
@@ -1207,14 +1214,14 @@ def get_trade_in_activity(session: Session, filters: dict = None) -> pd.DataFram
     # True concession = sticker discount + over-allowance + trade bonus. Only
     # the first of these shows up in discount_pct, which is why reported
     # discount understates what the store actually gave away.
-    df["sticker_discount_eur"] = (df["base_price_eur"] - df["selling_price_eur"]).clip(lower=0)
-    df["over_allowance_eur"] = df["trade_in_over_allowance_eur"].fillna(0)
-    df["trade_bonus_eur"] = df["trade_bonus_eur"].fillna(0)
-    df["true_concession_eur"] = (
-        df["sticker_discount_eur"] + df["over_allowance_eur"] + df["trade_bonus_eur"]
+    df["sticker_discount_amt"] = (df["base_price"] - df["selling_price"]).clip(lower=0)
+    df["over_allowance_amt"] = df["trade_in_over_allowance"].fillna(0)
+    df["trade_bonus"] = df["trade_bonus"].fillna(0)
+    df["true_concession_amt"] = (
+        df["sticker_discount_amt"] + df["over_allowance_amt"] + df["trade_bonus"]
     )
     df["true_concession_pct"] = (
-        df["true_concession_eur"] / df["base_price_eur"].replace(0, pd.NA) * 100
+        df["true_concession_amt"] / df["base_price"].replace(0, pd.NA) * 100
     ).astype(float)
     return df
 
@@ -1258,7 +1265,7 @@ def get_vehicle_catalog(session: Session) -> pd.DataFrame:
         Vehicle.variant,
         Vehicle.category,
         Vehicle.fuel_type,
-        Vehicle.price_eur,
+        Vehicle.price,
         Vehicle.power_kw,
         Vehicle.consumption_l_per_100km,
         Vehicle.range_km,
@@ -1284,7 +1291,7 @@ def get_substitution_history(session: Session, filters: dict = None) -> pd.DataF
         Sale.model,
         Sale.fuel_type,
         func.count(Sale.sale_id).label("units"),
-        func.avg(Sale.selling_price_eur).label("avg_price"),
+        func.avg(Sale.selling_price).label("avg_price"),
     )
     query = _apply_sale_filters(query, filters)
     query = query.group_by(Sale.vehicle_category, Sale.brand, Sale.model, Sale.fuel_type)
@@ -1297,7 +1304,7 @@ def get_dealer_directory(session: Session) -> pd.DataFrame:
         Dealer.dealer_id,
         Dealer.dealer_name,
         Dealer.brand,
-        Dealer.state,
+        Dealer.region,
         Dealer.city,
         Dealer.tier,
         Dealer.latitude,

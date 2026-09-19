@@ -28,7 +28,7 @@ from sqlalchemy import func
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from database.connection import get_db_session, init_all_tables
+from database.connection import get_db_session
 from database.models import NewsArticle, SentimentSignal, DailySentimentSummary
 from sentiment.fetchers.gdelt_fetcher import (
     fetch_all_themes,
@@ -67,7 +67,6 @@ def run_full_pipeline(
     Returns:
         Status report dict with keys: fetch, analyze, summarize, mode, errors.
     """
-    init_all_tables()
     status: Dict = {
         "mode":      "live" if is_live_mode() else "mock",
         "fetch":     {},

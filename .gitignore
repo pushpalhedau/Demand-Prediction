@@ -36,3 +36,7 @@ dist/
 # docs
 demo_script.txt
 demo_script-UAE-v2.txt
+# local runtime data
+data/
+*.log
+models/*/[0-9a-f]*-*-*-*-*/

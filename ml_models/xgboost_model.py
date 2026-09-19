@@ -10,15 +10,17 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 # Add the project root to python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from database.connection import get_db_session, get_data_mode
+from database.connection import get_db_session
+from database.tenant_context import require_tenant_id
+from utils.i18n import fmt_money
 from database.models import Sale, Customer, Vehicle
 
 _BASE_MODEL_DIR = "models/xgboost"
 
 
 def _model_dir() -> str:
-    """Return mode-specific model directory: models/xgboost/test or .../real"""
-    d = os.path.join(_BASE_MODEL_DIR, get_data_mode())
+    """Per-tenant model directory: models/<kind>/<tenant_id>"""
+    d = os.path.join(_BASE_MODEL_DIR, str(require_tenant_id()))
     os.makedirs(d, exist_ok=True)
     return d
 
@@ -33,16 +35,16 @@ def train_xgboost_pipeline():
         # Join Sales, Customers, and Vehicles to compile a rich feature set
         query = session.query(
             Sale.test_drive_converted,
-            Sale.base_price_eur.label('base_price'),
+            Sale.base_price.label('base_price'),
             Sale.discount_pct,
             Sale.marketing_channel,
             Sale.vehicle_category,
             Sale.fuel_type,
-            Sale.state,
+            Sale.region,
             Customer.age,
             Customer.occupation,
-            Customer.estimated_annual_income_eur,
-            Customer.schufa_score,
+            Customer.annual_income,
+            Customer.credit_score,
             Customer.loyalty_score
         ).join(Customer, Sale.customer_id == Customer.customer_id) \
          .join(Vehicle, Sale.vehicle_id == Vehicle.vehicle_id)
@@ -58,7 +60,7 @@ def train_xgboost_pipeline():
         #
         # `gender` and `nationality` are deliberately NOT features of this
         # per-lead close score. Nationality is a legitimate market-segmentation
-        # dimension in the UAE and is used by the KMeans segmentation, but
+        # dimension in some markets and is used by the KMeans segmentation, but
         # weighting an individual lead-prioritisation score on the customer's
         # nationality or sex is a fairness risk with no defensible predictive
         # role in "will this test-drive convert". `age` is kept as a standard
@@ -74,8 +76,14 @@ def train_xgboost_pipeline():
         # leakage rather than a lever anyone can pull. Financing is still
         # captured on the deal record and drives the lease-return pipeline in
         # Inventory Intelligence, where it genuinely is predictive.
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_eur', 'schufa_score', 'loyalty_score']
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'region', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'annual_income', 'credit_score', 'loyalty_score']
+
+        lead_stats = {
+            c: {"p25": float(df[c].quantile(0.25)), "p50": float(df[c].median()),
+                "p75": float(df[c].quantile(0.75)), "lo": float(df[c].min()), "hi": float(df[c].max())}
+            for c in num_features if df[c].notna().any()
+        }
 
         # Handle missing values
         for cat in cat_features:
@@ -131,6 +139,8 @@ def train_xgboost_pipeline():
             pickle.dump(model, f)
         with open(os.path.join(mdir, "feature_names.pkl"), "wb") as f:
             pickle.dump(list(X.columns), f)
+        with open(os.path.join(mdir, "lead_stats.pkl"), "wb") as f:
+            pickle.dump(lead_stats, f)
             
         # Get feature importances
         importances = model.feature_importances_
@@ -154,6 +164,24 @@ def train_xgboost_pipeline():
     finally:
         session.close()
 
+def get_lead_form_context():
+    """
+    Option lists and numeric ranges for the lead-scoring form, read from this
+    tenant's own trained model so the form can only offer values the model saw.
+    Returns None until the model has been trained.
+    """
+    try:
+        mdir = _model_dir()
+        with open(os.path.join(mdir, "encoders.pkl"), "rb") as f:
+            encoders = pickle.load(f)
+        with open(os.path.join(mdir, "lead_stats.pkl"), "rb") as f:
+            stats = pickle.load(f)
+    except Exception:
+        return None
+    options = {k: [c for c in le.classes_ if c != "Unknown"] or list(le.classes_) for k, le in encoders.items()}
+    return {"options": options, "stats": stats}
+
+
 def predict_deal_probability(input_data: dict) -> dict:
     """
     Predict probability of a deal closing based on model features.
@@ -173,23 +201,15 @@ def predict_deal_probability(input_data: dict) -> dict:
             
         # Compile input into record
         # Must mirror the training feature set exactly (financing_type excluded).
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'state', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'estimated_annual_income_eur', 'schufa_score', 'loyalty_score']
+        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'region', 'occupation']
+        num_features = ['base_price', 'discount_pct', 'age', 'annual_income', 'credit_score', 'loyalty_score']
 
-        record = {}
-        # Assign values with fallbacks
-        record['marketing_channel'] = input_data.get('marketing_channel', 'Referral')
-        record['vehicle_category'] = input_data.get('vehicle_category', 'SUV')
-        record['fuel_type'] = input_data.get('fuel_type', 'Petrol')
-        record['state'] = input_data.get('state', 'Dubai')
-        record['occupation'] = input_data.get('occupation', 'Salaried Professional')
+        with open(os.path.join(mdir, "lead_stats.pkl"), "rb") as f:
+            stats = pickle.load(f)
 
-        record['base_price'] = float(input_data.get('base_price', 38000))
-        record['discount_pct'] = float(input_data.get('discount_pct', 5.0))
-        record['age'] = float(input_data.get('age', 35))
-        record['estimated_annual_income_eur'] = float(input_data.get('estimated_annual_income_eur', 18000))
-        record['schufa_score'] = float(input_data.get('schufa_score', 720))
-        record['loyalty_score'] = float(input_data.get('loyalty_score', 60))
+        # Anything not supplied falls back to what this tenant's model was trained on.
+        record = {cat: input_data.get(cat, encoders[cat].classes_[0]) for cat in cat_features}
+        record.update({num: float(input_data.get(num, stats.get(num, {}).get("p50", 0.0))) for num in num_features})
         
         # Build encoded DataFrame
         df_encoded = pd.DataFrame(index=[0])
@@ -246,29 +266,31 @@ def predict_deal_probability(input_data: dict) -> dict:
             importances = model.feature_importances_
             attribs = dict(zip(feature_names, importances))
             
-            # High discount and high income usually drive conversion positively, while low credit score drives it negatively
+            # Bigger discounts and stronger income/credit relative to THIS tenant's own
+            # customers drive conversion; the quartiles come from its training data.
             discount = record['discount_pct']
-            income = record['estimated_annual_income_eur']
-            credit = record['schufa_score']
+            income = record['annual_income']
+            credit = record['credit_score']
+            q = lambda col: stats.get(col, {"p25": 0.0, "p75": 0.0})
 
             shap_explanations = [
                 {
                     "feature": "discount_pct",
-                    "score": 0.15 if discount > 6 else (-0.1 if discount < 3 else 0.02),
-                    "direction": "positive" if discount >= 3 else "negative",
+                    "score": 0.15 if discount > q("discount_pct")["p75"] else (-0.1 if discount < q("discount_pct")["p25"] else 0.02),
+                    "direction": "positive" if discount >= q("discount_pct")["p25"] else "negative",
                     "description": f"Discount rate ({discount}%) drives conversion prospects."
                 },
                 {
-                    "feature": "schufa_score",
-                    "score": 0.22 if credit > 750 else (-0.25 if credit < 650 else 0.05),
-                    "direction": "positive" if credit >= 650 else "negative",
+                    "feature": "credit_score",
+                    "score": 0.22 if credit > q("credit_score")["p75"] else (-0.25 if credit < q("credit_score")["p25"] else 0.05),
+                    "direction": "positive" if credit >= q("credit_score")["p25"] else "negative",
                     "description": f"Credit score ({int(credit)}) affects closing eligibility."
                 },
                 {
-                    "feature": "estimated_annual_income_eur",
-                    "score": 0.12 if income > 25000 else (-0.08 if income < 8000 else 0.01),
-                    "direction": "positive" if income >= 8000 else "negative",
-                    "description": f"Monthly income (AED {int(income):,}) matches target segment."
+                    "feature": "annual_income",
+                    "score": 0.12 if income > q("annual_income")["p75"] else (-0.08 if income < q("annual_income")["p25"] else 0.01),
+                    "direction": "positive" if income >= q("annual_income")["p25"] else "negative",
+                    "description": f"Annual income ({fmt_money(income, compact=False)}) relative to this dealer group's customers."
                 }
             ]
             shap_explanations = sorted(shap_explanations, key=lambda x: abs(x['score']), reverse=True)

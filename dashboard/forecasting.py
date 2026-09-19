@@ -1,4 +1,7 @@
 import streamlit as st
+from utils.i18n import cur, cur_code
+from sqlalchemy import func
+from utils.tenant_cache import tenant_cache_data
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
@@ -34,11 +37,11 @@ LEVERS = {
     "crude_oil_price_usd": dict(
         label="Crude oil price", unit="USD/barrel", step=1.0, fmt="{:.0f}",
     ),
-    "super_e10_price_eur_per_litre": dict(
-        label="Petrol price (Special 95)", unit="AED/litre", step=0.05, fmt="{:.2f}",
+    "petrol_price_per_litre": dict(
+        label="Petrol price", unit="{cur}/litre", step=None, fmt="{:.2f}",
     ),
-    "diesel_price_eur_per_litre": dict(
-        label="Diesel price", unit="AED/litre", step=0.05, fmt="{:.2f}",
+    "diesel_price_per_litre": dict(
+        label="Diesel price", unit="{cur}/litre", step=None, fmt="{:.2f}",
     ),
     "auto_loan_apr_pct": dict(
         label="Auto-loan APR", unit="%", step=0.10, fmt="{:.1f}",
@@ -46,24 +49,22 @@ LEVERS = {
 }
 
 # Group demand response to each lever, held one-at-a-time, relative to the
-# recent baseline. Petrol and diesel are regulated monthly pump prices in the
-# UAE, so those levers are really "what happens to demand if the Fuel Price
-# Committee moves the number", and the response is smaller than the US
-# pump-price elasticity. Crude is upstream of the regulated pump price, so its
-# own direct effect (cost-of-ownership sentiment) is deliberately mild to avoid
-# double-counting the petrol/diesel move it usually feeds:
-#   crude oil   ~ -0.15% units per +1 USD/barrel
-#   petrol      ~ -3%   units per +1 AED/litre
-#   diesel      ~ -2%   units per +1 AED/litre  (pickup / commercial buyers)
-#   loan APR    ~ -3%   units per +1pt
-GROUP_DEMAND_RESPONSE = {
-    "crude_oil_price_usd": -0.15,
-    "super_e10_price_eur_per_litre": -3.0,
-    "diesel_price_eur_per_litre": -2.0,
-    "auto_loan_apr_pct": -3.0,
+# recent baseline. Fuel and crude levers are elasticities: % change in units per
+# +1% change in the price, so they hold in any currency (an absolute "per +1
+# currency unit" figure would not). Crude is upstream of the pump price, so its
+# direct effect is deliberately mild to avoid double-counting the petrol/diesel
+# move it usually feeds. Loan APR is % change in units per +1 percentage point.
+#   crude oil   ~ -0.12% units per +1% price
+#   petrol      ~ -0.08% units per +1% price
+#   diesel      ~ -0.05% units per +1% price  (pickup / commercial buyers)
+#   loan APR    ~ -3%    units per +1pt
+RELATIVE_ELASTICITY = {
+    "crude_oil_price_usd": -0.12,
+    "petrol_price_per_litre": -0.08,
+    "diesel_price_per_litre": -0.05,
 }
+POINT_RESPONSE = {"auto_loan_apr_pct": -3.0}
 
-_AVG_LOAN = 150000     # AED financed, for the monthly-payment translation
 _LOAN_MONTHS = 60
 
 
@@ -75,14 +76,25 @@ def _supply_drag_pct(days_supply: float) -> float:
     return (days_supply - 55) * 1.1
 
 
-def _monthly_payment(apr_pct: float) -> float:
+@tenant_cache_data(ttl=600, show_spinner=False)
+def _avg_loan() -> float:
+    """Typical financed amount for this tenant, for the monthly-payment translation."""
+    s = get_db_session()
+    try:
+        v = s.query(func.avg(Sale.loan_amount)).filter(Sale.loan_amount > 0).scalar()
+        return float(v or 0.0)
+    finally:
+        s.close()
+
+
+def _monthly_payment(apr_pct: float, loan: float) -> float:
     r = apr_pct / 100 / 12
     if r <= 0:
-        return _AVG_LOAN / _LOAN_MONTHS
-    return _AVG_LOAN * r / (1 - (1 + r) ** -_LOAN_MONTHS)
+        return loan / _LOAN_MONTHS
+    return loan * r / (1 - (1 + r) ** -_LOAN_MONTHS)
 
 
-@st.cache_data(ttl=600, show_spinner=False)
+@tenant_cache_data(ttl=600, show_spinner=False)
 def _brand_options():
     s = get_db_session()
     try:
@@ -103,8 +115,10 @@ def _net_response_pct(overrides: dict, factor_stats: dict) -> float:
         base = factor_stats[col]["last"]
         if col == "inventory_days_supply":
             pct += _supply_drag_pct(float(val)) - _supply_drag_pct(float(base))
-        elif col in GROUP_DEMAND_RESPONSE:
-            pct += (float(val) - float(base)) * GROUP_DEMAND_RESPONSE[col]
+        elif col in RELATIVE_ELASTICITY and float(base) > 0:
+            pct += (float(val) / float(base) - 1) * 100 * RELATIVE_ELASTICITY[col]
+        elif col in POINT_RESPONSE:
+            pct += (float(val) - float(base)) * POINT_RESPONSE[col]
     return pct
 
 
@@ -123,7 +137,7 @@ def render_forecasting(filters: dict):
     c1, c2, c3 = st.columns(3)
     with c1:
         target = st.selectbox(
-            "Forecast", ["units_sold", "total_revenue_incl_vat"],
+            "Forecast", ["units_sold", "total_revenue_incl_tax"],
             format_func=lambda x: "Units Sold" if x == "units_sold" else "Revenue",
         )
     with c2:
@@ -174,21 +188,23 @@ def render_forecasting(filters: dict):
                 lo = round(max(0.0, s["min"] - (s["max"] - s["min"]) * 0.2), 2)
                 hi = round(s["max"] + (s["max"] - s["min"]) * 0.2, 2)
                 if hi <= lo:
-                    hi = lo + max(cfg["step"] * 5, 1.0)
-                cur = float(st.session_state.fc_overrides.get(col, s["last"]))
-                cur = min(max(cur, lo), hi)
+                    hi = lo + max((cfg["step"] or 0.05) * 5, 1.0)
+                start = float(st.session_state.fc_overrides.get(col, s["last"]))
+                start = min(max(start, lo), hi)
+                step = cfg["step"] or max(round(s["last"] * 0.02, 2), 0.01)
                 with cols[i]:
                     pending[col] = st.slider(
-                        f"{cfg['label']} ({cfg['unit']})", lo, hi, cur,
-                        step=float(cfg["step"]), key=f"fc_{col}",
+                        f"{cfg['label']} ({cfg['unit'].format(cur=cur_code())})", lo, hi, start,
+                        step=float(step), key=f"fc_{col}",
                     )
                     if col == "auto_loan_apr_pct":
-                        base_pay = _monthly_payment(s["last"])
-                        new_pay = _monthly_payment(pending[col])
+                        loan = _avg_loan()
+                        base_pay = _monthly_payment(s["last"], loan)
+                        new_pay = _monthly_payment(pending[col], loan)
                         delta_pay = new_pay - base_pay
                         sign = "+" if delta_pay >= 0 else "−"
                         cap = (
-                            f"approx {_fmt_money(new_pay)}/mo on a {_fmt_money(_AVG_LOAN)} loan "
+                            f"approx {_fmt_money(new_pay)}/mo on a {_fmt_money(loan)} loan "
                             f"({sign}{_fmt_money(abs(delta_pay))}/mo vs now)"
                         ).replace("$", "\\$")
                         st.caption(cap)
@@ -297,7 +313,7 @@ def render_forecasting(filters: dict):
 
     fmt = _fmt_money if not is_units else (lambda v: f"{_compact(v)}")
     range_str = (f"{_compact(low)} – {_compact(high)}" if is_units
-                 else f"AED {_compact(low)} – {_compact(high)}")
+                 else f"{cur()} {_compact(low)} – {_compact(high)}")
 
     # ── Lever impact banner ─────────────────────────────────────────────────
     if overrides and abs(net_pct) >= 0.1:

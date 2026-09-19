@@ -92,32 +92,61 @@ def fmt_num(value, digits: int = 0) -> str:
     return f"{value:,.{digits}f}"
 
 
+def tenant_config() -> dict:
+    """The signed-in tenant's config (currency, region_label, ...). Empty outside a Streamlit run."""
+    try:
+        return st.session_state.get("tenant_config") or {}
+    except Exception:
+        return {}
+
+
+def cur() -> str:
+    """Currency display token for the active tenant: '$', 'EUR' -> '€', 'AED' ..."""
+    return tenant_config().get("currency_symbol") or "€"
+
+
+def cur_code() -> str:
+    return tenant_config().get("currency") or "EUR"
+
+
+def _symbol_after() -> bool:
+    pos = tenant_config().get("symbol_position")
+    return (pos == "suffix") if pos else is_de()
+
+
+def _wrap_money(num: str) -> str:
+    """Put the tenant's currency symbol on the right side of an already-formatted number."""
+    sym = cur()
+    if _symbol_after():
+        return f"{num} {sym}"
+    return f"{sym} {num}" if sym.isalpha() else f"{sym}{num}"
+
+
 def fmt_money(value, compact: bool = True) -> str:
     """
-    Currency in the active language.
-      EN compact: €3.04B / €742.0M / €940K      EN exact: €1,234,567
-      DE compact: 3,04 Mrd. € / 742,0 Mio. € / 940 Tsd. €
-      DE exact:   1.234.567 €
+    Currency in the tenant's symbol and the active language's number convention.
+      EN compact: €3.04B / AED 742.0M / $940K      EN exact: $1,234,567
+      DE compact: 3,04 Mrd. € / 742,0 Mio. € / 940 Tsd. €   DE exact: 1.234.567 €
     """
     value = float(value or 0)
     a = abs(value)
 
     if is_de():
         if compact and a >= 1_000_000_000:
-            return f"{_de_num(value / 1_000_000_000, 2)} Mrd. €"
+            return _wrap_money(f"{_de_num(value / 1_000_000_000, 2)} Mrd.")
         if compact and a >= 1_000_000:
-            return f"{_de_num(value / 1_000_000, 1)} Mio. €"
+            return _wrap_money(f"{_de_num(value / 1_000_000, 1)} Mio.")
         if compact and a >= 1_000:
-            return f"{_de_num(value / 1_000, 0)} Tsd. €"
-        return f"{_de_num(value, 0)} €"
+            return _wrap_money(f"{_de_num(value / 1_000, 0)} Tsd.")
+        return _wrap_money(_de_num(value, 0))
 
     if compact and a >= 1_000_000_000:
-        return f"€{value / 1_000_000_000:.2f}B"
+        return _wrap_money(f"{value / 1_000_000_000:.2f}B")
     if compact and a >= 1_000_000:
-        return f"€{value / 1_000_000:.1f}M"
+        return _wrap_money(f"{value / 1_000_000:.1f}M")
     if compact and a >= 1_000:
-        return f"€{value / 1_000:.0f}K"
-    return f"€{value:,.0f}"
+        return _wrap_money(f"{value / 1_000:.0f}K")
+    return _wrap_money(f"{value:,.0f}")
 
 
 def fmt_pct(value, digits: int = 1, signed: bool = False) -> str:
@@ -183,9 +212,9 @@ def hover_money(expr: str = "%{y:,.0f}") -> str:
 
     Plotly formats the number itself (using layout.separators from
     plotly_number_format), so all this does is put the symbol on the correct
-    side: EUR 1.234 in English, 1.234 EUR in German.
+    side for the tenant's currency.
     """
-    return f"{expr} €" if is_de() else f"€{expr}"
+    return _wrap_money(expr)
 
 
 def hover_month(axis: str = "x") -> str:
@@ -357,7 +386,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "app.updated": "Updated",
 
         # ── Filters ─────────────────────────────────────────────────────────
-        "filter.state": "Federal state",
+        "filter.state": "Region",
         "filter.city": "City",
         "filter.brand": "Brand",
         "filter.category": "Segment",
@@ -390,7 +419,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "kpi.days_supply": "Days' supply",
         "kpi.aged_stock": "Aged stock",
         "kpi.stockouts": "Stockouts",
-        "kpi.ecb_rate": "ECB policy rate",
+        "kpi.ecb_rate": "Policy rate",
         "kpi.fuel_price": "Super E10",
         "kpi.conversion": "Test-drive conversion",
         "kpi.lead_time": "Lead-to-close",
@@ -403,7 +432,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
 
         # ── Table columns ───────────────────────────────────────────────────
         "col.dealer": "Store",
-        "col.state": "Federal state",
+        "col.state": "Region",
         "col.city": "City",
         "col.brand": "Brand",
         "col.model": "Model",
@@ -501,8 +530,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "sa.title": "Market Sentiment",
         "sa.window": "News window",
         "sa.refresh": "Refresh news",
-        "sa.fetching": "Fetching the latest German auto news and scoring signals…",
-        "sa.empty": "No recent signals yet.<br>Click <b>Refresh news</b> above to pull the latest German auto headlines and score them for the group's demand.",
+        "sa.fetching": "Fetching the latest local auto news and scoring signals…",
+        "sa.empty": "No recent signals yet.<br>Click <b>Refresh news</b> above to pull the latest local auto headlines and score them for the group's demand.",
         "sa.tab_watch": "Demand Watch",
         "sa.tab_fc": "Does news improve our forecast?",
         "sa.headline.label": "Expected demand impact · next ~30 days",
@@ -551,7 +580,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "sa.fc.standard": "Standard forecast",
         "sa.fc.news_aware": "News-aware forecast",
         "sa.fc.yaxis_units": "Units / month",
-        "sa.fc.yaxis_revenue": "Revenue / month (EUR)",
+        "sa.fc.yaxis_revenue": "Revenue / month ({cur})",
         "sa.status.fetched": "Fetched **{n}** headlines from **{source}** ",
         "sa.status.warn": "Refresh finished with warnings: {msg}",
         # News themes
@@ -559,7 +588,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "sa.theme.ev_market_de": "Electric mobility",
         "sa.theme.tax_policy": "Vehicle tax & levies",
         "sa.theme.fuel_prices": "Fuel & energy prices",
-        "sa.theme.de_macro_economy": "Economy & ECB",
+        "sa.theme.de_macro_economy": "Economy & central bank",
         "sa.theme.auto_industry_de": "Auto industry & production",
         "sa.theme.auto_financing": "Financing & leasing",
         "sa.theme.incentives_offers": "Discounts & campaigns",
@@ -783,7 +812,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "sa.fc.standard": "Standardprognose",
         "sa.fc.news_aware": "Nachrichtengestützte Prognose",
         "sa.fc.yaxis_units": "Einheiten / Monat",
-        "sa.fc.yaxis_revenue": "Umsatz / Monat (EUR)",
+        "sa.fc.yaxis_revenue": "Umsatz / Monat ({cur})",
         "sa.status.fetched": "**{n}** Schlagzeilen von **{source}** geladen ",
         "sa.status.warn": "Aktualisierung mit Warnungen abgeschlossen: {msg}",
         # Nachrichtenthemen
@@ -815,6 +844,10 @@ def t(key: str, **kwargs) -> str:
     one side only degrades to readable text instead of raising mid-render.
     Missing keys are recorded in `missing_keys()` for the translation sweep.
     """
+    if key in ("filter.state", "col.state"):
+        label = tenant_config().get("region_label")
+        if label:
+            return label
     lang = get_lang()
     table = TRANSLATIONS.get(lang, {})
     if key in table:

@@ -94,7 +94,7 @@ def _period_frame(session, filters: dict, start, end) -> pd.DataFrame:
         Sale.brand.label("brand"),
         Sale.vehicle_category.label("category"),
         func.coalesce(func.sum(Sale.units_sold), 0).label("units"),
-        func.coalesce(func.sum(Sale.total_revenue_incl_vat), 0).label("revenue"),
+        func.coalesce(func.sum(Sale.total_revenue_incl_tax), 0).label("revenue"),
     ).join(Dealer, Sale.dealer_id == Dealer.dealer_id)
     q = _apply_sale_filters(q, {**_scope(filters), "start_date": start, "end_date": end})
     q = q.group_by(Dealer.dealer_name, Sale.brand, Sale.vehicle_category)

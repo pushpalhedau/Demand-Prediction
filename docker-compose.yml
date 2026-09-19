@@ -1,15 +1,120 @@
-version: '3.8'
+# Everything here is free and open source. `docker compose up -d db auth` is enough for local
+# development (the app then runs imports in a background thread). Add `redis worker web` to run the
+# full stack, where uploads are processed by separate worker containers you can scale out.
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql+psycopg2://predictax_app:predictax_app_dev@db:5432/predictax
+  ADMIN_DATABASE_URL: postgresql+psycopg2://predictax_owner:predictax_owner_dev@db:5432/predictax
+  UPLOAD_DIR: /data/uploads
+  AUTH_BASE_URL: http://auth:9999
+  SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-predictax-dev-jwt-secret-change-me-0123456789abcdef}
+  REDIS_URL: redis://redis:6379/0
 
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: predictax_owner
+      POSTGRES_PASSWORD: predictax_owner_dev
+      POSTGRES_DB: predictax
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U predictax_owner -d predictax"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  auth:
+    image: supabase/gotrue:v2.170.0
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "9999:9999"
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: "9999"
+      API_EXTERNAL_URL: http://localhost:9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:auth_dev_pw@db:5432/predictax?search_path=auth
+      GOTRUE_SITE_URL: http://localhost:8501
+      GOTRUE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-predictax-dev-jwt-secret-change-me-0123456789abcdef}
+      GOTRUE_JWT_EXP: "3600"
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_DISABLE_SIGNUP: "true"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker:
+    build: .
+    command: ["rq", "worker", "ingest", "--url", "redis://redis:6379/0"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment: *app-env
+    volumes:
+      - uploads:/data/uploads
+      - models:/app/models
+    restart: unless-stopped
+
+  admin:
+    # Operator-only console (create accounts, load data, train models). Published on localhost ONLY:
+    # never expose this port publicly; reach it over a VPN / SSH tunnel in production.
+    build: .
+    command: ["streamlit", "run", "admin_console/app.py", "--server.port=8502", "--server.address=0.0.0.0"]
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8502:8502"
+    env_file: .env
+    environment: *app-env
+    volumes:
+      - uploads:/data/uploads
+      - models:/app/models
+    restart: unless-stopped
+
   web:
     build: .
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+      redis:
+        condition: service_healthy
     ports:
       - "8501:8501"
+    env_file: .env
+    environment: *app-env
     volumes:
-      - .:/app
-      - /app/.venv
-      - /app/models
-    environment:
-      - DATABASE_URL=sqlite:////app/automobile_demand.db
-      - DEBUG=False
+      - uploads:/data/uploads
+      - models:/app/models
     restart: always
+
+volumes:
+  pgdata:
+  uploads:
+  models:

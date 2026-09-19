@@ -28,7 +28,7 @@ import requests
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from database.connection import get_db_session, init_all_tables
+from database.connection import get_db_session
 from database.models import NewsArticle, SentimentSignal
 from sqlalchemy.orm import joinedload
 
@@ -387,6 +387,9 @@ _NOISE_TERMS = (
     "dead", "killed", "fatal", "collision", "crash on", "arrested", "charged with",
     "obituary", "sentenced", "pleads guilty", "lawsuit against", "shooting",
     "horoscope", "recipe", "celebrity", "box office",
+    # local crime / accident stories that trip bare "dealership" / "car" terms
+    "swat", "police", "assault", "warrant", "dies ", "stabbing", "carjacking", "burglary",
+    "racial slur", "oil change sticker",
     "advantages of", "disadvantages of", "reasons to", "things to know",
     "best cars", "worst cars", "ranked", "vs.",
     # non-auto retail that trips the bare "showroom" / "offer" terms
@@ -627,7 +630,6 @@ def save_articles_to_db(articles: List[Dict]) -> Dict[str, int]:
     Returns:
         {"inserted": N, "skipped": N, "errors": N}
     """
-    init_all_tables()
     session = get_db_session()
     inserted = skipped = errors = 0
 
