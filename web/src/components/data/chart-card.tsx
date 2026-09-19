@@ -17,7 +17,7 @@ export function Panel({
   footer?: ReactNode;
 }) {
   return (
-    <Card className="gap-4 py-5">
+    <Card className="min-w-0 gap-4 py-5">
       {(title || description || action) && (
         <CardHeader className="px-5">
           {title && <CardTitle className="text-base">{title}</CardTitle>}
@@ -25,7 +25,7 @@ export function Panel({
           {action && <CardAction>{action}</CardAction>}
         </CardHeader>
       )}
-      <CardContent className="px-5">{children}</CardContent>
+      <CardContent className="min-w-0 px-5">{children}</CardContent>
       {footer && <div className="text-muted-foreground border-t px-5 pt-4 text-xs">{footer}</div>}
     </Card>
   );

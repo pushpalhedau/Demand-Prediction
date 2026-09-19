@@ -26,11 +26,11 @@ export function KpiCard({
   return (
     <Card className="gap-3 py-5">
       <CardHeader className="flex flex-row items-center justify-between gap-2 px-5">
-        <CardDescription className="text-xs font-medium tracking-wide uppercase">{label}</CardDescription>
+        <CardDescription className="text-xs font-medium tracking-[0.07em] uppercase">{label}</CardDescription>
         {icon && <span className="text-muted-foreground">{icon}</span>}
       </CardHeader>
       <CardContent className="space-y-1 px-5">
-        <div className="tabular text-2xl leading-none font-semibold tracking-tight lg:text-[1.7rem]">{value}</div>
+        <div className="font-heading tabular text-2xl leading-none font-semibold tracking-[-0.02em] lg:text-[1.75rem]">{value}</div>
         {note && (
           <p
             className={cn("flex items-center gap-1 text-xs", {

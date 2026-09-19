@@ -30,7 +30,7 @@ export function Headline({ stats, runrate }: { stats: Stats; runrate: number }) 
       <CardContent className="grid items-center gap-6 md:grid-cols-[3fr_2fr]">
         <div className="space-y-1">
           <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{t("sa.headline.label")}</p>
-          <p className="tabular text-5xl font-semibold tracking-tight" style={{ color }}>{fmt.pct(net, 1, true)}</p>
+          <p className="font-heading tabular text-5xl font-semibold tracking-[-0.03em]" style={{ color }}>{fmt.pct(net, 1, true)}</p>
           <p className="text-sm">
             {t(`sa.word.${word}`)}
             {runrate > 0 && <span className="text-muted-foreground"> · {t("sa.headline.units", { v: fmt.num(units, 0) })}</span>}

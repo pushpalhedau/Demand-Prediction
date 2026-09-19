@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
+  --font-heading: var(--font-display), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -53,94 +53,124 @@
 }
 
 /*
- * Design tokens. A restrained enterprise palette: cool neutrals, one deep-blue brand colour, and muted data colours
- * that stay distinguishable in both themes. Semantic colours (success/warning) are separate from the chart series.
+ * Design tokens: brand-tinted neutrals with the logo's blue as the primary and its blue-to-green gradient as a
+ * signature used sparingly (active navigation, header rule, login panel). Surfaces carry a hint of the brand hue
+ * (hue ~245-250) instead of pure white or black. Success is a deeper green than the logo's, so status colour is
+ * never confused with brand accent.
  */
 :root {
-  --background: oklch(0.985 0.003 250);
-  --foreground: oklch(0.21 0.03 262);
+  --background: oklch(0.965 0.012 245);
+  --foreground: oklch(0.24 0.05 250);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.03 262);
+  --card-foreground: oklch(0.24 0.05 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.03 262);
-  --primary: oklch(0.5 0.16 255);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.96 0.008 255);
-  --secondary-foreground: oklch(0.28 0.04 262);
-  --muted: oklch(0.965 0.006 255);
-  --muted-foreground: oklch(0.5 0.03 258);
-  --accent: oklch(0.95 0.02 255);
-  --accent-foreground: oklch(0.3 0.08 258);
-  --destructive: oklch(0.55 0.2 27);
-  --success: oklch(0.52 0.12 158);
-  --warning: oklch(0.62 0.14 70);
-  --border: oklch(0.91 0.01 255);
-  --input: oklch(0.89 0.012 255);
-  --ring: oklch(0.55 0.14 258);
-  --chart-1: oklch(0.5 0.16 255);
-  --chart-2: oklch(0.62 0.1 195);
-  --chart-3: oklch(0.72 0.14 75);
-  --chart-4: oklch(0.55 0.05 255);
-  --chart-5: oklch(0.5 0.15 300);
-  --chart-6: oklch(0.6 0.13 158);
-  --chart-7: oklch(0.6 0.16 25);
-  --chart-8: oklch(0.7 0.05 240);
+  --popover-foreground: oklch(0.24 0.05 250);
+  --primary: oklch(0.56 0.17 246);
+  --primary-foreground: oklch(0.985 0.005 245);
+  --secondary: oklch(0.94 0.018 245);
+  --secondary-foreground: oklch(0.3 0.06 250);
+  --muted: oklch(0.945 0.016 245);
+  --muted-foreground: oklch(0.5 0.045 250);
+  --accent: oklch(0.93 0.035 238);
+  --accent-foreground: oklch(0.32 0.1 250);
+  --destructive: oklch(0.58 0.2 25);
+  --success: oklch(0.55 0.13 152);
+  --warning: oklch(0.7 0.15 75);
+  --border: oklch(0.9 0.018 245);
+  --input: oklch(0.87 0.022 245);
+  --ring: oklch(0.6 0.16 246);
+  --chart-1: oklch(0.56 0.17 246);
+  --chart-2: oklch(0.68 0.12 185);
+  --chart-3: oklch(0.74 0.15 82);
+  --chart-4: oklch(0.55 0.05 250);
+  --chart-5: oklch(0.55 0.16 290);
+  --chart-6: oklch(0.66 0.15 148);
+  --chart-7: oklch(0.63 0.18 25);
+  --chart-8: oklch(0.75 0.08 235);
+  --brand-from: oklch(0.6 0.17 245);
+  --brand-to: oklch(0.76 0.17 155);
   --radius: 0.5rem;
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.3 0.03 262);
-  --sidebar-primary: oklch(0.5 0.16 255);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.955 0.015 255);
-  --sidebar-accent-foreground: oklch(0.3 0.08 258);
-  --sidebar-border: oklch(0.91 0.01 255);
-  --sidebar-ring: oklch(0.55 0.14 258);
+  --sidebar: oklch(0.985 0.007 245);
+  --sidebar-foreground: oklch(0.32 0.05 250);
+  --sidebar-primary: oklch(0.56 0.17 246);
+  --sidebar-primary-foreground: oklch(0.985 0.005 245);
+  --sidebar-accent: oklch(0.93 0.035 238);
+  --sidebar-accent-foreground: oklch(0.3 0.1 250);
+  --sidebar-border: oklch(0.9 0.018 245);
+  --sidebar-ring: oklch(0.6 0.16 246);
 }
 
 .dark {
-  --background: oklch(0.165 0.02 262);
-  --foreground: oklch(0.96 0.005 255);
-  --card: oklch(0.205 0.022 262);
-  --card-foreground: oklch(0.96 0.005 255);
-  --popover: oklch(0.22 0.024 262);
-  --popover-foreground: oklch(0.96 0.005 255);
-  --primary: oklch(0.7 0.13 252);
-  --primary-foreground: oklch(0.18 0.03 262);
-  --secondary: oklch(0.26 0.024 262);
-  --secondary-foreground: oklch(0.96 0.005 255);
-  --muted: oklch(0.26 0.024 262);
-  --muted-foreground: oklch(0.72 0.025 258);
-  --accent: oklch(0.29 0.04 258);
-  --accent-foreground: oklch(0.96 0.005 255);
-  --destructive: oklch(0.7 0.18 22);
-  --success: oklch(0.72 0.13 158);
-  --warning: oklch(0.8 0.14 75);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.65 0.13 252);
-  --chart-1: oklch(0.7 0.13 252);
-  --chart-2: oklch(0.75 0.1 195);
-  --chart-3: oklch(0.82 0.13 78);
-  --chart-4: oklch(0.7 0.05 255);
-  --chart-5: oklch(0.7 0.14 300);
-  --chart-6: oklch(0.75 0.13 158);
-  --chart-7: oklch(0.72 0.15 25);
-  --chart-8: oklch(0.6 0.05 240);
-  --sidebar: oklch(0.185 0.022 262);
-  --sidebar-foreground: oklch(0.9 0.01 255);
-  --sidebar-primary: oklch(0.7 0.13 252);
-  --sidebar-primary-foreground: oklch(0.18 0.03 262);
-  --sidebar-accent: oklch(0.27 0.03 260);
-  --sidebar-accent-foreground: oklch(0.96 0.005 255);
-  --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: oklch(0.65 0.13 252);
+  --background: oklch(0.19 0.035 250);
+  --foreground: oklch(0.95 0.01 245);
+  --card: oklch(0.235 0.04 250);
+  --card-foreground: oklch(0.95 0.01 245);
+  --popover: oklch(0.255 0.042 250);
+  --popover-foreground: oklch(0.95 0.01 245);
+  --primary: oklch(0.72 0.14 240);
+  --primary-foreground: oklch(0.18 0.04 250);
+  --secondary: oklch(0.28 0.038 250);
+  --secondary-foreground: oklch(0.95 0.01 245);
+  --muted: oklch(0.27 0.036 250);
+  --muted-foreground: oklch(0.72 0.03 245);
+  --accent: oklch(0.31 0.055 245);
+  --accent-foreground: oklch(0.95 0.01 245);
+  --destructive: oklch(0.7 0.18 25);
+  --success: oklch(0.76 0.15 152);
+  --warning: oklch(0.82 0.14 80);
+  --border: oklch(0.34 0.045 250);
+  --input: oklch(0.38 0.05 250);
+  --ring: oklch(0.7 0.14 240);
+  --chart-1: oklch(0.72 0.14 240);
+  --chart-2: oklch(0.78 0.11 185);
+  --chart-3: oklch(0.83 0.14 82);
+  --chart-4: oklch(0.7 0.05 245);
+  --chart-5: oklch(0.72 0.14 295);
+  --chart-6: oklch(0.78 0.15 150);
+  --chart-7: oklch(0.72 0.16 25);
+  --chart-8: oklch(0.62 0.06 240);
+  --brand-from: oklch(0.68 0.16 242);
+  --brand-to: oklch(0.8 0.17 155);
+  --sidebar: oklch(0.165 0.035 252);
+  --sidebar-foreground: oklch(0.9 0.015 245);
+  --sidebar-primary: oklch(0.72 0.14 240);
+  --sidebar-primary-foreground: oklch(0.18 0.04 250);
+  --sidebar-accent: oklch(0.28 0.05 248);
+  --sidebar-accent-foreground: oklch(0.96 0.01 245);
+  --sidebar-border: oklch(0.3 0.04 250);
+  --sidebar-ring: oklch(0.7 0.14 240);
+}
+
+/* The brand gradient, taken from the logo's X. Reserved for a few signature spots, never for body content. */
+.brand-gradient {
+  background-image: linear-gradient(135deg, var(--brand-from), var(--brand-to));
+}
+
+/* Active navigation item: a short gradient bar on its leading edge. */
+[data-slot="sidebar-menu-button"][data-active="true"] {
+  position: relative;
+}
+[data-slot="sidebar-menu-button"][data-active="true"]::before {
+  content: "";
+  position: absolute;
+  inset-block: 22%;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background-image: linear-gradient(180deg, var(--brand-from), var(--brand-to));
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
-    font-feature-settings: "cv11", "ss01";
+    text-rendering: optimizeLegibility;
   }
-  .tabular {
+  /* Headings and card titles use the display face; digits line up in tables and chart axes. */
+  h1, h2, h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.015em;
+  }
+  td, th, .tabular, .recharts-text, .recharts-cartesian-axis-tick-value {
     font-variant-numeric: tabular-nums;
   }
   * {

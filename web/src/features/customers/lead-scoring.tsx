@@ -195,7 +195,7 @@ function Result({ result, store, channel }: { result: LeadScore; store: string; 
                 <RadialBar dataKey="value" background={{ fill: "var(--muted)" }} cornerRadius={8} fill={color} />
               </RadialBarChart>
             </ChartContainer>
-            <p className="tabular absolute inset-x-0 bottom-3 text-center text-4xl font-semibold" style={{ color }}>{fmt.pct(p * 100, 0)}</p>
+            <p className="font-heading tabular absolute inset-x-0 bottom-3 text-center text-4xl font-semibold" style={{ color }}>{fmt.pct(p * 100, 0)}</p>
           </div>
         </Panel>
 

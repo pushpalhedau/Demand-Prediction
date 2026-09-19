@@ -54,8 +54,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar me={me} />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="bg-background/90 sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
+          <span aria-hidden className="brand-gradient absolute inset-x-0 top-0 h-0.5" />
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mx-1 h-4" />
           <Breadcrumb>
@@ -75,7 +76,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <FilterToolbar regionLabel={me.organisation.region_label} dataRange={me.data_range} />
           </Suspense>
         </div>
-        <main className="mx-auto w-full max-w-[1500px] flex-1 space-y-6 p-4 md:p-6">{children}</main>
+        <main className="mx-auto w-full max-w-[1500px] min-w-0 flex-1 space-y-6 p-4 md:p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

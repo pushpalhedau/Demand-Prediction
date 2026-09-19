@@ -44,7 +44,7 @@ export default function LoginPage() {
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
-      <section className="relative hidden bg-[oklch(0.3_0.09_258)] text-white flex-col justify-between p-12 lg:flex">
+      <section className="relative hidden bg-[linear-gradient(150deg,oklch(0.27_0.07_255)_0%,oklch(0.31_0.08_235)_55%,oklch(0.38_0.09_190)_100%)] text-white flex-col justify-between p-12 lg:flex">
         <div className="rounded-md bg-white/95 px-4 py-2.5 self-start">
           <Image src="/logo.png" alt="PredictaX" width={150} height={38} priority />
         </div>
