@@ -1,6 +1,6 @@
 import pytest
 
-from sentiment.fetchers import rss_fetcher as rss
+from backend.sentiment.fetchers import rss_fetcher as rss
 
 
 @pytest.fixture(autouse=True)
@@ -77,7 +77,7 @@ def test_one_tenant_mutating_its_articles_does_not_affect_the_next(monkeypatch):
 
 
 def test_paid_scoring_is_off_unless_explicitly_enabled(monkeypatch):
-    from sentiment.analyzers import grok_analyzer as g
+    from backend.sentiment.analyzers import grok_analyzer as g
     monkeypatch.setattr(g, "_XAI_API_KEY", "xai-something")
     monkeypatch.delenv("ALLOW_PAID_SENTIMENT", raising=False)
     assert g.is_live_mode() is False

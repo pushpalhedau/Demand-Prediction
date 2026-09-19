@@ -7,15 +7,15 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from auth.gate import _load_active_tenant
-from auth.supabase import Identity
-from database.connection import get_admin_session, init_all_tables
-from database.models import Tenant
-from database.tenant_context import tenant_context
-from ingestion.mapping import propose_mapping
-from ingestion.pipeline import read_csv, run_ingest
-from tenancy.capabilities import get_capabilities, tab_available
-from tenancy.provision import get_tenant_id
+from frontend.customer_app.auth import _load_active_tenant
+from backend.auth.client import Identity
+from backend.db.connection import get_admin_session, init_all_tables
+from backend.db.models import Tenant
+from backend.core.tenant_context import tenant_context
+from backend.ingestion.mapping import propose_mapping
+from backend.ingestion.pipeline import read_csv, run_ingest
+from backend.tenancy.capabilities import get_capabilities, tab_available
+from backend.tenancy.provision import get_tenant_id
 
 ALL_TABS = ["tab.overview", "tab.forecasting", "tab.comparison", "tab.regional",
             "tab.customers", "tab.inventory", "tab.sentiment"]
@@ -29,7 +29,7 @@ FOREIGN = {"germany-demo": ("AED", "$", "USD"), "uae-demo": (EURO, "EUR", "$", "
 def _login(tenant_id, role="tenant_admin", page=None):
     """Same session state a real login produces (see auth.gate._establish_session)."""
     tenant = _load_active_tenant(tenant_id)
-    at = AppTest.from_file("app.py", default_timeout=240)
+    at = AppTest.from_file("frontend/customer_app/main.py", default_timeout=240)
     ss = at.session_state
     ss["identity"] = Identity("u1", "user@example.com", tenant_id, role)
     ss["tenant_id"] = str(tenant_id)
@@ -55,7 +55,7 @@ def _visible_text(at) -> str:
 
 def test_logged_out_visitor_only_sees_login(monkeypatch):
     monkeypatch.setenv("AUTH_BASE_URL", "http://localhost:9999")
-    at = AppTest.from_file("app.py", default_timeout=60).run()
+    at = AppTest.from_file("frontend/customer_app/main.py", default_timeout=60).run()
     assert not at.exception
     assert [t.label for t in at.text_input] == ["Email", "Password"]
     assert len(at.selectbox) == 0   # no dashboard filters rendered

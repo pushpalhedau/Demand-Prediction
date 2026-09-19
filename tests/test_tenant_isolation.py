@@ -6,9 +6,9 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from database.connection import get_admin_session, get_db_session, get_engine, init_all_tables
-from database.models import Dealer, Sale, Tenant
-from database.tenant_context import tenant_context
+from backend.db.connection import get_admin_session, get_db_session, get_engine, init_all_tables
+from backend.db.models import Dealer, Sale, Tenant
+from backend.core.tenant_context import tenant_context
 
 
 @pytest.fixture(scope="module")

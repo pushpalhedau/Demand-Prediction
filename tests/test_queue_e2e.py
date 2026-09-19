@@ -9,9 +9,9 @@ import uuid
 
 import pytest
 
-from database.connection import get_admin_session, init_all_tables
-from database.models import Tenant
-from ingestion.jobs import create_job, enqueue_job, get_job
+from backend.db.connection import get_admin_session, init_all_tables
+from backend.db.models import Tenant
+from backend.ingestion.jobs import create_job, enqueue_job, get_job
 
 REDIS_URL = "redis://localhost:6379/0"
 
@@ -59,7 +59,7 @@ def test_worker_container_runs_a_job_queued_through_redis(tenant, tmp_path, monk
     _docker("exec", "-T", "worker", "mkdir", "-p", remote_dir)
     _docker("cp", str(local), f"worker:{remote_dir}/sales.csv")
 
-    from ingestion.mapping import propose_mapping
+    from backend.ingestion.mapping import propose_mapping
     mapping = propose_mapping("sales", ["sale_id", "sale_date", "selling_price"]).to_mapping()
     create_job(tenant, {"files": {"sales": f"{remote_dir}/sales.csv"}, "mappings": {"sales": mapping},
                         "units": {"distance": "km"}, "replace": True, "train": False}, job_id=jid)

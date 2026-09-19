@@ -8,7 +8,7 @@ def _script(csv_path: str, tenant_id: str):
 
     import streamlit as st
 
-    from admin_console import import_wizard as u
+    from frontend.admin_console.views import import_wizard as u
 
     ds = {"job": "j", "files": {"sales": csv_path}, "props": {}, "sizes": {}, "started": False}
     mappings, units, dayfirst, decimal, replace, ok = u._step_map(ds, _uuid.UUID(tenant_id))

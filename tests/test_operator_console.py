@@ -10,13 +10,13 @@ import pytest
 import requests
 from streamlit.testing.v1 import AppTest
 
-from auth import supabase
-from auth.gate import _load_active_tenant
-from auth.supabase import AuthError, Operator
-from database.connection import get_admin_session, init_all_tables
-from database.models import Tenant
-from ingestion.jobs import create_job, get_job, job_dir, process_job
-from tenancy.provision import create_operator, create_tenant, get_tenant, set_status
+from backend.auth import client as auth_client
+from frontend.customer_app.auth import _load_active_tenant
+from backend.auth.client import AuthError, Operator
+from backend.db.connection import get_admin_session, init_all_tables
+from backend.db.models import Tenant
+from backend.ingestion.jobs import create_job, get_job, job_dir, process_job
+from backend.tenancy.provision import create_operator, create_tenant, get_tenant, set_status
 
 
 def _auth_up() -> bool:
@@ -31,8 +31,8 @@ pytestmark = pytest.mark.skipif(not _auth_up(), reason="local auth server is not
 
 
 def _delete_tenant_and_users(tenant_id):
-    for u in supabase.users_of_tenant(tenant_id):
-        supabase.admin_delete_user(u["id"])
+    for u in auth_client.users_of_tenant(tenant_id):
+        auth_client.admin_delete_user(u["id"])
     db = get_admin_session()
     db.query(Tenant).filter(Tenant.id == tenant_id).delete()
     db.commit()
@@ -45,9 +45,9 @@ def operator():
     email = f"op-{uuid.uuid4().hex[:8]}@example.com"
     r = create_operator(email, "Operator-Pw-2026!")
     yield r
-    for u in supabase.admin_list_users():
+    for u in auth_client.admin_list_users():
         if u["email"] == email:
-            supabase.admin_delete_user(u["id"])
+            auth_client.admin_delete_user(u["id"])
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def account():
 
 
 def _console(slug=None):
-    at = AppTest.from_file("admin_console/app.py", default_timeout=120)
+    at = AppTest.from_file("frontend/admin_console/main.py", default_timeout=120)
     at.session_state["operator"] = Operator("op-1", "operator@example.com")
     at.session_state["op_refresh"] = "x"
     at.session_state["op_exp"] = time.time() + 3600
@@ -73,43 +73,43 @@ def _console(slug=None):
 # ── who can get in ──────────────────────────────────────────────────────────
 
 def test_operator_signs_in_and_is_recognised(operator):
-    tokens = supabase.sign_in(operator["email"], operator["password"])
-    op = supabase.operator_from_claims(supabase.verify_access_token(tokens["access_token"]))
+    tokens = auth_client.sign_in(operator["email"], operator["password"])
+    op = auth_client.operator_from_claims(auth_client.verify_access_token(tokens["access_token"]))
     assert op.email == operator["email"]
 
 
 def test_an_operator_login_cannot_open_a_customer_dashboard(operator):
-    tokens = supabase.sign_in(operator["email"], operator["password"])
-    claims = supabase.verify_access_token(tokens["access_token"])
+    tokens = auth_client.sign_in(operator["email"], operator["password"])
+    claims = auth_client.verify_access_token(tokens["access_token"])
     with pytest.raises(AuthError, match="not linked to an organisation"):
-        supabase.identity_from_claims(claims)
+        auth_client.identity_from_claims(claims)
 
 
 def test_a_customer_login_cannot_open_the_console(account):
-    tokens = supabase.sign_in(account["email"], account["password"])
+    tokens = auth_client.sign_in(account["email"], account["password"])
     with pytest.raises(AuthError, match="cannot use the admin console"):
-        supabase.operator_from_claims(supabase.verify_access_token(tokens["access_token"]))
+        auth_client.operator_from_claims(auth_client.verify_access_token(tokens["access_token"]))
 
 
 def test_a_customer_cannot_become_an_operator_by_editing_their_own_metadata(account):
-    tokens = supabase.sign_in(account["email"], account["password"])
+    tokens = auth_client.sign_in(account["email"], account["password"])
     requests.put(f"{os.getenv('AUTH_BASE_URL')}/user",
                  headers={"Authorization": f"Bearer {tokens['access_token']}", "Content-Type": "application/json"},
                  json={"data": {"role": "platform_admin"}}, timeout=10)
-    tokens = supabase.sign_in(account["email"], account["password"])
+    tokens = auth_client.sign_in(account["email"], account["password"])
     with pytest.raises(AuthError):
-        supabase.operator_from_claims(supabase.verify_access_token(tokens["access_token"]))
+        auth_client.operator_from_claims(auth_client.verify_access_token(tokens["access_token"]))
 
 
 def test_console_shows_only_a_login_form_when_signed_out():
-    at = AppTest.from_file("admin_console/app.py", default_timeout=60).run()
+    at = AppTest.from_file("frontend/admin_console/main.py", default_timeout=60).run()
     assert not at.exception
     assert [t.label for t in at.text_input] == ["Email", "Password"]
     assert not at.sidebar.button
 
 
 def test_console_login_accepts_an_operator_and_rejects_a_customer(operator, account):
-    at = AppTest.from_file("admin_console/app.py", default_timeout=60).run()
+    at = AppTest.from_file("frontend/admin_console/main.py", default_timeout=60).run()
     at.text_input[0].input(account["email"])
     at.text_input[1].input(account["password"])
     at.button[0].click().run()
@@ -149,8 +149,8 @@ def test_creating_an_account_through_the_form_makes_a_working_login(operator):
         t = get_tenant(slug)
         assert t["config"]["currency"] == "GBP" and t["config"]["currency_symbol"] == "£"
         assert at.session_state["selected_slug"] == slug
-        tokens = supabase.sign_in(values["First admin's email"], values["Password (leave blank to generate one)"])
-        ident = supabase.identity_from_claims(supabase.verify_access_token(tokens["access_token"]))
+        tokens = auth_client.sign_in(values["First admin's email"], values["Password (leave blank to generate one)"])
+        ident = auth_client.identity_from_claims(auth_client.verify_access_token(tokens["access_token"]))
         assert str(ident.tenant_id) == str(t["id"]) and ident.role == "tenant_admin"
     finally:
         _delete_tenant_and_users(get_tenant(slug)["id"])
@@ -207,6 +207,6 @@ def test_retrain_only_job_runs_without_needing_any_files(account):
 
 
 def test_settings_change_reaches_the_customer(account):
-    from tenancy.provision import set_config
+    from backend.tenancy.provision import set_config
     set_config(account["slug"], {"region_label": "County"})
     assert _load_active_tenant(uuid.UUID(account["tenant_id"])).config["region_label"] == "County"

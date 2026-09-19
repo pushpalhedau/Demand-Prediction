@@ -3,11 +3,11 @@ import uuid
 import pytest
 from sqlalchemy import text
 
-from database.connection import get_admin_session, get_db_session, init_all_tables
-from database.models import Tenant
-from database.tenant_context import tenant_context
-from ingestion.mapping import propose_mapping
-from ingestion.pipeline import IngestError, read_csv, run_ingest
+from backend.db.connection import get_admin_session, get_db_session, init_all_tables
+from backend.db.models import Tenant
+from backend.core.tenant_context import tenant_context
+from backend.ingestion.mapping import propose_mapping
+from backend.ingestion.pipeline import IngestError, read_csv, run_ingest
 
 
 @pytest.fixture

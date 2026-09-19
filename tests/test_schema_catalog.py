@@ -1,8 +1,8 @@
 import pytest
 from sqlalchemy import Boolean, Date, Float, Integer, Text
 
-from database import models
-from schema.catalog import TABLES
+from backend.db import models
+from backend.ingestion.catalog import TABLES
 
 _MODEL = {"sales": models.Sale, "dealers": models.Dealer, "vehicles": models.Vehicle,
           "customers": models.Customer, "inventory": models.Inventory,

@@ -4,14 +4,14 @@ import uuid
 import pytest
 from sqlalchemy import text
 
-from database.connection import get_admin_session, get_db_session, init_all_tables
-from database.models import Tenant
-from database.tenant_context import tenant_context
-from ingestion.jobs import (
+from backend.db.connection import get_admin_session, get_db_session, init_all_tables
+from backend.db.models import Tenant
+from backend.core.tenant_context import tenant_context
+from backend.ingestion.jobs import (
     create_job, enqueue_job, get_job, job_dir, load_saved_mapping, process_job,
 )
-from ingestion.mapping import propose_mapping
-from ingestion.pipeline import read_csv
+from backend.ingestion.mapping import propose_mapping
+from backend.ingestion.pipeline import read_csv
 
 
 @pytest.fixture

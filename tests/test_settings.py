@@ -1,6 +1,6 @@
 import pytest
 
-from tenancy.settings import InvalidSetting, validate_config
+from backend.tenancy.settings import InvalidSetting, validate_config
 
 
 def test_ordinary_settings_pass():

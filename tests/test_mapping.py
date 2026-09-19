@@ -1,6 +1,6 @@
 import pytest
 
-from ingestion.mapping import propose_mapping
+from backend.ingestion.mapping import propose_mapping
 
 
 def test_mileage_kmpl_is_not_imperial():

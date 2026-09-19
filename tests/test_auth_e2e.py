@@ -9,11 +9,11 @@ import uuid
 import pytest
 import requests
 
-from auth import supabase
-from auth.supabase import AuthError
-from database.connection import get_admin_session, init_all_tables
-from database.models import Tenant
-from tenancy.provision import create_tenant
+from backend.auth import client as auth_client
+from backend.auth.client import AuthError
+from backend.db.connection import get_admin_session, init_all_tables
+from backend.db.models import Tenant
+from backend.tenancy.provision import create_tenant
 
 
 def _auth_up() -> bool:
@@ -47,8 +47,8 @@ def two_accounts():
 
 def test_login_resolves_to_the_accounts_own_tenant(two_accounts):
     for slug, r in two_accounts:
-        tokens = supabase.sign_in(r["email"], r["password"])
-        identity = supabase.identity_from_claims(supabase.verify_access_token(tokens["access_token"]))
+        tokens = auth_client.sign_in(r["email"], r["password"])
+        identity = auth_client.identity_from_claims(auth_client.verify_access_token(tokens["access_token"]))
         assert str(identity.tenant_id) == r["tenant_id"]
         assert identity.role == "tenant_admin"
         assert identity.email == r["email"]
@@ -57,22 +57,22 @@ def test_login_resolves_to_the_accounts_own_tenant(two_accounts):
 def test_two_accounts_never_resolve_to_each_others_tenant(two_accounts):
     ids = set()
     for _, r in two_accounts:
-        tokens = supabase.sign_in(r["email"], r["password"])
-        ids.add(supabase.identity_from_claims(supabase.verify_access_token(tokens["access_token"])).tenant_id)
+        tokens = auth_client.sign_in(r["email"], r["password"])
+        ids.add(auth_client.identity_from_claims(auth_client.verify_access_token(tokens["access_token"])).tenant_id)
     assert len(ids) == 2
 
 
 def test_wrong_password_is_rejected(two_accounts):
     _, r = two_accounts[0]
     with pytest.raises(AuthError, match="Invalid email or password"):
-        supabase.sign_in(r["email"], "definitely-wrong")
+        auth_client.sign_in(r["email"], "definitely-wrong")
 
 
 def test_refresh_token_issues_a_new_valid_session(two_accounts):
     _, r = two_accounts[0]
-    tokens = supabase.sign_in(r["email"], r["password"])
-    fresh = supabase.refresh(tokens["refresh_token"])
-    ident = supabase.identity_from_claims(supabase.verify_access_token(fresh["access_token"]))
+    tokens = auth_client.sign_in(r["email"], r["password"])
+    fresh = auth_client.refresh(tokens["refresh_token"])
+    ident = auth_client.identity_from_claims(auth_client.verify_access_token(fresh["access_token"]))
     assert str(ident.tenant_id) == r["tenant_id"]
 
 
@@ -80,10 +80,10 @@ def test_a_user_cannot_change_their_own_tenant_via_user_metadata(two_accounts):
     """user_metadata is user-writable; app_metadata (where tenant_id lives) is not."""
     _, ra = two_accounts[0]
     _, rb = two_accounts[1]
-    tokens = supabase.sign_in(ra["email"], ra["password"])
+    tokens = auth_client.sign_in(ra["email"], ra["password"])
     requests.put(f"{os.getenv('AUTH_BASE_URL')}/user",
                  headers={"Authorization": f"Bearer {tokens['access_token']}", "Content-Type": "application/json"},
                  json={"data": {"tenant_id": rb["tenant_id"]}}, timeout=10)
-    tokens = supabase.sign_in(ra["email"], ra["password"])
-    ident = supabase.identity_from_claims(supabase.verify_access_token(tokens["access_token"]))
+    tokens = auth_client.sign_in(ra["email"], ra["password"])
+    ident = auth_client.identity_from_claims(auth_client.verify_access_token(tokens["access_token"]))
     assert str(ident.tenant_id) == ra["tenant_id"]
