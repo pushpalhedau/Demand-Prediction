@@ -1,7 +1,8 @@
 """Dealer (rooftop) queries: the performance leaderboard and the store directory."""
+from datetime import date
+
 import numpy as np
 import pandas as pd
-from datetime import date
 from sqlalchemy import case, desc, func
 from sqlalchemy.orm import Session
 
@@ -54,7 +55,7 @@ def get_dealer_performance_leaderboard(session: Session, filters: dict = None) -
         func.sum(Sale.units_sold).label("units_sold"),
         func.sum(Sale.total_revenue_incl_tax).label("revenue"),
         func.count(Sale.sale_id).label("deal_rows"),
-        func.sum(case((Sale.test_drive_converted == True, 1), else_=0)).label("td_converted"),
+        func.sum(case((Sale.test_drive_converted.is_(True), 1), else_=0)).label("td_converted"),
         func.avg(Sale.lead_to_close_days).label("avg_days_to_close"),
     ).join(Sale, Sale.dealer_id == Dealer.dealer_id)
     query = apply_sale_filters(query, filters)

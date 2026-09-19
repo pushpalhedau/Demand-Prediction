@@ -6,22 +6,22 @@ process_job() does the work and is safe to run anywhere: in a background thread
 queue message carries only (tenant_id, job_id); the worker re-scopes itself to
 that tenant, so it never needs cross-tenant database access.
 """
-import os
 import pathlib
 import threading
 import traceback
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
+from backend.core.config import get_settings
+from backend.core.request_context import tenant_context
 from backend.db.connection import get_db_session
 from backend.db.models import ColumnMapping, IngestJob
-from backend.core.request_context import tenant_context
 from backend.ingestion.pipeline import IngestError, run_ingest
 from backend.ml.training import train_tenant_models
 
 
 def upload_root() -> pathlib.Path:
-    return pathlib.Path(os.getenv("UPLOAD_DIR", "./data/uploads")).resolve()
+    return get_settings().upload_dir
 
 
 def job_dir(tenant_id, job_id) -> pathlib.Path:
@@ -31,7 +31,7 @@ def job_dir(tenant_id, job_id) -> pathlib.Path:
 
 
 def _now():
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 def create_job(tenant_id, options: dict, created_by: str = None, job_id=None) -> uuid.UUID:
@@ -162,7 +162,7 @@ def process_job(tenant_id, job_id) -> None:
 
 def enqueue_job(tenant_id, job_id) -> str:
     """Hand the job to a Redis/RQ worker if REDIS_URL is set, else run it in a background thread."""
-    redis_url = os.getenv("REDIS_URL")
+    redis_url = get_settings().redis_url
     if redis_url:
         import redis
         from rq import Queue

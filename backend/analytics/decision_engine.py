@@ -21,13 +21,16 @@ from datetime import date
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import func, case
+from sqlalchemy import case, func
 
-from backend.db.models import Sale, Dealer
 from backend.core.formatting import fmt_money
+from backend.core.log import get_logger
+from backend.db.models import Dealer, Sale
 from backend.repositories._filters import apply_sale_filters, shift_years
 from backend.repositories.dealers import get_dealer_performance_leaderboard
 from backend.repositories.inventory import get_inventory_snapshot
+
+log = get_logger(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Benchmark ratios (new-vehicle retail).
@@ -347,7 +350,7 @@ def _play_margin(session, filters: dict, scorecard: pd.DataFrame) -> list[Play]:
         expected = sum(grp_cat.get(c, 0) * u for c, u in zip(sub["vehicle_category"], sub["units"])) / units
         actual = sub["concession"].sum() / units
         rows.append((did, name.get(did, did), units, actual - expected))
-    for did, nm, units, excess in sorted(rows, key=lambda r: -r[3])[:2]:
+    for _did, nm, units, excess in sorted(rows, key=lambda r: -r[3])[:2]:
         if excess < 600:
             continue
         annual = excess * units
@@ -558,7 +561,8 @@ def generate_plays(session, filters: dict, limit: int = 5) -> list[Play]:
     ):
         try:
             plays.extend(gen())
-        except Exception:
+        except Exception:  # noqa: BLE001 - one failing play must not hide the others
+            log.warning("Play generator failed", exc_info=True)
             continue
 
     # An executive brief shouldn't carry sub-scale items next to six-figure ones.

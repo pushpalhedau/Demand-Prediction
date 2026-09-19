@@ -1,16 +1,13 @@
-import os
-import sys
-import pandas as pd
 import numpy as np
-from datetime import timedelta, date
+import pandas as pd
 from prophet import Prophet
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-# Add the project root to python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+from backend.core.log import get_logger
 from backend.db.connection import get_db_session
-from backend.db.models import Sale, ExternalFactor
+from backend.db.models import ExternalFactor, Sale
+
+log = get_logger(__name__)
 
 def get_external_factor_stats(region: str = None) -> dict:
     """Return last known value, min, and max for each external factor column."""
@@ -100,14 +97,14 @@ def train_prophet_model(
         else:
             daily_series = sales_df.groupby('sale_date')['total_revenue_incl_tax'].sum().reset_index()
             daily_series.columns = ['ds', 'y']
-            
+
         # Complete missing dates with zero sales/revenue
         min_date = daily_series['ds'].min()
         max_date = daily_series['ds'].max()
         all_dates = pd.date_range(start=min_date, end=max_date, freq='D')
         daily_series = daily_series.set_index('ds').reindex(all_dates, fill_value=0).reset_index()
         daily_series.columns = ['ds', 'y']
-        
+
         # 2. Fetch external factors
         # Only the conditions a dealer group actually reasons about: pump price,
         # what its customers finance at, how hard it is discounting, how much
@@ -122,27 +119,27 @@ def train_prophet_model(
         )
         if region:
             ext_query = ext_query.filter(ExternalFactor.region == region)
-            
+
         ext_df = pd.read_sql(ext_query.statement, session.bind)
         if not ext_df.empty:
             ext_df['date'] = pd.to_datetime(ext_df['date'])
-            
+
             # Group by date and take mean of numerical factors if multiple regions are present (global view)
             if not region:
                 # Grouping by date ensures unique date index for resampling
                 ext_df = ext_df.groupby('date').mean(numeric_only=True).reset_index()
-                
+
             # We want to resample/upsample monthly external factors to daily
             ext_df = ext_df.set_index('date').resample('D').ffill().reset_index()
             ext_df.rename(columns={'date': 'ds'}, inplace=True)
-            
+
             # Merge with sales daily series
             data = pd.merge(daily_series, ext_df, on='ds', how='left')
             # Fill remaining NaNs with forward/backward fills
             data = data.ffill().bfill()
         else:
             data = daily_series
-            
+
         # 2a. Optionally merge sentiment regressors from DailySentimentSummary
         sentiment_regressor_candidates = []
         sent_df_for_future = None
@@ -163,8 +160,8 @@ def train_prophet_model(
                         data[col] = data[col].ffill().bfill().fillna(0.0)
                     sentiment_regressor_candidates = sent_cols
                     sent_df_for_future = sent_df  # saved for future-dataframe merge below
-            except Exception:
-                pass  # sentiment module not yet available — skip silently
+            except Exception:  # noqa: BLE001 - sentiment regressors are optional
+                log.info("Sentiment regressors unavailable; forecasting without them", exc_info=True)
 
         # Ensure we have enough data to train (at least 30 historical days)
         if len(data) < 30:
@@ -172,12 +169,12 @@ def train_prophet_model(
 
         # 3. Model setup
         model = Prophet(
-            yearly_seasonality=True, 
-            weekly_seasonality=True, 
+            yearly_seasonality=True,
+            weekly_seasonality=True,
             daily_seasonality=False,
             interval_width=interval_width
         )
-        
+
         # Add external regressors if they exist in dataframe
         regressors = [
             'petrol_price_per_litre', 'auto_loan_apr_pct',
@@ -190,37 +187,37 @@ def train_prophet_model(
             if reg in data.columns and data[reg].nunique() > 1:
                 model.add_regressor(reg)
                 active_regressors.append(reg)
-                
+
         # Split into train / test for validation (use last 30 days for testing)
         train_size = len(data) - 30
         train_data = data.iloc[:train_size]
         test_data = data.iloc[train_size:]
-        
+
         # Fit the model
         model.fit(train_data)
-        
+
         # Evaluate on test set
         forecast_test = model.predict(test_data)
         y_true = test_data['y'].values
         y_pred = forecast_test['yhat'].values
         # Prophet can predict negative values in low-sales scenarios, floor to 0
         y_pred = np.clip(y_pred, 0, None)
-        
+
         rmse = np.sqrt(mean_squared_error(y_true, y_pred))
         mae = mean_absolute_error(y_true, y_pred)
-        
+
         # Calculate baseline accuracy
         mean_y = np.mean(y_true)
         accuracy = 1.0 - (mae / mean_y) if mean_y > 0 else 0.0
         accuracy = max(0.0, min(1.0, accuracy)) * 100 # percentage
-        
+
         metrics = {
             "rmse": rmse,
             "mae": mae,
             "accuracy": accuracy,
             "historical_mean": mean_y
         }
-        
+
         # Retrain model on full dataset for future forecast
         full_model = Prophet(
             yearly_seasonality=True,
@@ -259,17 +256,17 @@ def train_prophet_model(
             )
             for col in sent_active:
                 future[col] = future[col].ffill().bfill().fillna(0.0)
-            
+
         forecast = full_model.predict(future)
-        
+
         # Clip negative predictions to 0
         for col in ['yhat', 'yhat_lower', 'yhat_upper']:
             forecast[col] = np.clip(forecast[col], 0, None)
-            
+
         # Merge actuals back
         forecast = pd.merge(forecast, data[['ds', 'y']], on='ds', how='left')
         forecast.rename(columns={'y': 'actual'}, inplace=True)
-        
+
         return {
             "forecast": forecast,
             "metrics": metrics,
@@ -277,10 +274,9 @@ def train_prophet_model(
             "sentiment_regressors": [r for r in active_regressors if r in sentiment_regressor_candidates],
             "historical_data": data,
         }, None
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return None, f"Forecasting pipeline error: {str(e)}"
+
+    except Exception:
+        log.exception("The forecast could not be produced")
+        return None, "The forecast could not be produced. Please contact support."
     finally:
         session.close()

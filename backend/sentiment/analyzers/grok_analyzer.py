@@ -13,17 +13,13 @@ Mode selection (automatic):
 Both modes produce identical output schemas so the rest of the pipeline is unaffected.
 """
 
-import os
-import sys
+import hashlib
 import json
 import logging
-import hashlib
 import random
 from datetime import datetime
-from typing import List, Dict, Optional, Tuple
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-
+from backend.core.config import get_settings
 from backend.core.request_context import current_language
 from backend.db.connection import get_db_session
 from backend.db.models import NewsArticle, SentimentSignal
@@ -34,8 +30,6 @@ logger = logging.getLogger(__name__)
 # Configuration
 # ─────────────────────────────────────────────────────────────────────────────
 
-_XAI_API_KEY: str = os.getenv("XAI_API_KEY", "").strip()
-_GROK_MODEL: str = os.getenv("GROK_MODEL", "grok-3-mini")
 _GROK_BASE_URL: str = "https://api.x.ai/v1"
 _BATCH_SIZE: int = 10  # articles per Grok API call
 
@@ -175,7 +169,7 @@ _MEDIUM_IMPACT_WORDS = {
     "concern", "uncertainty", "risk", "slowdown", "inflation", "economy",
     "demand", "inventory", "prices", "trade", "consumer", "confidence", "lease",
     # German
-    "sorge", "unsicherheit", "risiko", "abschwung", "inflation", "wirtschaft",
+    "sorge", "unsicherheit", "risiko", "abschwung", "wirtschaft",
     "nachfrage", "bestand", "preise", "handel", "verbraucher", "konsumklima",
     "geschäftsklima", "leasing", "markt", "branche",
 }
@@ -214,7 +208,7 @@ _FALL_WORDS = {
     "fall", "falls", "falling", "fell", "drop", "drops", "dropped", "plunge",
     "plunged", "tumble", "tumbled", "slide", "slid", "ease", "eased", "easing",
     "lower", "lowered", "cheaper", "decline", "declined", "declines", "relief",
-    "cool", "cools", "cooled", "cooling", "down", "cut", "cuts", "slashed", "drops",
+    "cool", "cools", "cooled", "cooling", "down", "cut", "cuts", "slashed",
 }
 
 
@@ -250,7 +244,7 @@ def _theme_directional_read(theme, tl: str, words: set):
     return None
 
 
-def _mock_signal_for_title(title: str, article_index: int, theme: Optional[str] = None) -> Dict:
+def _mock_signal_for_title(title: str, article_index: int, theme: str | None = None) -> dict:
     """
     Generate a plausible deterministic signal from article title keywords.
     Uses a title-seeded RNG so the same title always produces the same output.
@@ -259,8 +253,8 @@ def _mock_signal_for_title(title: str, article_index: int, theme: Optional[str] 
     title_lower = title.lower()
 
     # Seed RNG from title hash for determinism
-    seed = int(hashlib.md5(title.encode()).hexdigest(), 16) % (2 ** 32)
-    rng = random.Random(seed)
+    seed = int(hashlib.md5(title.encode(), usedforsecurity=False).hexdigest(), 16) % (2 ** 32)
+    rng = random.Random(seed)  # noqa: S311 - deterministic mock scoring, not security
 
     # An "event, not a signal" headline (fatal crash, lawsuit, theft) gets a
     # flat, low-impact read — the keyword scorer has no business calling a
@@ -377,7 +371,7 @@ def _mock_summary(direction: str, category: str, change_pct: float) -> str:
     return f"No clear demand read for {seg} — monitor, no action yet."
 
 
-def _analyze_mock(articles: List[Dict]) -> List[Dict]:
+def _analyze_mock(articles: list[dict]) -> list[dict]:
     """Generate mock signals for all articles (no API call)."""
     return [
         _mock_signal_for_title(art.get("title", ""), i, art.get("theme") or art.get("_theme"))
@@ -393,15 +387,15 @@ def _build_grok_client():
     """Return an OpenAI client pointed at xAI's Grok endpoint."""
     try:
         from openai import OpenAI
-        return OpenAI(api_key=_XAI_API_KEY, base_url=_GROK_BASE_URL)
-    except ImportError:
+        return OpenAI(api_key=get_settings().xai_api_key, base_url=_GROK_BASE_URL)
+    except ImportError as exc:
         raise RuntimeError(
             "The 'openai' package is required for Grok analysis. "
             "Run: pip install openai"
-        )
+        ) from exc
 
 
-def _analyze_batch_live(client, articles: List[Dict]) -> Tuple[List[Dict], Optional[str]]:
+def _analyze_batch_live(client, articles: list[dict]) -> tuple[list[dict], str | None]:
     """
     Send one batch of articles to Grok and parse the response.
 
@@ -416,7 +410,7 @@ def _analyze_batch_live(client, articles: List[Dict]) -> Tuple[List[Dict], Optio
 
     try:
         response = client.chat.completions.create(
-            model=_GROK_MODEL,
+            model=get_settings().grok_model,
             messages=[
                 # Language directive appended per-call so a German session
                 # gets German summaries without re-scoring anything.
@@ -456,13 +450,13 @@ def _analyze_batch_live(client, articles: List[Dict]) -> Tuple[List[Dict], Optio
         return _analyze_mock(articles), f"API error: {e}"
 
 
-def _analyze_live(articles: List[Dict]) -> List[Dict]:
+def _analyze_live(articles: list[dict]) -> list[dict]:
     """
     Analyze all articles in batches via Grok API.
     Falls back to mock signals for any failed batch.
     """
     client = _build_grok_client()
-    all_signals: List[Dict] = []
+    all_signals: list[dict] = []
 
     for batch_start in range(0, len(articles), _BATCH_SIZE):
         batch = articles[batch_start: batch_start + _BATCH_SIZE]
@@ -488,10 +482,11 @@ def is_live_mode() -> bool:
     True only when a key is configured AND paid scoring is explicitly enabled
     (ALLOW_PAID_SENTIMENT=1). The default is the free offline scorer, so tenants cost nothing.
     """
-    return bool(_XAI_API_KEY) and os.getenv("ALLOW_PAID_SENTIMENT", "").strip().lower() in ("1", "true", "yes")
+    settings = get_settings()
+    return bool(settings.xai_api_key) and settings.allow_paid_sentiment
 
 
-def analyze_articles(articles: List[Dict]) -> List[Dict]:
+def analyze_articles(articles: list[dict]) -> list[dict]:
     """
     Analyze a list of article dicts and return signal dicts.
 
@@ -506,7 +501,7 @@ def analyze_articles(articles: List[Dict]) -> List[Dict]:
         return []
 
     if is_live_mode():
-        logger.info("Grok analyzer | LIVE mode | model=%s | articles=%d", _GROK_MODEL, len(articles))
+        logger.info("Grok analyzer | LIVE mode | model=%s | articles=%d", get_settings().grok_model, len(articles))
         return _analyze_live(articles)
     else:
         logger.info("Grok analyzer | MOCK mode (XAI_API_KEY not set) | articles=%d", len(articles))
@@ -514,9 +509,9 @@ def analyze_articles(articles: List[Dict]) -> List[Dict]:
 
 
 def save_signals_to_db(
-    article_dicts: List[Dict],
-    signal_dicts: List[Dict],
-) -> Dict[str, int]:
+    article_dicts: list[dict],
+    signal_dicts: list[dict],
+) -> dict[str, int]:
     """
     Persist SentimentSignal records to SQLite.
 
@@ -585,7 +580,7 @@ def save_signals_to_db(
     return {"inserted": inserted, "skipped": skipped, "errors": errors}
 
 
-def get_unanalyzed_articles(limit: int = 100) -> List[Dict]:
+def get_unanalyzed_articles(limit: int = 100) -> list[dict]:
     """
     Fetch NewsArticle records that have no corresponding SentimentSignal.
     Returns list of flat dicts with 'article_id' and 'title' keys.
@@ -630,7 +625,7 @@ WHAT TO DO THIS WEEK
 Use plain text. Do not use markdown formatting."""
 
 
-def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = None) -> str:
+def generate_market_briefing(stats: dict, category_rows: list[dict] | None = None) -> str:
     """
     Generate a natural-language market briefing using Grok (or a template in mock mode).
 
@@ -682,7 +677,7 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
         try:
             client = _build_grok_client()
             response = client.chat.completions.create(
-                model=_GROK_MODEL,
+                model=get_settings().grok_model,
                 messages=[
                     {"role": "system",
                      "content": _BRIEFING_SYSTEM_PROMPT + _language_directive(_active_lang())},
@@ -726,7 +721,7 @@ def generate_market_briefing(stats: Dict, category_rows: Optional[List[Dict]] = 
     action_2 = (
         f"Pull forward incentive spend on {top_down} — the news is against that segment and moving the metal matters more than holding gross right now."
         if top_down else
-        f"Hold incentive spend where it is; no segment needs a defensive push this week."
+        "Hold incentive spend where it is; no segment needs a defensive push this week."
     )
 
     briefing = f"""WHAT'S MOVING DEMAND
@@ -750,7 +745,7 @@ WHAT TO DO THIS WEEK
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _safe_float(val) -> Optional[float]:
+def _safe_float(val) -> float | None:
     """Coerce val to float or return None."""
     try:
         return float(val) if val is not None else None
@@ -766,7 +761,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 
     print(f"Mode: {'LIVE (Grok API)' if is_live_mode() else 'MOCK (keyword-based)'}")
-    print(f"Model: {_GROK_MODEL}\n")
+    print(f"Model: {get_settings().grok_model}\n")
 
     test_articles = [
         {"article_id": 1, "title": "Neuzulassungen steigen: Rabatte und 0-Prozent-Finanzierung locken Käufer"},

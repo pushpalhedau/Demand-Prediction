@@ -1,21 +1,22 @@
 
-import streamlit as st
-import plotly.graph_objects as go
 import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
 
 from backend.services import comparison as comparison_service
+from frontend.shared.errors import report_error
 from frontend.shared.ui import (
-    _section,
-    _base_layout,
-    _fmt_money,
-    _compact,
-    _pct_label,
-    _INK,
-    _HUE_HISTORY,
+    _HUE_DOWN,
     _HUE_FORECAST,
+    _HUE_HISTORY,
     _HUE_MARKER,
     _HUE_UP,
-    _HUE_DOWN,
+    _INK,
+    _base_layout,
+    _compact,
+    _fmt_money,
+    _pct_label,
+    _section,
 )
 
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -36,9 +37,7 @@ def render_comparison(filters: dict):
         _render_tracking(filters)
 
     except Exception as e:  # noqa: BLE001 — surface, don't crash the tab
-        st.error(f"Error rendering Comparative Analytics: {e}")
-        import traceback
-        st.code(traceback.format_exc())
+        report_error("Could not render Comparative Analytics", e)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -197,7 +196,7 @@ def _render_drivers(filters, m_key, is_units, fmt, vword):
     spec_label = comparison_service.SPECIFIC_LABEL.get(dim, "Specific")
     _section(
         f"What moved it — by {dim_label.lower()}",
-        "★ = unusual move for that {}".format(dim_label.lower()) if n_sig else None,
+        f"★ = unusual move for that {dim_label.lower()}" if n_sig else None,
     )
 
     names = [f"{'★ ' if s else ''}{n}" for n, s in zip(d["name"], d["significant"])]

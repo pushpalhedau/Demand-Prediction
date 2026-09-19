@@ -29,9 +29,13 @@ extend-exclude = ["venv", "scripts/generate_*.py"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "S", "UP"]
 ignore = [
+    "B905",   # zip() without strict= is intentional throughout the analytics code
     "E501",   # long lines: formatter's job
     "S101",   # assert is fine in tests
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S", "B011"]
+# st.set_page_config must be the first Streamlit call, so these entry points import after it.
+"frontend/customer_app/main.py" = ["E402"]
+"frontend/admin_console/main.py" = ["E402"]

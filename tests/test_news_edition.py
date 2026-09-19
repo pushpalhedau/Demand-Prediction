@@ -78,8 +78,23 @@ def test_one_tenant_mutating_its_articles_does_not_affect_the_next(monkeypatch):
 
 def test_paid_scoring_is_off_unless_explicitly_enabled(monkeypatch):
     from backend.sentiment.analyzers import grok_analyzer as g
-    monkeypatch.setattr(g, "_XAI_API_KEY", "xai-something")
+    monkeypatch.setenv("XAI_API_KEY", "xai-something")
     monkeypatch.delenv("ALLOW_PAID_SENTIMENT", raising=False)
     assert g.is_live_mode() is False
     monkeypatch.setenv("ALLOW_PAID_SENTIMENT", "1")
     assert g.is_live_mode() is True
+
+
+def test_hostile_feed_xml_is_rejected(monkeypatch):
+    """A 'billion laughs' / external-entity payload from the network must not be expanded."""
+    bomb = (b'<?xml version="1.0"?><!DOCTYPE lolz [<!ENTITY lol "lol"><!ENTITY lol2 "&lol;&lol;&lol;&lol;">]>'
+            b'<rss><channel><item><title>&lol2;</title><link>http://x</link></item></channel></rss>')
+
+    class Resp:
+        content = bomb
+        def raise_for_status(self): pass
+
+    monkeypatch.setattr(rss.requests, "get", lambda *a, **k: Resp())
+    ed = {"hl": "en", "gl": "US", "ceid": "US:en", "pack": "en", "country": ""}
+    with pytest.raises(Exception, match="(?i)entit|forbidden"):
+        rss._fetch_one("q", 7, 10, ed)

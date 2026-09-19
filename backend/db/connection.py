@@ -1,35 +1,29 @@
-import os
-from dotenv import load_dotenv
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+from backend.core.config import get_settings
 from backend.core.request_context import current_tenant_id
-
-load_dotenv()
 
 Base = declarative_base()
 
-_DEFAULT_APP_URL = "postgresql+psycopg2://predictax_app:predictax_app_dev@localhost:5432/predictax"
-_DEFAULT_ADMIN_URL = "postgresql+psycopg2://predictax_owner:predictax_owner_dev@localhost:5432/predictax"
-
-_APP_URL = os.getenv("DATABASE_URL") or _DEFAULT_APP_URL
-_ADMIN_URL = os.getenv("ADMIN_DATABASE_URL") or _DEFAULT_ADMIN_URL
+_settings = get_settings()
+_settings.assert_production_ready()
 
 
 def _build_engine(url: str):
     return create_engine(
         url,
         pool_pre_ping=True,
-        pool_size=int(os.getenv("DB_POOL_SIZE", "10")),
-        max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "20")),
+        pool_size=_settings.db_pool_size,
+        max_overflow=_settings.db_max_overflow,
         pool_recycle=1800,
     )
 
 
 # App engine: restricted role, row-level security enforced.
-_app_engine = _build_engine(_APP_URL)
+_app_engine = _build_engine(_settings.database_url)
 # Admin engine: table owner. Migrations and tenant provisioning ONLY.
-_admin_engine = _build_engine(_ADMIN_URL)
+_admin_engine = _build_engine(_settings.admin_database_url)
 
 # Kept so `from database.connection import engine` in scripts still resolves.
 engine = _app_engine

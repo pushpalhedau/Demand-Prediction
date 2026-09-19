@@ -16,21 +16,16 @@ Flow:
   get_stored_articles()               [loads persisted articles + signals for rendering]
 """
 
-import os
-import sys
-import time
 import logging
 import threading
-from datetime import datetime, date, timedelta
-from typing import List, Dict, Optional
+import time
+from datetime import date, datetime, timedelta
 
 import requests
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+from sqlalchemy.orm import joinedload
 
 from backend.db.connection import get_db_session
 from backend.db.models import NewsArticle, SentimentSignal
-from sqlalchemy.orm import joinedload
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +65,7 @@ GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 # disputes are demand news here), company-car taxation drives the majority of
 # registrations, and the Umweltbonus cliff still dominates the EV conversation.
 # ---------------------------------------------------------------------------
-DE_AUTO_QUERIES: List[Dict] = [
+DE_AUTO_QUERIES: list[dict] = [
     {
         "name": "de_auto_demand",
         "label": "Neuzulassungen & Nachfrage",
@@ -186,7 +181,7 @@ TIMESPAN_OPTIONS = {
 # Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _parse_gdelt_date(raw: str) -> Optional[date]:
+def _parse_gdelt_date(raw: str) -> date | None:
     """Parse GDELT seendate '20240115T120000Z' → Python date. Returns None on failure."""
     try:
         return datetime.strptime(raw, _GDELT_DATE_FMT).date()
@@ -220,7 +215,7 @@ def _throttle():
     _last_request_time = time.monotonic()
 
 
-def _get(url: str, params: Dict, retries: int = 3):
+def _get(url: str, params: dict, retries: int = 3):
     """
     Rate-limited GET with exponential backoff on 429/timeout.
     Enforces ≥6s between all GDELT requests, serialized across threads/sessions
@@ -258,7 +253,7 @@ def _get(url: str, params: Dict, retries: int = 3):
                 # every time — so fail loudly with the API's own message.
                 body = (resp.text or "").strip()
                 if resp.status_code == 200 and body:
-                    raise GdeltQueryError(body[:300])
+                    raise GdeltQueryError(body[:300]) from None
                 logger.warning("GDELT non-JSON response (attempt %d/%d)", attempt + 1, retries)
             except requests.exceptions.RequestException as e:
                 logger.warning("GDELT request error: %s (attempt %d/%d)", e, attempt + 1, retries)
@@ -280,9 +275,9 @@ def fetch_articles_for_query(
     query: str,
     timespan: str = "30d",
     max_records: int = 75,
-    start: Optional[datetime] = None,
-    end: Optional[datetime] = None,
-) -> List[Dict]:
+    start: datetime | None = None,
+    end: datetime | None = None,
+) -> list[dict]:
     """
     Fetch English-language news articles from GDELT Doc v2 ArtList for one query.
 
@@ -399,7 +394,7 @@ _NOISE_TERMS = (
 )
 
 
-def _is_relevant(article: Dict) -> bool:
+def _is_relevant(article: dict) -> bool:
     t = (article.get("title") or "").lower()
     if not t:
         return False
@@ -408,14 +403,14 @@ def _is_relevant(article: Dict) -> bool:
     return any(term in t for term in _RELEVANCE_TERMS)
 
 
-def _title_key(article: Dict) -> str:
+def _title_key(article: dict) -> str:
     """Normalised title for near-duplicate detection — GDELT returns the same
     wire story under many domains/URLs."""
     t = (article.get("title") or "").lower()
     return "".join(ch for ch in t if ch.isalnum() or ch == " ").split(" - ")[0].strip()[:70]
 
 
-def _infer_theme(article: Dict) -> Dict:
+def _infer_theme(article: dict) -> dict:
     """
     Best-effort mapping of a combined-query article back to one of our
     DE_AUTO_QUERIES themes, by keyword overlap against the article title.
@@ -440,7 +435,7 @@ def fetch_all_themes(
     one_per_day: bool = True,
     combine_queries: bool = True,
     slice_days: int = 0,
-) -> List[Dict]:
+) -> list[dict]:
     """
     Fetch articles for all German auto-market themes and return a deduplicated list.
 
@@ -483,7 +478,7 @@ def fetch_all_themes(
     seen_urls: set = set()
     seen_days: set = set()
     seen_titles: set = set()
-    all_articles: List[Dict] = []
+    all_articles: list[dict] = []
 
     if combine_queries:
         # GDELT caps every response at 250 records and sorts DateDesc, so for a
@@ -492,7 +487,7 @@ def fetch_all_themes(
         # slice_days-sized windows instead so each window's 250 records cover
         # its own days. Costs one request per slice, which the _gdelt_lock
         # throttle serializes.
-        raw: List[Dict] = []
+        raw: list[dict] = []
         if slice_days and slice_days > 0:
             total_days = _timespan_days(timespan)
             window_end = datetime.utcnow()
@@ -622,7 +617,7 @@ def fetch_all_themes(
     return all_articles
 
 
-def save_articles_to_db(articles: List[Dict]) -> Dict[str, int]:
+def save_articles_to_db(articles: list[dict]) -> dict[str, int]:
     """
     Persist raw GDELT article dicts to the news_articles table.
     Skips any URL already present (idempotent).
@@ -684,7 +679,7 @@ def save_articles_to_db(articles: List[Dict]) -> Dict[str, int]:
 def fetch_tone_timeline(
     query: str,
     timespan: str = "90d",
-) -> List[Dict]:
+) -> list[dict]:
     """
     Fetch GDELT's daily average tone timeline for a query.
     Positive values = positive tone; negative = negative/alarming news.
@@ -723,12 +718,12 @@ def fetch_tone_timeline(
     return sorted(result, key=lambda x: x["date"])
 
 
-def fetch_all_tone_timelines(timespan: str = "90d") -> Dict[str, List[Dict]]:
+def fetch_all_tone_timelines(timespan: str = "90d") -> dict[str, list[dict]]:
     """
     Fetch tone timelines for all UAE auto themes.
     Returns dict: {theme_name: [{"date": date, "tone": float}, ...]}
     """
-    timelines: Dict[str, List[Dict]] = {}
+    timelines: dict[str, list[dict]] = {}
     for q in DE_AUTO_QUERIES:
         tl = fetch_tone_timeline(q["query"], timespan=timespan)
         timelines[q["name"]] = tl
@@ -739,10 +734,10 @@ def fetch_all_tone_timelines(timespan: str = "90d") -> Dict[str, List[Dict]]:
 
 def get_stored_articles(
     days_back: int = 30,
-    theme: Optional[str] = None,
+    theme: str | None = None,
     analyzed_only: bool = False,
     limit: int = 500,
-) -> List[Dict]:
+) -> list[dict]:
     """
     Load stored NewsArticle records (with joined SentimentSignal) from SQLite.
     Used by the dashboard to render the news feed and sentiment charts.
@@ -798,7 +793,7 @@ def get_stored_articles(
         session.close()
 
 
-def get_article_stats() -> Dict:
+def get_article_stats() -> dict:
     """
     Quick summary stats on stored articles — used for dashboard KPI cards.
 

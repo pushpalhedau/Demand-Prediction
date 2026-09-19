@@ -1,14 +1,22 @@
-import streamlit as st
-import plotly.graph_objects as go
 import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
 
 from backend.services import overview as overview_service
+from frontend.shared.errors import report_error, report_warning
+from frontend.shared.i18n import fmt_num, fmt_pct, hover_money, hover_month, t, tv, tv_series
 from frontend.shared.ui import (
-    render_kpi_card, get_color_palette,
-    _fmt_money, _section, _base_layout,
-    _INK, _INK_MUTED, _HUE_HISTORY, _HUE_FORECAST, _HUE_MARKER,
+    _HUE_FORECAST,
+    _HUE_HISTORY,
+    _HUE_MARKER,
+    _INK,
+    _INK_MUTED,
+    _base_layout,
+    _fmt_money,
+    _section,
+    get_color_palette,
+    render_kpi_card,
 )
-from frontend.shared.i18n import t, tv, tv_series, fmt_num, fmt_pct, hover_money, hover_month
 
 _CONF_DOT = {"High": "#10b981", "Medium": "#f59e0b", "Low": "#9ca3af"}
 
@@ -273,7 +281,7 @@ def _render_recommendations(filters: dict) -> None:
         plays = overview_service.recommended_plays(filters, limit=5)
     except Exception as e:
         landing, plays = {}, []
-        st.warning(t("ov.rec.unavailable", e=e))
+        report_warning(t("ov.rec.unavailable"), e)
 
     gross_at_stake = sum(p.impact_amt for p in plays)
     att = landing.get("attainment_pct")
@@ -343,6 +351,4 @@ def render_overview(filters: dict):
             _render_recommendations(filters)
 
     except Exception as e:
-        st.error(t("ov.err.render", e=e))
-        import traceback
-        st.code(traceback.format_exc())
+        report_error(t("ov.err.render"), e)

@@ -1,6 +1,7 @@
 """Sales analytics queries: KPIs, trends and breakdowns over the tenant's booked deals."""
-import pandas as pd
 from datetime import date
+
+import pandas as pd
 from sqlalchemy import case, desc, func
 from sqlalchemy.orm import Session
 
@@ -82,8 +83,8 @@ def get_executive_kpis(session: Session, filters: dict = None) -> dict:
     top_cat = top_cat_res[0] if top_cat_res else "N/A"
 
     cust_count = session.query(func.count(Customer.customer_id)).scalar()
-    inv_stockout = session.query(func.count(Inventory.inventory_id)).filter(Inventory.stockout_flag == True).scalar()
-    inv_reorder = session.query(func.count(Inventory.inventory_id)).filter(Inventory.reorder_needed == True).scalar()
+    inv_stockout = session.query(func.count(Inventory.inventory_id)).filter(Inventory.stockout_flag.is_(True)).scalar()
+    inv_reorder = session.query(func.count(Inventory.inventory_id)).filter(Inventory.reorder_needed.is_(True)).scalar()
 
     return {
         "total_sales": total_sales,

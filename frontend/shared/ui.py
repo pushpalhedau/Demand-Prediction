@@ -1,9 +1,13 @@
-import streamlit as st
 from pathlib import Path
 
+import streamlit as st
+
 from frontend.shared.i18n import (
+    fmt_money,
+    fmt_num,
+    fmt_pct,
     is_de,
-    fmt_money, fmt_num, fmt_pct, plotly_number_format,
+    plotly_number_format,
 )
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"
@@ -15,7 +19,7 @@ def inject_custom_css():
     """
     css_path = ASSETS_DIR / "styles" / "custom.css"
     if css_path.exists():
-        with open(css_path, "r", encoding="utf-8") as f:
+        with open(css_path, encoding="utf-8") as f:
             css = f.read()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
     else:
@@ -40,7 +44,7 @@ def render_kpi_card(title: str, value: str, delta: str = None, is_positive: bool
         delta_class = "positive" if is_positive else "negative"
         arrow = "▲" if is_positive else "▼"
         delta_html = f'<div class="kpi-delta {delta_class}">{arrow} {delta}</div>'
-        
+
     card_html = f"""
     <div class="kpi-card">
         <div class="kpi-title">{title}</div>

@@ -8,9 +8,9 @@ import streamlit as st
 
 st.set_page_config(page_title="PredictaX Admin Console", layout="wide", initial_sidebar_state="expanded")
 
+from frontend.admin_console.auth import require_operator, sign_out
 from frontend.admin_console.views.account_detail import render_account
 from frontend.admin_console.views.accounts import render_accounts
-from frontend.admin_console.auth import require_operator, sign_out
 from frontend.shared.ui import inject_custom_css
 
 inject_custom_css()

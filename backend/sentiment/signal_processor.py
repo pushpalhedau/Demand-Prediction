@@ -17,31 +17,25 @@ Entry points:
   get_overall_sentiment_stats() — KPI dict for the dashboard header cards
 """
 
-import os
-import sys
 import logging
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Optional
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 from sqlalchemy import func
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from backend.db.connection import get_db_session
-from backend.db.models import NewsArticle, SentimentSignal, DailySentimentSummary
-from backend.sentiment.fetchers.gdelt_fetcher import (
-    fetch_all_themes,
-    save_articles_to_db,
-    get_stored_articles,
-    get_article_stats,
-)
+from backend.db.models import DailySentimentSummary
 from backend.sentiment.analyzers.grok_analyzer import (
+    _analyze_mock,
     analyze_articles,
-    save_signals_to_db,
     get_unanalyzed_articles,
     is_live_mode,
-    _analyze_mock,
+    save_signals_to_db,
+)
+from backend.sentiment.fetchers.gdelt_fetcher import (
+    fetch_all_themes,
+    get_stored_articles,
+    save_articles_to_db,
 )
 
 logger = logging.getLogger(__name__)
@@ -55,7 +49,7 @@ def run_full_pipeline(
     timespan: str = "30d",
     max_articles_per_query: int = 50,
     analyze_limit: int = 200,
-) -> Dict:
+) -> dict:
     """
     Run the complete fetch → analyze → summarize pipeline.
 
@@ -67,7 +61,7 @@ def run_full_pipeline(
     Returns:
         Status report dict with keys: fetch, analyze, summarize, mode, errors.
     """
-    status: Dict = {
+    status: dict = {
         "mode":      "live" if is_live_mode() else "mock",
         "fetch":     {},
         "analyze":   {},
@@ -169,7 +163,7 @@ def run_full_pipeline(
 # Daily Summary Aggregation
 # ─────────────────────────────────────────────────────────────────────────────
 
-def recompute_daily_summaries() -> Dict:
+def recompute_daily_summaries() -> dict:
     """
     Rebuild the daily_sentiment_summary table from all analyzed articles.
 
@@ -196,7 +190,7 @@ def recompute_daily_summaries() -> Dict:
     df["demand_direction"] = df["demand_direction"].fillna("neutral")
     df["affected_category"] = df["affected_category"].fillna("All")
 
-    summaries: List[Dict] = []
+    summaries: list[dict] = []
 
     # Per-category daily rows
     for category in df["affected_category"].unique():
@@ -216,7 +210,7 @@ def recompute_daily_summaries() -> Dict:
             session.add(DailySentimentSummary(computed_at=now, **row))
 
         session.commit()
-    except Exception as e:
+    except Exception:
         session.rollback()
         raise
     finally:
@@ -230,7 +224,7 @@ def recompute_daily_summaries() -> Dict:
     }
 
 
-def _compute_daily_stats(df: pd.DataFrame, vehicle_category: Optional[str]) -> List[Dict]:
+def _compute_daily_stats(df: pd.DataFrame, vehicle_category: str | None) -> list[dict]:
     """
     For each unique published_date in df, compute one summary row.
     vehicle_category=None → "All" aggregate row.
@@ -274,7 +268,7 @@ def _compute_daily_stats(df: pd.DataFrame, vehicle_category: Optional[str]) -> L
     return summaries
 
 
-def _safe_mean(series: pd.Series) -> Optional[float]:
+def _safe_mean(series: pd.Series) -> float | None:
     """Return float mean of a numeric series ignoring NaN, or None if all NaN."""
     valid = series.dropna()
     return float(valid.mean()) if not valid.empty else None
@@ -285,10 +279,10 @@ def _safe_mean(series: pd.Series) -> Optional[float]:
 # booked mix as of the 2026-08 reseed — see the dealer-positioning changelogs.
 _DEFAULT_SEGMENT_MIX = {"SUV": 0.49, "Pickup": 0.23, "Sedan": 0.16, "Luxury": 0.09, "EV": 0.03}
 
-_segment_mix_cache: Optional[Dict[str, float]] = None
+_segment_mix_cache: dict[str, float] | None = None
 
 
-def _group_segment_mix() -> Dict[str, float]:
+def _group_segment_mix() -> dict[str, float]:
     """
     The group's own unit mix by vehicle category, normalised to sum to 1.
     Used to weight per-segment news signals into one 'net demand signal' that
@@ -353,7 +347,7 @@ def _net_demand_signal(df: pd.DataFrame) -> tuple:
 
 def get_daily_summaries(
     days_back: int = 365,
-    vehicle_category: Optional[str] = None,
+    vehicle_category: str | None = None,
 ) -> pd.DataFrame:
     """
     Return a DataFrame of DailySentimentSummary rows for use as Prophet regressors.
@@ -403,7 +397,7 @@ def get_daily_summaries(
         session.close()
 
 
-def ensure_recent_articles_analyzed(limit: int = 30) -> Dict:
+def ensure_recent_articles_analyzed(limit: int = 30) -> dict:
     """
     Best-effort: analyze whatever's currently unanalyzed in the cached-article
     pool (the same one the "Recent News" tab reads), up to `limit` articles.
@@ -436,7 +430,7 @@ def ensure_recent_articles_analyzed(limit: int = 30) -> Dict:
         return {"analyzed": 0, "error": str(e)}
 
 
-def compute_live_daily_df(days_back: int = 90, vehicle_category: Optional[str] = None) -> pd.DataFrame:
+def compute_live_daily_df(days_back: int = 90, vehicle_category: str | None = None) -> pd.DataFrame:
     """
     Build daily aggregate rows directly from currently cached, analyzed
     articles — the same pool the "Recent News" tab reads via
@@ -492,7 +486,7 @@ def compute_live_category_summary(days_back: int = 90) -> pd.DataFrame:
     df["demand_direction"] = df["demand_direction"].fillna("neutral")
     df["affected_category"] = df["affected_category"].fillna("All")
 
-    records: List[Dict] = []
+    records: list[dict] = []
     for category in df["affected_category"].unique():
         cat_df = df[df["affected_category"] == category]
         for row in _compute_daily_stats(cat_df, vehicle_category=category):
@@ -511,7 +505,7 @@ def compute_live_category_summary(days_back: int = 90) -> pd.DataFrame:
     return pd.DataFrame(records)
 
 
-def compute_live_overall_stats(days_back: int = 30) -> Dict:
+def compute_live_overall_stats(days_back: int = 30) -> dict:
     """
     KPI-card stats computed directly from currently cached, analyzed articles
     (the same pool as the "Recent News" tab), instead of the persisted
@@ -571,7 +565,7 @@ def compute_live_overall_stats(days_back: int = 30) -> Dict:
     }
 
 
-def get_overall_sentiment_stats() -> Dict:
+def get_overall_sentiment_stats() -> dict:
     """
     Aggregate stats across all DailySentimentSummary rows (vehicle_category=None).
     Used for the dashboard KPI header cards.
@@ -684,7 +678,7 @@ def get_category_sentiment_summary(days_back: int = 30) -> pd.DataFrame:
         session.close()
 
 
-def _empty_stats() -> Dict:
+def _empty_stats() -> dict:
     return {
         "avg_sentiment": 0.0, "avg_impact": 0.0, "avg_demand_change": 0.0,
         "net_demand_signal_pct": 0.0, "segment_changes": {},

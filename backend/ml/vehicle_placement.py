@@ -17,6 +17,7 @@ worth putting in front of the customer.
 
 import numpy as np
 import pandas as pd
+
 from backend.core.formatting import cur
 
 # ─────────────────────────────────────────────────────────────────────────────

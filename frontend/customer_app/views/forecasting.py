@@ -1,24 +1,23 @@
-import streamlit as st
-from frontend.shared.i18n import cur, cur_code
-import plotly.graph_objects as go
-import pandas as pd
 import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
 
 from backend.services import forecasting as forecasting_service
+from frontend.shared.i18n import cur, cur_code
 from frontend.shared.ui import (
-    get_color_palette,
-    _section,
-    _base_layout,
-    _fmt_money,
-    _compact,
-    _pct_label,
-    _INK,
-    _HUE_HISTORY,
-    _HUE_FORECAST,
     _HUE_BAND,
-    _HUE_UP,
     _HUE_DOWN,
+    _HUE_FORECAST,
+    _HUE_HISTORY,
     _HUE_MARKER,
+    _HUE_UP,
+    _INK,
+    _base_layout,
+    _compact,
+    _fmt_money,
+    _pct_label,
+    _section,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -44,7 +43,6 @@ LEVERS = {
 }
 
 def render_forecasting(filters: dict):
-    colors = get_color_palette()
 
     st.markdown(
         "<h2 class='gradient-text' style='margin-bottom:16px;'>Demand Forecast</h2>",

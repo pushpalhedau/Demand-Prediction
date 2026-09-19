@@ -1,6 +1,6 @@
-import os
 from sqlalchemy import text
 
+from backend.core.config import get_settings
 from backend.db.connection import Base
 
 # NULLIF: on a pooled connection that previously served a tenant, Postgres
@@ -14,7 +14,7 @@ TENANT_CONFIG_KEYS = ("currency", "currency_symbol", "symbol_position", "languag
 
 
 def _app_role() -> str:
-    return os.getenv("APP_DB_ROLE", "predictax_app")
+    return get_settings().app_db_role
 
 
 def apply_rls(admin_engine) -> None:

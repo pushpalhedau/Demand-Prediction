@@ -46,7 +46,7 @@ def two_accounts():
 
 
 def test_login_resolves_to_the_accounts_own_tenant(two_accounts):
-    for slug, r in two_accounts:
+    for _slug, r in two_accounts:
         tokens = auth_client.sign_in(r["email"], r["password"])
         identity = auth_client.identity_from_claims(auth_client.verify_access_token(tokens["access_token"]))
         assert str(identity.tenant_id) == r["tenant_id"]

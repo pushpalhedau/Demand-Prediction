@@ -5,16 +5,13 @@ transaction so row-level security checks every row and a failure loads nothing).
 """
 import io
 import json
-import re
 
-import numpy as np
 import pandas as pd
 
 from backend.core.errors import IngestError
-
+from backend.core.request_context import tenant_context
 from backend.db.connection import get_db_session
 from backend.db.models import Customer, Dealer, ExternalFactor, Inventory, Sale, Vehicle
-from backend.core.request_context import tenant_context
 from backend.ingestion.catalog import LOAD_ORDER, MI_TO_KM, NATURAL_KEY, REQUIRED_TABLES, TABLES, field_map
 
 MODELS = {"vehicles": Vehicle, "dealers": Dealer, "customers": Customer,
@@ -176,7 +173,9 @@ def _derive(table: str, df: pd.DataFrame, report: dict) -> None:
         if "vehicle_id" not in df and {"brand", "model"} <= set(df.columns):
             parts = [df[c].fillna("") for c in ("brand", "model", "vehicle_category") if c in df]
             df["vehicle_id"] = _slug(parts[0].str.cat(parts[1:], sep="-"))
-        money = lambda c: df[c].fillna(0) if c in df else 0
+        def money(c):
+            return df[c].fillna(0) if c in df else 0
+
         if "selling_price" not in df and "total_revenue_excl_tax" in df:
             df["selling_price"] = df["total_revenue_excl_tax"] / df["units_sold"].where(df["units_sold"] > 0)
         elif "selling_price" not in df and "total_revenue_incl_tax" in df:
@@ -278,16 +277,19 @@ def _copy_insert(session, table: str, df: pd.DataFrame) -> int:
     stg = f"_stg_{table}"
     raw = session.connection().connection.driver_connection
     with raw.cursor() as cur:
+        # Identifiers below come from our own model metadata (never from user input); values travel via COPY.
         cur.execute(f'CREATE TEMP TABLE "{stg}" (LIKE "{table}" INCLUDING DEFAULTS) ON COMMIT DROP')
         cur.copy_expert(f"COPY \"{stg}\" ({collist}) FROM STDIN WITH (FORMAT csv, NULL '')", buf)
-        cur.execute(f'INSERT INTO "{table}" ({collist}) SELECT {collist} FROM "{stg}" ON CONFLICT DO NOTHING')
+        cur.execute(f'INSERT INTO "{table}" ({collist}) SELECT {collist} FROM "{stg}" ON CONFLICT DO NOTHING')  # noqa: S608 - identifiers from model metadata
         n = cur.rowcount
         cur.execute(f'DROP TABLE "{stg}"')
     return n
 
 
 def _known_ids(session) -> dict:
-    q = lambda model, col: {r[0] for r in session.query(getattr(model, col)).all()}
+    def q(model, col):
+        return {r[0] for r in session.query(getattr(model, col)).all()}
+
     return {"dealers": q(Dealer, "dealer_id"), "vehicles": q(Vehicle, "vehicle_id"),
             "customers": q(Customer, "customer_id")}
 

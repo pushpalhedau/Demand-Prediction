@@ -1,21 +1,19 @@
-import os
-import sys
 import datetime as _dt
+from pathlib import Path
+
 import pandas as pd
-import numpy as np
-import pickle
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-
-# Add the project root to python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from backend.db.connection import get_db_session
-from backend.core.request_context import require_tenant_id
-from backend.db.models import Customer, Sale
 from sqlalchemy import func
 
-_BASE_MODEL_DIR = "models/clustering"
+from backend.core.log import get_logger
+from backend.core.request_context import require_tenant_id
+from backend.db.connection import get_db_session
+from backend.db.models import Customer, Sale
+from backend.ml.artifacts import load_artifact, model_dir, save_artifact
+
+log = get_logger(__name__)
+
 
 # Segmentation feature set.
 #
@@ -49,11 +47,9 @@ SEGMENT_LABELS = [
 ]
 
 
-def _model_dir() -> str:
-    """Per-tenant model directory: models/<kind>/<tenant_id>"""
-    d = os.path.join(_BASE_MODEL_DIR, str(require_tenant_id()))
-    os.makedirs(d, exist_ok=True)
-    return d
+def _model_dir() -> Path:
+    """Per-tenant artifact directory."""
+    return model_dir("clustering")
 
 
 def load_customer_features(session, as_of: _dt.date = None) -> pd.DataFrame:
@@ -168,7 +164,7 @@ def train_customer_segmentation(n_clusters: int = 5):
         cluster_mapping = _assign_labels(cluster_means)
         df["assigned_segment"] = df["cluster"].map(cluster_mapping)
 
-        print("Writing segmentations back to database customers table...")
+        log.info("Writing segmentations back to database customers table...")
         tenant_id = require_tenant_id()
         session.bulk_update_mappings(
             Customer,
@@ -180,27 +176,22 @@ def train_customer_segmentation(n_clusters: int = 5):
         session.commit()
 
         mdir = _model_dir()
-        with open(os.path.join(mdir, "scaler.pkl"), "wb") as f:
-            pickle.dump(scaler, f)
-        with open(os.path.join(mdir, "kmeans.pkl"), "wb") as f:
-            pickle.dump(kmeans, f)
-        with open(os.path.join(mdir, "cluster_mapping.pkl"), "wb") as f:
-            pickle.dump(cluster_mapping, f)
-        with open(os.path.join(mdir, "feature_names.pkl"), "wb") as f:
-            pickle.dump(list(FEATURES), f)
+        save_artifact(mdir, "scaler", scaler)
+        save_artifact(mdir, "kmeans", kmeans)
+        save_artifact(mdir, "cluster_mapping", cluster_mapping)
+        save_artifact(mdir, "feature_names", list(FEATURES))
 
-        print("Customer clustering completed and models saved.")
+        log.info("Customer clustering completed and models saved.")
         return {
             "customers_df": df,
             "cluster_means": cluster_means,
             "cluster_mapping": cluster_mapping,
         }, None
 
-    except Exception as e:
+    except Exception:
         session.rollback()
-        import traceback
-        traceback.print_exc()
-        return None, f"Customer clustering pipeline error: {str(e)}"
+        log.exception("Customer segmentation could not be trained")
+        return None, "Customer segmentation could not be trained. Please contact support."
     finally:
         session.close()
 
@@ -214,12 +205,9 @@ def predict_customer_segment(customer_data: dict) -> str:
     """
     try:
         mdir = _model_dir()
-        with open(os.path.join(mdir, "scaler.pkl"), "rb") as f:
-            scaler = pickle.load(f)
-        with open(os.path.join(mdir, "kmeans.pkl"), "rb") as f:
-            kmeans = pickle.load(f)
-        with open(os.path.join(mdir, "cluster_mapping.pkl"), "rb") as f:
-            cluster_mapping = pickle.load(f)
+        scaler = load_artifact(mdir, "scaler")
+        kmeans = load_artifact(mdir, "kmeans")
+        cluster_mapping = load_artifact(mdir, "cluster_mapping")
 
         row = [
             customer_data.get("age", 39),
@@ -232,6 +220,6 @@ def predict_customer_segment(customer_data: dict) -> str:
         ]
         cluster_idx = int(kmeans.predict(scaler.transform([row]))[0])
         return cluster_mapping.get(cluster_idx, "Core Mainstream")
-    except Exception as e:
-        print(f"Prediction error: {e}")
+    except Exception:
+        log.warning("Prediction failed", exc_info=True)
         return "Core Mainstream"

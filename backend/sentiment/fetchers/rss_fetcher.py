@@ -25,21 +25,19 @@ import logging
 import re
 import threading
 import time
-from datetime import datetime, timezone, date
+from datetime import UTC
 from email.utils import parsedate_to_datetime
-from typing import Dict, List, Optional
 from urllib.parse import urlparse
-import xml.etree.ElementTree as ET
 
 import requests
+from defusedxml import ElementTree as ET  # untrusted network XML: no entity expansion or external entities
 
 from backend.core.request_context import current_profile
-
 from backend.sentiment.fetchers.gdelt_fetcher import (
     DE_AUTO_QUERIES,
     _is_relevant,
-    _title_key,
     _timespan_days,
+    _title_key,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,7 +49,7 @@ _HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; PredictaX/1.0; +demand-advis
 # DE_AUTO_QUERIES, keyed by its
 # `name`. Plain Google News query syntax (space = AND, OR = or, "" = phrase);
 # a `when:<N>d` recency clause is appended per call.
-_RSS_QUERIES: Dict[str, str] = {
+_RSS_QUERIES: dict[str, str] = {
     "de_auto_demand":    'Neuzulassungen OR Autohaus OR "Auto Absatz" OR Autohandel OR KBA',
     "ev_market_de":      'Elektroauto OR "E-Auto" OR Ladesäule OR Ladeinfrastruktur OR Batteriefabrik',
     "tax_policy":        '"Kfz-Steuer" OR Dienstwagen OR "CO2-Preis" OR Autopreise OR Zulassungskosten',
@@ -64,7 +62,7 @@ _RSS_QUERIES: Dict[str, str] = {
 
 # The same eight themes for an English-language edition. Keys are the internal theme ids
 # (kept from the original German build); only the search text changes per edition.
-_RSS_QUERIES_EN: Dict[str, str] = {
+_RSS_QUERIES_EN: dict[str, str] = {
     "de_auto_demand":    '("new car sales" OR "car registrations" OR "auto sales" OR "car market") {country}',
     "ev_market_de":      '("electric vehicle" OR "EV charging" OR "electric car" OR "battery plant") {country}',
     "tax_policy":        '("vehicle tax" OR "car prices" OR "registration fee" OR "import duty" OR "car tariffs") {country}',
@@ -77,11 +75,11 @@ _RSS_QUERIES_EN: Dict[str, str] = {
 
 _GDELT_DATE_FMT = "%Y%m%dT%H%M%SZ"
 _CACHE_TTL_S = 1800
-_cache: Dict[tuple, tuple] = {}
+_cache: dict[tuple, tuple] = {}
 _cache_lock = threading.Lock()
 
 
-def _settings() -> Dict:
+def _settings() -> dict:
     """The current tenant's news-relevant settings (empty outside a tenant scope)."""
     profile = current_profile()
     if profile is None:
@@ -90,7 +88,7 @@ def _settings() -> Dict:
             "country_name": profile.country_name}
 
 
-def _edition() -> Dict:
+def _edition() -> dict:
     """
     The news edition for the CURRENT tenant: Google News language/country and which
     query pack to use. Explicit tenant config wins; otherwise it follows the tenant's UI language.
@@ -106,24 +104,24 @@ def _edition() -> Dict:
     }
 
 
-def _q_by_name(name: str) -> Optional[Dict]:
+def _q_by_name(name: str) -> dict | None:
     return next((q for q in DE_AUTO_QUERIES if q["name"] == name), None)
 
 
-def _to_seendate(pub_raw: str) -> Optional[str]:
+def _to_seendate(pub_raw: str) -> str | None:
     """RFC-822 'Sat, 15 Aug 2026 07:00:00 GMT' -> GDELT '20260815T070000Z'."""
     if not pub_raw:
         return None
     try:
         dt = parsedate_to_datetime(pub_raw)
         if dt.tzinfo is not None:
-            dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+            dt = dt.astimezone(UTC).replace(tzinfo=None)
         return dt.strftime(_GDELT_DATE_FMT)
     except Exception:
         return None
 
 
-def _domain_from(source_url: Optional[str], source_name: Optional[str]) -> Optional[str]:
+def _domain_from(source_url: str | None, source_name: str | None) -> str | None:
     if source_url:
         host = urlparse(source_url).netloc.lower()
         if host:
@@ -140,7 +138,7 @@ def _split_title(raw_title: str) -> str:
     return raw_title.rsplit(" - ", 1)[0].strip() if " - " in raw_title else raw_title.strip()
 
 
-def _fetch_one(rss_query: str, days: int, max_records: int, ed: Dict) -> List[Dict]:
+def _fetch_one(rss_query: str, days: int, max_records: int, ed: dict) -> list[dict]:
     params = {
         "q": f"{rss_query.replace('{country}', ed['country'])} when:{days}d",
         "hl": ed["hl"], "gl": ed["gl"], "ceid": ed["ceid"],
@@ -150,7 +148,7 @@ def _fetch_one(rss_query: str, days: int, max_records: int, ed: Dict) -> List[Di
     root = ET.fromstring(resp.content)
 
     ns = {"gn": "http://news.google.com/rss"}
-    out: List[Dict] = []
+    out: list[dict] = []
     for item in root.findall(".//item")[:max_records]:
         link = (item.findtext("link") or "").strip()
         if not link:
@@ -174,7 +172,7 @@ def fetch_all_themes_rss(
     timespan: str = "30d",
     max_records_per_query: int = 40,
     one_per_day: bool = True,
-) -> List[Dict]:
+) -> list[dict]:
     """
     Fetch recent German auto-market news for every theme via Google News RSS and
     return a flat, deduplicated, relevance-gated list of article dicts shaped
@@ -195,12 +193,12 @@ def fetch_all_themes_rss(
     return [dict(a) for a in articles]
 
 
-def _fetch_edition(ed: Dict, days: int, max_records_per_query: int, one_per_day: bool) -> List[Dict]:
+def _fetch_edition(ed: dict, days: int, max_records_per_query: int, one_per_day: bool) -> list[dict]:
     queries = _RSS_QUERIES if ed["pack"] == "de" else _RSS_QUERIES_EN
     seen_urls: set = set()
     seen_titles: set = set()
     seen_days: set = set()
-    all_articles: List[Dict] = []
+    all_articles: list[dict] = []
     dropped_noise = 0
 
     for name, rss_query in queries.items():

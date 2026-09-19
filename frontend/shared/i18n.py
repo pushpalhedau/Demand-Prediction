@@ -31,7 +31,15 @@ from __future__ import annotations
 import streamlit as st
 
 from backend.core.formatting import (  # noqa: F401  (re-exported: screens import formatting from here)
-    cur, cur_code, fmt_date, fmt_money, fmt_num, fmt_pct, fmt_weekday, is_de, wrap_money,
+    cur,
+    cur_code,
+    fmt_date,
+    fmt_money,
+    fmt_num,
+    fmt_pct,
+    fmt_weekday,
+    is_de,
+    wrap_money,
 )
 from backend.core.request_context import current_profile, set_language
 
@@ -61,7 +69,7 @@ def get_lang() -> str:
             if qp in LANGUAGES:
                 st.session_state["lang"] = qp
                 lang = qp
-    except Exception:  # noqa: BLE001 - outside a Streamlit run (scripts, tests) fall back to the default
+    except Exception:  # noqa: BLE001, S110 - outside a Streamlit run (scripts, tests) fall back to the default
         pass
     set_language(lang)
     return lang
@@ -397,8 +405,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "ov.rec.chart.yaxis": "Units / month",
         "ov.rec.confidence": "{level} confidence",
         "ov.rec.est_value": "estimated value if acted on",
-        "ov.rec.unavailable": "Decision brief unavailable for this scope ({e}).",
-        "ov.err.render": "Error rendering Executive Overview: {e}",
+        "ov.rec.unavailable": "Decision brief unavailable for this scope",
+        "ov.err.render": "Could not render the Executive Overview",
         "conf.High": "High",
         "conf.Medium": "Medium",
         "conf.Low": "Low",
@@ -448,7 +456,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "sa.card.exposure_all": "affects showroom traffic across the whole book",
         "sa.card.exposure_seg": "lands on the group's {seg} demand",
         "sa.fc.title": "Does watching the news actually improve our forecast?",
-        "sa.fc.unavailable": "Forecast engine unavailable: {e}",
+        "sa.fc.unavailable": "Forecast engine unavailable",
         "sa.fc.horizon": "Look ahead",
         "sa.fc.measure": "Measure",
         "sa.fc.units": "Units",
@@ -456,7 +464,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "sa.fc.run": "Run check",
         "sa.fc.training": "Training both models…",
         "sa.fc.prompt": "Click **Run check** to compare.",
-        "sa.fc.base_failed": "Baseline forecast failed: {e}",
+        "sa.fc.base_failed": "Baseline forecast failed",
         "sa.fc.actual": "Actual",
         "sa.fc.standard": "Standard forecast",
         "sa.fc.news_aware": "News-aware forecast",
@@ -629,8 +637,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "ov.rec.chart.yaxis": "Einheiten / Monat",
         "ov.rec.confidence": "Konfidenz {level}",
         "ov.rec.est_value": "geschätzter Wert bei Umsetzung",
-        "ov.rec.unavailable": "Entscheidungsbriefing für diesen Zuschnitt nicht verfügbar ({e}).",
-        "ov.err.render": "Fehler beim Rendern des Management-Überblicks: {e}",
+        "ov.rec.unavailable": "Entscheidungsbriefing für diesen Zuschnitt nicht verfügbar",
+        "ov.err.render": "Der Management-Überblick konnte nicht dargestellt werden",
         "conf.High": "hoch",
         "conf.Medium": "mittel",
         "conf.Low": "niedrig",
@@ -680,7 +688,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "sa.card.exposure_all": "wirkt auf die Frequenz über das gesamte Geschäft",
         "sa.card.exposure_seg": "trifft die {seg}-Nachfrage der Gruppe",
         "sa.fc.title": "Verbessert die Nachrichtenauswertung unsere Prognose tatsächlich?",
-        "sa.fc.unavailable": "Prognose-Engine nicht verfügbar: {e}",
+        "sa.fc.unavailable": "Prognose-Engine nicht verfügbar",
         "sa.fc.horizon": "Prognosehorizont",
         "sa.fc.measure": "Kennzahl",
         "sa.fc.units": "Einheiten",
@@ -688,7 +696,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "sa.fc.run": "Prüfung starten",
         "sa.fc.training": "Beide Modelle werden trainiert …",
         "sa.fc.prompt": "Auf **Prüfung starten** klicken, um zu vergleichen.",
-        "sa.fc.base_failed": "Basisprognose fehlgeschlagen: {e}",
+        "sa.fc.base_failed": "Basisprognose fehlgeschlagen",
         "sa.fc.actual": "Ist",
         "sa.fc.standard": "Standardprognose",
         "sa.fc.news_aware": "Nachrichtengestützte Prognose",

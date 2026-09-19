@@ -12,25 +12,25 @@ Two sub-tabs:
                                   answered in plain language
 """
 
-import streamlit as st
-import plotly.graph_objects as go
 import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
 
 from backend.services import forecasting as forecasting_service
 from backend.services import sentiment as sentiment_service
 from backend.services.sentiment import TIMESPAN_OPTIONS
 from frontend.shared.i18n import cur_code, fmt_pct, is_de, t, tseg
 from frontend.shared.ui import (
-    _section,
-    _base_layout,
-    _pct_label,
-    _INK,
-    _INK_MUTED,
-    _HUE_UP,
     _HUE_DOWN,
     _HUE_FORECAST,
     _HUE_HISTORY,
     _HUE_MARKER,
+    _HUE_UP,
+    _INK,
+    _INK_MUTED,
+    _base_layout,
+    _pct_label,
+    _section,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -386,6 +386,7 @@ def _render_demand_watch(stats: dict, articles: list, filters: dict):
     if st.button(t("sa.read.button"), key="gen_briefing"):
         with st.spinner(t("sa.read.spinner")):
             import json
+
             from frontend.shared.i18n import get_lang
             fk = json.dumps({k: str(v) for k, v in (filters or {}).items()},
                             sort_keys=True) + f"|lang={get_lang()}"

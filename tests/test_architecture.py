@@ -24,7 +24,7 @@ LAYERS = {
 TOP_LEVEL_BACKEND_MODULES = {"cli"}     # entry points may use anything in the backend
 
 # The ONLY backend modules the frontend may import.
-FRONTEND_MAY_IMPORT = ("backend.services", "backend.core.formatting", "backend.core.request_context",
+FRONTEND_MAY_IMPORT = ("backend.services", "backend.core.formatting", "backend.core.request_context", "backend.core.log",
                        "backend.core.errors")
 FRONTEND_FORBIDDEN_THIRD_PARTY = ("sqlalchemy", "psycopg2", "redis", "rq", "jwt")
 

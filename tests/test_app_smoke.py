@@ -7,13 +7,13 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from backend.services.identity import load_active_tenant as _load_active_tenant
 from backend.auth.client import Identity
+from backend.core.request_context import tenant_context
 from backend.db.connection import get_admin_session, init_all_tables
 from backend.db.models import Tenant
-from backend.core.request_context import tenant_context
 from backend.ingestion.mapping import propose_mapping
 from backend.ingestion.pipeline import read_csv, run_ingest
+from backend.services.identity import load_active_tenant as _load_active_tenant
 from backend.tenancy.capabilities import get_capabilities, tab_available
 from backend.tenancy.provision import get_tenant_id
 
@@ -97,7 +97,7 @@ def test_customer_app_has_no_data_upload_tab():
     for slug in DEMO:
         at = _login(get_tenant_id(slug), page="tab.overview").run()
         labels = [b.label for b in at.sidebar.button]
-        assert not any("Data" == l or "Upload" in l for l in labels)
+        assert not any(label == "Data" or "Upload" in label for label in labels)
         assert "Upload your files" not in _visible_text(at)
 
 
@@ -126,7 +126,8 @@ def sales_only_tenant():
             rows.append({"Date": d.date().isoformat(), "Make": brand, "Model": f"{brand}-{rng.integers(1, 4)}",
                          "Dealer": rng.choice(["Leeds", "Bristol"]), "County": rng.choice(["Yorkshire", "Avon"]),
                          "Price": int(rng.integers(12000, 60000)), "Qty": 1})
-    import tempfile, os
+    import os
+    import tempfile
     path = os.path.join(tempfile.mkdtemp(), "sales.csv")
     pd.DataFrame(rows).to_csv(path, index=False)
     mapping = propose_mapping("sales", list(read_csv(path).columns)).to_mapping()

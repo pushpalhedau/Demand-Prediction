@@ -1,8 +1,8 @@
 import os
 
+from backend.ingestion.catalog import LOAD_ORDER
 from backend.ingestion.mapping import propose_mapping
 from backend.ingestion.pipeline import IngestError, read_csv, run_ingest
-from backend.ingestion.catalog import LOAD_ORDER
 
 
 def auto_mappings(files: dict) -> tuple:

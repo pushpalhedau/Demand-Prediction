@@ -8,14 +8,15 @@ import uuid
 
 import pytest
 import requests
+from sqlalchemy.exc import NoResultFound
 from streamlit.testing.v1 import AppTest
 
 from backend.auth import client as auth_client
-from backend.services.identity import load_active_tenant as _load_active_tenant
 from backend.auth.client import AuthError, Operator
 from backend.db.connection import get_admin_session, init_all_tables
 from backend.db.models import Tenant
-from backend.ingestion.jobs import create_job, get_job, job_dir, process_job
+from backend.ingestion.jobs import create_job, get_job, process_job
+from backend.services.identity import load_active_tenant as _load_active_tenant
 from backend.tenancy.provision import create_operator, create_tenant, get_tenant, set_status
 
 
@@ -168,7 +169,7 @@ def test_a_bad_setting_is_rejected_and_creates_nothing(operator):
             ti.input("<script>")
     [b for b in at.button if b.label == "Create account"][0].click().run()
     assert any("Invalid value" in e.value for e in at.error)
-    with pytest.raises(Exception):
+    with pytest.raises(NoResultFound):
         get_tenant(slug)
 
 

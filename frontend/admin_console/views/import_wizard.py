@@ -13,7 +13,15 @@ import streamlit as st
 
 from backend.services import imports as imports_service
 from backend.services.imports import (
-    AUTO_CONFIDENCE, GAL_TO_L, HP_TO_KW, L100_FROM_MPG, LOAD_ORDER, MI_TO_KM, PS_TO_KW, SQFT_TO_SQM, TABLES,
+    AUTO_CONFIDENCE,
+    GAL_TO_L,
+    HP_TO_KW,
+    L100_FROM_MPG,
+    LOAD_ORDER,
+    MI_TO_KM,
+    PS_TO_KW,
+    SQFT_TO_SQM,
+    TABLES,
     IngestError,
 )
 

@@ -1,4 +1,3 @@
-import os
 import time
 import uuid
 from dataclasses import dataclass
@@ -7,10 +6,8 @@ from functools import lru_cache
 import jwt
 import requests
 
+from backend.core.config import get_settings
 from backend.core.errors import AuthError
-from dotenv import load_dotenv
-
-load_dotenv()
 
 _TIMEOUT = 10
 
@@ -28,29 +25,29 @@ def _url() -> str:
     Base URL of the auth API. AUTH_BASE_URL points at a self-hosted GoTrue (free, e.g. http://localhost:9999);
     otherwise it is a hosted Supabase project, whose gateway serves the same API under /auth/v1.
     """
-    base = os.getenv("AUTH_BASE_URL", "").rstrip("/")
-    if base:
-        return base
-    url = os.getenv("SUPABASE_URL", "").rstrip("/")
-    if not url:
+    settings = get_settings()
+    if settings.auth_base_url:
+        return settings.auth_base_url
+    if not settings.supabase_url:
         raise AuthError("Authentication is not configured (set AUTH_BASE_URL or SUPABASE_URL).")
-    return f"{url}/auth/v1"
+    return f"{settings.supabase_url}/auth/v1"
 
 
 def is_configured() -> bool:
-    return bool(os.getenv("AUTH_BASE_URL") or (os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_ANON_KEY")))
+    s = get_settings()
+    return bool(s.auth_base_url or (s.supabase_url and s.supabase_anon_key))
 
 
 def _anon_headers() -> dict:
-    return {"apikey": os.getenv("SUPABASE_ANON_KEY", ""), "Content-Type": "application/json"}
+    return {"apikey": get_settings().supabase_anon_key, "Content-Type": "application/json"}
 
 
 def _service_key() -> str:
     """Admin credential: the hosted service-role key, or (self-hosted) a short-lived token signed with the JWT secret."""
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-    if key:
-        return key
-    secret = os.getenv("SUPABASE_JWT_SECRET")
+    settings = get_settings()
+    if settings.supabase_service_role_key:
+        return settings.supabase_service_role_key
+    secret = settings.supabase_jwt_secret
     if secret:
         now = int(time.time())
         return jwt.encode({"role": "service_role", "aud": "authenticated", "iat": now, "exp": now + 300},
@@ -82,15 +79,18 @@ def _jwks_client() -> "jwt.PyJWKClient":
 def verify_access_token(token: str) -> dict:
     """Validate signature, expiry and audience. HS256 shared secret (legacy projects) or JWKS (asymmetric keys)."""
     try:
-        secret = os.getenv("SUPABASE_JWT_SECRET")
+        # `require` matters: PyJWT does not insist on an expiry by default, so a token minted
+        # without one would otherwise be accepted forever.
+        options = {"require": ["exp", "sub", "aud"]}
+        secret = get_settings().supabase_jwt_secret
         if secret:
-            return jwt.decode(token, secret, algorithms=["HS256"], audience="authenticated")
+            return jwt.decode(token, secret, algorithms=["HS256"], audience="authenticated", options=options)
         key = _jwks_client().get_signing_key_from_jwt(token).key
-        return jwt.decode(token, key, algorithms=["RS256", "ES256"], audience="authenticated")
+        return jwt.decode(token, key, algorithms=["RS256", "ES256"], audience="authenticated", options=options)
     except jwt.ExpiredSignatureError:
-        raise AuthError("Your session has expired. Please sign in again.")
+        raise AuthError("Your session has expired. Please sign in again.") from None
     except jwt.PyJWTError:
-        raise AuthError("Invalid session.")
+        raise AuthError("Invalid session.") from None
 
 
 def identity_from_claims(claims: dict) -> Identity:
@@ -103,7 +103,7 @@ def identity_from_claims(claims: dict) -> Identity:
     try:
         tenant_id = uuid.UUID(str(raw_tenant))
     except ValueError:
-        raise AuthError("This account is not linked to a valid organisation. Contact support.")
+        raise AuthError("This account is not linked to a valid organisation. Contact support.") from None
     return Identity(user_id=claims["sub"], email=claims.get("email", ""), tenant_id=tenant_id,
                     role=meta.get("role", "tenant_user"))
 

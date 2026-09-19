@@ -1,6 +1,7 @@
 """Customer analytics queries: segments, the customer book and repeat-buyer contribution."""
-import pandas as pd
 from datetime import date
+
+import pandas as pd
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 

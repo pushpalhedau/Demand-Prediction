@@ -29,12 +29,13 @@ demo authenticity, not precise historical accuracy):
 Run: python -m preprocessing.generate_uae_data
 """
 
+import calendar
 import os
 import sys
-import calendar
+from datetime import date
+
 import numpy as np
 import pandas as pd
-from datetime import date
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 

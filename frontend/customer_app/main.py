@@ -1,7 +1,6 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-
 # A page's identity is its KEY, never its (language-dependent) label. The
 # sidebar nav, the floating top-left tab menu that stays visible when the
 # sidebar is collapsed, and the view router at the bottom of this file all
@@ -37,18 +36,20 @@ PAGE_RAIL_ICONS = [
 ]
 
 from backend.services import workspace
-from frontend.customer_app.auth import require_login, render_account_menu
-from frontend.shared.session import bind_backend_scope, reset_backend_scope
-from frontend.shared.ui import ASSETS_DIR, inject_custom_css
-from frontend.shared.i18n import t, tv, language_selector, get_lang
-from frontend.customer_app.views.overview import render_overview
-from frontend.customer_app.views.forecasting import render_forecasting
+from frontend.customer_app.auth import render_account_menu, require_login
 from frontend.customer_app.views.comparison import render_comparison
-from frontend.customer_app.views.regional import render_regional
 from frontend.customer_app.views.customers import render_customers
+from frontend.customer_app.views.forecasting import render_forecasting
 from frontend.customer_app.views.inventory import render_inventory
+from frontend.customer_app.views.overview import render_overview
+from frontend.customer_app.views.regional import render_regional
+
 # from dashboard.ai_insights import render_ai_insights
 from frontend.customer_app.views.sentiment import render_sentiment_analysis
+from frontend.shared.i18n import get_lang, language_selector, t, tv
+from frontend.shared.session import bind_backend_scope, reset_backend_scope
+from frontend.shared.ui import ASSETS_DIR, inject_custom_css
+
 # from dashboard.metrics import render_metrics
 
 # 1. Page Configuration

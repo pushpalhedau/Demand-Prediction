@@ -35,7 +35,7 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import func
 
-from backend.db.models import Sale, Dealer
+from backend.db.models import Dealer, Sale
 from backend.repositories._filters import apply_sale_filters
 
 # ── Statistical constants (not data) ─────────────────────────────────────────
@@ -159,7 +159,8 @@ def _bridge_core(session, filters: dict) -> dict | None:
         }
 
     # Revenue: split the comp move into "sold more/better metal" vs "price & mix"
-    u = out["units"]; r = out["revenue"]
+    u = out["units"]
+    r = out["revenue"]
     atp0 = (r["ss_start"] / u["ss_start"]) if u["ss_start"] else 0.0
     volume_rev = u["comp"] * atp0
     price_rev = r["comp"] - volume_rev

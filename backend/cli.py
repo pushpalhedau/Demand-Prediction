@@ -1,12 +1,11 @@
 import argparse
+import json
 import sys
 
 from backend.db.connection import Base, get_admin_engine, init_all_tables
-from backend.tenancy.loader import load_csv_dir
-import json
-
-from backend.tenancy.provision import create_operator, add_user, create_tenant, get_tenant_id, list_tenants, set_config
 from backend.ml.training import train_tenant_models
+from backend.tenancy.loader import load_csv_dir
+from backend.tenancy.provision import add_user, create_operator, create_tenant, get_tenant_id, list_tenants, set_config
 
 
 def main(argv=None):
@@ -42,13 +41,13 @@ def main(argv=None):
     sc.add_argument("--tenant", required=True, help="tenant slug")
     sc.add_argument("--json", required=True, help="JSON object, e.g. region_label / country_name / news_gl")
 
-    l = sub.add_parser("load-csv", help="Load a folder of standard CSVs into a tenant")
-    l.add_argument("--tenant", required=True, help="tenant slug")
-    l.add_argument("--dir", required=True)
-    l.add_argument("--append", action="store_true", help="Keep existing rows instead of replacing")
-    l.add_argument("--distance", choices=["km", "mi"], help="Unit of unlabeled distance columns (auto-detected if omitted)")
-    l.add_argument("--dayfirst", action="store_true", help="Dates are DD/MM/YYYY")
-    l.add_argument("--decimal", default=".", choices=[".", ","], help="Decimal separator in numbers")
+    loader = sub.add_parser("load-csv", help="Load a folder of standard CSVs into a tenant")
+    loader.add_argument("--tenant", required=True, help="tenant slug")
+    loader.add_argument("--dir", required=True)
+    loader.add_argument("--append", action="store_true", help="Keep existing rows instead of replacing")
+    loader.add_argument("--distance", choices=["km", "mi"], help="Unit of unlabeled distance columns (auto-detected if omitted)")
+    loader.add_argument("--dayfirst", action="store_true", help="Dates are DD/MM/YYYY")
+    loader.add_argument("--decimal", default=".", choices=[".", ","], help="Decimal separator in numbers")
 
     t = sub.add_parser("train", help="Train a tenant's ML models")
     t.add_argument("--tenant", required=True, help="tenant slug")

@@ -1,12 +1,12 @@
 """Inventory queries: stock snapshot, ageing, lease returns, trade-ins and substitution history."""
-import pandas as pd
 from datetime import date
+
+import pandas as pd
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.db.models import Customer, Dealer, Inventory, Sale, Vehicle
 from backend.repositories._filters import apply_inventory_filters, apply_sale_filters
-
 
 # Healthy days-of-supply band used across the stock-health views.
 DAYS_SUPPLY_HEALTHY_LOW = 45

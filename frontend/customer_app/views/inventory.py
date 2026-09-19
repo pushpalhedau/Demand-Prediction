@@ -21,10 +21,11 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from frontend.shared.i18n import cur, cur_code, fmt_money
 
 from backend.services import inventory as inventory_service
 from backend.services.inventory import DAYS_SUPPLY_HEALTHY_HIGH, DAYS_SUPPLY_HEALTHY_LOW
+from frontend.shared.errors import report_error
+from frontend.shared.i18n import cur, cur_code, fmt_money
 from frontend.shared.ui import get_color_palette, render_kpi_card
 
 FONT = "Plus Jakarta Sans"
@@ -104,7 +105,7 @@ def render_inventory(filters: dict):
     try:
         snapshot = inventory_service.snapshot(filters)
     except Exception as exc:
-        st.error(f"Could not load inventory snapshot: {exc}")
+        report_error("Could not load the inventory snapshot", exc)
         return
 
     if snapshot.empty:
@@ -628,7 +629,7 @@ def _render_flow(snapshot, filters, colors):
     with cbar:
         fig = go.Figure(go.Bar(
             x=lanes["units"], y=lanes["lane"], orientation="h",
-            marker_color=[lane_color.get(l, colors["muted"]) for l in lanes["lane"]],
+            marker_color=[lane_color.get(lane, colors["muted"]) for lane in lanes["lane"]],
             text=[f"{u:,.0f}" for u in lanes["units"]],
             textposition="auto",
         ))
@@ -923,7 +924,7 @@ def _render_sankey(flow, colors, top_pairs=25):
     labels = sorted(set(sources) | set(targets))
     idx = {label: i for i, label in enumerate(labels)}
 
-    node_colors = [colors["warning"] if "(traded)" in l else colors["primary"] for l in labels]
+    node_colors = [colors["warning"] if "(traded)" in label else colors["primary"] for label in labels]
 
     fig = go.Figure(go.Sankey(
         node=dict(pad=14, thickness=14,

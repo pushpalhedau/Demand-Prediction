@@ -1,9 +1,9 @@
 import numpy as np
 from sqlalchemy import func
 
+from backend.core.cache import tenant_cache
 from backend.db.connection import get_db_session
 from backend.db.models import Sale
-from backend.core.cache import tenant_cache
 
 # Share of a brand's average selling price kept as front-end + F&I gross, by price tier.
 # Front-end gross is thin on mass brands and fatter on luxury; the tiers are ranked within
@@ -23,7 +23,9 @@ def gross_per_unit_by_brand() -> dict:
     if not asp:
         return {}
     q80, q40 = np.percentile(list(asp.values()), [80, 40])
-    tier = lambda p: "luxury" if p >= q80 else ("premium" if p >= q40 else "mass")
+    def tier(p: float) -> str:
+        return "luxury" if p >= q80 else ("premium" if p >= q40 else "mass")
+
     return {b: p * _GROSS_PCT[tier(p)] for b, p in asp.items()}
 
 

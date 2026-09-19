@@ -5,11 +5,21 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from frontend.shared.i18n import cur, cur_code
+
 from backend.services import customers as customers_service
+from frontend.shared.errors import report_error
+from frontend.shared.i18n import cur, cur_code
 from frontend.shared.ui import (
-    _section, _base_layout, _compact, _fmt_money,
-    _INK, _INK_MUTED, _HUE_UP, _HUE_DOWN, _HUE_FORECAST, _HUE_MARKER,
+    _HUE_DOWN,
+    _HUE_FORECAST,
+    _HUE_MARKER,
+    _HUE_UP,
+    _INK,
+    _INK_MUTED,
+    _base_layout,
+    _compact,
+    _fmt_money,
+    _section,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -421,9 +431,7 @@ def render_customers(filters: dict):
                 _lead_recommendation(prob, pick_store, marketing_channel)
 
     except Exception as e:  # pragma: no cover - surfaced in the UI
-        st.error(f"Error rendering Customer Intelligence: {e}")
-        import traceback
-        st.code(traceback.format_exc())
+        report_error("Could not render Customer Intelligence", e)
 
 
 def _lead_recommendation(prob: float, store: str, channel: str):

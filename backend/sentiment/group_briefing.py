@@ -19,6 +19,7 @@ from datetime import date
 
 import pandas as pd
 
+from backend.core.config import get_settings
 from backend.core.request_context import current_language, current_profile
 from backend.db.connection import get_db_session
 from backend.db.models import Dealer
@@ -27,7 +28,8 @@ from backend.repositories import dealers as dealers_repo
 from backend.repositories import inventory as inventory_repo
 from backend.repositories import sales as sales_repo
 from backend.sentiment.analyzers.grok_analyzer import (
-    is_live_mode, _build_grok_client, _GROK_MODEL,
+    _build_grok_client,
+    is_live_mode,
 )
 
 logger = logging.getLogger(__name__)
@@ -105,6 +107,7 @@ def build_briefing_context(filters: dict, sentiment_stats: dict = None,
     s = get_db_session()
     try:
         from sqlalchemy import func
+
         from backend.repositories._filters import apply_dealer_scope
         try:
             ctx["rooftops"] = int(
@@ -154,15 +157,15 @@ def _executive(s, filters, ctx):
                     r["vehicle_category"]: round(100 * r["sales"] / tot, 1)
                     for _, r in cat.head(5).iterrows()
                 }
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001
+            logger.debug("Optional briefing section skipped", exc_info=True)
         try:
             tm = sales_repo.get_top_models(s, filters, limit=5)
             ctx["executive"]["top_models"] = [
                 f"{r['brand']} {r['model']} ({_num(r['units'])})" for _, r in tm.iterrows()
             ]
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001
+            logger.debug("Optional briefing section skipped", exc_info=True)
     except Exception as e:
         ctx["errors"].append(f"executive: {e}")
 
@@ -305,8 +308,8 @@ def _customer(s, filters, ctx):
         try:
             lm = inventory_repo.get_lease_maturity_recapture(s, filters, days_ahead=90)
             c["lease_returns_next_90d"] = int(len(lm)) if lm is not None else 0
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001
+            logger.debug("Optional briefing section skipped", exc_info=True)
         ctx["customer"] = c
     except Exception as e:
         ctx["errors"].append(f"customer: {e}")
@@ -331,8 +334,8 @@ def _inventory(s, filters, ctx):
                     if not old.empty:
                         inv["aging_90plus_units"] = int(old["units"].sum())
                         inv["aging_90plus_capital"] = round(float(old["capital_amt"].sum()))
-            except Exception:
-                pass
+            except Exception:  # noqa: BLE001
+                logger.debug("Optional briefing section skipped", exc_info=True)
         try:
             lrp = inventory_repo.get_lease_return_pipeline(s, filters, months_ahead=3)
             if lrp is not None and not lrp.empty:
@@ -340,20 +343,20 @@ def _inventory(s, filters, ctx):
                 inv["lease_returns_in_money"] = int(lrp["in_the_money"].sum())
                 inv["lease_returns_equity"] = round(
                     float(lrp.loc[lrp["in_the_money"], "equity_amt"].sum()))
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001
+            logger.debug("Optional briefing section skipped", exc_info=True)
         try:
             ti = inventory_repo.get_trade_in_activity(s, filters)
             if ti is not None and not ti.empty and "sale_date" in ti:
                 ti["sale_date"] = pd.to_datetime(ti["sale_date"], errors="coerce")
                 cut = ti["sale_date"].max() - pd.Timedelta(days=90)
-                recent = ti[(ti["sale_date"] >= cut) & (ti["trade_in_flag"] == True)]
+                recent = ti[(ti["sale_date"] >= cut) & ti["trade_in_flag"].astype(bool)]
                 inv["trade_ins_last_90d"] = int(len(recent))
                 if len(recent):
                     inv["avg_true_concession_pct"] = round(
                         float(recent["true_concession_pct"].dropna().mean()), 1)
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001
+            logger.debug("Optional briefing section skipped", exc_info=True)
         ctx["inventory"] = inv
     except Exception as e:
         ctx["errors"].append(f"inventory: {e}")
@@ -430,7 +433,7 @@ def generate_group_briefing(context: dict) -> str:
             client = _build_grok_client()
             payload = _context_as_text(context)
             resp = client.chat.completions.create(
-                model=_GROK_MODEL,
+                model=get_settings().grok_model,
                 messages=[
                     {"role": "system", "content": _system_prompt() + _lang_directive()},
                     {"role": "user", "content": f"DATA SNAPSHOT\n\n{payload}\n\nWrite the briefing."},

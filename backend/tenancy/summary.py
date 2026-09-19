@@ -1,14 +1,13 @@
-import os
-
 from sqlalchemy import func
 
+from backend.core.request_context import tenant_context
 from backend.db.connection import get_db_session
 from backend.db.models import Customer, Dealer, Inventory, Sale
-from backend.core.request_context import tenant_context
+from backend.ml.artifacts import artifact_exists
 
 
 def models_trained(tenant_id) -> bool:
-    return os.path.exists(os.path.join("models", "xgboost", str(tenant_id), "xgboost_model.pkl"))
+    return artifact_exists("xgboost", tenant_id, "xgboost_model")
 
 
 def account_summary(tenant_id) -> dict:

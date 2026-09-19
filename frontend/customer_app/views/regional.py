@@ -2,12 +2,17 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from frontend.shared.i18n import cur_code
 
 from backend.services import stores as stores_service
+from frontend.shared.errors import report_error
+from frontend.shared.i18n import cur_code
 from frontend.shared.ui import (
-    _section, _base_layout, _fmt_money, _compact, _pct_label,
     _INK,
+    _base_layout,
+    _compact,
+    _fmt_money,
+    _pct_label,
+    _section,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -197,6 +202,4 @@ def render_regional(filters: dict):
                 )
 
     except Exception as e:  # pragma: no cover - surfaced in the UI
-        st.error(f"Error rendering Store Performance: {e}")
-        import traceback
-        st.code(traceback.format_exc())
+        report_error("Could not render Store Performance", e)
