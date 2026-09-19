@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from backend.core.tenant_context import current_tenant_id
+from backend.core.request_context import current_tenant_id
 
 load_dotenv()
 

@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 from backend.db.connection import get_db_session
 from backend.db.models import ColumnMapping, IngestJob
-from backend.core.tenant_context import tenant_context
+from backend.core.request_context import tenant_context
 from backend.ingestion.pipeline import IngestError, run_ingest
 from backend.ml.training import train_tenant_models
 

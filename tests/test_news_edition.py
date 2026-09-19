@@ -11,7 +11,7 @@ def _clear_cache():
 
 
 def _as_tenant(monkeypatch, cfg):
-    monkeypatch.setattr(rss, "tenant_config", lambda: cfg)
+    monkeypatch.setattr(rss, "_settings", lambda: cfg)
 
 
 def test_explicit_tenant_settings_pick_the_edition(monkeypatch):

@@ -3,7 +3,7 @@ from sqlalchemy import func
 
 from backend.db.connection import get_db_session
 from backend.db.models import Sale
-from backend.core.cache import tenant_cache_data
+from backend.core.cache import tenant_cache
 
 # Share of a brand's average selling price kept as front-end + F&I gross, by price tier.
 # Front-end gross is thin on mass brands and fatter on luxury; the tiers are ranked within
@@ -11,7 +11,7 @@ from backend.core.cache import tenant_cache_data
 _GROSS_PCT = {"luxury": 0.09, "premium": 0.06, "mass": 0.04}
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def gross_per_unit_by_brand() -> dict:
     """{brand: estimated gross per new unit, in the tenant's currency}. A benchmark, not booked gross."""
     s = get_db_session()

@@ -1,7 +1,7 @@
 import streamlit as st
 from frontend.shared.i18n import cur, cur_code
 from sqlalchemy import func
-from backend.core.cache import tenant_cache_data
+from backend.core.cache import tenant_cache
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
@@ -76,7 +76,7 @@ def _supply_drag_pct(days_supply: float) -> float:
     return (days_supply - 55) * 1.1
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _avg_loan() -> float:
     """Typical financed amount for this tenant, for the monthly-payment translation."""
     s = get_db_session()
@@ -94,7 +94,7 @@ def _monthly_payment(apr_pct: float, loan: float) -> float:
     return loan * r / (1 - (1 + r) ** -_LOAN_MONTHS)
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _brand_options():
     s = get_db_session()
     try:

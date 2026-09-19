@@ -8,7 +8,7 @@ from sqlalchemy.exc import DBAPIError
 
 from backend.db.connection import get_admin_session, get_db_session, get_engine, init_all_tables
 from backend.db.models import Dealer, Sale, Tenant
-from backend.core.tenant_context import tenant_context
+from backend.core.request_context import tenant_context
 
 
 @pytest.fixture(scope="module")

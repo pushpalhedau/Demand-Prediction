@@ -33,7 +33,7 @@ import xml.etree.ElementTree as ET
 
 import requests
 
-from frontend.shared.i18n import tenant_config
+from backend.core.request_context import current_profile
 
 from backend.sentiment.fetchers.gdelt_fetcher import (
     DE_AUTO_QUERIES,
@@ -81,12 +81,21 @@ _cache: Dict[tuple, tuple] = {}
 _cache_lock = threading.Lock()
 
 
+def _settings() -> Dict:
+    """The current tenant's news-relevant settings (empty outside a tenant scope)."""
+    profile = current_profile()
+    if profile is None:
+        return {}
+    return {"language": profile.language, "news_hl": profile.news_hl, "news_gl": profile.news_gl,
+            "country_name": profile.country_name}
+
+
 def _edition() -> Dict:
     """
     The news edition for the CURRENT tenant: Google News language/country and which
     query pack to use. Explicit tenant config wins; otherwise it follows the tenant's UI language.
     """
-    cfg = tenant_config()
+    cfg = _settings()
     lang = (cfg.get("language") or "en").lower()
     hl = cfg.get("news_hl") or lang
     gl = cfg.get("news_gl") or ("DE" if lang == "de" else "US")

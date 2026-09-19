@@ -6,15 +6,13 @@ from functools import lru_cache
 
 import jwt
 import requests
+
+from backend.core.errors import AuthError
 from dotenv import load_dotenv
 
 load_dotenv()
 
 _TIMEOUT = 10
-
-
-class AuthError(Exception):
-    """Raised with a message that is safe to show to the end user."""
 
 
 @dataclass(frozen=True)

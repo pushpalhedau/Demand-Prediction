@@ -30,6 +30,11 @@ from __future__ import annotations
 
 import streamlit as st
 
+from backend.core.formatting import (  # noqa: F401  (re-exported: screens import formatting from here)
+    cur, cur_code, fmt_date, fmt_money, fmt_num, fmt_pct, fmt_weekday, is_de, wrap_money,
+)
+from backend.core.request_context import current_profile, set_language
+
 # Default language. German, because the primary audience is the dealer group;
 # English is the toggle-away.
 DEFAULT_LANG = "de"
@@ -45,27 +50,26 @@ _MISSING: set[tuple[str, str]] = set()
 def get_lang() -> str:
     """Active language code. Falls back to the default outside a Streamlit run
     (scripts, tests, the seeders) so nothing here can raise."""
+    lang = DEFAULT_LANG
     try:
-        lang = st.session_state.get("lang")
-        if lang in LANGUAGES:
-            return lang
-        # ?lang=de in the URL pre-sets the language so a link can open in it.
-        qp = st.query_params.get("lang")
-        if qp in LANGUAGES:
-            st.session_state["lang"] = qp
-            return qp
-    except Exception:
+        chosen = st.session_state.get("lang")
+        if chosen in LANGUAGES:
+            lang = chosen
+        else:
+            # ?lang=de in the URL pre-sets the language so a link can open in it.
+            qp = st.query_params.get("lang")
+            if qp in LANGUAGES:
+                st.session_state["lang"] = qp
+                lang = qp
+    except Exception:  # noqa: BLE001 - outside a Streamlit run (scripts, tests) fall back to the default
         pass
-    return DEFAULT_LANG
+    set_language(lang)
+    return lang
 
 
 def set_lang(lang: str) -> None:
     if lang in LANGUAGES:
         st.session_state["lang"] = lang
-
-
-def is_de() -> bool:
-    return get_lang() == "de"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -74,129 +78,6 @@ def is_de() -> bool:
 # German convention inverts the separators and puts the symbol AFTER the
 # number: 1.234.567,89 € against English €1,234,567.89.
 # ─────────────────────────────────────────────────────────────────────────────
-
-def _de_num(value: float, digits: int = 0) -> str:
-    """Format with German separators: 1.234.567,89"""
-    s = f"{value:,.{digits}f}"
-    # en -> de: swap ',' and '.' via a placeholder so neither pass clobbers the other
-    return s.replace(",", "\x00").replace(".", ",").replace("\x00", ".")
-
-
-def fmt_num(value, digits: int = 0) -> str:
-    """Plain number in the active language's separator convention."""
-    if value is None:
-        return "–" if is_de() else "n/a"
-    value = float(value)
-    if is_de():
-        return _de_num(value, digits)
-    return f"{value:,.{digits}f}"
-
-
-def tenant_config() -> dict:
-    """The signed-in tenant's config (currency, region_label, ...). Empty outside a Streamlit run."""
-    try:
-        return st.session_state.get("tenant_config") or {}
-    except Exception:
-        return {}
-
-
-def cur() -> str:
-    """Currency display token for the active tenant: '$', 'EUR' -> '€', 'AED' ..."""
-    return tenant_config().get("currency_symbol") or "€"
-
-
-def cur_code() -> str:
-    return tenant_config().get("currency") or "EUR"
-
-
-def _symbol_after() -> bool:
-    pos = tenant_config().get("symbol_position")
-    return (pos == "suffix") if pos else is_de()
-
-
-def _wrap_money(num: str) -> str:
-    """Put the tenant's currency symbol on the right side of an already-formatted number."""
-    sym = cur()
-    if _symbol_after():
-        return f"{num} {sym}"
-    return f"{sym} {num}" if sym.isalpha() else f"{sym}{num}"
-
-
-def fmt_money(value, compact: bool = True) -> str:
-    """
-    Currency in the tenant's symbol and the active language's number convention.
-      EN compact: €3.04B / AED 742.0M / $940K      EN exact: $1,234,567
-      DE compact: 3,04 Mrd. € / 742,0 Mio. € / 940 Tsd. €   DE exact: 1.234.567 €
-    """
-    value = float(value or 0)
-    a = abs(value)
-
-    if is_de():
-        if compact and a >= 1_000_000_000:
-            return _wrap_money(f"{_de_num(value / 1_000_000_000, 2)} Mrd.")
-        if compact and a >= 1_000_000:
-            return _wrap_money(f"{_de_num(value / 1_000_000, 1)} Mio.")
-        if compact and a >= 1_000:
-            return _wrap_money(f"{_de_num(value / 1_000, 0)} Tsd.")
-        return _wrap_money(_de_num(value, 0))
-
-    if compact and a >= 1_000_000_000:
-        return _wrap_money(f"{value / 1_000_000_000:.2f}B")
-    if compact and a >= 1_000_000:
-        return _wrap_money(f"{value / 1_000_000:.1f}M")
-    if compact and a >= 1_000:
-        return _wrap_money(f"{value / 1_000:.0f}K")
-    return _wrap_money(f"{value:,.0f}")
-
-
-def fmt_pct(value, digits: int = 1, signed: bool = False) -> str:
-    """Percent in the active language. German uses a comma and a space
-    before the sign: 12,4 % against 12.4%."""
-    if value is None:
-        return "–" if is_de() else "n/a"
-    value = float(value)
-    body = _de_num(abs(value), digits) if is_de() else f"{abs(value):.{digits}f}"
-    unit = " %" if is_de() else "%"
-    if signed:
-        if value > 0:
-            return f"+{body}{unit}"
-        if value < 0:
-            return f"−{body}{unit}"
-    return f"{body}{unit}"
-
-
-_DE_MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
-              "August", "September", "Oktober", "November", "Dezember"]
-_DE_MONTHS_SHORT = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul",
-                    "Aug", "Sep", "Okt", "Nov", "Dez"]
-_DE_DAYS = {"Monday": "Montag", "Tuesday": "Dienstag", "Wednesday": "Mittwoch",
-            "Thursday": "Donnerstag", "Friday": "Freitag",
-            "Saturday": "Samstag", "Sunday": "Sonntag"}
-
-
-def fmt_date(d, style: str = "short") -> str:
-    """Date in the active language. DE uses DD.MM.YYYY; EN uses the short
-    month name."""
-    if d is None:
-        return "–" if is_de() else "n/a"
-    try:
-        if is_de():
-            if style == "month":
-                return f"{_DE_MONTHS_SHORT[d.month - 1]} {d.year}"
-            if style == "monthlong":
-                return f"{_DE_MONTHS[d.month - 1]} {d.year}"
-            return f"{d.day:02d}.{d.month:02d}.{d.year}"
-        if style in ("month", "monthlong"):
-            return d.strftime("%b %Y" if style == "month" else "%B %Y")
-        return d.strftime("%d %b %Y")
-    except Exception:
-        return str(d)
-
-
-def fmt_weekday(name: str) -> str:
-    """Translate an English weekday name as stored in Sale.day_of_week."""
-    return _DE_DAYS.get(name, name) if is_de() else name
-
 
 def plotly_number_format() -> dict:
     """d3-format separators for Plotly axes and hover labels. German charts
@@ -214,7 +95,7 @@ def hover_money(expr: str = "%{y:,.0f}") -> str:
     plotly_number_format), so all this does is put the symbol on the correct
     side for the tenant's currency.
     """
-    return _wrap_money(expr)
+    return wrap_money(expr)
 
 
 def hover_month(axis: str = "x") -> str:
@@ -845,9 +726,9 @@ def t(key: str, **kwargs) -> str:
     Missing keys are recorded in `missing_keys()` for the translation sweep.
     """
     if key in ("filter.state", "col.state"):
-        label = tenant_config().get("region_label")
-        if label:
-            return label
+        profile = current_profile()
+        if profile and profile.region_label:
+            return profile.region_label
     lang = get_lang()
     table = TRANSLATIONS.get(lang, {})
     if key in table:

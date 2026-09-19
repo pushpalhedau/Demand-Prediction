@@ -2,7 +2,7 @@ from sqlalchemy import func
 
 from backend.db.connection import get_db_session
 from backend.db.models import Customer, Dealer, ExternalFactor, Inventory, Sale
-from backend.core.cache import tenant_cache_data
+from backend.core.cache import tenant_cache
 
 # Which tab needs which data. A tab a tenant cannot populate is hidden rather than shown broken.
 TAB_REQUIRES = {
@@ -16,7 +16,7 @@ TAB_REQUIRES = {
 }
 
 
-@tenant_cache_data(ttl=60, show_spinner=False)
+@tenant_cache(ttl=60)
 def get_capabilities() -> dict:
     """What data this tenant has. Cached briefly so an upload shows up within a minute."""
     s = get_db_session()

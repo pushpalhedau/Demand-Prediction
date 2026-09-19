@@ -19,6 +19,7 @@ from datetime import date
 
 import pandas as pd
 
+from backend.core.request_context import current_language, current_profile
 from backend.db.connection import get_db_session
 from backend.db.models import Dealer
 import backend.repositories.queries as Q
@@ -55,14 +56,14 @@ def _money(v):
         v = float(v)
     except (TypeError, ValueError):
         return "n/a"
-    from frontend.shared.i18n import fmt_money
+    from backend.core.formatting import fmt_money
     return fmt_money(v, compact=True)
 
 
 def _eur(v):
     """Exact money for per-unit / small figures, in the tenant's currency."""
     try:
-        from frontend.shared.i18n import fmt_money
+        from backend.core.formatting import fmt_money
         return fmt_money(float(v), compact=False)
     except (TypeError, ValueError):
         return "n/a"
@@ -386,12 +387,7 @@ def _sentiment(ctx, sent, articles):
 
 def _lang_directive() -> str:
     """Make the briefing come back in the UI's active language."""
-    try:
-        from frontend.shared.i18n import get_lang
-        lang = get_lang()
-    except Exception:
-        lang = "de"
-    if lang == "de":
+    if current_language() == "de":
         return ("\n\nOUTPUT LANGUAGE: Write the entire briefing in GERMAN, in the "
                 "register a German Autohaus-Geschäftsführung would use. Keep the "
                 "SECTION HEADINGS exactly as specified in English, because the UI "
@@ -401,13 +397,9 @@ def _lang_directive() -> str:
 
 def _system_prompt() -> str:
     """Tenant-neutral system prompt: market facts come from the data snapshot, never from this text."""
-    try:
-        import streamlit as st
-        from frontend.shared.i18n import tenant_config
-        name = st.session_state.get("tenant_name") or "an automobile dealer group"
-        cfg = tenant_config()
-    except Exception:
-        name, cfg = "an automobile dealer group", {}
+    profile = current_profile()
+    name = (profile.name if profile and profile.name else None) or "an automobile dealer group"
+    cfg = {"country_name": profile.country_name, "currency": profile.currency} if profile else {}
     where = f" operating in {cfg['country_name']}" if cfg.get("country_name") else ""
     money = f" All money amounts are in {cfg['currency']}." if cfg.get("currency") else ""
     return (

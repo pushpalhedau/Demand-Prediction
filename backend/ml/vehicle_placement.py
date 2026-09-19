@@ -17,7 +17,7 @@ worth putting in front of the customer.
 
 import numpy as np
 import pandas as pd
-from frontend.shared.i18n import cur
+from backend.core.formatting import cur
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Cross-shopping affinity between body styles.

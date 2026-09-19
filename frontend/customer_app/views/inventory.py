@@ -22,7 +22,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from frontend.shared.i18n import cur, cur_code, fmt_money
-from backend.core.cache import tenant_cache_data
+from backend.core.cache import tenant_cache
 
 from backend.db.connection import get_db_session
 from backend.repositories.queries import (
@@ -110,7 +110,7 @@ def _pill(color, label, value, sub):
 # filter set rather than re-queried per interaction.
 # ─────────────────────────────────────────────────────────────────────────────
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _load_snapshot(filters):
     s = get_db_session()
     try:
@@ -119,7 +119,7 @@ def _load_snapshot(filters):
         s.close()
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _load_trend(filters):
     s = get_db_session()
     try:
@@ -128,7 +128,7 @@ def _load_trend(filters):
         s.close()
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _load_lease_returns(filters, months_ahead):
     s = get_db_session()
     try:
@@ -137,7 +137,7 @@ def _load_lease_returns(filters, months_ahead):
         s.close()
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _load_recapture(filters, days_ahead):
     s = get_db_session()
     try:
@@ -146,7 +146,7 @@ def _load_recapture(filters, days_ahead):
         s.close()
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _load_trades(filters):
     s = get_db_session()
     try:
@@ -155,7 +155,7 @@ def _load_trades(filters):
         s.close()
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _load_replacement_flow(filters):
     s = get_db_session()
     try:
@@ -164,7 +164,7 @@ def _load_replacement_flow(filters):
         s.close()
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _load_placement_reference(filters):
     s = get_db_session()
     try:

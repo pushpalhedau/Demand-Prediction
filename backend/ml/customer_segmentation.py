@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from backend.db.connection import get_db_session
-from backend.core.tenant_context import require_tenant_id
+from backend.core.request_context import require_tenant_id
 from backend.db.models import Customer, Sale
 from sqlalchemy import func
 

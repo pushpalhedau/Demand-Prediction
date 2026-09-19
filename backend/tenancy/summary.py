@@ -4,7 +4,7 @@ from sqlalchemy import func
 
 from backend.db.connection import get_db_session
 from backend.db.models import Customer, Dealer, Inventory, Sale
-from backend.core.tenant_context import tenant_context
+from backend.core.request_context import tenant_context
 
 
 def models_trained(tenant_id) -> bool:

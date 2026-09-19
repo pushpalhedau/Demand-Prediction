@@ -42,6 +42,7 @@ from backend.db.models import Sale
 from frontend.customer_app.auth import require_login, render_account_menu
 from backend.tenancy.capabilities import get_capabilities, tab_available
 from backend.repositories.queries import get_unique_filter_options
+from frontend.shared.session import bind_backend_scope, reset_backend_scope
 from frontend.shared.ui import ASSETS_DIR, inject_custom_css
 from frontend.shared.i18n import t, tv, language_selector, get_lang
 from frontend.customer_app.views.overview import render_overview
@@ -69,7 +70,9 @@ inject_custom_css()
 #    Nothing below runs for an unauthenticated visitor. A successful login sets
 #    st.session_state["tenant_id"], which pins every DB transaction to that
 #    tenant (Postgres row-level security), so all queries below are tenant-scoped.
+reset_backend_scope()
 identity = require_login()
+bind_backend_scope()
 caps = get_capabilities()
 
 # Accounts are set up by the operator (admin console). Until their data is loaded there is nothing to show.

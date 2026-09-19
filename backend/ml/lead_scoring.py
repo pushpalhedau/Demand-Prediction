@@ -11,8 +11,8 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from backend.db.connection import get_db_session
-from backend.core.tenant_context import require_tenant_id
-from frontend.shared.i18n import fmt_money
+from backend.core.request_context import require_tenant_id
+from backend.core.formatting import fmt_money
 from backend.db.models import Sale, Customer, Vehicle
 
 _BASE_MODEL_DIR = "models/xgboost"

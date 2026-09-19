@@ -10,9 +10,11 @@ import re
 import numpy as np
 import pandas as pd
 
+from backend.core.errors import IngestError
+
 from backend.db.connection import get_db_session
 from backend.db.models import Customer, Dealer, ExternalFactor, Inventory, Sale, Vehicle
-from backend.core.tenant_context import tenant_context
+from backend.core.request_context import tenant_context
 from backend.ingestion.catalog import LOAD_ORDER, MI_TO_KM, NATURAL_KEY, REQUIRED_TABLES, TABLES, field_map
 
 MODELS = {"vehicles": Vehicle, "dealers": Dealer, "customers": Customer,
@@ -20,10 +22,6 @@ MODELS = {"vehicles": Vehicle, "dealers": Dealer, "customers": Customer,
 
 _TRUE = {"true", "t", "yes", "y", "1", "1.0", "x"}
 _FALSE = {"false", "f", "no", "n", "0", "0.0"}
-
-
-class IngestError(Exception):
-    """A problem the tenant can act on; the message is safe to show them."""
 
 
 def read_csv(source) -> pd.DataFrame:

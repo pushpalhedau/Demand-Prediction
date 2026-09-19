@@ -13,7 +13,7 @@ Two sub-tabs:
 """
 
 import streamlit as st
-from backend.core.cache import tenant_cache_data
+from backend.core.cache import tenant_cache
 import plotly.graph_objects as go
 import pandas as pd
 
@@ -97,7 +97,7 @@ _DIR_ARROW = {"up": "▲", "down": "▼", "neutral": "■"}
 # Small helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _cached_briefing_context(filters_key: str, _filters, _stats, _articles):
     """The context build sweeps every module's queries (~10s). Cache it on the
     filter set so re-clicking 'Generate read' in the same session is instant."""
@@ -105,7 +105,7 @@ def _cached_briefing_context(filters_key: str, _filters, _stats, _articles):
                                   sentiment_articles=_articles)
 
 
-@tenant_cache_data(ttl=600, show_spinner=False)
+@tenant_cache(ttl=600)
 def _group_monthly_runrate() -> float:
     """Group's average booked units per month over the last 12 months of data —
     so the headline % can be expressed as a rough unit count."""

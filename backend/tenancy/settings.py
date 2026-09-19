@@ -1,5 +1,7 @@
 import re
 
+from backend.core.errors import InvalidSetting
+
 from backend.db.rls import TENANT_CONFIG_KEYS
 
 # A tenant admin can edit these, and some end up in HTML. Anything outside these shapes is rejected,
@@ -15,10 +17,6 @@ _RULES = {
     "news_hl": re.compile(r"^[a-z]{2}(-[A-Z]{2})?$"),
     "news_gl": re.compile(r"^[A-Z]{2}$"),
 }
-
-
-class InvalidSetting(ValueError):
-    pass
 
 
 def validate_config(cfg: dict) -> dict:

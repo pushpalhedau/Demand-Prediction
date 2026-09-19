@@ -1,4 +1,4 @@
-from backend.core.tenant_context import tenant_context
+from backend.core.request_context import tenant_context
 from backend.ml.customer_segmentation import train_customer_segmentation
 from backend.ml.lead_scoring import train_xgboost_pipeline
 

@@ -24,7 +24,7 @@ import pandas as pd
 from sqlalchemy import func, case
 
 from backend.db.models import Sale, Dealer
-from frontend.shared.i18n import fmt_money
+from backend.core.formatting import fmt_money
 from backend.repositories.queries import (
     _apply_sale_filters,
     _shift_years,

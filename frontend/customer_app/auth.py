@@ -7,7 +7,7 @@ from backend.auth import client as auth_client
 from backend.auth.client import AuthError, Identity
 from backend.db.connection import get_db_session
 from backend.db.models import Tenant
-from backend.core.tenant_context import tenant_context
+from backend.core.request_context import tenant_context
 
 _REFRESH_MARGIN_S = 60
 _SUPPORTED_LANGS = ("en", "de")

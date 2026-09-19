@@ -24,6 +24,7 @@ from typing import List, Dict, Optional, Tuple
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
+from backend.core.request_context import current_language
 from backend.db.connection import get_db_session
 from backend.db.models import NewsArticle, SentimentSignal
 
@@ -106,12 +107,8 @@ def _language_directive(lang: str) -> str:
 
 
 def _active_lang() -> str:
-    """UI language, defaulting to German outside a Streamlit run."""
-    try:
-        from frontend.shared.i18n import get_lang
-        return get_lang()
-    except Exception:
-        return "de"
+    """The request's UI language."""
+    return current_language()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Mock mode: keyword-based signal generator
