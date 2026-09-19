@@ -26,3 +26,23 @@ jobs:
         run: pip-audit -r requirements/lock.txt --no-deps --disable-pip
       - name: Unit tests (no services needed)
         run: pytest -m unit -q
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Dependency vulnerabilities
+        run: npm audit --omit=dev --audit-level=high

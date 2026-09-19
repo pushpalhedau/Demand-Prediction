@@ -4,7 +4,7 @@
 
 ```bash
 docker compose up -d db auth              # minimum for local development
-docker compose up -d --build              # full stack: + redis, worker, web (8501), admin (8502)
+docker compose up -d --build              # full stack: + redis, worker, api, frontend (3000), classic web (8501), admin (8502)
 docker compose stop                       # stop, keep data
 docker compose down -v                    # DANGER: also deletes the database, uploads and models
 ```
@@ -16,6 +16,17 @@ python -m backend.cli init-db             # creates tables, applies row-level se
 ```
 
 `reset-db --yes` drops every table (development only).
+
+## Run the new dashboard from source (development)
+
+```bash
+docker compose up -d db auth
+python -m uvicorn backend.api.app:app --reload --port 8000     # API (docs at /api/docs in development)
+cd web && npm install && npm run dev                            # dashboard on http://localhost:3000
+```
+
+`API_URL` (default `http://localhost:8000`) tells the dashboard where to proxy `/api`. Quality gates for the web app:
+`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 
 ## Operators
 

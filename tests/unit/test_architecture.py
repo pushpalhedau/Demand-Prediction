@@ -20,6 +20,7 @@ LAYERS = {
     "ingestion": 6,
     "tenancy": 7,
     "services": 8,
+    "api": 9,
 }
 TOP_LEVEL_BACKEND_MODULES = {"cli"}     # entry points may use anything in the backend
 
@@ -92,3 +93,18 @@ def test_every_package_directory_has_an_init(base):
     missing = [d.relative_to(ROOT).as_posix() for d in (ROOT / base).rglob("*")
                if d.is_dir() and d.name != "__pycache__" and any(d.glob("*.py")) and not (d / "__init__.py").exists()]
     assert not missing, missing
+
+
+# The HTTP API is a thin shell: like the frontend, it reaches the backend only through services.
+API_MAY_IMPORT = ("backend.api", "backend.services", "backend.core")
+
+
+def test_api_reaches_the_backend_only_through_services():
+    bad = []
+    for p in _py_files("backend/api"):
+        for mod, line in _imports(p):
+            if mod.split(".")[0] in FRONTEND_FORBIDDEN_THIRD_PARTY:
+                bad.append(f"{_rel(p)}:{line} imports {mod}")
+            if mod.startswith("backend") and not mod.startswith(API_MAY_IMPORT) and mod != "backend":
+                bad.append(f"{_rel(p)}:{line} imports {mod}")
+    assert not bad, "the API must go through backend.services:\n" + "\n".join(sorted(set(bad)))

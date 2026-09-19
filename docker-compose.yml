@@ -1,7 +1,7 @@
 # PredictaX stack. Everything here is free and open source.
 #
 #   Local development :  docker compose up -d db auth        (the apps then run from your own Python environment)
-#   Full stack        :  docker compose up -d --build
+#   Full stack        :  docker compose up -d --build     (new dashboard on :3000, classic on :8501, console on :8502)
 #
 # Secure defaults: every published port is bound to localhost only, containers run as a non-root user with all
 # capabilities dropped and a read-only filesystem, and secrets come from the environment. The fallback values
@@ -109,7 +109,43 @@ services:
     healthcheck:
       disable: true      # no HTTP server in the worker
 
+  api:
+    # JSON API behind the new dashboard. Not published: only the frontend container talks to it.
+    <<: *app
+    command: ["uvicorn", "backend.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  frontend:
+    # The new dashboard (Next.js). Proxies /api to the api service, so the browser only sees one origin.
+    build: ./web
+    image: predictax-web:latest
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
   web:
+    # Classic Streamlit dashboard: kept while the remaining tabs move to the new one.
     <<: *app
     command: ["streamlit", "run", "frontend/customer_app/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
     depends_on:

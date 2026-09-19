@@ -9,6 +9,7 @@ calls `refresh_*` before they expire; it never handles a token or talks to the a
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 
 from backend.auth import client as auth_client
@@ -20,8 +21,9 @@ from backend.db.models import Tenant
 from backend.db.session import session_scope
 from backend.tenancy import audit
 
-__all__ = ["AuthError", "CustomerSession", "Identity", "Operator", "OperatorSession", "auth_configured", "load_active_tenant",
-           "refresh_customer", "refresh_operator", "sign_in_customer", "sign_in_operator", "tenant_is_active"]
+__all__ = ["AuthError", "CustomerSession", "Identity", "Operator", "OperatorSession", "auth_configured", "customer_from_access_token",
+           "load_active_tenant", "refresh_customer", "refresh_operator", "sign_in_customer", "sign_in_operator",
+           "tenant_is_active"]
 
 
 _customer_throttle = LoginThrottle()
@@ -35,6 +37,7 @@ class CustomerSession:
     tenant_config: dict
     refresh_token: str | None
     expires_at: int
+    access_token: str | None = None       # set for API sign-ins, which keep it in an httpOnly cookie
 
 
 @dataclass(frozen=True)
@@ -73,7 +76,7 @@ def _customer_session(tokens: dict) -> CustomerSession:
     identity = auth_client.identity_from_claims(claims)
     tenant = load_active_tenant(identity.tenant_id)
     return CustomerSession(identity, tenant.name, dict(tenant.config or {}), tokens.get("refresh_token"),
-                           int(claims["exp"]))
+                           int(claims["exp"]), tokens["access_token"])
 
 
 def _operator_session(tokens: dict) -> OperatorSession:
@@ -92,6 +95,30 @@ def _guarded(throttle: LoginThrottle, email: str, attempt):
         raise
     throttle.record_success(email)
     return session
+
+
+_TENANT_RECHECK_S = 60
+_tenant_seen: dict = {}            # tenant_id -> (checked_at, name, config); bounds the DB lookups on a per-request API
+
+
+def customer_from_access_token(access_token: str) -> CustomerSession:
+    """
+    Authenticate one API request: verify the token, then confirm the tenant is still active. The tenant lookup is
+    remembered for a minute, so a suspension takes effect within that time without a query on every request.
+    """
+    claims = auth_client.verify_access_token(access_token)
+    identity = auth_client.identity_from_claims(claims)
+    now = time.monotonic()
+    hit = _tenant_seen.get(identity.tenant_id)
+    if hit is None or now - hit[0] > _TENANT_RECHECK_S:
+        try:
+            tenant = load_active_tenant(identity.tenant_id)
+        except AuthError:
+            _tenant_seen.pop(identity.tenant_id, None)
+            raise
+        hit = (now, tenant.name, dict(tenant.config or {}))
+        _tenant_seen[identity.tenant_id] = hit
+    return CustomerSession(identity, hit[1], hit[2], None, int(claims["exp"]))
 
 
 def sign_in_customer(email: str, password: str) -> CustomerSession:

@@ -3,9 +3,10 @@
 ## Shape of the system
 
 ```
- browser ──► customer app  (Streamlit)  ─┐
- browser ──► admin console (Streamlit)  ─┤   frontend/   (presentation only)
-                                          ▼
+ browser ──► web dashboard (Next.js)  ──/api──► backend.api (FastAPI) ─┐   web/  +  backend/api
+ browser ──► classic dashboard (Streamlit) ──────────────────────────────┤   frontend/   (being retired)
+ browser ──► admin console (Streamlit) ──────────────────────────────────┤   frontend/
+                                                                          ▼
                                    backend.services      ◄── the only door into the backend
                                           │
         ┌─────────────┬───────────────────┼──────────────┬──────────────┐
@@ -31,7 +32,8 @@ Layers (a package may import only from its own layer or one BELOW it; enforced b
 | 5 | `ml` | forecasting, segmentation, lead scoring, signed artifacts |
 | 6 | `ingestion` | field catalog, mapping, transform + load, jobs |
 | 7 | `tenancy` | provisioning, capabilities, settings validation, audit |
-| 8 | `services` | application services used by the frontend |
+| 8 | `services` | application services used by the frontends |
+| 9 | `api` | HTTP shell for the web dashboard: cookie sessions, tenant binding, JSON; calls only `services` |
 
 ## Tenancy: how one customer never sees another's data
 
@@ -91,3 +93,20 @@ Views receive plain data (DataFrames, dicts) and never a session or an ORM objec
   database, not application code, enforces isolation.
 * **Operator-run onboarding**: quality control over mappings and no upload surface on the customer side.
 * **Free by construction**: Postgres, Redis, GoTrue, RSS news and an offline scorer; paid scoring is opt-in.
+
+## Web dashboard (Next.js) and API
+
+`web/` is a Next.js (React, TypeScript, Tailwind, ECharts) app. It is a client of `backend/api`, never of the database.
+
+* **One origin.** The browser talks only to the Next.js server; it proxies `/api/*` to FastAPI, so the API needs no
+  CORS and its cookies are first-party.
+* **Sessions** are `httpOnly`, `SameSite=Strict` cookies (`Secure` in production) set by `/api/auth/login`; no token
+  is ever readable by page scripts. An expired access token is refreshed once, transparently, from the refresh cookie.
+* **CSRF:** every state-changing request must carry `X-Requested-With: predictax` (a cross-site form cannot add it).
+* **Tenant scope** is bound per request in `backend/api/deps.py` from the verified token, exactly as the Streamlit
+  apps bind it per page run, and cleared afterwards. Postgres RLS remains the final guard; tests prove two tenants
+  interleaved on the same workers never see each other's data.
+* **Presentation** (currency, separators, language) is done in the browser from the tenant profile the API returns;
+  the API returns raw numbers. Translations are shared with the classic app (`web/src/i18n/*.json`).
+* **Migration:** tabs move over one at a time. Tabs not yet ported show a "moving" notice with a link to the classic
+  dashboard. The admin console stays on Streamlit until the customer tabs are done.

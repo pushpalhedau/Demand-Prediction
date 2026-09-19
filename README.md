@@ -4,17 +4,18 @@ Multi-tenant demand intelligence for automobile dealer groups. Each customer acc
 its own data: forecasting, store performance, customer intelligence, inventory and market-sentiment dashboards, built
 from CSV exports the operator uploads.
 
-There are two web apps, both Streamlit:
+Three web apps:
 
 | App | Who | What | Default URL |
 |---|---|---|---|
-| **Customer app** (`frontend/customer_app`) | dealer-group staff | dashboards over their own data | http://localhost:8501 |
+| **Dashboard** (`web/`, Next.js + FastAPI) | dealer-group staff | the new customer dashboard; tabs are being moved over one at a time (Overview is live) | http://localhost:3000 |
+| **Classic dashboard** (`frontend/customer_app`, Streamlit) | dealer-group staff | every tab, until the new dashboard has them all | http://localhost:8501 |
 | **Admin console** (`frontend/admin_console`) | PredictaX operators only | create accounts, import data, train models, manage logins, audit log | http://localhost:8502 |
 
 ## Repository layout
 
 ```
-backend/                 all logic; knows nothing about Streamlit
+backend/                 all logic; knows nothing about Streamlit or any web framework
   core/                  config, request scope, formatting, cache, errors, logging, security primitives
   db/                    engines, sessions, row-level security, ORM models
   repositories/          SQL access by domain (sales, dealers, customers, inventory, catalog)
@@ -24,13 +25,15 @@ backend/                 all logic; knows nothing about Streamlit
   ml/                    forecasting, segmentation, lead scoring, signed model artifacts
   ingestion/             field catalog, column mapping, transform + load pipeline, background jobs
   tenancy/               provisioning, capabilities, settings validation, audit trail
-  services/              the only surface the frontend may call
+  services/              the only surface the frontends may call
+  api/                   FastAPI shell for the Next.js dashboard (cookie sessions, JSON)
   cli.py                 operator command line (python -m backend.cli)
-frontend/
+frontend/                Streamlit apps (classic dashboard, admin console)
   customer_app/          main.py, auth.py, views/
   admin_console/         main.py, auth.py, views/
   shared/                ui helpers, i18n, HTML-safety, error display, session bridge
   assets/                stylesheet, images
+web/                     Next.js dashboard: src/app (routes), features/, components/, lib/ (api, i18n, format)
 deploy/postgres/         database bootstrap (roles, default-deny)
 data/samples/            demo datasets (Germany)
 docs/                    architecture, security, operations (archive/ = pre-multi-tenant material)
@@ -57,7 +60,11 @@ python -m backend.cli init-db                           # tables, row-level secu
 # an operator login for the admin console, then start the apps
 python -m backend.cli create-operator --email you@example.com
 streamlit run frontend/admin_console/main.py --server.port 8502 --server.maxUploadSize 500
-streamlit run frontend/customer_app/main.py  --server.port 8501
+streamlit run frontend/customer_app/main.py  --server.port 8501          # classic dashboard
+
+# the new dashboard: API + Next.js
+python -m uvicorn backend.api.app:app --port 8000
+(cd web && npm install && npm run dev)                                   # http://localhost:3000
 ```
 
 Full stack in containers (adds Redis, a background worker, and both apps):
