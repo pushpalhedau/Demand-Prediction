@@ -1,27 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { Tabs } from "@/components/ui/primitives";
-import { Glance } from "@/features/overview/Glance";
-import { Recommendations } from "@/features/overview/Recommendations";
+import { PageHeader } from "@/components/data/page-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Glance } from "@/features/overview/glance";
+import { Recommendations } from "@/features/overview/recommendations";
 import { usePresentation } from "@/lib/session";
 
 export default function OverviewPage() {
   const { t } = usePresentation();
-  const [view, setView] = useState<"glance" | "recs">("glance");
-
   return (
-    <div>
-      <h1 className="gradient-text mb-4 text-2xl font-bold">{t("ov.title")}</h1>
-      <Tabs
-        value={view}
-        onChange={setView}
-        tabs={[
-          { id: "glance", label: t("ov.tab_glance") },
-          { id: "recs", label: t("ov.tab_recs") },
-        ]}
-      />
-      <div className="mt-6">{view === "glance" ? <Glance /> : <Recommendations />}</div>
-    </div>
+    <>
+      <PageHeader title={t("ov.title")} />
+      <Tabs defaultValue="glance" className="gap-6">
+        <TabsList>
+          <TabsTrigger value="glance">{t("ov.tab_glance")}</TabsTrigger>
+          <TabsTrigger value="recs">{t("ov.tab_recs")}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="glance">
+          <Glance />
+        </TabsContent>
+        <TabsContent value="recs">
+          <Recommendations />
+        </TabsContent>
+      </Tabs>
+    </>
   );
 }

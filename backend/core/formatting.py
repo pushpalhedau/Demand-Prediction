@@ -89,6 +89,27 @@ def fmt_money(value, compact: bool = True) -> str:
     return wrap_money(f"{value:,.0f}")
 
 
+def compact_num(value) -> str:
+    """Compact count for labels and sentences. EN: 9.4K / 1.2M / 320.  DE: 9,4 Tsd. / 1,2 Mio. / 320."""
+    n = float(value or 0)
+    a = abs(n)
+    if is_de():
+        if a >= 1_000_000:
+            return f"{fmt_num(n / 1_000_000, 1)} Mio."
+        if a >= 10_000:
+            return f"{fmt_num(n / 1_000, 0)} Tsd."
+        if a >= 1_000:
+            return f"{fmt_num(n / 1_000, 1)} Tsd."
+        return fmt_num(n, 0)
+    if a >= 1_000_000:
+        return f"{n / 1_000_000:.1f}M"
+    if a >= 10_000:
+        return f"{n / 1_000:.0f}K"
+    if a >= 1_000:
+        return f"{n / 1_000:.1f}K"
+    return f"{n:,.0f}"
+
+
 def fmt_pct(value, digits: int = 1, signed: bool = False) -> str:
     """Percent in the active language. German uses a comma and a space before the sign: 12,4 % vs 12.4%."""
     if value is None:

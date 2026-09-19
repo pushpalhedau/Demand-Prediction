@@ -14,7 +14,17 @@ import uuid
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from backend.api.routers import auth, overview, workspace
+from backend.api.routers import (
+    auth,
+    comparison,
+    customers,
+    forecasting,
+    inventory,
+    overview,
+    regional,
+    sentiment,
+    workspace,
+)
 from backend.core.config import get_settings
 from backend.core.errors import AppError, AuthError
 from backend.core.log import configure_logging, get_logger
@@ -62,7 +72,8 @@ def create_app() -> FastAPI:
     def health():
         return {"status": "ok"}
 
-    for router in (auth.router, workspace.router, overview.router):
+    for router in (auth.router, workspace.router, overview.router, regional.router, comparison.router,
+                   forecasting.router, customers.router, inventory.router, sentiment.router):
         app.include_router(router, prefix="/api")
     return app
 

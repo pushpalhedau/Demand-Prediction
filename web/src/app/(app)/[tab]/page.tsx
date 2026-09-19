@@ -1,37 +1,21 @@
 "use client";
 
 import { notFound, useParams } from "next/navigation";
-import { TAB_ROUTES } from "@/components/shell/AppShell";
-import { Notice } from "@/components/ui/primitives";
+import { EmptyState } from "@/components/data/states";
+import { PageHeader } from "@/components/data/page-header";
+import { NAV } from "@/lib/nav";
 import { usePresentation } from "@/lib/session";
 
-const LEGACY_URL = process.env.NEXT_PUBLIC_LEGACY_URL;
-
-/** Tabs that have not moved to the new frontend yet. They stay available in the classic app meanwhile. */
+/** A dashboard the API lists for the account but this app has no page for yet. */
 export default function PendingTab() {
   const { tab } = useParams<{ tab: string }>();
   const { t } = usePresentation();
-  const key = Object.keys(TAB_ROUTES).find((k) => TAB_ROUTES[k]?.href === `/${tab}`);
-  if (!key) notFound();
-
+  const item = NAV.find((n) => n.href === `/${tab}`);
+  if (!item) notFound();
   return (
-    <div className="max-w-2xl">
-      <h1 className="gradient-text text-2xl font-bold">{t(key)}</h1>
-      <div className="mt-4">
-        <Notice>
-          This view is moving to the new dashboard and is not available here yet.
-          {LEGACY_URL && (
-            <>
-              {" "}
-              Meanwhile you can use it in the{" "}
-              <a className="text-accent underline" href={LEGACY_URL}>
-                classic dashboard
-              </a>
-              .
-            </>
-          )}
-        </Notice>
-      </div>
-    </div>
+    <>
+      <PageHeader title={t(item.key)} />
+      <EmptyState title="Not available yet">This dashboard is being moved to the new interface.</EmptyState>
+    </>
   );
 }

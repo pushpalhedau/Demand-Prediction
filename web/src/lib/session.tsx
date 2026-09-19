@@ -2,8 +2,11 @@
 
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ApiError, api, setApiLanguage } from "./api";
-import { formatMoney, formatNumber, formatPercent } from "./format";
+import { formatCompact, formatMoney, formatNumber, formatPercent } from "./format";
 import { isLang, translate, translateValue } from "./i18n";
 import type { Lang, Me } from "./types";
 
@@ -80,7 +83,12 @@ export function Providers({ children }: { children: ReactNode }) {
   );
   return (
     <QueryClientProvider client={client}>
-      <PresentationProvider>{children}</PresentationProvider>
+      <ThemeProvider>
+        <PresentationProvider>
+          <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+          <Toaster richColors closeButton />
+        </PresentationProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
@@ -104,6 +112,7 @@ export function useFormat() {
     () => ({
       money: (v: number | null | undefined, compact = true) => formatMoney(v, org, lang, compact),
       num: (v: number | null | undefined, digits = 0) => formatNumber(v, lang, digits),
+      compact: (v: number | null | undefined) => formatCompact(v, lang),
       pct: (v: number | null | undefined, digits = 1, signed = false) => formatPercent(v, lang, digits, signed),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -133,3 +133,75 @@ def test_a_customer_login_cannot_reach_a_context_left_by_a_previous_request(logi
     for _ in range(6):
         assert a.get("/api/me").json()["organisation"]["currency"] == "EUR"
         assert b.get("/api/me").json()["organisation"]["currency"] == "AED"
+
+
+def test_every_tab_endpoint_answers_for_a_signed_in_customer(logins):
+    c = _sign_in(logins["uae-demo"])
+    assert c.get("/api/regional/scorecard").json()["rows"]
+    tracking = c.get("/api/comparison/tracking", params={"measure": "revenue"}).json()
+    assert tracking["status"] == "ok" and len(tracking["rows"]) == 12
+    assert c.get("/api/comparison/drivers", params={"dimension": "brand"}).json()["status"] == "ok"
+    assert c.get("/api/forecasting/options").json()["levers"]
+    assert c.get("/api/customers/retention").json()["queue_total"] > 0
+    assert c.get("/api/customers/lead-form").json()["stores"]
+    assert c.get("/api/inventory/stock-health").json()["kpis"]["units"] > 0
+    assert "stats" in c.get("/api/sentiment/overview").json()
+
+
+def test_forecast_report_and_what_if(logins):
+    c = _sign_in(logins["germany-demo"])
+    body = {"target": "units_sold", "horizon_months": 3}
+    base = c.post("/api/forecasting/report", json=body, headers=CSRF).json()
+    shifted = c.post("/api/forecasting/report", json={**body, "overrides": {"auto_loan_apr_pct": 12.0}}, headers=CSRF).json()
+    assert base["status"] == "ok" and not base["what_if"]["active"]
+    assert shifted["what_if"]["active"] and shifted["headline"]["expected"] < base["headline"]["expected"]
+
+
+@pytest.mark.parametrize("body", [
+    {"target": "drop table", "horizon_months": 3},
+    {"target": "units_sold", "horizon_months": 5},
+    {"target": "units_sold", "horizon_months": 3, "overrides": {"not_a_lever": 1}},
+    {"target": "units_sold", "horizon_months": 3, "overrides": {"auto_loan_apr_pct": 1e12}},
+])
+def test_forecast_rejects_invalid_requests(logins, body):
+    c = _sign_in(logins["germany-demo"])
+    assert c.post("/api/forecasting/report", json=body, headers=CSRF).status_code == 422
+
+
+def test_lead_scoring_validates_input_and_scores(logins):
+    c = _sign_in(logins["uae-demo"])
+    form = c.get("/api/customers/lead-form").json()
+    opts = form["model"]["options"]
+    lead = {"region": form["stores"][0]["region"], "age": 40, "occupation": opts["occupation"][0], "annual_income": 200000,
+            "credit_score": 650, "vehicle_category": opts["vehicle_category"][0], "fuel_type": opts["fuel_type"][0],
+            "marketing_channel": opts["marketing_channel"][0], "relationship": "repeat", "discount_pct": 5, "base_price": 120000}
+    ok = c.post("/api/customers/score-lead", json=lead, headers=CSRF)
+    assert ok.status_code == 200 and 0 <= ok.json()["close_probability"] <= 1
+    for bad in ({**lead, "age": 5}, {**lead, "discount_pct": 90}, {**lead, "relationship": "vip"}, {**lead, "base_price": -1}):
+        assert c.post("/api/customers/score-lead", json=bad, headers=CSRF).status_code == 422
+
+
+def test_queue_is_paged_filtered_and_the_csv_export_is_defused(logins):
+    c = _sign_in(logins["uae-demo"])
+    page = c.get("/api/customers/queue", params={"page": 0, "page_size": 5}).json()
+    assert len(page["rows"]) == 5 and page["total"] > 5
+    assert c.get("/api/customers/queue", params={"page_size": 500}).status_code == 422
+    reason = page["rows"][0]["reason"]
+    only = c.get("/api/customers/queue", params={"reason": reason, "page_size": 50}).json()
+    assert {r["reason"] for r in only["rows"]} == {reason}
+    export = c.get("/api/customers/queue.csv", params={"reason": reason})
+    assert export.headers["content-type"].startswith("text/csv") and "attachment" in export.headers["content-disposition"]
+    from backend.api.routers.customers import _csv_cell
+    assert _csv_cell("=HYPERLINK(1)") == "'=HYPERLINK(1)" and _csv_cell("@x") == "'@x" and _csv_cell("Ann") == "Ann"
+
+
+def test_tenants_cannot_see_each_others_stores_in_new_endpoints(logins):
+    de = _sign_in(logins["germany-demo"]).get("/api/regional/scorecard").json()["rows"]
+    ae = _sign_in(logins["uae-demo"]).get("/api/regional/scorecard").json()["rows"]
+    assert {r["dealer_id"] for r in de}.isdisjoint({r["dealer_id"] for r in ae}) or {r["dealer_name"] for r in de}.isdisjoint({r["dealer_name"] for r in ae})
+
+
+def test_sentiment_rejects_unknown_windows_and_horizons(logins):
+    c = _sign_in(logins["uae-demo"])
+    assert c.post("/api/sentiment/refresh", json={"timespan": "999d"}, headers=CSRF).status_code == 422
+    assert c.post("/api/sentiment/forecast-check", json={"target": "units_sold", "horizon_days": 7}, headers=CSRF).status_code == 422

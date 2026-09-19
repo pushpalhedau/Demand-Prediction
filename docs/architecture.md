@@ -96,7 +96,7 @@ Views receive plain data (DataFrames, dicts) and never a session or an ORM objec
 
 ## Web dashboard (Next.js) and API
 
-`web/` is a Next.js (React, TypeScript, Tailwind, ECharts) app. It is a client of `backend/api`, never of the database.
+`web/` is a Next.js (React, TypeScript, Tailwind) app built on shadcn/ui components; charts are shadcn charts (Recharts). It is a client of `backend/api`, never of the database.
 
 * **One origin.** The browser talks only to the Next.js server; it proxies `/api/*` to FastAPI, so the API needs no
   CORS and its cookies are first-party.
@@ -108,5 +108,8 @@ Views receive plain data (DataFrames, dicts) and never a session or an ORM objec
   interleaved on the same workers never see each other's data.
 * **Presentation** (currency, separators, language) is done in the browser from the tenant profile the API returns;
   the API returns raw numbers. Translations are shared with the classic app (`web/src/i18n/*.json`).
-* **Migration:** tabs move over one at a time. Tabs not yet ported show a "moving" notice with a link to the classic
-  dashboard. The admin console stays on Streamlit until the customer tabs are done.
+* **Structure:** `components/ui` (shadcn primitives), `components/{layout,filters,data,charts}` (our shell, KPI card, panel,
+  table and chart helpers), `features/<tab>` (one folder per dashboard), `lib` (API client, filters in the URL, i18n,
+  formatting). Light/dark themes come from CSS variables in `app/globals.css`.
+* **Tests:** unit tests cover formatting, translations (every key used exists in English and German) and URL safety.
+* **Migration:** all seven customer tabs are ported. The admin console stays on Streamlit for now.

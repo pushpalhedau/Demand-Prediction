@@ -1,9 +1,12 @@
 import de from "@/i18n/de.json";
 import en from "@/i18n/en.json";
+import extraDe from "@/i18n/extra.de.json";
+import extraEn from "@/i18n/extra.en.json";
 import values from "@/i18n/values.json";
 import type { Lang } from "./types";
 
-const dictionaries: Record<Lang, Record<string, string>> = { en, de };
+// en/de: strings carried over from the classic app. extra.*: strings written for this dashboard.
+const dictionaries: Record<Lang, Record<string, string>> = { en: { ...en, ...extraEn }, de: { ...de, ...extraDe } };
 const valueMap = values as Record<string, string>;
 
 export const LANGUAGES: Record<Lang, string> = { en: "English", de: "Deutsch" };
@@ -21,4 +24,9 @@ export function translate(lang: Lang, key: string, vars: Record<string, string |
 /** Translate a data value (segment, fuel type…) for display only; filters and queries keep the canonical value. */
 export function translateValue(lang: Lang, value: string): string {
   return lang === "de" ? (valueMap[value] ?? value) : value;
+}
+
+/** Whether a string exists for this key (translate() falls back to the key itself, which is not always wanted). */
+export function hasTranslation(lang: Lang, key: string): boolean {
+  return key in dictionaries[lang] || key in dictionaries.en;
 }

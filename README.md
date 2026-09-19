@@ -8,8 +8,8 @@ Three web apps:
 
 | App | Who | What | Default URL |
 |---|---|---|---|
-| **Dashboard** (`web/`, Next.js + FastAPI) | dealer-group staff | the new customer dashboard; tabs are being moved over one at a time (Overview is live) | http://localhost:3000 |
-| **Classic dashboard** (`frontend/customer_app`, Streamlit) | dealer-group staff | every tab, until the new dashboard has them all | http://localhost:8501 |
+| **Dashboard** (`web/`, Next.js + FastAPI) | dealer-group staff | the new customer dashboard, light and dark themes, all seven tabs | http://localhost:3000 |
+| **Classic dashboard** (`frontend/customer_app`, Streamlit) | dealer-group staff | the previous dashboard, kept until the new one is signed off | http://localhost:8501 |
 | **Admin console** (`frontend/admin_console`) | PredictaX operators only | create accounts, import data, train models, manage logins, audit log | http://localhost:8502 |
 
 ## Repository layout

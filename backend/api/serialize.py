@@ -12,8 +12,8 @@ import pandas as pd
 
 
 def to_jsonable(value: Any) -> Any:
-    if value is None or isinstance(value, (str, bool)):
-        return value
+    if value is None or value is pd.NA or value is pd.NaT or isinstance(value, (str, bool)):
+        return None if value is pd.NA or value is pd.NaT else value
     if isinstance(value, pd.DataFrame):
         return [to_jsonable(row) for row in value.to_dict(orient="records")]
     if isinstance(value, pd.Series):
