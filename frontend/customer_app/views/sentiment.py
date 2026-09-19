@@ -20,6 +20,7 @@ from backend.services import forecasting as forecasting_service
 from backend.services import sentiment as sentiment_service
 from backend.services.sentiment import TIMESPAN_OPTIONS
 from frontend.shared.i18n import cur_code, fmt_pct, is_de, t, tseg
+from frontend.shared.safe import esc, safe_url
 from frontend.shared.ui import (
     _HUE_DOWN,
     _HUE_FORECAST,
@@ -261,7 +262,7 @@ def _bottom_line(stats: dict, articles: list):
             names = sorted(_t[_t["_dir"] == direction]["_t"].dropna().unique())[:2]
             if not names:
                 return t(fallback_key)
-            joined = ", ".join(names)
+            joined = esc(", ".join(names))
             return joined if is_de() else joined.lower()
 
         up_theme = _join_themes("up", "sa.bl.supportive_news")
@@ -280,7 +281,7 @@ def _bottom_line(stats: dict, articles: list):
         if drivers:
             d_theme, d_val = drivers[0]
             exp = _THEME_EXPOSURE.get(d_theme)
-            d_lbl = _THEME_LABEL.get(d_theme, d_theme)
+            d_lbl = esc(_THEME_LABEL.get(d_theme, d_theme))
             parts.append(
                 t("sa.bl.driver", label=d_lbl)
                 + (f" — {exp}." if exp else f" ({_pct_label(d_val, 1)}).")
@@ -288,17 +289,17 @@ def _bottom_line(stats: dict, articles: list):
         if segs:
             parts.append(
                 t("sa.bl.exposed")
-                + ", ".join(f"{_SEGMENT_LABEL.get(s, s)} ({_pct_label(v, 1)})" for s, v in segs)
+                + ", ".join(f"{esc(_SEGMENT_LABEL.get(s, s))} ({_pct_label(v, 1)})" for s, v in segs)
                 + "."
             )
         if net < 0:
             dn = (_SEGMENT_LABEL.get(segs[0][0]) if segs and segs[0][1] < 0
                   else t("sa.bl.seg_affected"))
-            parts.append(f"<b>{t('sa.bl.week')}</b> " + t("sa.bl.week_down", seg=dn))
+            parts.append(f"<b>{t('sa.bl.week')}</b> " + t("sa.bl.week_down", seg=esc(dn)))
         else:
             up = (_SEGMENT_LABEL.get(segs[0][0]) if segs and segs[0][1] > 0
                   else t("sa.bl.seg_favour"))
-            parts.append(f"<b>{t('sa.bl.week')}</b> " + t("sa.bl.week_up", seg=up))
+            parts.append(f"<b>{t('sa.bl.week')}</b> " + t("sa.bl.week_up", seg=esc(up)))
         body = " ".join(parts)
 
     st.markdown(
@@ -410,9 +411,10 @@ def _signal_card(a: pd.Series):
             exposure = t("sa.card.exposure_all")
         else:
             exposure = t("sa.card.exposure_seg", seg=_SEGMENT_LABEL.get(seg, seg))
-    title = (a.get("title") or t("sa.card.untitled"))[:150]
-    url = a.get("url") or ""
-    title_html = f"<a href='{url}' target='_blank' style='color:{_INK};text-decoration:none;'>{title}</a>" if url else title
+    title = esc((a.get("title") or t("sa.card.untitled"))[:150])
+    url = safe_url(a.get("url"))     # feed links are untrusted: only plain http(s) URLs become links
+    title_html = (f"<a href='{url}' target='_blank' rel='noopener noreferrer' "
+                  f"style='color:{_INK};text-decoration:none;'>{title}</a>") if url else title
     chg_txt = f"{_DIR_ARROW.get(direction,'■')} {_pct_label(chg,1)}" if pd.notna(chg) else _DIR_ARROW.get(direction, "■")
     action = a.get("signal_summary") or ""
 
@@ -424,11 +426,11 @@ def _signal_card(a: pd.Series):
             <div style="color:{color};font-weight:700;font-size:13px;white-space:nowrap;">{chg_txt}</div>
           </div>
           <div style="color:{_INK_MUTED};font-size:11.5px;margin-top:4px;">
-            {a.get('domain') or '—'} &nbsp;·&nbsp; {a.get('published_date') or '—'}
-            &nbsp;·&nbsp; {_THEME_LABEL.get(theme, theme or '—')}
-            &nbsp;·&nbsp; <span style="color:{color};">{_SEGMENT_LABEL.get(seg, seg)}</span> — {exposure}
+            {esc(a.get('domain') or '—')} &nbsp;·&nbsp; {esc(a.get('published_date') or '—')}
+            &nbsp;·&nbsp; {esc(_THEME_LABEL.get(theme, theme or '—'))}
+            &nbsp;·&nbsp; <span style="color:{color};">{esc(_SEGMENT_LABEL.get(seg, seg))}</span> — {esc(exposure)}
           </div>
-          <div style="color:{_INK};font-size:12.5px;margin-top:6px;">{action}</div>
+          <div style="color:{_INK};font-size:12.5px;margin-top:6px;">{esc(action)}</div>
         </div>""",
         unsafe_allow_html=True,
     )

@@ -68,4 +68,4 @@ def load_artifact(directory: Path, name: str) -> Any:
     signature, sep, payload = blob.partition(b"\n")
     if not sep or len(signature) != _SIG_HEX_LEN or not hmac.compare_digest(signature, _signature(payload)):
         raise ArtifactError(f"Model artifact '{name}' failed verification (unsigned or altered). Retrain the models.")
-    return pickle.loads(payload)  # noqa: S301 - signature verified above
+    return pickle.loads(payload)  # noqa: S301  # nosec B301 - signature verified above

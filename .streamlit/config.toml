@@ -7,4 +7,22 @@ textColor = "#f3f4f6"
 font = "sans serif"
 
 [server]
-maxUploadSize = 500
+headless = true
+# Cross-site request protections stay ON (these are also Streamlit's defaults; pinned so nobody switches them off).
+enableXsrfProtection = true
+enableCORS = true
+# Uploads are an operator feature: the customer app accepts almost nothing. The admin console is started with
+# --server.maxUploadSize=500 (see docker-compose.yml).
+maxUploadSize = 1
+enableStaticServing = false
+
+[client]
+# Never show exception messages or stack traces in the browser; they are logged server-side instead.
+showErrorDetails = "none"
+toolbarMode = "viewer"
+
+[browser]
+gatherUsageStats = false
+
+[logger]
+level = "info"

@@ -21,8 +21,21 @@ _TRUE = {"true", "t", "yes", "y", "1", "1.0", "x"}
 _FALSE = {"false", "f", "no", "n", "0", "0.0"}
 
 
+MAX_ROWS = 5_000_000
+MAX_COLUMNS = 500
+
+
 def read_csv(source) -> pd.DataFrame:
-    return pd.read_csv(source, dtype=str, keep_default_na=False, na_values=[""], encoding_errors="replace")
+    """Read a customer CSV as text, refusing files that are absurdly wide or long (a memory-exhaustion guard)."""
+    header = pd.read_csv(source, nrows=0, dtype=str, encoding_errors="replace")
+    if len(header.columns) > MAX_COLUMNS:
+        raise IngestError(f"The file has {len(header.columns)} columns; the limit is {MAX_COLUMNS}.")
+    if hasattr(source, "seek"):
+        source.seek(0)
+    df = pd.read_csv(source, dtype=str, keep_default_na=False, na_values=[""], encoding_errors="replace")
+    if len(df) > MAX_ROWS:
+        raise IngestError(f"The file has {len(df):,} rows; the limit is {MAX_ROWS:,}.")
+    return df
 
 
 # ── coercion ────────────────────────────────────────────────────────────────
@@ -280,7 +293,7 @@ def _copy_insert(session, table: str, df: pd.DataFrame) -> int:
         # Identifiers below come from our own model metadata (never from user input); values travel via COPY.
         cur.execute(f'CREATE TEMP TABLE "{stg}" (LIKE "{table}" INCLUDING DEFAULTS) ON COMMIT DROP')
         cur.copy_expert(f"COPY \"{stg}\" ({collist}) FROM STDIN WITH (FORMAT csv, NULL '')", buf)
-        cur.execute(f'INSERT INTO "{table}" ({collist}) SELECT {collist} FROM "{stg}" ON CONFLICT DO NOTHING')  # noqa: S608 - identifiers from model metadata
+        cur.execute(f'INSERT INTO "{table}" ({collist}) SELECT {collist} FROM "{stg}" ON CONFLICT DO NOTHING')  # noqa: S608  # nosec B608 - identifiers from model metadata
         n = cur.rowcount
         cur.execute(f'DROP TABLE "{stg}"')
     return n

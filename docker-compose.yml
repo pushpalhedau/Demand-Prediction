@@ -1,27 +1,53 @@
-# Everything here is free and open source. `docker compose up -d db auth` is enough for local
-# development (the app then runs imports in a background thread). Add `redis worker web` to run the
-# full stack, where uploads are processed by separate worker containers you can scale out.
+# PredictaX stack. Everything here is free and open source.
+#
+#   Local development :  docker compose up -d db auth        (the apps then run from your own Python environment)
+#   Full stack        :  docker compose up -d --build
+#
+# Secure defaults: every published port is bound to localhost only, containers run as a non-root user with all
+# capabilities dropped and a read-only filesystem, and secrets come from the environment. The fallback values
+# below are DEVELOPMENT ONLY; the application refuses to start with them when ENVIRONMENT=production.
 
-x-app-env: &app-env
-  DATABASE_URL: postgresql+psycopg2://predictax_app:predictax_app_dev@db:5432/predictax
-  ADMIN_DATABASE_URL: postgresql+psycopg2://predictax_owner:predictax_owner_dev@db:5432/predictax
-  UPLOAD_DIR: /data/uploads
-  AUTH_BASE_URL: http://auth:9999
-  SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-predictax-dev-jwt-secret-change-me-0123456789abcdef}
-  REDIS_URL: redis://redis:6379/0
+x-app: &app
+  build: .
+  image: predictax-app:latest
+  env_file: .env
+  environment: &app-env
+    ENVIRONMENT: ${ENVIRONMENT:-development}
+    DATABASE_URL: postgresql+psycopg2://predictax_app:${APP_DB_PASSWORD:-predictax_app_dev}@db:5432/predictax
+    ADMIN_DATABASE_URL: postgresql+psycopg2://predictax_owner:${OWNER_DB_PASSWORD:-predictax_owner_dev}@db:5432/predictax
+    UPLOAD_DIR: /data/uploads
+    MODEL_DIR: /app/models
+    AUTH_BASE_URL: http://auth:9999
+    SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-predictax-dev-jwt-secret-change-me-0123456789abcdef}
+    REDIS_URL: redis://:${REDIS_PASSWORD:-predictax_redis_dev}@redis:6379/0
+  read_only: true
+  tmpfs:
+    - /tmp
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  volumes:
+    - uploads:/data/uploads
+    - models:/app/models
+  restart: unless-stopped
 
 services:
   db:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: predictax_owner
-      POSTGRES_PASSWORD: predictax_owner_dev
+      POSTGRES_PASSWORD: ${OWNER_DB_PASSWORD:-predictax_owner_dev}
       POSTGRES_DB: predictax
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-predictax_app_dev}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-auth_dev_pw}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./deploy/postgres/init.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U predictax_owner -d predictax"]
       interval: 5s
@@ -34,52 +60,77 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "9999:9999"
+      - "127.0.0.1:9999:9999"
     environment:
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: "9999"
       API_EXTERNAL_URL: http://localhost:9999
       GOTRUE_DB_DRIVER: postgres
-      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:auth_dev_pw@db:5432/predictax?search_path=auth
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${AUTH_DB_PASSWORD:-auth_dev_pw}@db:5432/predictax?search_path=auth
       GOTRUE_SITE_URL: http://localhost:8501
       GOTRUE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-predictax-dev-jwt-secret-change-me-0123456789abcdef}
       GOTRUE_JWT_EXP: "3600"
       GOTRUE_JWT_AUD: authenticated
+      # Accounts are created by operators only: public sign-up is off.
       GOTRUE_DISABLE_SIGNUP: "true"
       GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      # Development convenience: no email server needed. In production configure SMTP and turn this OFF.
       GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_PASSWORD_MIN_LENGTH: "10"
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-predictax_redis_dev}", "--appendonly", "yes"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-predictax_redis_dev}
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   worker:
-    build: .
-    command: ["rq", "worker", "ingest", "--url", "redis://redis:6379/0"]
+    <<: *app
+    command: ["rq", "worker", "ingest", "--url", "redis://:${REDIS_PASSWORD:-predictax_redis_dev}@redis:6379/0"]
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    env_file: .env
-    environment: *app-env
-    volumes:
-      - uploads:/data/uploads
-      - models:/app/models
-    restart: unless-stopped
+    healthcheck:
+      disable: true      # no HTTP server in the worker
+
+  web:
+    <<: *app
+    command: ["streamlit", "run", "frontend/customer_app/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8501:8501"
 
   admin:
-    # Operator-only console (create accounts, load data, train models). Published on localhost ONLY:
-    # never expose this port publicly; reach it over a VPN / SSH tunnel in production.
-    build: .
-    command: ["streamlit", "run", "admin_console/app.py", "--server.port=8502", "--server.address=0.0.0.0"]
+    # Operator-only console (accounts, data import, training, audit log). Published on localhost ONLY: never
+    # expose this port publicly; reach it over a VPN or SSH tunnel.
+    <<: *app
+    command: ["streamlit", "run", "frontend/admin_console/main.py", "--server.port=8502", "--server.address=0.0.0.0",
+              "--server.maxUploadSize=500"]
+    environment:
+      <<: *app-env
+      PORT: "8502"
     depends_on:
       db:
         condition: service_healthy
@@ -89,32 +140,9 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:8502:8502"
-    env_file: .env
-    environment: *app-env
-    volumes:
-      - uploads:/data/uploads
-      - models:/app/models
-    restart: unless-stopped
-
-  web:
-    build: .
-    depends_on:
-      db:
-        condition: service_healthy
-      auth:
-        condition: service_started
-      redis:
-        condition: service_healthy
-    ports:
-      - "8501:8501"
-    env_file: .env
-    environment: *app-env
-    volumes:
-      - uploads:/data/uploads
-      - models:/app/models
-    restart: always
 
 volumes:
   pgdata:
+  redisdata:
   uploads:
   models:

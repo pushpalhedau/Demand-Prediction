@@ -5,6 +5,7 @@ import streamlit as st
 from backend.services import overview as overview_service
 from frontend.shared.errors import report_error, report_warning
 from frontend.shared.i18n import fmt_num, fmt_pct, hover_money, hover_month, t, tv, tv_series
+from frontend.shared.safe import esc
 from frontend.shared.ui import (
     _HUE_FORECAST,
     _HUE_HISTORY,
@@ -213,15 +214,15 @@ def _render_play(idx: int, play) -> None:
                     border-radius:8px;padding:13px 16px;margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;">
             <span style="font-size:10.5px;font-weight:700;letter-spacing:0.7px;
-                         text-transform:uppercase;color:{accent};">{play.category}</span>
+                         text-transform:uppercase;color:{accent};">{esc(play.category)}</span>
             <span style="font-size:11px;color:{_INK_MUTED};">
-              <span style="color:{dot};">●</span> {conf} · {play.horizon}
+              <span style="color:{dot};">●</span> {esc(conf)} · {esc(play.horizon)}
             </span>
           </div>
           <div style="font-size:15px;font-weight:650;color:{_INK};margin:7px 0 5px;">
-            {idx}. {play.title}
+            {idx}. {esc(play.title)}
           </div>
-          <div style="font-size:13px;color:{_INK_MUTED};line-height:1.7;">{play.detail}</div>
+          <div style="font-size:13px;color:{_INK_MUTED};line-height:1.7;">{esc(play.detail)}</div>
           <div style="font-size:17px;font-weight:700;color:#10b981;margin-top:10px;">
             {_fmt_money(play.impact_amt)}
             <span style="font-size:11px;color:{_INK_MUTED};font-weight:400;"> {t("ov.rec.est_value")}</span>

@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: |
+          pip install -r requirements/lock.txt
+          pip install -r requirements/dev.txt
+          pip install -e . --no-deps
+      - name: Lint
+        run: ruff check backend frontend tests
+      - name: Static security scan (medium and above must be clean)
+        run: bandit -r backend frontend -ll -q
+      - name: Dependency vulnerabilities
+        run: pip-audit -r requirements/lock.txt --no-deps --disable-pip
+      - name: Unit tests (no services needed)
+        run: pytest -m unit -q

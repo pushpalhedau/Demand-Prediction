@@ -1,127 +1,87 @@
-# 🚗 AI-Powered Automobile Demand Intelligence Platform — UAE Edition
+# PredictaX
 
-Welcome to the **AI-Powered Automobile Demand Intelligence Platform**, an enterprise-grade decision support suite that integrates advanced machine learning forecasting models, behavioral customer segmentation matrices, and interactive simulation capabilities into a cohesive, high-performance web dashboard.
+Multi-tenant demand intelligence for automobile dealer groups. Each customer account has its own login and sees only
+its own data: forecasting, store performance, customer intelligence, inventory and market-sentiment dashboards, built
+from CSV exports the operator uploads.
 
-The dataset models **one regional dealer group of 24 rooftops trading across the seven emirates** (Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Fujairah, Umm Al Quwain). All figures are the group's own booked retail sales — there is no market-level extrapolation. Currency is **AED**; every vehicle is imported (flat 5% GCC customs duty, flat 5% federal VAT).
+There are two web apps, both Streamlit:
 
----
+| App | Who | What | Default URL |
+|---|---|---|---|
+| **Customer app** (`frontend/customer_app`) | dealer-group staff | dashboards over their own data | http://localhost:8501 |
+| **Admin console** (`frontend/admin_console`) | PredictaX operators only | create accounts, import data, train models, manage logins, audit log | http://localhost:8502 |
 
-## 🌟 Core Features
-
-- **Executive Analytics:** High-impact KPI indicators (Total Revenue, Sales Volume, average discounts, and lead closing velocity) backed by rich Plotly charts.
-- **AI-Powered Forecasting:** Dynamic time-series projections leveraging **Facebook Prophet** integrated with monthly per-emirate indicators (regulated petrol price, CBUAE base rate, incentive spend, days' supply, Ramadan) upsampled daily as external regressors.
-- **Customer Segmentation:** Automated customer profiling using **KMeans clustering** to partition the customer base into actionable cohorts (High-Value / Prime, Loyal Repeat, Core Mainstream, Value Buyers, Lapsed / At-Risk) and seeding those segments back into the primary database. Features include monthly income (AED), AECB credit score and residency tenure; `nationality` is retained on the record and surfaced descriptively (the UAE resident base is ~88% expatriate) but is not itself a clustering feature.
-- **Lead Close Predictive Modeling:** A production-grade **XGBoost Classifier** that calculates the exact conversion probability of a sales lead, backed by a **SHAP explainability** layer mapping the explicit positive and negative feature contributions in real-time.
-- **What-if Levers (Demand Forecasting tab):** Alter the four conditions a dealer GM actually reasons about — pump price (Special 95, AED/litre), car-loan APR, incentive spend, days' supply on hand — and see the modelled shift against the baseline forecast.
-- **Dynamic Ingestion Engine:** Live dataset uploading with automatic column detection, data validation, and real-time model retraining triggers.
-
----
-
-## 🏗️ Repository Architecture
-
-The platform is designed with a strictly modular, clean separation of concerns:
+## Repository layout
 
 ```
-automobile-demand-intelligence/
-│
-├── app.py                      # Main entrypoint and navigation framework
-├── requirements.txt            # Package dependencies
-├── README.md                   # System documentation
-├── .env                        # Environment configurations
-├── train_models.py             # Seeding & training pipeline runner script
-│
-├── assets/
-│   └── styles/
-│       └── custom.css          # Premium glassmorphism dark stylesheet
-│
-├── database/
-│   ├── connection.py           # SQLAlchemy engine and session initializer
-│   ├── models.py               # Star Schema table definitions
-│   └── queries.py              # Optimized analytical aggregations
-│
-├── preprocessing/
-│   ├── generate_uae_data.py    # Synthetic UAE (7-emirate) dataset generator (seeded)
-│   ├── clean_data.py           # Data scrubbing and normalization functions
-│   ├── seed_database.py        # "test" DB seeder (automobile_datasets/ → automobile_demand.db)
-│   └── seed_real_database.py   # "real" DB seeder (realdata-datasets/ → real_demand.db)
-│
-├── forecasting/
-│   └── prophet_forecasting.py   # Prophet trainer and forecast generator
-│
-├── ml_models/
-│   ├── customer_segmentation.py # KMeans segmentation and classifiers
-│   └── xgboost_model.py         # XGBoost lead scoring and SHAP explainers
-│
-└── dashboard/                  # Dashboard individual tabs
-    ├── overview.py             # Landing metrics and volume graphs
-    ├── forecasting.py          # Prophet uncertainty and decomposition views
-    ├── comparison.py           # Overlapping YoY comparison charts
-    ├── regional.py             # Store Performance — footprint map + per-rooftop scorecard
-    ├── customers.py            # KMeans 2D/3D profiles and lead scorers
-    ├── ai_insights.py          # Automated growth recommendations & Simulator
-    ├── upload_data.py          # Ingestion engine and uploader
-    └── metrics.py              # ML Hyperparameters and elbow profiles
+backend/                 all logic; knows nothing about Streamlit
+  core/                  config, request scope, formatting, cache, errors, logging, security primitives
+  db/                    engines, sessions, row-level security, ORM models
+  repositories/          SQL access by domain (sales, dealers, customers, inventory, catalog)
+  auth/                  client for the auth server (open-source Supabase Auth / GoTrue)
+  analytics/             decision engine, year-over-year attribution, what-if model, benchmarks
+  sentiment/             free news intake (Google News RSS), offline scoring, briefing
+  ml/                    forecasting, segmentation, lead scoring, signed model artifacts
+  ingestion/             field catalog, column mapping, transform + load pipeline, background jobs
+  tenancy/               provisioning, capabilities, settings validation, audit trail
+  services/              the only surface the frontend may call
+  cli.py                 operator command line (python -m backend.cli)
+frontend/
+  customer_app/          main.py, auth.py, views/
+  admin_console/         main.py, auth.py, views/
+  shared/                ui helpers, i18n, HTML-safety, error display, session bridge
+  assets/                stylesheet, images
+deploy/postgres/         database bootstrap (roles, default-deny)
+data/samples/            demo datasets (Germany)
+docs/                    architecture, security, operations (archive/ = pre-multi-tenant material)
+requirements/            base.txt (ranges), lock.txt (pinned, audited), dev.txt
+scripts/                 one-off data generators
+tests/                   unit/, integration/, e2e/
 ```
 
----
+The boundary that matters: **the frontend reaches the backend only through `backend.services`**, and the backend never
+imports Streamlit. `tests/unit/test_architecture.py` enforces both, plus one-directional layering inside the backend.
 
-## ⚡ Quickstart Guide
+## Quick start (local development)
 
-### 1. Prerequisites
-Ensure you have **Python 3.10 to 3.13** installed on your machine. This platform uses the high-performance **`uv`** package manager for super-fast dependency installations.
-
-### 2. Environment Setup & Dependency Installation
-Create a python virtual environment and install all necessary packages inside it:
+Requires Python 3.11+ and Docker.
 
 ```bash
-# Create virtual environment
-uv venv
+python -m venv venv && venv/Scripts/activate            # Windows; use `source venv/bin/activate` elsewhere
+pip install -r requirements/dev.txt && pip install -e . --no-deps
+cp .env.example .env
 
-# Activate on Windows (PowerShell)
-.venv\Scripts\Activate.ps1
+docker compose up -d db auth                            # Postgres + auth server
+python -m backend.cli init-db                           # tables, row-level security, grants
 
-# Activate on Linux/macOS
-source .venv/bin/activate
-
-# Install requirements
-uv pip install -r requirements.txt
+# an operator login for the admin console, then start the apps
+python -m backend.cli create-operator --email you@example.com
+streamlit run frontend/admin_console/main.py --server.port 8502 --server.maxUploadSize 500
+streamlit run frontend/customer_app/main.py  --server.port 8501
 ```
 
-### 3. Generate Data, Ingest & Train Machine Learning Models
-
-Regenerate the synthetic UAE datasets (seeded — deterministic), then seed both SQLite databases and train the ML assets:
+Full stack in containers (adds Redis, a background worker, and both apps):
 
 ```bash
-# (re)generate realdata-datasets/ and automobile_datasets/ from scratch
-python -m preprocessing.generate_uae_data
-
-# seed the "real" DB (real_demand.db) and the "test" DB (automobile_demand.db)
-python -m preprocessing.seed_real_database
-python -m preprocessing.seed_database
-
-# train KMeans clustering + XGBoost classifier (per data mode)
-python train_models.py
+docker compose up -d --build
 ```
 
-The Streamlit app also auto-seeds `real_demand.db` on first launch if it is empty.
+Onboarding a customer: open the admin console, **Accounts → Create a new account**, open it, **Import data**, upload
+their CSVs, confirm the column matching, **Import and train**. See `docs/operations.md`.
 
-### 4. Launch the Streamlit Dashboard
-Start the production-ready Streamlit app locally:
+## Tests
 
 ```bash
-streamlit run app.py
+pytest -m unit                    # no services needed
+pytest -m "unit or integration"   # needs: docker compose up -d db
+pytest                            # everything; tests skip themselves when a service they need is down
+ruff check backend frontend tests
+bandit -r backend frontend -ll
+pip-audit -r requirements/lock.txt
 ```
 
-Open `http://localhost:8501` in your browser to explore the fully functional dashboard!
+## Documentation
 
----
-
-## 💾 Database Schema (Star Schema)
-
-The database utilizes standard relational mappings built via SQLAlchemy ORM:
-- **`sales` (Fact Table):** Tracks all individual sale transactions, fully denormalized with emirate/area, vehicle categories, and fuel types for high-performance analytical aggregates. All money columns are AED (`selling_price_aed`, `vat_amount_aed`, …).
-- **`customers` (Dimension Table):** CRM profiles — nationality, emirate/area, AECB credit score, occupation, estimated **monthly** income (AED), residency tenure, and assigned customer segments.
-- **`vehicles` (Dimension Table):** The product catalog containing specifications, `mileage_kmpl`, `range_km` (for EVs), `price_aed`, `gcc_spec`, and launch details.
-- **`dealers` (Dimension Table):** Rooftop network data — brand, emirate/area, P.O. box, capacity, and latitude/longitude coordinates.
-- **`inventory` (Dimension Table):** Month-end stock snapshots, daily holding costs (AED), stockout alerts, port of entry and transit quantities.
-- **`external_factors` (Dimension Table):** Per-emirate monthly conditions — regulated petrol price (AED/litre), CBUAE base rate, Dubai real-estate index, tourism index, Ramadan / National Day / DSF flags.
+- [`docs/architecture.md`](docs/architecture.md) — layers, request flow, tenancy model, data flow
+- [`docs/security.md`](docs/security.md) — threat model, controls, production checklist, known limits
+- [`docs/operations.md`](docs/operations.md) — runbook: onboarding, retraining, secrets, backups, troubleshooting

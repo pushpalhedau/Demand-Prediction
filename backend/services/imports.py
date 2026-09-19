@@ -10,6 +10,7 @@ from typing import Any
 
 import pandas as pd
 
+from backend.core.config import get_settings
 from backend.core.errors import IngestError
 from backend.ingestion import jobs
 from backend.ingestion.catalog import (
@@ -24,6 +25,7 @@ from backend.ingestion.catalog import (
 )
 from backend.ingestion.mapping import AUTO_CONFIDENCE, Proposal, propose_mapping
 from backend.ingestion.pipeline import transform_table
+from backend.tenancy import audit
 from backend.tenancy.capabilities import get_capabilities
 
 __all__ = ["AUTO_CONFIDENCE", "GAL_TO_L", "HP_TO_KW", "IngestError", "L100_FROM_MPG", "LOAD_ORDER", "MI_TO_KM",
@@ -35,6 +37,9 @@ PREVIEW_ROWS = 3000
 
 def save_upload(tenant_id, job_id: str, table: str, content: bytes | memoryview) -> Path:
     """Store an uploaded CSV under the account's own upload folder and return its path."""
+    limit_mb = get_settings().max_upload_mb
+    if len(content) > limit_mb * 1024 * 1024:
+        raise IngestError(f"{table}: the file is larger than the {limit_mb} MB limit.")
     path = jobs.job_dir(tenant_id, job_id) / f"{table}.csv"
     path.write_bytes(bytes(content))
     return path
@@ -62,12 +67,15 @@ def dry_run(table: str, path: str, mapping: dict, units: dict, dayfirst: bool, d
 def start_import(tenant_id, job_id: str, options: dict[str, Any], created_by: str) -> None:
     jobs.create_job(tenant_id, options, created_by=created_by, job_id=uuid.UUID(job_id))
     jobs.enqueue_job(tenant_id, uuid.UUID(job_id))
+    audit.record("import.start", tenant=str(tenant_id), detail={"tables": sorted(options.get("files", {})),
+                                                                 "replace": options.get("replace", True)})
 
 
 def start_retrain(tenant_id, created_by: str) -> str:
     job_id = uuid.uuid4()
     jobs.create_job(tenant_id, {"train_only": True, "train": True}, created_by=created_by, job_id=job_id)
     jobs.enqueue_job(tenant_id, job_id)
+    audit.record("models.retrain", tenant=str(tenant_id))
     return str(job_id)
 
 

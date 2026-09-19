@@ -9,6 +9,7 @@ from frontend.shared.i18n import (
     is_de,
     plotly_number_format,
 )
+from frontend.shared.safe import esc
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"
 
@@ -43,12 +44,12 @@ def render_kpi_card(title: str, value: str, delta: str = None, is_positive: bool
     if delta:
         delta_class = "positive" if is_positive else "negative"
         arrow = "▲" if is_positive else "▼"
-        delta_html = f'<div class="kpi-delta {delta_class}">{arrow} {delta}</div>'
+        delta_html = f'<div class="kpi-delta {delta_class}">{arrow} {esc(delta)}</div>'
 
     card_html = f"""
     <div class="kpi-card">
-        <div class="kpi-title">{title}</div>
-        <div class="kpi-value">{value}</div>
+        <div class="kpi-title">{esc(title)}</div>
+        <div class="kpi-value">{esc(value)}</div>
         {delta_html}
     </div>
     """

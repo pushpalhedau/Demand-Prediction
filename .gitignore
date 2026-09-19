@@ -1,43 +1,39 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual Environment
-venv/
-env/
-.venv/
+# ── secrets and local configuration (never commit) ─────────────────────────────
 .env
-
-# Streamlit
+.env.*
+!.env.example
+*.pem
+*.key
 .streamlit/secrets.toml
 
-# Data and Models (demand forecasting typically generates these)
-# *.csv
-# *.xlsx
-# *.parquet
-# *.pkl
-# *.joblib
-
-# Distribution / packaging
-node_modules/
-build/
-dist/
+# ── Python ─────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
 *.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# IDEs
-.vscode/
+# ── runtime state (uploads, trained models, caches, logs) ───────────────────────
+/data/uploads/
+/models/
+.cache/
+*.log
+
+# ── local databases and editor/OS noise ────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+.DS_Store
+Thumbs.db
 .idea/
+.vscode/
 
-# Logs and temporary files
-*.log
-.ipynb_checkpoints/
-
-# docs
-demo_script.txt
-demo_script-UAE-v2.txt
-# local runtime data
-data/
-*.log
-models/*/[0-9a-f]*-*-*-*-*/
+# ── one-off local refactoring helpers ──────────────────────────────────────────
 scripts/_dev/

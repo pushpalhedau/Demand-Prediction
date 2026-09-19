@@ -56,3 +56,17 @@ class LoginThrottle:
         with self._lock:
             self._failures.pop(key, None)
             self._locked_until.pop(key, None)
+
+
+MIN_PASSWORD_LENGTH = 10
+_COMMON_PASSWORDS = {"password123", "1234567890", "qwertyuiop", "administrator", "changeme123"}
+
+
+def validate_password(password: str) -> None:
+    """Reject weak passwords chosen by a person (generated ones are always long and random)."""
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise AuthError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+    if len(set(password)) < 5:
+        raise AuthError("Password is too repetitive.")
+    if password.lower() in _COMMON_PASSWORDS:
+        raise AuthError("Password is too common.")

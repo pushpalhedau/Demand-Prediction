@@ -63,6 +63,7 @@ class TenantProfile:
 _explicit_tenant: ContextVar[uuid.UUID | None] = ContextVar("predictax_explicit_tenant", default=None)
 _profile: ContextVar[TenantProfile | None] = ContextVar("predictax_profile", default=None)
 _language: ContextVar[str | None] = ContextVar("predictax_language", default=None)
+_actor: ContextVar[str | None] = ContextVar("predictax_actor", default=None)
 
 
 @contextmanager
@@ -85,6 +86,16 @@ def clear_request() -> None:
     """Drop any scope. Call at the top of every page run, before authentication decides who this is."""
     _profile.set(None)
     _language.set(None)
+    _actor.set(None)
+
+
+def bind_actor(actor: str) -> None:
+    """Record who is performing operator actions in this page run (used by the audit trail)."""
+    _actor.set(actor)
+
+
+def current_actor() -> str:
+    return _actor.get() or "system"
 
 
 def set_language(language: str) -> None:

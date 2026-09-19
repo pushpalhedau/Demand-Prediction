@@ -20,6 +20,11 @@ include = ["backend*", "frontend*"]
 pythonpath = ["."]
 testpaths = ["tests"]
 filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "unit: needs nothing external",
+    "integration: needs a Postgres database",
+    "e2e: needs the running services (auth, redis, worker)",
+]
 
 [tool.ruff]
 line-length = 120

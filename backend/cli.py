@@ -9,7 +9,7 @@ from backend.tenancy.provision import add_user, create_operator, create_tenant, 
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(prog="python -m tenancy.cli")
+    p = argparse.ArgumentParser(prog="python -m backend.cli")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("init-db", help="Create tables and apply row-level security (owner credentials)")

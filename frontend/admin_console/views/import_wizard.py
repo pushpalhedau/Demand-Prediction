@@ -95,7 +95,11 @@ def _step_upload(ds, tenant_id):
             continue
         sig = (up.name, up.size)
         if ds["sizes"].get(table) != sig:
-            path = imports_service.save_upload(tenant_id, ds["job"], table, up.getbuffer())
+            try:
+                path = imports_service.save_upload(tenant_id, ds["job"], table, up.getbuffer())
+            except IngestError as e:
+                st.error(str(e))
+                continue
             ds["files"][table] = str(path)
             ds["sizes"][table] = sig
             ds["props"].pop(table, None)

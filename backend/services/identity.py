@@ -18,6 +18,7 @@ from backend.core.request_context import tenant_context
 from backend.core.security import LoginThrottle
 from backend.db.models import Tenant
 from backend.db.session import session_scope
+from backend.tenancy import audit
 
 __all__ = ["AuthError", "CustomerSession", "Identity", "Operator", "OperatorSession", "auth_configured", "load_active_tenant",
            "refresh_customer", "refresh_operator", "sign_in_customer", "sign_in_operator", "tenant_is_active"]
@@ -102,7 +103,13 @@ def refresh_customer(refresh_token: str) -> CustomerSession:
 
 
 def sign_in_operator(email: str, password: str) -> OperatorSession:
-    return _guarded(_operator_throttle, email, lambda: _operator_session(auth_client.sign_in(email, password)))
+    try:
+        session = _guarded(_operator_throttle, email, lambda: _operator_session(auth_client.sign_in(email, password)))
+    except AuthError as e:
+        audit.record("operator.sign_in", actor=email.strip().lower(), outcome="denied", detail={"reason": str(e)[:80]})
+        raise
+    audit.record("operator.sign_in", actor=session.operator.email)
+    return session
 
 
 def refresh_operator(refresh_token: str) -> OperatorSession:

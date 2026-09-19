@@ -1,0 +1,274 @@
+========================================================
+DEMO SCRIPT - AUTOMOBILE DEMAND INTELLIGENCE PLATFORM
+========================================================
+(Read this out loud, section by section, as you click through the app)
+
+
+INTRODUCTION
+------------
+Good [morning/afternoon] everyone. Today I'm showing a platform that
+helps car dealers and automobile companies across the United States
+understand their sales, predict what's coming next, and make smarter
+decisions - like a smart assistant for the car business, using data
+instead of guesswork. The platform currently models an 8-state
+footprint - California, Texas, Florida, New York, Illinois, Georgia,
+Ohio, and Michigan.
+
+One thing to note before we start: there's a filter panel that stays
+with us throughout, letting us narrow the view by date, state, city,
+brand, vehicle type, or fuel type - so we can always zoom into a
+specific slice of the business.
+
+Let's walk through each part of the platform.
+
+
+===========================================================
+SECTION 1: EXECUTIVE OVERVIEW
+===========================================================
+This is the homepage - the one-glance summary a business owner or manager
+would check first thing in the morning.
+
+At the top, four key numbers jump out immediately:
+- Total units sold, and how that compares to last year
+- Total revenue earned, in millions of dollars, again compared to last year
+- The current US Fed Funds Rate set by the Federal Reserve, because that
+  affects how easily people can get car loans
+- The best-performing car brand and how much of the market it owns
+
+Below that, there's a chart showing sales and revenue trends over time,
+so we can see at a glance whether the business is growing, shrinking, or
+staying flat month to month.
+
+Next to it, two more charts break things down further: one shows which
+type of vehicle - SUVs, sedans, and so on - brings in the most revenue,
+and the other shows the split between gasoline, diesel, electric, and
+hybrid vehicles being sold.
+
+Finally, there's a chart comparing how much revenue each state is
+generating, so we can instantly tell which regions are the strongest
+performers.
+
+In short - this page answers the question "How is the business doing
+right now?" in about ten seconds.
+
+
+===========================================================
+SECTION 2: DEMAND FORECASTING
+===========================================================
+This is where things get really interesting - this is the prediction
+engine.
+
+Instead of just looking backward at what already happened, this tab
+predicts what will happen next. We can choose whether we want to forecast
+future sales volume or future revenue, choose how far ahead to look -
+one month, three months, six months, or even a full year - and choose how
+confident we want the prediction to be.
+
+Now here's the exciting part. There's a panel where we can adjust
+real-world economic factors and instantly see how they would change
+future demand. Things like:
+- Gasoline and diesel prices
+- WTI crude oil prices
+- Economic growth (GDP)
+- Inflation (CPI)
+- Tourism levels
+- Luxury vehicle demand
+- Import tariffs on foreign-made vehicles
+- Number of EV charging stations available
+
+So, for example, if we think gasoline prices are going to rise next
+quarter, we can move that slider and watch the forecast update in real
+time to show how that would likely affect car sales. This is basically a
+"what-if" simulator for the automobile market. Business leaders can test
+different scenarios before making real decisions.
+
+The main chart shows three possible futures side by side: a cautious,
+worst-case scenario, a realistic expected scenario, and an optimistic
+best-case scenario - along with the actual historical numbers leading up
+to today, so we can see exactly where the prediction begins.
+
+There are also two smaller charts showing seasonal patterns - which days
+of the week and which months of the year usually see the highest demand.
+This helps with planning staffing, stock, and promotions in advance.
+
+And at the bottom, the platform writes out a plain-English summary for
+us automatically - telling us the total predicted sales, the total
+predicted revenue, and which specific day is expected to have the
+biggest spike in demand.
+
+
+===========================================================
+SECTION 3: COMPARATIVE ANALYTICS
+===========================================================
+This tab is all about comparisons - helping us understand performance by
+putting things side by side.
+
+First, we can compare how this year's monthly performance stacks up
+against previous years, for either sales volume or revenue, with an
+automatic summary explaining which year performed better and by how
+much.
+
+Then we get a breakdown comparing growth across different vehicle
+categories, and growth across different regions - so we can quickly spot
+which segments and which areas are growing fastest.
+
+The standout feature in this tab is a dedicated Import Tariff Exposure
+section, built around one of the biggest stories in the industry right
+now: the 25% Section 232 tariff on imported vehicles that took effect in
+April 2025. It compares import brands - Toyota, Honda, Nissan, Hyundai,
+Kia, BMW, Mercedes-Benz, and others - against domestic brands like Ford,
+Chevrolet, GMC, Ram, Jeep, and Tesla. This tells a really compelling
+story:
+- How much of the total market import brands hold, and how that share is
+  shifting since the tariff took effect
+- How the electric vehicle market splits between import and domestic
+  brands
+- How much of a price premium import vehicles now carry over comparable
+  domestic models, as the tariff cost gets passed through to buyers
+- A projection of what that market share split could look like by 2027
+
+There are several supporting charts here too - showing how import brand
+share is trending year over year, how import pricing compares to
+domestic pricing under the tariff, and which brands are gaining or
+losing ground as a result. This section alone tells a powerful
+competitive story about where the market is heading.
+
+
+===========================================================
+SECTION 4: REGIONAL INTELLIGENCE
+===========================================================
+This tab zooms into geography and dealership performance.
+
+There's an interactive map showing every dealership location. Bigger
+bubbles mean more cars sold, and the color of each bubble reflects how
+much revenue that dealership generated. We can hover over any dealership
+to see its name, its region, its performance tier, units sold, and
+revenue - all in one glance.
+
+Below the map, there's a leaderboard - a ranked table of the
+top-performing dealers, including details like customer ratings,
+whether they offer EV charging infrastructure, average deal size, and
+their best-selling category.
+
+The platform also automatically highlights the single best-performing
+dealer with a callout message, so leadership can recognize top
+performers without digging through spreadsheets.
+
+
+===========================================================
+SECTION 5: CUSTOMER INTELLIGENCE
+===========================================================
+This tab has two parts, and it's all about understanding customers as
+people, not just numbers.
+
+The first part, Customer Segmentation, groups customers into meaningful
+categories - for example, budget-conscious buyers, premium buyers,
+electric vehicle enthusiasts, fleet buyers, and loyal repeat customers.
+We can compare these groups across things like income, age, loyalty,
+credit score, and likelihood to stop being a customer. There's also a
+chart plotting age against income, colored by customer group, to spot
+patterns at a glance.
+
+The second part, Lead Close Score, is genuinely one of the most fun
+features to demo live. It's an interactive tool where we type in details
+about a potential customer - their age, occupation, income, credit
+score, loyalty history, what type of car they're interested in, the
+discount being offered, how they're financing it, and where the lead
+came from. When we click "Evaluate," the platform instantly predicts the
+probability that this customer will actually buy the car.
+
+It doesn't just give a number - it explains why. It shows exactly which
+factors are pushing that probability up or down, for example a strong
+credit score helping, or a low discount hurting the chances. Then it
+gives a plain-English recommendation on what action to take next, like
+offering a bigger discount, or fast-tracking a VIP showroom visit for a
+high-value lead. This turns guesswork into a data-backed sales strategy.
+
+
+===========================================================
+SECTION 6: INVENTORY INTELLIGENCE
+===========================================================
+This tab helps make sure dealerships never run out of the cars people
+actually want, and never get stuck with cars that don't sell.
+
+At the top, four numbers summarize the current stock situation: how many
+units are currently in stock and how many are on the way, how many
+models have completely run out, how many items have triggered a reorder
+alert, and roughly how much it's costing per month just to hold the
+current inventory.
+
+There's a table listing the most urgent items that need to be reordered
+right now, ranked by how critical the situation is.
+
+A chart compares current stock levels against what we predict will be
+needed over the next thirty days for each vehicle category - so we can
+see immediately where we're overstocked or understocked.
+
+Two more charts round this out: one shows which specific models have
+been sitting unsold the longest, and another shows how inventory is
+spread out across different warehouse locations.
+
+The platform also displays automatic alerts and warnings when stock
+levels are getting risky, so nothing slips through the cracks.
+
+
+===========================================================
+SECTION 7: SENTIMENT ANALYSIS
+===========================================================
+This is the most advanced part of the platform, and it's genuinely
+unique - it connects real-world news and global events to car buying
+behavior.
+
+Here's the idea: things happening in the world - conflicts, oil price
+shocks, new government policies, economic news - all influence whether
+people feel confident enough to buy a car. This tab reads real news
+articles, scores how positive or negative they are, and shows us how
+that connects to expected car demand. There's even a "Refresh Data"
+button that pulls in the very latest news whenever we want an update.
+
+This tab is organized into four parts:
+
+First, Geopolitical Risk. This shows an overall risk score for how
+unstable or risky the current environment looks, along with a simple
+dial - like a speedometer - that turns green, yellow, or red depending
+on the risk level. There's also a ninety-day timeline showing how that
+risk has moved day by day, and a table of the specific news events that
+had the biggest impact.
+
+Second, Economic Signals. This shows how much upcoming demand is
+expected to shift because of recent news, broken down by vehicle
+category, plus a color-coded grid showing sentiment trends over time
+across categories.
+
+Third, Forecast Comparison. This is a great one to show off - it runs
+two predictions side by side: one that only looks at past sales data,
+and one that also factors in real-world news and sentiment. We can
+compare which one is more accurate, proving that world events genuinely
+do improve the quality of our predictions.
+
+Fourth, AI Insights. With one click, the platform writes a short,
+easy-to-read market briefing summarizing what's happening right now -
+overall market mood, which direction demand is heading, the current risk
+level, and the trend over the past week. It's like having an analyst
+generate a daily report automatically, instantly, at any time.
+
+
+===========================================================
+CLOSING
+===========================================================
+So to summarize what we just walked through: this platform takes all
+the scattered information a car business normally has to piece together
+manually - past sales, future predictions, regional performance,
+customer behavior, inventory levels, and even world news - and brings it
+all into one place, explained in plain language, with actionable
+recommendations built right in.
+
+The goal is simple: help the business sell smarter, stock smarter, and
+react faster - all backed by data-driven analysis instead of guesswork.
+
+That's the full tour. Happy to answer any questions, or dive deeper into
+any specific part you're curious about.
+
+========================================================
+END OF SCRIPT
+========================================================

@@ -26,6 +26,7 @@ from backend.services import inventory as inventory_service
 from backend.services.inventory import DAYS_SUPPLY_HEALTHY_HIGH, DAYS_SUPPLY_HEALTHY_LOW
 from frontend.shared.errors import report_error
 from frontend.shared.i18n import cur, cur_code, fmt_money
+from frontend.shared.safe import esc
 from frontend.shared.ui import get_color_palette, render_kpi_card
 
 FONT = "Plus Jakarta Sans"
@@ -1016,7 +1017,7 @@ def _render_placement(snapshot, filters, colors):
         return
 
     st.markdown("<br>", unsafe_allow_html=True)
-    _note(f"Requested: <b>{brand} {model} {trim}</b> — {cur()} {target['price']:,} · "
+    _note(f"Requested: <b>{esc(brand)} {esc(model)} {esc(trim)}</b> — {cur()} {target['price']:,} · "
           f"{target['category']} · {target['fuel_type']} · {target['drive_type']} · "
           f"{int(target['power_kw'])} hp · seats {int(target['seating_capacity'])}")
 
@@ -1042,7 +1043,7 @@ def _render_placement(snapshot, filters, colors):
                     border-left:3px solid {tone};border-radius:10px;padding:14px 18px;margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;">
             <div style="font-size:15px;font-weight:700;color:#f3f4f6;">
-              {r['brand']} {r['model']} <span style="color:#9ca3af;font-weight:500;">{r['variant']}</span>
+              {esc(r['brand'])} {esc(r['model'])} <span style="color:#9ca3af;font-weight:500;">{esc(r['variant'])}</span>
             </div>
             <div style="text-align:right;white-space:nowrap;">
               <span style="color:{tone};font-weight:700;font-size:15px;">{r['placement_score_pct']:.0f}</span>
@@ -1052,12 +1053,12 @@ def _render_placement(snapshot, filters, colors):
           <div style="color:#d1d5db;font-size:12.5px;margin-top:6px;">
             <span style="background:{tone}22;color:{tone};border-radius:5px;padding:2px 8px;
                          font-size:11px;font-weight:600;">{label}</span>
-            <span style="color:#9ca3af;"> {r['availability_detail']}</span>
+            <span style="color:#9ca3af;"> {esc(r['availability_detail'])}</span>
             · {cur()} {r['price']:,.0f} ({delta_txt})
             · spec match {r['match_pct']:.0f}%{aged_txt}
           </div>
-          <div style="color:#10b981;font-size:12px;margin-top:7px;">Matches: {r['match_reasons']}</div>
-          <div style="color:#9ca3af;font-size:12px;margin-top:2px;">Trade-off: {r['tradeoffs']}</div>
+          <div style="color:#10b981;font-size:12px;margin-top:7px;">Matches: {esc(r['match_reasons'])}</div>
+          <div style="color:#9ca3af;font-size:12px;margin-top:2px;">Trade-off: {esc(r['tradeoffs'])}</div>
         </div>
         """, unsafe_allow_html=True)
 
