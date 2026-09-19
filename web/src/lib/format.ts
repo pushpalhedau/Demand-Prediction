@@ -86,3 +86,10 @@ const EN_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export function dayName(day: number, lang: Lang): string {
   return (lang === "de" ? DE_DAYS : EN_DAYS)[day] ?? String(day);
 }
+
+/** "31 Aug 2026" / "31.08.2026" for an ISO date, read as UTC so it never shifts with the viewer's timezone. */
+export function formatDate(iso: string, lang: Lang): string {
+  const date = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat(locale(lang), { day: lang === "de" ? "2-digit" : "numeric", month: lang === "de" ? "2-digit" : "short", year: "numeric", timeZone: "UTC" }).format(date);
+}

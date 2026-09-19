@@ -1,205 +1,241 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { Bar, BarChart, CartesianGrid, ComposedChart, LabelList, Line, Pie, PieChart, ReferenceArea, ReferenceLine, XAxis, YAxis } from "recharts";
-import { bridge, joinSeries, seriesColor } from "@/components/charts/series";
+import { useMemo, type ReactNode } from "react";
+import { Bar, CartesianGrid, ComposedChart, Line, ReferenceDot, XAxis, YAxis } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
+import { FORECAST_STROKE, ForecastGradient, XMarker } from "@/components/charts/forecast-marks";
+import { bridge, joinSeries } from "@/components/charts/series";
 import { valueTip } from "@/components/charts/tooltip";
-import { Panel, PanelSkeleton } from "@/components/data/chart-card";
-import { KpiCard, KpiSkeletonRow } from "@/components/data/kpi-card";
+import { MetricStrip, type Metric } from "@/components/data/metric-strip";
+import { PageHeading } from "@/components/data/page-heading";
+import { PanelSkeleton } from "@/components/data/chart-card";
+import { RankedBars } from "@/components/data/ranked-bars";
+import { Section } from "@/components/data/section";
 import { ErrorState } from "@/components/data/states";
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
-import { ApiError, api } from "@/lib/api";
-import { useFilters } from "@/lib/filters";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import { ApiError } from "@/lib/api";
 import { formatMonth } from "@/lib/format";
 import { useFormat, usePresentation } from "@/lib/session";
-import type { Glance as GlanceData } from "@/lib/types";
+import type { Glance as GlanceData, Point } from "@/lib/types";
+import { useGlance } from "./queries";
 
-export function Glance() {
-  const { t, tv, lang } = usePresentation();
+const sum = (points: Point[]) => points.reduce((total, p) => total + (p.y ?? 0), 0);
+const last = <T,>(items: T[], n: number) => items.slice(Math.max(0, items.length - n));
+
+export function Glance({ nav }: { nav: ReactNode }) {
+  const query = useGlance();
+  const { t } = usePresentation();
   const fmt = useFormat();
-  const { apiParams } = useFilters();
-  const { data, error, isPending } = useQuery({
-    queryKey: ["overview", "glance", apiParams],
-    queryFn: () => api<GlanceData>("/api/overview/glance", { params: apiParams }),
-  });
 
-  const trend = useMemo(() => {
-    const tr = data?.trend;
-    if (!tr?.revenue?.length) return null;
-    const rows = joinSeries({
-      revenue: tr.revenue,
-      revenueProj: bridge(tr.revenue, tr.revenue_projection),
-      units: tr.units,
-      unitsProj: tr.units_projection,
-    });
-    const config = {
-      revenue: { label: t("ov.trend.revenue"), color: "var(--chart-1)" },
-      revenueProj: { label: t("ov.trend.revenue_proj"), color: "var(--chart-1)" },
-      units: { label: t("ov.trend.units"), color: "var(--chart-2)" },
-      unitsProj: { label: `${t("ov.trend.units")} (${t("ov.trend.projection")})`, color: "var(--chart-2)" },
-    } satisfies ChartConfig;
-    return { rows, config, from: tr.revenue[tr.revenue.length - 1]?.x, to: rows[rows.length - 1]?.x };
-  }, [data, t]);
-
-  const category = useMemo(() => {
-    const rows = (data?.by_category ?? []).map((c, i) => ({ name: tv(c.vehicle_category), sales: c.sales, fill: seriesColor(i) }));
-    const config: ChartConfig = Object.fromEntries(rows.map((r) => [r.name, { label: r.name, color: r.fill }]));
-    return { rows, config };
-  }, [data, tv]);
-
-  const fuel = useMemo(() => {
-    const rows = [...(data?.by_fuel ?? [])]
-      .sort((a, b) => b.sales - a.sales)
-      .map((f, i) => ({ name: tv(f.fuel_type), sales: f.sales, fill: seriesColor(i) }));
-    return { rows, config: { sales: { label: t("ov.trend.units") } } satisfies ChartConfig };
-  }, [data, t, tv]);
-
-  if (error) return <ErrorState message={error.message} reference={error instanceof ApiError ? error.reference : undefined} />;
-  if (isPending) {
+  if (query.isError) {
     return (
       <div className="space-y-6">
-        <KpiSkeletonRow />
+        {nav}
+        <ErrorState message={query.error.message} reference={query.error instanceof ApiError ? query.error.reference : undefined} />
+      </div>
+    );
+  }
+  if (!query.data) {
+    return (
+      <div className="space-y-6">
+        {nav}
+        <Skeleton className="h-24 w-full max-w-3xl" />
+        <Skeleton className="h-32 w-full" />
         <PanelSkeleton height={380} />
       </div>
     );
   }
 
+  const data = query.data;
   const k = data.kpis;
-  const yoy = (d: number | null) => (d === null ? t("val.na") : t("val.yoy_pct", { v: fmt.pct(d, 1, true).replace(/\s?%$/, "") }));
-  const yoyPts = (d: number | null) => (d === null ? null : t("val.yoy_pts", { v: fmt.pct(d, 1, true).replace(/\s?%$/, "") }));
-  const tone = (d: number | null) => (d === null || d >= 0 ? "positive" : "negative");
-  const attainmentNote =
-    k.target_attainment_pct === null
-      ? t("ov.kpi.no_targets")
-      : [
-          yoyPts(k.target_attainment_delta),
-          t("ov.kpi.attainment_sub", { actual: fmt.num(k.ttm_units), target: fmt.num(k.annual_target) }),
-        ]
-          .filter(Boolean)
-          .join(" · ");
-
-  const storeRows = [...data.stores].sort((a, b) => b.units - a.units);
-  const storeConfig = { units: { label: t("ov.trend.units"), color: "var(--chart-1)" } } satisfies ChartConfig;
+  const revDelta = k.total_revenue_delta;
+  const headline =
+    (revDelta === null
+      ? t("ov.head.nodelta", { rev: fmt.money(k.total_revenue), units: fmt.num(k.total_sales) })
+      : Math.abs(revDelta) < 0.05
+        ? t("ov.head.flat", { units: fmt.num(k.total_sales) })
+        : t(revDelta > 0 ? "ov.head.ahead" : "ov.head.behind", { pct: fmt.pct(Math.abs(revDelta), 1), units: fmt.num(k.total_sales) })) +
+    (k.target_attainment_pct === null ? "" : ` ${t("ov.head.plan", { pct: fmt.pct(k.target_attainment_pct, 0) })}`);
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label={t("ov.kpi.units")} value={t("val.units", { v: fmt.num(k.total_sales) })} note={yoy(k.total_sales_delta)} tone={tone(k.total_sales_delta)} trend />
-        <KpiCard label={t("ov.kpi.revenue")} value={fmt.money(k.total_revenue)} note={yoy(k.total_revenue_delta)} tone={tone(k.total_revenue_delta)} trend />
-        <KpiCard
-          label={t("ov.kpi.attainment")}
-          value={k.target_attainment_pct === null ? t("val.na") : fmt.pct(k.target_attainment_pct, 0)}
-          note={attainmentNote}
-          tone={k.target_attainment_pct === null ? "neutral" : k.target_attainment_pct >= 92 ? "positive" : "negative"}
-        />
-        <KpiCard
-          label={t("ov.kpi.penetration")}
-          value={fmt.pct(k.finance_lease_penetration, 0)}
-          note={yoyPts(k.finance_lease_penetration_delta)}
-          tone={tone(k.finance_lease_penetration_delta)}
-          trend
-        />
+    <div className="space-y-8">
+      {nav}
+      <PageHeading eyebrow={t("ov.title")} headline={headline} />
+      <Metrics data={data} />
+      <Trend data={data} />
+      <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
+        <Mix title={t("ov.mix.category")} rows={data.by_category.map((c) => ({ name: c.vehicle_category, value: c.sales }))} translate />
+        <Mix title={t("ov.mix.fuel")} rows={data.by_fuel.map((f) => ({ name: f.fuel_type, value: f.sales }))} translate />
       </div>
+      <Stores data={data} />
+    </div>
+  );
+}
 
-      {trend && (
-        <Panel title={t("ov.trend.title")} description={t("ov.trend.caption")}>
-          <ChartContainer config={trend.config} className="h-[340px] w-full">
-            <ComposedChart data={trend.rows} margin={{ left: 4, right: 4, top: 8 }}>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="x" tickFormatter={(v: string) => formatMonth(v, lang)} tickLine={false} axisLine={false} minTickGap={36} tickMargin={8} />
-              <YAxis yAxisId="rev" tickFormatter={(v: number) => fmt.money(v)} tickLine={false} axisLine={false} width={92} />
-              <YAxis yAxisId="units" orientation="right" tickFormatter={(v: number) => fmt.num(v)} tickLine={false} axisLine={false} width={48} />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(_, p) => formatMonth(String(p?.[0]?.payload?.x ?? ""), lang)}
-                    formatter={valueTip(trend.config, (v, key) => (key.startsWith("revenue") ? fmt.money(v, false) : fmt.num(v)))}
-                  />
-                }
-              />
-              <ChartLegend content={<ChartLegendContent />} />
-              {trend.from && trend.to && trend.from !== trend.to && (
-                <ReferenceArea yAxisId="rev" x1={trend.from} x2={trend.to} fill="var(--muted)" fillOpacity={0.5} ifOverflow="visible" />
-              )}
-              <Bar yAxisId="units" dataKey="units" fill="var(--color-units)" fillOpacity={0.35} radius={[2, 2, 0, 0]} />
-              <Bar yAxisId="units" dataKey="unitsProj" fill="var(--color-unitsProj)" fillOpacity={0.15} radius={[2, 2, 0, 0]} legendType="none" />
-              <Line yAxisId="rev" dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2.25} dot={false} connectNulls />
-              <Line yAxisId="rev" dataKey="revenueProj" type="monotone" stroke="var(--color-revenueProj)" strokeWidth={2} strokeDasharray="5 4" dot={false} legendType="none" connectNulls />
-            </ComposedChart>
-          </ChartContainer>
-        </Panel>
-      )}
+function Metrics({ data }: { data: GlanceData }) {
+  const { t } = usePresentation();
+  const fmt = useFormat();
+  const k = data.kpis;
+  const pts = (d: number | null) => (d === null ? null : { text: `${fmt.pct(d, 1, true).replace(/\s?%$/, "")} ${t("ov.pts")}`, tone: d >= 0 ? ("positive" as const) : ("negative" as const) });
+  const rel = (d: number | null) => (d === null ? null : { text: fmt.pct(d, 1, true), tone: d >= 0 ? ("positive" as const) : ("negative" as const) });
+  const vs = t("ov.vs_last_year");
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title={t("ov.mix.category")}>
-          <ChartContainer config={category.config} className="mx-auto h-[300px] w-full">
-            <PieChart>
-              <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="name" formatter={valueTip(category.config, (v) => `${fmt.num(v)} ${t("ov.trend.units")}`)} />} />
-              <Pie data={category.rows} dataKey="sales" nameKey="name" innerRadius={62} outerRadius={104} strokeWidth={2} paddingAngle={1} />
-              <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-            </PieChart>
-          </ChartContainer>
-        </Panel>
+  const metrics: Metric[] = [
+    { label: t("ov.kpi.units"), value: fmt.num(k.total_sales), delta: rel(k.total_sales_delta), note: vs, spark: last(data.trend.units ?? [], 12).map((p) => p.y ?? 0) },
+    { label: t("ov.kpi.revenue"), value: fmt.money(k.total_revenue), delta: rel(k.total_revenue_delta), note: vs, spark: last(data.trend.revenue ?? [], 12).map((p) => p.y ?? 0) },
+    k.target_attainment_pct === null
+      ? { label: t("ov.kpi.attainment"), value: t("val.na"), note: t("ov.kpi.no_targets") }
+      : {
+          label: t("ov.kpi.attainment"),
+          value: fmt.pct(k.target_attainment_pct, 0),
+          delta: pts(k.target_attainment_delta),
+          note: t("ov.kpi.attainment_sub", { actual: fmt.num(k.ttm_units), target: fmt.num(k.annual_target) }),
+          bullet: { value: k.target_attainment_pct, target: 100, targetLabel: t("ov.target") },
+        },
+    { label: t("ov.kpi.penetration"), value: fmt.pct(k.finance_lease_penetration, 0), delta: pts(k.finance_lease_penetration_delta), note: vs },
+  ];
+  return <MetricStrip metrics={metrics} />;
+}
 
-        <Panel title={t("ov.mix.fuel")}>
-          <ChartContainer config={fuel.config} className="h-[300px] w-full">
-            <BarChart data={fuel.rows} margin={{ top: 8 }}>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
-              <YAxis tickFormatter={(v: number) => fmt.num(v)} tickLine={false} axisLine={false} width={56} />
-              <ChartTooltip cursor={{ fill: "var(--muted)", opacity: 0.5 }} content={<ChartTooltipContent hideLabel formatter={valueTip(fuel.config, (v) => `${fmt.num(v)} ${t("ov.trend.units")}`)} />} />
-              <Bar dataKey="sales" radius={[4, 4, 0, 0]} maxBarSize={72} />
-            </BarChart>
-          </ChartContainer>
-        </Panel>
-      </div>
+function Trend({ data }: { data: GlanceData }) {
+  const { t, lang } = usePresentation();
+  const fmt = useFormat();
+  const tr = data.trend;
 
-      <Panel title={t("ov.store.title")} description={t("ov.store.caption")}>
-        <ChartContainer config={storeConfig} className="w-full" style={{ height: Math.max(220, 52 * storeRows.length + 30) }}>
-          <BarChart data={storeRows} layout="vertical" margin={{ left: 0, right: 96, top: 16 }}>
-            <CartesianGrid horizontal={false} />
-            <XAxis type="number" hide domain={[0, "dataMax"]} />
-            <YAxis dataKey="dealer_name" type="category" tickLine={false} axisLine={false} width={190} />
+  const model = useMemo(() => {
+    const rev = tr.revenue ?? [];
+    if (!rev.length) return null;
+    const proj = tr.revenue_projection ?? [];
+    const rows = joinSeries({ revenue: rev, revenueProj: bridge(rev, proj), units: tr.units, unitsProj: tr.units_projection });
+    const peak = rev.reduce((best, p) => ((p.y ?? 0) > (best.y ?? 0) ? p : best), rev[0]!);
+    const handover = rev[rev.length - 1]!;
+    const end = proj[proj.length - 1];
+    const lastSix = sum(last(rev, 6));
+    const nextSix = sum(proj.slice(0, 6));
+    return { rows, peak, handover, end, outlook: lastSix ? (nextSix / lastSix - 1) * 100 : null };
+  }, [tr]);
+
+  if (!model) return null;
+  const config = {
+    revenue: { label: t("ov.trend.revenue"), color: "var(--chart-1)" },
+    revenueProj: { label: t("ov.trend.revenue_proj"), color: "var(--brand-to)" },
+    units: { label: t("ov.trend.units"), color: "var(--muted-foreground)" },
+    unitsProj: { label: `${t("ov.trend.units")} (${t("ov.trend.projection")})`, color: "var(--muted-foreground)" },
+  } satisfies ChartConfig;
+
+  const headline =
+    model.outlook === null
+      ? t("ov.trend.title")
+      : t("ov.chart.head", { month: formatMonth(model.peak.x, lang), peak: fmt.money(model.peak.y), pct: fmt.pct(model.outlook, 1, true) });
+
+  const key = (
+    <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+      <span className="flex items-center gap-1.5"><span className="bg-chart-1 h-0.5 w-4 rounded-full" />{t("ov.trend.revenue")}</span>
+      <span className="flex items-center gap-1.5"><span className="brand-gradient h-0.5 w-4 rounded-full" />{t("ov.trend.revenue_proj")}</span>
+      <span className="flex items-center gap-1.5"><span className="bg-muted-foreground/30 h-2.5 w-2 rounded-[1px]" />{t("ov.trend.units")}</span>
+    </span>
+  );
+
+  return (
+    <ChartFrame
+      headline={headline}
+      description={key}
+      csv={{
+        filename: "revenue_and_units_trend.csv",
+        headers: [t("ov.export.month"), t("ov.trend.revenue"), t("ov.trend.revenue_proj"), t("ov.trend.units"), `${t("ov.trend.units")} (${t("ov.trend.projection")})`],
+        rows: model.rows.map((r) => [r.x, r.revenue, r.revenueProj, r.units, r.unitsProj]),
+      }}
+    >
+      {(height) => (
+        <ChartContainer config={config} className="w-full" style={{ height }}>
+          <ComposedChart data={model.rows} margin={{ left: 0, right: 84, top: 22, bottom: 0 }}>
+            <ForecastGradient />
+            <CartesianGrid vertical={false} strokeOpacity={0.6} />
+            <XAxis dataKey="x" tickFormatter={(v: string) => formatMonth(v, lang)} tickLine={false} axisLine={false} minTickGap={40} tickMargin={10} />
+            <YAxis yAxisId="rev" tickFormatter={(v: number) => fmt.money(v)} tickLine={false} axisLine={false} width={88} tickCount={5} />
+            <YAxis yAxisId="units" orientation="right" hide />
             <ChartTooltip
-              cursor={{ fill: "var(--muted)", opacity: 0.5 }}
+              cursor={{ stroke: "var(--muted-foreground)", strokeDasharray: "3 3" }}
               content={
                 <ChartTooltipContent
-                  labelFormatter={(_, p) => {
-                    const s = p?.[0]?.payload as { dealer_name: string; city: string } | undefined;
-                    return s ? `${s.dealer_name} — ${s.city}` : "";
-                  }}
-                  formatter={valueTip(storeConfig, (v) => `${fmt.num(v)} ${t("ov.trend.units")}`)}
+                  labelFormatter={(_, p) => formatMonth(String(p?.[0]?.payload?.x ?? ""), lang)}
+                  formatter={valueTip(config, (v, key) => (key.startsWith("revenue") ? fmt.money(v, false) : fmt.num(v)))}
                 />
               }
             />
-            {data.store_average_units !== null && (
-              <ReferenceLine
-                x={data.store_average_units}
-                stroke="var(--muted-foreground)"
-                strokeDasharray="4 4"
-                label={{ value: t("ov.store.group_avg", { v: fmt.num(data.store_average_units) }), position: "top", fill: "var(--muted-foreground)", fontSize: 11 }}
+            <Bar yAxisId="units" dataKey="units" fill="var(--color-units)" fillOpacity={0.16} radius={[1.5, 1.5, 0, 0]} />
+            <Bar yAxisId="units" dataKey="unitsProj" fill="var(--color-unitsProj)" fillOpacity={0.07} radius={[1.5, 1.5, 0, 0]} />
+            <Line yAxisId="rev" dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2.25} dot={false} activeDot={{ r: 4 }} connectNulls />
+            <Line yAxisId="rev" dataKey="revenueProj" type="monotone" stroke={FORECAST_STROKE} strokeWidth={2.75} strokeLinecap="round" dot={false} activeDot={{ r: 4 }} connectNulls />
+            <ReferenceDot
+              yAxisId="rev"
+              x={model.peak.x}
+              y={model.peak.y ?? 0}
+              r={4}
+              fill="var(--card)"
+              stroke="var(--chart-1)"
+              strokeWidth={2}
+              ifOverflow="visible"
+              label={{ value: t("ov.peak", { month: formatMonth(model.peak.x, lang) }), position: "top", fill: "var(--foreground)", fontSize: 11, fontWeight: 600 }}
+            />
+            <ReferenceDot yAxisId="rev" x={model.handover.x} y={model.handover.y ?? 0} ifOverflow="visible" shape={(p: { cx?: number; cy?: number }) => <XMarker cx={p.cx} cy={p.cy} />} />
+            {model.end && (
+              <ReferenceDot
+                yAxisId="rev"
+                x={model.end.x}
+                y={model.end.y ?? 0}
+                r={3.5}
+                fill="var(--brand-to)"
+                stroke="var(--card)"
+                strokeWidth={1.5}
+                ifOverflow="visible"
+                label={{ value: fmt.money(model.end.y), position: "right", fill: "var(--foreground)", fontSize: 12, fontWeight: 600 }}
               />
             )}
-            <Bar dataKey="units" fill="var(--color-units)" radius={4} barSize={18}>
-              <LabelList
-                dataKey="units"
-                position="right"
-                className="fill-foreground"
-                fontSize={12}
-                formatter={(v: unknown) => fmt.num(Number(v))}
-              />
-            </Bar>
-          </BarChart>
+          </ComposedChart>
         </ChartContainer>
-      </Panel>
-    </div>
+      )}
+    </ChartFrame>
+  );
+}
+
+function Mix({ title, rows, translate }: { title: string; rows: { name: string; value: number }[]; translate?: boolean }) {
+  const { t, tv } = usePresentation();
+  const fmt = useFormat();
+  const total = rows.reduce((s, r) => s + r.value, 0) || 1;
+  const sorted = [...rows].sort((a, b) => b.value - a.value);
+  return (
+    <Section title={title}>
+      <RankedBars
+        rows={sorted.map((r) => ({
+          key: r.name,
+          label: translate ? tv(r.name) : r.name,
+          value: r.value,
+          display: t("val.units", { v: fmt.num(r.value) }),
+          secondary: fmt.pct((r.value / total) * 100, 1),
+        }))}
+      />
+    </Section>
+  );
+}
+
+function Stores({ data }: { data: GlanceData }) {
+  const { t } = usePresentation();
+  const fmt = useFormat();
+  const rows = [...data.stores].sort((a, b) => b.units - a.units);
+  return (
+    <Section title={t("ov.store.title")} description={t("ov.store.caption")}>
+      <RankedBars
+        reference={data.store_average_units === null ? undefined : { value: data.store_average_units, label: t("ov.store.group_avg", { v: fmt.num(data.store_average_units) }) }}
+        rows={rows.map((s) => ({ key: `${s.dealer_name}-${s.city}`, label: s.dealer_name, sublabel: s.city, value: s.units, display: t("val.units", { v: fmt.num(s.units) }), secondary: fmt.money(s.revenue) }))}
+      />
+      {data.store_average_units !== null && (
+        <p className="text-muted-foreground mt-3 flex items-center gap-2 text-xs">
+          <span className="bg-foreground/70 h-3 w-px" aria-hidden />
+          {t("ov.store.group_avg", { v: fmt.num(data.store_average_units) })}
+        </p>
+      )}
+    </Section>
   );
 }
