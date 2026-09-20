@@ -28,7 +28,7 @@ Both generators build monthly volume as `YEAR_BASE × seasonal curve × macro re
 
 ## Still open
 
-1. **`na-demo` was not recalibrated.** There is no North America generator in the repository (the tree has only Germany and UAE). Its 2020 fall is about twice the real US fall and its 2021 rebound is far stronger. Either write an NA generator using the real monthly `TOTALNSA` shape, or avoid demoing that tenant.
+1. **`na-demo` in the database is still the old data** until the new America dataset is uploaded. `scripts/generate_us_data.py` now builds a US dealer group from the real monthly US market series (annual path within about 1.5 points of reality) and real macro series; `scripts/build_account_datasets.py` writes upload-ready sets for all three accounts to the untracked `Accounts-Datasets/` folder.
 2. **Tracked sample CSVs are unchanged.** `data/samples/germany` still holds the old data (46 MB; regenerating it would add tens of MB to git history). The demo tenants in the local database were reloaded from freshly generated files; the repo samples were not.
 3. **Only annual volume was calibrated.** Monthly seasonality was checked only for the US demo (correlation 0.90 with the real US monthly shape). Germany and UAE monthly shapes, price and discount levels, days in stock, brand mix and F&I attach rates are still the generator authors' assumptions, not verified against public data.
 4. **A dealer group is not the market.** A 24-rooftop group can outgrow or trail its market. The demo now tracks the market within about 1 to 2 points a year, which is a reasonable default, not a fact about any real group.

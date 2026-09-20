@@ -39,3 +39,5 @@ Thumbs.db
 scripts/_dev/
 data/public/backtest_*.csv
 logincreds.txt
+
+Accounts-Datasets/
