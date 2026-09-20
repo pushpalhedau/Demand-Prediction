@@ -113,6 +113,10 @@ afterwards. Routers receive plain data (DataFrames, dicts) and never a session o
 * **Structure:** `components/ui` (shadcn primitives), `components/{layout,filters,data,charts}` (our shell, KPI card, panel,
   table and chart helpers), `features/<tab>` (one folder per dashboard), `lib` (API client, filters in the URL, i18n,
   formatting). Light/dark themes come from CSS variables in `app/globals.css`.
+* **Store Performance map:** an SVG map drawn with `d3-geo` from region-boundary files in `web/src/data/regions/` (US states, German
+  Länder, UAE emirates; Natural Earth, public domain, built by `scripts/build_region_maps.py`). It uses only theme colours, so it follows
+  light/dark mode, and loads no tiles or external service. The right country is picked by matching the rooftops' region names; a country
+  without a boundary file falls back to plain rooftop positions. To add a country, add it to `COUNTRIES` in the script and rebuild.
 * **Tests:** unit tests cover formatting, translations (every key used exists in English and German) and URL safety.
 * **Migration:** all seven customer tabs are ported.
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, LabelList, Scatter, ScatterChart, XAxis, YAxis, ZAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
 import { ChartFrame } from "@/components/charts/chart-frame";
+import { RegionMap } from "@/components/charts/region-map";
 import { PanelSkeleton } from "@/components/data/chart-card";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { Insight } from "@/components/data/insight";
@@ -12,7 +13,7 @@ import { Section } from "@/components/data/section";
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart";
 import { attainmentColor } from "@/lib/attainment";
 import { useDashboardQuery } from "@/lib/query";
-import { useFormat, usePresentation } from "@/lib/session";
+import { useFormat, useMe, usePresentation } from "@/lib/session";
 import type { Scorecard, StoreRow } from "@/lib/types";
 
 const chartConfig = { units: { label: "Units", color: "var(--chart-1)" } } satisfies ChartConfig;
@@ -54,6 +55,7 @@ export function RegionalPage() {
 function Content({ data }: { data: Scorecard }) {
   const { t, tv } = usePresentation();
   const fmt = useFormat();
+  const { data: me } = useMe();
   const rows = data.rows;
   const withTarget = rows.filter((r) => r.attainment_pct !== null);
   const behind = withTarget.filter((r) => (r.attainment_pct ?? 100) < data.behind_plan_pct).length;
@@ -164,51 +166,7 @@ function Content({ data }: { data: Scorecard }) {
             </span>
           }
         >
-          {(height) => (
-            <ChartContainer config={chartConfig} className="w-full" style={{ height: height + 80 }}>
-              <ScatterChart margin={{ top: 16, right: 24, bottom: 16, left: 24 }}>
-                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.6} />
-                <XAxis type="number" dataKey="longitude" name="Longitude" domain={["dataMin - 0.3", "dataMax + 0.3"]} hide />
-                <YAxis type="number" dataKey="latitude" name="Latitude" domain={["dataMin - 0.3", "dataMax + 0.3"]} hide />
-                <ZAxis type="number" dataKey="units_sold" range={[90, 900]} />
-                <ChartTooltip
-                  cursor={false}
-                  content={({ active, payload }) => {
-                    const r = payload?.[0]?.payload as StoreRow | undefined;
-                    if (!active || !r) return null;
-                    return (
-                      <div className="bg-background grid gap-1 rounded-lg border px-3 py-2 text-xs shadow-xl">
-                        <p className="text-sm font-medium">{r.dealer_name}</p>
-                        <p className="text-muted-foreground">
-                          {r.brand} · {r.city}, {r.region}
-                        </p>
-                        <p className="tabular">
-                          {fmt.num(r.units_sold)} {t("ov.trend.units").toLowerCase()} · {fmt.money(r.revenue)}
-                        </p>
-                        <p className="tabular">
-                          {r.attainment_pct === null ? t("rg.no_target") : t("rg.of_target", { v: fmt.pct(r.attainment_pct, 0) })} · {yoy(r.yoy_units_pct)} {t("rg.yoy")}
-                        </p>
-                      </div>
-                    );
-                  }}
-                />
-                <Scatter
-                  data={located}
-                  shape={(props: { cx?: number; cy?: number; size?: number; payload?: StoreRow }) => (
-                    <circle
-                      cx={props.cx}
-                      cy={props.cy}
-                      r={Math.sqrt((props.size ?? 100) / Math.PI)}
-                      fill={attainmentColor(props.payload?.attainment_pct)}
-                      fillOpacity={0.8}
-                      stroke="var(--background)"
-                      strokeWidth={1.5}
-                    />
-                  )}
-                />
-              </ScatterChart>
-            </ChartContainer>
-          )}
+          {() => <RegionMap stores={located} country={me?.organisation.country} />}
         </ChartFrame>
       )}
 
