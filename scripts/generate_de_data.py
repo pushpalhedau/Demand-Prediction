@@ -1166,7 +1166,13 @@ def build_sales(rng, n, vehicles_df, dealers_df, customers_df, start, end):
     macro_mult = np.clip(1.0 + petrol_e + apr_e + inc_e, 0.85, 1.15)
     scarcity = np.clip(0.70 + DAYS_SUPPLY / 120.0, 0.82, 1.0)
     macro_mult = macro_mult * scarcity
-    macro_mult = macro_mult / macro_mult.mean()
+    # Normalise WITHIN each calendar year, weighted by that year's seasonal curve: the macro response then only
+    # moves deals between months, and YEAR_BASE alone fixes each year's total. (Normalising over the whole period
+    # let the chip-shortage "scarcity" term cut 2021-22 on top of a YEAR_BASE that already reflects the real fall.)
+    _seasonal = np.array([RETAIL_SEASONAL_FACTOR[int(m)] for m in MONTH_OF])
+    for _year in np.unique(YEAR_OF):
+        _sel = YEAR_OF == _year
+        macro_mult[_sel] /= (_seasonal[_sel] * macro_mult[_sel]).sum() / _seasonal[_sel].sum()
 
     # Indexed to KBA Neuzulassungen: 3.61m (2019), 2.92m (2020), 2.62m (2021),
     # 2.65m (2022), 2.84m (2023), 2.82m (2024). The German market genuinely
