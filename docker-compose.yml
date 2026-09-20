@@ -1,7 +1,7 @@
 # PredictaX stack. Everything here is free and open source.
 #
 #   Local development :  docker compose up -d db auth        (the apps then run from your own Python environment)
-#   Full stack        :  docker compose up -d --build     (dashboard :3000, admin console :3002, classic :8501/:8502)
+#   Full stack        :  docker compose up -d --build     (dashboard :3000, admin console :3002)
 #
 # Secure defaults: every published port is bound to localhost only, containers run as a non-root user with all
 # capabilities dropped and a read-only filesystem, and secrets come from the environment. The fallback values
@@ -67,7 +67,7 @@ services:
       API_EXTERNAL_URL: http://localhost:9999
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${AUTH_DB_PASSWORD:-auth_dev_pw}@db:5432/predictax?search_path=auth
-      GOTRUE_SITE_URL: http://localhost:8501
+      GOTRUE_SITE_URL: http://localhost:3000
       GOTRUE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-predictax-dev-jwt-secret-change-me-0123456789abcdef}
       GOTRUE_JWT_EXP: "3600"
       GOTRUE_JWT_AUD: authenticated
@@ -145,8 +145,7 @@ services:
     restart: unless-stopped
 
   admin-frontend:
-    # The new admin console (Next.js): accounts, settings, logins, access, audit log. Import (upload, column
-    # mapping, dry-run) is not ported yet and stays on the classic console (the "admin" service below) meanwhile.
+    # The admin console (Next.js): accounts, settings, logins, access, import, audit log.
     # Uses its own session cookies (see backend/api/cookies.py) so an operator session can never be mistaken for a
     # customer one. Published on localhost ONLY: never expose this port publicly; reach it over a VPN or SSH tunnel.
     build: ./web-admin
@@ -165,39 +164,6 @@ services:
     cap_drop:
       - ALL
     restart: unless-stopped
-
-  web:
-    # Classic Streamlit dashboard: kept while the remaining tabs move to the new one.
-    <<: *app
-    command: ["streamlit", "run", "frontend/customer_app/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
-    depends_on:
-      db:
-        condition: service_healthy
-      auth:
-        condition: service_started
-      redis:
-        condition: service_healthy
-    ports:
-      - "127.0.0.1:8501:8501"
-
-  admin:
-    # Operator-only console (accounts, data import, training, audit log). Published on localhost ONLY: never
-    # expose this port publicly; reach it over a VPN or SSH tunnel.
-    <<: *app
-    command: ["streamlit", "run", "frontend/admin_console/main.py", "--server.port=8502", "--server.address=0.0.0.0",
-              "--server.maxUploadSize=500"]
-    environment:
-      <<: *app-env
-      PORT: "8502"
-    depends_on:
-      db:
-        condition: service_healthy
-      auth:
-        condition: service_started
-      redis:
-        condition: service_healthy
-    ports:
-      - "127.0.0.1:8502:8502"
 
 volumes:
   pgdata:

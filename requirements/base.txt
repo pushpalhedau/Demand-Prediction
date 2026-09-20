@@ -1,13 +1,10 @@
-streamlit>=1.35.0
 pandas>=2.2.0
 numpy>=1.26.0
-plotly>=5.22.0
 prophet>=1.1.5
 xgboost>=2.0.0
 scikit-learn>=1.4.0
 sqlalchemy>=2.0.0
 python-dotenv
-streamlit-option-menu
 shap>=0.45.0
 openai>=1.0.0
 requests>=2.31.0
@@ -18,3 +15,4 @@ rq>=1.16.0
 defusedxml>=0.7.1
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9

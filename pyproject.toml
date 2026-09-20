@@ -14,7 +14,7 @@ dynamic = ["dependencies"]
 dependencies = { file = ["requirements/base.txt"] }
 
 [tool.setuptools.packages.find]
-include = ["backend*", "frontend*"]
+include = ["backend*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -41,6 +41,3 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S", "B011"]
-# st.set_page_config must be the first Streamlit call, so these entry points import after it.
-"frontend/customer_app/main.py" = ["E402"]
-"frontend/admin_console/main.py" = ["E402"]

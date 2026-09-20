@@ -19,9 +19,9 @@ jobs:
           pip install -r requirements/dev.txt
           pip install -e . --no-deps
       - name: Lint
-        run: ruff check backend frontend tests
+        run: ruff check backend tests
       - name: Static security scan (medium and above must be clean)
-        run: bandit -r backend frontend -ll -q
+        run: bandit -r backend -ll -q
       - name: Dependency vulnerabilities
         run: pip-audit -r requirements/lock.txt --no-deps --disable-pip
       - name: Unit tests (no services needed)

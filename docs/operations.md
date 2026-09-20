@@ -4,7 +4,7 @@
 
 ```bash
 docker compose up -d db auth              # minimum for local development
-docker compose up -d --build              # full stack: + redis, worker, api, frontend (3000), admin-frontend (3002), classic web (8501), admin (8502)
+docker compose up -d --build              # full stack: + redis, worker, api, frontend (3000), admin-frontend (3002)
 docker compose stop                       # stop, keep data
 docker compose down -v                    # DANGER: also deletes the database, uploads and models
 ```
@@ -35,9 +35,7 @@ cd web-admin && npm install && npm run dev                      # admin console 
 python -m backend.cli create-operator --email you@example.com     # prints a generated password once
 ```
 
-Sign in at the admin console (port 3002) for accounts, settings, logins, access, import and the audit log. The
-classic console (port 8502) still works and shares the same accounts, but is kept only until the new one has run
-in production for a while. To change an operator's password, use the auth server admin API or delete and recreate
+Sign in at the admin console (port 3002) for accounts, settings, logins, access, import and the audit log. To change an operator's password, use the auth server admin API or delete and recreate
 the login. Every sign-in and action is in **Audit log**.
 
 ## Onboard a customer
@@ -79,7 +77,8 @@ Back up Postgres (`pg_dump -Fc`), and the `uploads` and `models` volumes. Restor
 ## Scaling notes
 
 * Add capacity for imports by scaling workers: `docker compose up -d --scale worker=3`.
-* The customer app scales horizontally behind a load balancer with sticky sessions (sessions live in server memory).
+* The API and both web apps are stateless (sessions are cookies holding signed tokens), so they scale horizontally
+  behind a load balancer with no sticky sessions.
 * Put PgBouncer in front of Postgres in transaction-pooling mode if connections become the limit; tenant scoping is
   transaction-local, so it is compatible.
 

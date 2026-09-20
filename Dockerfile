@@ -18,7 +18,6 @@ ENV ENVIRONMENT=production \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
     PATH="/opt/venv/bin:$PATH" \
-    PORT=8501 \
     HOME=/tmp \
     MPLCONFIGDIR=/tmp/matplotlib
 
@@ -30,15 +29,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
 COPY --from=builder /opt/venv /opt/venv
 WORKDIR /app
 COPY --chown=app:app backend backend
-COPY --chown=app:app frontend frontend
-COPY --chown=app:app .streamlit .streamlit
 RUN mkdir -p /data/uploads /app/models && chown -R app:app /data /app/models
 
 USER app
-EXPOSE 8501
+EXPOSE 8000
 
 # The worker container has no HTTP server; docker-compose disables this check for it.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/_stcore/health' % os.environ['PORT'], timeout=4)"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4)"
 
-CMD ["streamlit", "run", "frontend/customer_app/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["uvicorn", "backend.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

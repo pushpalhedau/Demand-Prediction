@@ -1,13 +1,11 @@
 import io
 import os
-import time
 import uuid
 
 import pytest
 import requests
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError, ProgrammingError
-from streamlit.testing.v1 import AppTest
 
 from backend.auth import client as auth_client
 from backend.core.errors import AuthError, IngestError
@@ -138,17 +136,10 @@ def test_creating_an_account_is_audited_and_a_weak_password_is_refused():
         db.close()
 
 
-def test_the_audit_screen_shows_recent_events():
+def test_the_audit_trail_shows_recent_events():
+    from backend.services import accounts
     audit.record("test.visible", tenant="acme")
-    from backend.auth.client import Operator
-    at = AppTest.from_file("frontend/admin_console/main.py", default_timeout=60)
-    at.session_state["operator"] = Operator("op-1", "op@example.com")
-    at.session_state["op_refresh"] = "x"
-    at.session_state["op_exp"] = time.time() + 3600
-    at.session_state["admin_section"] = "Audit log"
-    at.run()
-    assert not at.exception, [e.value for e in at.exception]
-    assert any("test.visible" in list(df.value["Action"]) for df in at.dataframe)
+    assert any(e["action"] == "test.visible" for e in accounts.audit_trail(limit=20, account="acme"))
 
 
 # ── password policy ─────────────────────────────────────────────────────────

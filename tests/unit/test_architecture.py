@@ -1,6 +1,6 @@
 """
 Architecture rules, enforced. These fail the build when a layer boundary is crossed, which is what keeps
-the frontend from ever holding database access or another tenant's data.
+the web apps from ever holding database access or another tenant's data.
 """
 import ast
 from pathlib import Path
@@ -24,9 +24,7 @@ LAYERS = {
 }
 TOP_LEVEL_BACKEND_MODULES = {"cli"}     # entry points may use anything in the backend
 
-# The ONLY backend modules the frontend may import.
-FRONTEND_MAY_IMPORT = ("backend.services", "backend.core.formatting", "backend.core.request_context", "backend.core.log",
-                       "backend.core.errors")
+# Third-party packages the HTTP API must never import (data access belongs behind backend.services).
 FRONTEND_FORBIDDEN_THIRD_PARTY = ("sqlalchemy", "psycopg2", "redis", "rq", "jwt")
 
 
@@ -56,18 +54,6 @@ def test_backend_never_imports_the_web_framework_or_the_frontend():
     assert not bad, "\n".join(bad)
 
 
-def test_frontend_reaches_the_backend_only_through_services():
-    bad = []
-    for p in _py_files("frontend"):
-        for mod, line in _imports(p):
-            top = mod.split(".")[0]
-            if top in FRONTEND_FORBIDDEN_THIRD_PARTY:
-                bad.append(f"{_rel(p)}:{line} imports {mod}")
-            if mod.startswith("backend") and not mod.startswith(FRONTEND_MAY_IMPORT) and mod != "backend":
-                bad.append(f"{_rel(p)}:{line} imports {mod}")
-    assert not bad, "frontend must go through backend.services:\n" + "\n".join(sorted(set(bad)))
-
-
 def test_backend_layers_only_depend_downwards():
     bad = []
     for p in _py_files("backend"):
@@ -88,14 +74,14 @@ def test_every_backend_package_is_classified():
     assert packages <= set(LAYERS), f"unclassified backend packages: {sorted(packages - set(LAYERS))}"
 
 
-@pytest.mark.parametrize("base", ["backend", "frontend"])
+@pytest.mark.parametrize("base", ["backend"])
 def test_every_package_directory_has_an_init(base):
     missing = [d.relative_to(ROOT).as_posix() for d in (ROOT / base).rglob("*")
                if d.is_dir() and d.name != "__pycache__" and any(d.glob("*.py")) and not (d / "__init__.py").exists()]
     assert not missing, missing
 
 
-# The HTTP API is a thin shell: like the frontend, it reaches the backend only through services.
+# The HTTP API is a thin shell: it reaches the backend only through services.
 API_MAY_IMPORT = ("backend.api", "backend.services", "backend.core")
 
 

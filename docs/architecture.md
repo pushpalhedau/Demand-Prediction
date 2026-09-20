@@ -5,8 +5,6 @@
 ```
  browser ──► web dashboard (Next.js)   ──/api──► backend.api (FastAPI) ─┐   web/        + backend/api
  browser ──► admin console (Next.js)  ──/api──► backend.api (FastAPI) ─┤   web-admin/  + backend/api
- browser ──► classic dashboard (Streamlit) ──────────────────────────────┤   frontend/   (being retired)
- browser ──► classic admin console (Streamlit) ──────────────────────────┤   frontend/   (superseded, not yet removed)
                                                                           ▼
                                    backend.services      ◄── the only door into the backend
                                           │
@@ -33,8 +31,8 @@ Layers (a package may import only from its own layer or one BELOW it; enforced b
 | 5 | `ml` | forecasting, segmentation, lead scoring, signed artifacts |
 | 6 | `ingestion` | field catalog, mapping, transform + load, jobs |
 | 7 | `tenancy` | provisioning, capabilities, settings validation, audit |
-| 8 | `services` | application services used by the frontends |
-| 9 | `api` | HTTP shell for the web dashboard: cookie sessions, tenant binding, JSON; calls only `services` |
+| 8 | `services` | application services used by the API |
+| 9 | `api` | HTTP shell for both web apps: cookie sessions, tenant binding, JSON; calls only `services` |
 
 ## Tenancy: how one customer never sees another's data
 
@@ -42,7 +40,7 @@ One shared PostgreSQL database. Every business table has a `tenant_id` and **row
 that compare it with the tenant the current transaction is pinned to.
 
 1. After login, the auth server's signed token carries a `tenant_id` claim that only a service credential can set.
-2. The frontend calls `bind_request(profile)` once per page run. The scope lives in `ContextVar`s, so concurrent
+2. The API binds the scope once per request (`backend/api/deps.py`). The scope lives in `ContextVar`s, so concurrent
    sessions cannot see each other's.
 3. Every transaction on the app engine runs `set_config('app.current_tenant_id', <id>, true)` first
    (transaction-local, so safe with connection pooling).
@@ -85,15 +83,15 @@ operator uploads CSVs ──► column mapping proposed (exact > unit-converted 
 
 The load is atomic: any failure loads nothing. Optional files unlock optional tabs; a sales file alone is enough.
 
-## Request flow (customer app)
+## Request flow
 
-`reset scope → require_login → bind scope → capabilities → filters → view → service → repository → Postgres`.
-Views receive plain data (DataFrames, dicts) and never a session or an ORM object.
+`cookie → verify token → bind tenant scope → router → service → repository → Postgres`, and the scope is cleared
+afterwards. Routers receive plain data (DataFrames, dicts) and never a session or an ORM object.
 
 ## Key decisions
 
-* **Services layer, one process** rather than an HTTP API: the frontend cannot touch the database or another tenant,
-  and the seam is exactly where an API would attach later.
+* **A services layer behind a thin HTTP API**: the web apps cannot touch the database or another tenant; everything
+  they do passes through `backend.services`.
 * **Postgres RLS over per-tenant databases**: one schema to migrate and one pool at thousands of tenants; the
   database, not application code, enforces isolation.
 * **Operator-run onboarding**: quality control over mappings and no upload surface on the customer side.
@@ -108,11 +106,10 @@ Views receive plain data (DataFrames, dicts) and never a session or an ORM objec
 * **Sessions** are `httpOnly`, `SameSite=Strict` cookies (`Secure` in production) set by `/api/auth/login`; no token
   is ever readable by page scripts. An expired access token is refreshed once, transparently, from the refresh cookie.
 * **CSRF:** every state-changing request must carry `X-Requested-With: predictax` (a cross-site form cannot add it).
-* **Tenant scope** is bound per request in `backend/api/deps.py` from the verified token, exactly as the Streamlit
-  apps bind it per page run, and cleared afterwards. Postgres RLS remains the final guard; tests prove two tenants
+* **Tenant scope** is bound per request in `backend/api/deps.py` from the verified token, and cleared afterwards. Postgres RLS remains the final guard; tests prove two tenants
   interleaved on the same workers never see each other's data.
 * **Presentation** (currency, separators, language) is done in the browser from the tenant profile the API returns;
-  the API returns raw numbers. Translations are shared with the classic app (`web/src/i18n/*.json`).
+  the API returns raw numbers. Translations live in `web/src/i18n/*.json`.
 * **Structure:** `components/ui` (shadcn primitives), `components/{layout,filters,data,charts}` (our shell, KPI card, panel,
   table and chart helpers), `features/<tab>` (one folder per dashboard), `lib` (API client, filters in the URL, i18n,
   formatting). Light/dark themes come from CSS variables in `app/globals.css`.
@@ -123,15 +120,13 @@ Views receive plain data (DataFrames, dicts) and never a session or an ORM objec
 
 `web-admin/` is a second, separate Next.js app: accounts, settings, logins, access (suspend/reactivate), import,
 retrain and the audit log, all through `backend/api/routers/admin_*.py` (its own `/api/admin/*` surface, also
-calling only `backend.services`). It is operator-only, English-only (the classic console never had a language
-toggle either), and has no charts, so it does not depend on Recharts. It now has full parity with the classic
-console; the classic one (`frontend/admin_console`) stays available only until the new one has run in production
-for a while.
+calling only `backend.services`). It is operator-only, English-only, and has no charts, so it does not depend on Recharts. It replaced the original Streamlit console,
+which has been removed.
 
 * **A second app, not a second route in `web/`.** It ships as its own container (`admin-frontend`, port 3002),
-  matching the classic console's rule: never publish this port, reach it over a VPN or SSH tunnel.
-* **Idle sign-out.** The classic console signed operators out after 30 minutes idle; `web-admin/src/lib/idle.ts`
-  reproduces that in the browser (a passive activity listener, checked every 30s).
+  never publish this port, reach it over a VPN or SSH tunnel.
+* **Idle sign-out.** Operators are signed out after 30 minutes idle; `web-admin/src/lib/idle.ts`
+  enforces that in the browser (a passive activity listener, checked every 30s).
 * **One-time credentials.** A generated password (new account, new login, a reset) is handed to the page exactly
   once, across the redirect, via `sessionStorage` (`web-admin/src/lib/flash.ts`) — never state that could survive a
   re-render or reach the server.
