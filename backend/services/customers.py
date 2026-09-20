@@ -5,11 +5,11 @@ from backend.analytics import retention
 from backend.analytics.benchmarks import gross_series
 from backend.core.cache import tenant_cache
 from backend.db.session import with_session
-from backend.ml.lead_scoring import get_lead_form_context, predict_deal_probability
+from backend.ml.lead_scoring import get_lead_form_context, get_lead_status, predict_deal_probability
 from backend.repositories import customers as customers_repo
 from backend.repositories import dealers as dealers_repo
 
-__all__ = ["customer_book", "dealer_directory", "estimated_gross", "lead_form_context", "lead_stores",
+__all__ = ["customer_book", "dealer_directory", "estimated_gross", "lead_form_context", "lead_status", "lead_stores",
            "queue_page", "repeat_contribution", "retention_overview", "score_lead", "segment_data"]
 
 # How a lead's prior relationship with the group maps to the model's loyalty score.
@@ -96,6 +96,11 @@ def lead_stores() -> list[dict]:
 def lead_form_context() -> dict | None:
     """Option lists and numeric ranges the trained lead model was fitted on (None until it is trained)."""
     return get_lead_form_context()
+
+
+def lead_status() -> dict:
+    """Whether this account's lead-close model is trained, and if not, exactly why."""
+    return get_lead_status()
 
 
 def score_lead(lead: dict) -> dict:

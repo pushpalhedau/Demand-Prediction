@@ -58,6 +58,9 @@ data*. The confirmed mapping is remembered.
 All on the new admin console (port 3002):
 
 * **History → Retrain models now** rebuilds the ML models from the data already loaded.
+* Every import trains the account's models automatically. To retrain every account at once (for example after a
+  release that changes the models), run inside the stack: `docker compose exec worker python -m backend.cli train --all`.
+  Models live in the `models` volume, so run it in a container, not from a local shell.
 * **Logins**: add users (Manage = can see everything; View only = dashboards), reset a password.
 * **Access → Suspend** blocks every login for the account; data is kept. Users are signed out within 5 minutes.
 * **Access → Delete this account** removes the account, logins, data, uploads and models for good (type its short id
@@ -87,7 +90,8 @@ Back up Postgres (`pg_dump -Fc`), and the `uploads` and `models` volumes. Restor
 | Symptom | Likely cause / fix |
 |---|---|
 | "Your account is being set up" | the account has no sales yet: import data |
-| Customer tab says the lead model is not trained | run **Retrain models** (also required after a secret rotation) |
+| Lead Close Score says the model "has not been trained yet" | run **Retrain models** (also required after a secret rotation) |
+| Lead Close Score says the model "could not be trained" | the message gives the reason (too few sales linked to customers, or no won/lost test drives in the sales file). Fix the data and re-import; a failed retrain removes the old model rather than leaving stale scores |
 | Import "failed", nothing changed | read the message; usually a required column is missing or every date is unreadable |
 | `Refusing to start with an insecure production configuration` | `ENVIRONMENT=production` with a development default; fix what it lists |
 | Operator login says invalid credentials | wrong password, or a customer account (customer logins cannot use the console) |

@@ -38,3 +38,4 @@ Thumbs.db
 # ── one-off local refactoring helpers ──────────────────────────────────────────
 scripts/_dev/
 data/public/backtest_*.csv
+logincreds.txt

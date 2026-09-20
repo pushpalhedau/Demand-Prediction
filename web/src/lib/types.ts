@@ -212,12 +212,21 @@ export interface NumericRange {
   hi: number;
   p50: number;
 }
+export interface LeadStatus {
+  state: "not_trained" | "trained" | "cannot_train";
+  /** Why the model could not be trained (English, written for the account's administrator). */
+  message?: string;
+  weak?: boolean;
+  /** Inputs this account has no data for; the form leaves them out. */
+  missing_features?: string[];
+}
 export interface LeadForm {
   stores: { store: string; city: string; region: string; brand: string }[];
   model: {
     options: Record<"occupation" | "vehicle_category" | "fuel_type" | "marketing_channel", string[]>;
-    stats: Record<"age" | "annual_income" | "credit_score" | "base_price", NumericRange>;
+    stats: Partial<Record<"age" | "annual_income" | "credit_score" | "base_price", NumericRange>>;
   } | null;
+  status: LeadStatus;
   relationships: ("new" | "service" | "repeat")[];
 }
 export interface LeadScore {

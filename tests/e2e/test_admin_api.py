@@ -282,3 +282,102 @@ def test_deleting_an_account_removes_everything_it_owned(operator_client: TestCl
     events = operator_client.get("/api/admin/audit", params={"account": slug, "limit": 5}).json()
     assert any(e["action"] == "account.delete" for e in events)
     assert operator_client.post(f"/api/admin/accounts/{slug}/delete", json={"confirm": slug}, headers=CSRF).status_code == 404
+
+
+# ── lead-close model readiness for new accounts ─────────────────────────────
+
+def _lead_csvs(converted_pattern) -> dict[str, bytes]:
+    """A small but realistic customers + sales pair; `converted_pattern(i)` decides each sale's test-drive outcome."""
+    import csv
+    import io
+
+    def build(header, rows):
+        out = io.StringIO()
+        w = csv.writer(out)
+        w.writerow(header)
+        w.writerows(rows)
+        return out.getvalue().encode()
+
+    jobs = ["Engineer", "Teacher", "Manager", "Nurse"]
+    customers = build(["customer_id", "age", "occupation", "annual_income", "credit_score", "loyalty_score"],
+                      [[f"c{i}", 25 + i % 40, jobs[i % 4], 40000 + 1500 * i, 550 + 3 * i, 40 + i % 50] for i in range(60)])
+    cats, fuels, channels, regions = ["SUV", "Sedan"], ["Petrol", "Hybrid"], ["Walk-in", "Online Ad", "Referral"], ["North", "South"]
+    sales = build(["sale_id", "sale_date", "selling_price", "base_price", "discount_pct", "customer_id", "vehicle_category",
+                   "fuel_type", "marketing_channel", "region", "brand", "model", "dealer_name", "test_drive_converted"],
+                  [[f"s{i}", f"2025-{1 + i % 12:02d}-{1 + i % 27:02d}", 30000 + 100 * i, 32000 + 100 * i, i % 10, f"c{i % 60}",
+                    cats[i % 2], fuels[(i // 2) % 2], channels[i % 3], regions[i % 2], "Acme", f"M{i % 5}", f"Store {regions[i % 2]}",
+                    "true" if converted_pattern(i) else "false"] for i in range(200)])
+    return {"customers": customers, "sales": sales}
+
+
+def _run_import(client: TestClient, slug: str, files: dict[str, bytes]) -> dict:
+    job_id = str(uuid.uuid4())
+    mappings = {}
+    for table, content in files.items():
+        up = client.post(f"/api/admin/accounts/{slug}/imports/{job_id}/files/{table}",
+                         files={"file": (f"{table}.csv", content, "text/csv")}, headers=CSRF)
+        assert up.status_code == 204, up.text
+        proposal = client.get(f"/api/admin/accounts/{slug}/imports/{job_id}/{table}/mapping").json()
+        mappings[table] = {"columns": {f: {"source": c["source"], "transform": c["transform"]}
+                                       for f, c in proposal["proposal"].items()}, "extras": True}
+    start = client.post(f"/api/admin/accounts/{slug}/imports/{job_id}/start", headers=CSRF,
+                        json={"tables": list(files), "mappings": mappings, "units": {"distance": "km"}, "dayfirst": False,
+                              "decimal": ".", "replace": True, "train": True})
+    assert start.status_code == 202, start.text
+    job = {}
+    for _ in range(120):
+        job = client.get(f"/api/admin/accounts/{slug}/jobs/{job_id}").json()
+        if job["status"] not in ("queued", "running"):
+            break
+        time.sleep(1)
+    assert job["status"] == "succeeded", job
+    return job
+
+
+def _lead_form(account) -> dict:
+    customer = _client()
+    r = customer.post("/api/auth/login", json={"email": account["email"], "password": account["password"]}, headers=CSRF)
+    assert r.status_code == 200, r.text
+    form = customer.get("/api/customers/lead-form")
+    assert form.status_code == 200, form.text
+    return form.json()
+
+
+def _forget_models(account) -> None:
+    import shutil
+    settings = get_settings()
+    for kind in ("xgboost", "clustering"):
+        shutil.rmtree(settings.model_dir / kind / str(get_tenant_id(account["slug"])), ignore_errors=True)
+
+
+def test_a_brand_new_account_gets_a_working_lead_score_from_its_first_import(operator_client: TestClient, account):
+    try:
+        _run_import(operator_client, account["slug"], _lead_csvs(lambda i: i % 3 == 0))
+        form = _lead_form(account)
+        assert form["status"]["state"] == "trained" and form["model"] is not None
+        assert form["model"]["options"]["vehicle_category"] and form["status"]["missing_features"] == []
+    finally:
+        _forget_models(account)
+
+
+def test_data_that_cannot_train_says_why_instead_of_looking_untrained(operator_client: TestClient, account):
+    try:
+        _run_import(operator_client, account["slug"], _lead_csvs(lambda i: False))
+        form = _lead_form(account)
+        assert form["model"] is None and form["status"]["state"] == "cannot_train"
+        assert "won and lost" in form["status"]["message"]
+    finally:
+        _forget_models(account)
+
+
+def test_a_failed_retrain_does_not_leave_the_old_model_scoring_new_data(operator_client: TestClient, account):
+    try:
+        _run_import(operator_client, account["slug"], _lead_csvs(lambda i: i % 3 == 0))
+        assert _lead_form(account)["model"] is not None
+        _run_import(operator_client, account["slug"], _lead_csvs(lambda i: False))    # replace with unusable outcomes
+        form = _lead_form(account)
+        assert form["model"] is None and form["status"]["state"] == "cannot_train"
+        _run_import(operator_client, account["slug"], _lead_csvs(lambda i: i % 4 == 0))    # then a good file recovers it
+        assert _lead_form(account)["status"]["state"] == "trained"
+    finally:
+        _forget_models(account)

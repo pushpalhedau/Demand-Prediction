@@ -82,7 +82,7 @@ def queue_csv(
 def lead_form(caller: CurrentCustomer):
     """Stores a lead can be handled by, plus the option lists and ranges the lead model was trained on."""
     return to_jsonable({"stores": customers.lead_stores(), "model": customers.lead_form_context(),
-                        "relationships": list(customers.RELATIONSHIP_LOYALTY)})
+                        "status": customers.lead_status(), "relationships": list(customers.RELATIONSHIP_LOYALTY)})
 
 
 @router.post("/score-lead")

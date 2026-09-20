@@ -1,10 +1,14 @@
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
+from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sqlalchemy import func
 from xgboost import XGBClassifier
 
+from backend.core.errors import AppError
 from backend.core.formatting import fmt_money
 from backend.core.log import get_logger
 from backend.db.connection import get_db_session
@@ -15,9 +19,54 @@ log = get_logger(__name__)
 
 
 
+MIN_ROWS = 100            # sales linked to customers needed to fit anything meaningful
+MIN_CLASS = 10            # and at least this many won AND lost test drives
+COVERAGE_MIN = 0.05       # a feature with data on fewer rows than this is treated as absent
+WEAK_AUC = 0.60           # below this the score barely ranks leads better than chance
+MODEL_FILES = ("scaler", "encoders", "xgboost_model", "feature_names", "lead_stats")
+STATUS_FILE = "lead_status"
+CAT_FEATURES = ['marketing_channel', 'vehicle_category', 'fuel_type', 'region', 'occupation']
+NUM_FEATURES = ['base_price', 'discount_pct', 'age', 'annual_income', 'credit_score', 'loyalty_score']
+
+
 def _model_dir() -> Path:
     """Per-tenant artifact directory."""
     return model_dir("xgboost")
+
+
+def training_problem(rows: int, converted: int, sales_rows: int) -> str | None:
+    """A specific, actionable reason this account's data cannot train a lead-close model, or None if it can."""
+    if rows == 0 and sales_rows:
+        return ("None of this account's sales are linked to a customer, so there is nothing to learn from. "
+                "Sales need a customer_id that matches the customers file.")
+    if rows == 0:
+        return "This account has no sales linked to customers yet, so the lead-close model cannot be trained."
+    if rows < MIN_ROWS:
+        return f"Only {rows} sales are linked to customers; at least {MIN_ROWS} are needed to train the lead-close model."
+    lost = rows - converted
+    if min(converted, lost) < MIN_CLASS:
+        return (f"The lead-close model needs both won and lost test drives to learn from: found {converted} converted "
+                f"and {lost} not converted (at least {MIN_CLASS} of each are required). "
+                "Check the test-drive converted column in the sales file.")
+    return None
+
+
+def _write_status(mdir: Path, state: str, **fields) -> None:
+    save_artifact(mdir, STATUS_FILE, {"state": state, "trained_at": datetime.now(UTC).isoformat(timespec="seconds"), **fields})
+
+
+def _clear_model(mdir: Path) -> None:
+    """Drop a previous model so a failed retrain can never leave stale scores running on new data."""
+    for name in MODEL_FILES:
+        (mdir / f"{name}.pkl").unlink(missing_ok=True)
+
+
+def get_lead_status() -> dict:
+    """Outcome of this account's last lead-close training: not_trained, trained, or cannot_train (with the reason)."""
+    try:
+        return load_artifact(_model_dir(), STATUS_FILE)
+    except Exception:  # noqa: BLE001 - no (or unreadable) status file simply means it has not been trained
+        return {"state": "not_trained"}
 
 def train_xgboost_pipeline():
     """
@@ -45,11 +94,21 @@ def train_xgboost_pipeline():
          .join(Vehicle, Sale.vehicle_id == Vehicle.vehicle_id)
 
         df = pd.read_sql(query.statement, session.bind)
-        if df.empty or len(df) < 100:
-            return None, "Insufficient data to train XGBoost lead scoring model (need at least 100 transactions)."
 
         # Target column: test_drive_converted (binary classification)
         df['test_drive_converted'] = df['test_drive_converted'].fillna(False).astype(int)
+
+        problem = training_problem(len(df), int(df['test_drive_converted'].sum()),
+                                   session.query(func.count(Sale.sale_id)).scalar() or 0)
+        if problem:
+            mdir = _model_dir()
+            _clear_model(mdir)
+            _write_status(mdir, "cannot_train", message=problem)
+            return None, problem
+
+        # How much real data each feature has (measured before gaps are filled), so the app can say so honestly.
+        coverage = {c: float(df[c].notna().mean()) for c in CAT_FEATURES + NUM_FEATURES}
+        missing_features = [c for c, v in coverage.items() if v < COVERAGE_MIN]
 
         # Features to use
         #
@@ -71,8 +130,7 @@ def train_xgboost_pipeline():
         # leakage rather than a lever anyone can pull. Financing is still
         # captured on the deal record and drives the lease-return pipeline in
         # Inventory Intelligence, where it genuinely is predictive.
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'region', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'annual_income', 'credit_score', 'loyalty_score']
+        cat_features, num_features = CAT_FEATURES, NUM_FEATURES
 
         lead_stats = {
             c: {"p25": float(df[c].quantile(0.25)), "p50": float(df[c].median()),
@@ -132,6 +190,14 @@ def train_xgboost_pipeline():
         save_artifact(mdir, "feature_names", list(X.columns))
         save_artifact(mdir, "lead_stats", lead_stats)
 
+        holdout = float(model.score(X_test_scaled, y_test))
+        baseline = float(max(y_test.mean(), 1 - y_test.mean()))
+        # Ranking quality on unseen leads (0.5 = coin flip, 1.0 = perfect): what matters for prioritising leads.
+        auc = float(roc_auc_score(y_test, model.predict_proba(X_test_scaled)[:, 1]))
+        _write_status(mdir, "trained", rows=int(len(df)), converted=int(y.sum()), holdout_accuracy=holdout,
+                      baseline_accuracy=baseline, holdout_auc=auc, weak=auc < WEAK_AUC, coverage=coverage,
+                      missing_features=missing_features)
+
         # Get feature importances
         importances = model.feature_importances_
         feature_importance_df = pd.DataFrame({
@@ -142,7 +208,8 @@ def train_xgboost_pipeline():
         log.info("XGBoost classifier pipeline completed successfully.")
         return {
             "feature_importance": feature_importance_df,
-            "accuracy": float(model.score(X_test_scaled, y_test)),
+            "accuracy": holdout,
+            "auc": auc,
             "train_size": len(X_train),
             "test_size": len(X_test)
         }, None
@@ -184,8 +251,7 @@ def predict_deal_probability(input_data: dict) -> dict:
 
         # Compile input into record
         # Must mirror the training feature set exactly (financing_type excluded).
-        cat_features = ['marketing_channel', 'vehicle_category', 'fuel_type', 'region', 'occupation']
-        num_features = ['base_price', 'discount_pct', 'age', 'annual_income', 'credit_score', 'loyalty_score']
+        cat_features, num_features = CAT_FEATURES, NUM_FEATURES
 
         stats = load_artifact(mdir, "lead_stats")
 
@@ -286,8 +352,5 @@ def predict_deal_probability(input_data: dict) -> dict:
         }
     except Exception:
         log.warning("Prediction failed", exc_info=True)
-        return {
-            "close_probability": 0.5,
-            "explainer_used": "none",
-            "explanations": []
-        }
+        raise AppError("The lead-close model is not available for this account right now. "
+                       "Ask your administrator to retrain the models.") from None

@@ -41,20 +41,21 @@ function initialDraft(form: LeadForm): Draft | null {
   const { options, stats } = form.model;
   return {
     store: form.stores[0]?.store ?? "",
-    age: Math.round(stats.age.p50),
-    occupation: options.occupation[0] ?? "",
-    income: Math.round(stats.annual_income.p50),
-    credit: Math.round(stats.credit_score.p50),
+    age: Math.round(stats.age?.p50 ?? 40),
+    occupation: options.occupation[0] ?? "Unknown",
+    income: Math.round(stats.annual_income?.p50 ?? 0),
+    credit: Math.round(stats.credit_score?.p50 ?? 600),
     category: options.vehicle_category[0] ?? "",
     fuel: options.fuel_type[0] ?? "",
     channel: options.marketing_channel[0] ?? "",
     relationship: "new",
     discount: 6,
-    price: Math.round(stats.base_price.p50),
+    price: Math.round(stats.base_price?.p50 ?? 30000),
   };
 }
 
-const range = (r: NumericRange) => ({ min: Math.floor(r.lo), max: Math.ceil(Math.max(r.hi, r.lo + 1)) });
+const range = (r: NumericRange | undefined, fallback: { min: number; max: number }) =>
+  r ? { min: Math.floor(r.lo), max: Math.ceil(Math.max(r.hi, r.lo + 1)) } : fallback;
 
 export function LeadScoring({ nav }: { nav: ReactNode }) {
   const { t } = usePresentation();
@@ -64,7 +65,15 @@ export function LeadScoring({ nav }: { nav: ReactNode }) {
       {nav}
       <PageHeading eyebrow={t("tab.customers")} headline={t("cu.head.lead")} />
       <QueryBoundary query={query} skeleton={<PanelSkeleton height={420} />}>
-        {(form) => (form.model ? <LeadFormView form={form} /> : <EmptyState title={t("cu.lead.untrained")} />)}
+        {(form) =>
+          form.model ? (
+            <LeadFormView form={form} />
+          ) : form.status.state === "cannot_train" ? (
+            <EmptyState title={t("cu.lead.cannot")}>{form.status.message}</EmptyState>
+          ) : (
+            <EmptyState title={t("cu.lead.untrained")} />
+          )
+        }
       </QueryBoundary>
     </div>
   );
@@ -125,12 +134,20 @@ function LeadFormView({ form }: { form: LeadForm }) {
     </div>
   );
 
-  const age = range(model.stats.age);
-  const credit = range(model.stats.credit_score);
+  const age = range(model.stats.age, { min: 16, max: 100 });
+  const credit = range(model.stats.credit_score, { min: 0, max: 1000 });
+  const missing = new Set(form.status.missing_features ?? []);
+  const shown = (feature: string) => !missing.has(feature);
   const relationshipLabel = { new: t("cu.rel.new"), service: t("cu.rel.service"), repeat: t("cu.rel.repeat") };
 
   return (
     <div className="space-y-8">
+      {missing.size > 0 && (
+        <p className="text-muted-foreground border-l-2 pl-3 text-sm">
+          {t("cu.lead.limited", { fields: [...missing].map((f) => f.replace(/_/g, " ")).join(", ") })}
+        </p>
+      )}
+      {form.status.weak && <p className="text-muted-foreground border-l-2 pl-3 text-sm">{t("cu.lead.weak")}</p>}
       <Panel title={t("cu.lead.title")} description={t("cu.lead.caption")}>
         <div className="space-y-6">
           {pick(
@@ -145,17 +162,17 @@ function LeadFormView({ form }: { form: LeadForm }) {
           )}
           <div className="grid gap-x-8 gap-y-6 md:grid-cols-2 xl:grid-cols-3">
             <div className="space-y-6">
-              {slide(t("cu.lead.age"), draft.age, age.min, age.max, 1, (v) => set("age", v))}
-              {pick(t("cu.lead.occupation"), draft.occupation, model.options.occupation, (v) => set("occupation", v))}
-              {money(t("cu.lead.income"), draft.income, (v) => set("income", v))}
+              {shown("age") && slide(t("cu.lead.age"), draft.age, age.min, age.max, 1, (v) => set("age", v))}
+              {shown("occupation") && pick(t("cu.lead.occupation"), draft.occupation, model.options.occupation, (v) => set("occupation", v))}
+              {shown("annual_income") && money(t("cu.lead.income"), draft.income, (v) => set("income", v))}
             </div>
             <div className="space-y-6">
-              {slide(t("cu.lead.credit"), draft.credit, credit.min, credit.max, 1, (v) => set("credit", v))}
-              {pick(t("cu.lead.category"), draft.category, model.options.vehicle_category, (v) => set("category", v), tv)}
-              {pick(t("cu.lead.fuel"), draft.fuel, model.options.fuel_type, (v) => set("fuel", v), tv)}
+              {shown("credit_score") && slide(t("cu.lead.credit"), draft.credit, credit.min, credit.max, 1, (v) => set("credit", v))}
+              {shown("vehicle_category") && pick(t("cu.lead.category"), draft.category, model.options.vehicle_category, (v) => set("category", v), tv)}
+              {shown("fuel_type") && pick(t("cu.lead.fuel"), draft.fuel, model.options.fuel_type, (v) => set("fuel", v), tv)}
             </div>
             <div className="space-y-6">
-              {pick(t("cu.lead.channel"), draft.channel, model.options.marketing_channel, (v) => set("channel", v))}
+              {shown("marketing_channel") && pick(t("cu.lead.channel"), draft.channel, model.options.marketing_channel, (v) => set("channel", v))}
               {pick(t("cu.lead.relationship"), draft.relationship, form.relationships, (v) => set("relationship", v as Relationship), (v) => relationshipLabel[v as Relationship])}
               {slide(t("cu.lead.discount"), draft.discount, 0, 20, 0.5, (v) => set("discount", v), "%")}
               {money(t("cu.lead.price"), draft.price, (v) => set("price", v))}

@@ -49,8 +49,9 @@ def main(argv=None):
     loader.add_argument("--dayfirst", action="store_true", help="Dates are DD/MM/YYYY")
     loader.add_argument("--decimal", default=".", choices=[".", ","], help="Decimal separator in numbers")
 
-    t = sub.add_parser("train", help="Train a tenant's ML models")
-    t.add_argument("--tenant", required=True, help="tenant slug")
+    t = sub.add_parser("train", help="Train a tenant's ML models (or every tenant with --all)")
+    t.add_argument("--tenant", help="tenant slug")
+    t.add_argument("--all", action="store_true", help="retrain every account")
 
     a = p.parse_args(argv)
 
@@ -89,7 +90,12 @@ def main(argv=None):
                      units={"distance": a.distance} if a.distance else None,
                      dayfirst=a.dayfirst, decimal=a.decimal)
     elif a.cmd == "train":
-        train_tenant_models(get_tenant_id(a.tenant))
+        if a.all == bool(a.tenant):
+            p.error("train needs exactly one of --tenant <slug> or --all")
+        slugs = [row[1] for row in list_tenants()] if a.all else [a.tenant]
+        for slug in slugs:
+            print(f"{slug}:")
+            train_tenant_models(get_tenant_id(slug))
 
 
 if __name__ == "__main__":
