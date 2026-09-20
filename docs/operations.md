@@ -4,7 +4,7 @@
 
 ```bash
 docker compose up -d db auth              # minimum for local development
-docker compose up -d --build              # full stack: + redis, worker, api, frontend (3000), classic web (8501), admin (8502)
+docker compose up -d --build              # full stack: + redis, worker, api, frontend (3000), admin-frontend (3002), classic web (8501), admin (8502)
 docker compose stop                       # stop, keep data
 docker compose down -v                    # DANGER: also deletes the database, uploads and models
 ```
@@ -23,10 +23,11 @@ python -m backend.cli init-db             # creates tables, applies row-level se
 docker compose up -d db auth
 python -m uvicorn backend.api.app:app --reload --port 8000     # API (docs at /api/docs in development)
 cd web && npm install && npm run dev                            # dashboard on http://localhost:3000
+cd web-admin && npm install && npm run dev                      # admin console on http://localhost:3002
 ```
 
-`API_URL` (default `http://localhost:8000`) tells the dashboard where to proxy `/api`. Quality gates for the web app:
-`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
+`API_URL` (default `http://localhost:8000`) tells each app where to proxy `/api`. Quality gates for both web apps:
+`npm run lint`, `npm run typecheck`, `npm test`, `npm run build` (run from `web/` or `web-admin/` respectively).
 
 ## Operators
 
@@ -34,15 +35,18 @@ cd web && npm install && npm run dev                            # dashboard on h
 python -m backend.cli create-operator --email you@example.com     # prints a generated password once
 ```
 
-Sign in at the admin console (port 8502). To change an operator's password, use the auth server admin API or delete and
-recreate the login. Every sign-in and action is in **Audit log**.
+Sign in at the admin console (port 3002) for accounts, settings, logins, access and the audit log. **Import data**
+is not ported yet: use the classic console (port 8502) for that step, then return to port 3002 for everything else.
+To change an operator's password, use the auth server admin API or delete and recreate the login. Every sign-in and
+action is in **Audit log**.
 
 ## Onboard a customer
 
-1. **Accounts → Create a new account.** Name, currency, language, what they call regions ("State", "Emirate"…),
-   country for local news, and their first admin's email. The password is shown once: send it over a secure channel.
-2. Open the account → **Import data**. Upload their CSVs (only the sales file is required; the templates list the
-   standard columns, but their own names are matched automatically).
+1. **Accounts → Create a new account** (port 3002). Name, currency, language, what they call regions ("State",
+   "Emirate"…), country for local news, and their first admin's email. The password is shown once: send it over a
+   secure channel.
+2. On the **classic console** (port 8502), open the account → **Import data**. Upload their CSVs (only the sales
+   file is required; the templates list the standard columns, but their own names are matched automatically).
 3. Check the column matching, especially anything marked as a guess, the distance unit (km/miles), date order and
    decimal separator. **Check the data** dry-runs a sample.
 4. **Import and train.** Watch progress; the account's dashboards go live when it finishes. A failed import changes
@@ -53,7 +57,9 @@ data*. The confirmed mapping is remembered.
 
 ## Retrain, users, suspension
 
-* **History & models → Retrain models now** rebuilds the ML models from the data already loaded.
+All on the new admin console (port 3002):
+
+* **History → Retrain models now** rebuilds the ML models from the data already loaded.
 * **Logins**: add users (Manage = can see everything; View only = dashboards), reset a password.
 * **Access → Suspend** blocks every login for the account; data is kept. Users are signed out within 5 minutes.
 

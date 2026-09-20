@@ -11,7 +11,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from backend.api import cookies
 from backend.core.errors import AuthError
-from backend.core.request_context import TenantProfile, bind_request, clear_request
+from backend.core.request_context import TenantProfile, bind_actor, bind_request, clear_request
 from backend.services import identity, workspace
 
 SUPPORTED_LANGUAGES = ("en", "de")
@@ -76,3 +76,25 @@ def dashboard_filters(
 
 
 Filters = Annotated[dict, Depends(dashboard_filters)]
+
+
+async def operator(request: Request) -> AsyncIterator[identity.Operator]:
+    """
+    Authenticate an admin-console request from its (separate) session cookie. Every audited action taken while
+    this dependency is active is attributed to this operator; the attribution is cleared afterwards.
+    """
+    token = cookies.admin_access_token(request)
+    if not token:
+        raise HTTPException(status_code=401, detail="Not signed in.")
+    try:
+        op = await run_in_threadpool(identity.operator_from_access_token, token)
+    except AuthError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from None
+    bind_actor(op.email)
+    try:
+        yield op
+    finally:
+        clear_request()
+
+
+CurrentOperator = Annotated[identity.Operator, Depends(operator)]

@@ -1,7 +1,7 @@
 # PredictaX stack. Everything here is free and open source.
 #
 #   Local development :  docker compose up -d db auth        (the apps then run from your own Python environment)
-#   Full stack        :  docker compose up -d --build     (new dashboard on :3000, classic on :8501, console on :8502)
+#   Full stack        :  docker compose up -d --build     (dashboard :3000, admin console :3002, classic :8501/:8502)
 #
 # Secure defaults: every published port is bound to localhost only, containers run as a non-root user with all
 # capabilities dropped and a read-only filesystem, and secrets come from the environment. The fallback values
@@ -134,6 +134,28 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:3000:3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  admin-frontend:
+    # The new admin console (Next.js): accounts, settings, logins, access, audit log. Import (upload, column
+    # mapping, dry-run) is not ported yet and stays on the classic console (the "admin" service below) meanwhile.
+    # Uses its own session cookies (see backend/api/cookies.py) so an operator session can never be mistaken for a
+    # customer one. Published on localhost ONLY: never expose this port publicly; reach it over a VPN or SSH tunnel.
+    build: ./web-admin
+    image: predictax-admin:latest
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3002:3002"
     read_only: true
     tmpfs:
       - /tmp

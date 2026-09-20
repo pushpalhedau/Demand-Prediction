@@ -3,9 +3,10 @@
 ## Shape of the system
 
 ```
- browser ──► web dashboard (Next.js)  ──/api──► backend.api (FastAPI) ─┐   web/  +  backend/api
+ browser ──► web dashboard (Next.js)   ──/api──► backend.api (FastAPI) ─┐   web/        + backend/api
+ browser ──► admin console (Next.js)  ──/api──► backend.api (FastAPI) ─┤   web-admin/  + backend/api
  browser ──► classic dashboard (Streamlit) ──────────────────────────────┤   frontend/   (being retired)
- browser ──► admin console (Streamlit) ──────────────────────────────────┤   frontend/
+ browser ──► classic admin console (Streamlit, import wizard only) ──────┤   frontend/
                                                                           ▼
                                    backend.services      ◄── the only door into the backend
                                           │
@@ -58,6 +59,10 @@ Caches are keyed by tenant (`backend.core.cache`), model files live under a per-
 * **Customer users** belong to one tenant. The customer app accepts only tokens that carry a tenant.
 * **Operators** run the admin console and belong to no tenant (`platform_admin` role). The console accepts only
   those, and a customer token is refused with the same message as a wrong password.
+
+The two web apps use separate cookie names (`px_access`/`px_refresh` vs `px_admin_access`/`px_admin_refresh`, see
+`backend/api/cookies.py`) and separate FastAPI dependencies (`deps.customer` vs `deps.operator`), so a browser that
+somehow has both apps open at once can never have one session mistaken for the other.
 
 ## Market-neutral data model
 
@@ -112,4 +117,22 @@ Views receive plain data (DataFrames, dicts) and never a session or an ORM objec
   table and chart helpers), `features/<tab>` (one folder per dashboard), `lib` (API client, filters in the URL, i18n,
   formatting). Light/dark themes come from CSS variables in `app/globals.css`.
 * **Tests:** unit tests cover formatting, translations (every key used exists in English and German) and URL safety.
-* **Migration:** all seven customer tabs are ported. The admin console stays on Streamlit for now.
+* **Migration:** all seven customer tabs are ported.
+
+## Admin console (Next.js)
+
+`web-admin/` is a second, separate Next.js app: accounts, settings, logins, access (suspend/reactivate), retrain
+and the audit log, all through `backend/api/routers/admin_*.py` (its own `/api/admin/*` surface, also calling only
+`backend.services`). It is operator-only, English-only (the classic console never had a language toggle either),
+and has no charts, so it does not depend on Recharts.
+
+* **A second app, not a second route in `web/`.** It ships as its own container (`admin-frontend`, port 3002),
+  matching the classic console's rule: never publish this port, reach it over a VPN or SSH tunnel.
+* **Idle sign-out.** The classic console signed operators out after 30 minutes idle; `web-admin/src/lib/idle.ts`
+  reproduces that in the browser (a passive activity listener, checked every 30s).
+* **One-time credentials.** A generated password (new account, new login, a reset) is handed to the page exactly
+  once, across the redirect, via `sessionStorage` (`web-admin/src/lib/flash.ts`) — never state that could survive a
+  re-render or reach the server.
+* **Import is not ported yet.** Uploading files, mapping columns, dry-running and running the import is the most
+  complex screen in the product (a multi-file wizard with saved-mapping recall and background-job polling); it
+  stays on the classic console (`frontend/admin_console`) meanwhile, and the new console's Import tab links to it.

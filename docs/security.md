@@ -26,6 +26,8 @@
 * Sign-in is throttled per account on the server (5 failures → 15-minute lockout); the auth server rate-limits too.
 * Tokens are verified on every refresh; a suspended account is signed out within 5 minutes.
 * Operators are signed out after 30 minutes idle; passwords chosen by a person must be ≥ 10 characters.
+* The customer app and the admin console use different session-cookie names and different FastAPI dependencies
+  (`backend/api/deps.py`), so a browser with both open at once can never mix the two up.
 
 **Application**
 * Every place HTML is built by hand escapes data (`frontend/shared/safe.py`); news links must be plain http(s).

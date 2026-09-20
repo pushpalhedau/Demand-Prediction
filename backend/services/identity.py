@@ -22,8 +22,8 @@ from backend.db.session import session_scope
 from backend.tenancy import audit
 
 __all__ = ["AuthError", "CustomerSession", "Identity", "Operator", "OperatorSession", "auth_configured", "customer_from_access_token",
-           "load_active_tenant", "refresh_customer", "refresh_operator", "sign_in_customer", "sign_in_operator",
-           "tenant_is_active"]
+           "load_active_tenant", "operator_from_access_token", "refresh_customer", "refresh_operator", "sign_in_customer",
+           "sign_in_operator", "tenant_is_active"]
 
 
 _customer_throttle = LoginThrottle()
@@ -45,6 +45,7 @@ class OperatorSession:
     operator: Operator
     refresh_token: str | None
     expires_at: int
+    access_token: str | None = None       # set for API sign-ins, which keep it in an httpOnly cookie
 
 
 def auth_configured() -> bool:
@@ -82,7 +83,7 @@ def _customer_session(tokens: dict) -> CustomerSession:
 def _operator_session(tokens: dict) -> OperatorSession:
     claims = auth_client.verify_access_token(tokens["access_token"])
     operator = auth_client.operator_from_claims(claims)
-    return OperatorSession(operator, tokens.get("refresh_token"), int(claims["exp"]))
+    return OperatorSession(operator, tokens.get("refresh_token"), int(claims["exp"]), tokens["access_token"])
 
 
 def _guarded(throttle: LoginThrottle, email: str, attempt):
@@ -127,6 +128,12 @@ def sign_in_customer(email: str, password: str) -> CustomerSession:
 
 def refresh_customer(refresh_token: str) -> CustomerSession:
     return _customer_session(auth_client.refresh(refresh_token))
+
+
+def operator_from_access_token(access_token: str) -> Operator:
+    """Authenticate one admin-API request: verify the token and confirm it is an operator, not a customer."""
+    claims = auth_client.verify_access_token(access_token)
+    return auth_client.operator_from_claims(claims)
 
 
 def sign_in_operator(email: str, password: str) -> OperatorSession:

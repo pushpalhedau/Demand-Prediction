@@ -15,6 +15,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from backend.api.routers import (
+    admin_accounts,
+    admin_audit,
+    admin_auth,
     auth,
     comparison,
     customers,
@@ -73,7 +76,8 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     for router in (auth.router, workspace.router, overview.router, regional.router, comparison.router,
-                   forecasting.router, customers.router, inventory.router, sentiment.router):
+                   forecasting.router, customers.router, inventory.router, sentiment.router,
+                   admin_auth.router, admin_accounts.router, admin_audit.router):
         app.include_router(router, prefix="/api")
     return app
 

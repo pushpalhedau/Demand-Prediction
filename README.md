@@ -4,13 +4,14 @@ Multi-tenant demand intelligence for automobile dealer groups. Each customer acc
 its own data: forecasting, store performance, customer intelligence, inventory and market-sentiment dashboards, built
 from CSV exports the operator uploads.
 
-Three web apps:
+Four web apps:
 
 | App | Who | What | Default URL |
 |---|---|---|---|
 | **Dashboard** (`web/`, Next.js + FastAPI) | dealer-group staff | the new customer dashboard, light and dark themes, all seven tabs | http://localhost:3000 |
+| **Admin console** (`web-admin/`, Next.js + FastAPI) | PredictaX operators only | accounts, settings, logins, access, retrain, audit log | http://localhost:3002 |
 | **Classic dashboard** (`frontend/customer_app`, Streamlit) | dealer-group staff | the previous dashboard, kept until the new one is signed off | http://localhost:8501 |
-| **Admin console** (`frontend/admin_console`) | PredictaX operators only | create accounts, import data, train models, manage logins, audit log | http://localhost:8502 |
+| **Classic admin console** (`frontend/admin_console`, Streamlit) | PredictaX operators only | still the only place to **import data**; everything else has moved to the new console above | http://localhost:8502 |
 
 ## Repository layout
 
@@ -34,6 +35,7 @@ frontend/                Streamlit apps (classic dashboard, admin console)
   shared/                ui helpers, i18n, HTML-safety, error display, session bridge
   assets/                stylesheet, images
 web/                     Next.js dashboard: src/app (routes), features/, components/, lib/ (api, i18n, format)
+web-admin/               Next.js admin console: accounts, settings, logins, access, audit log (no import yet)
 deploy/postgres/         database bootstrap (roles, default-deny)
 data/samples/            demo datasets (Germany)
 docs/                    architecture, security, operations (archive/ = pre-multi-tenant material)
@@ -62,19 +64,21 @@ python -m backend.cli create-operator --email you@example.com
 streamlit run frontend/admin_console/main.py --server.port 8502 --server.maxUploadSize 500
 streamlit run frontend/customer_app/main.py  --server.port 8501          # classic dashboard
 
-# the new dashboard: API + Next.js
+# the new dashboard and admin console: API + two Next.js apps
 python -m uvicorn backend.api.app:app --port 8000
 (cd web && npm install && npm run dev)                                   # http://localhost:3000
+(cd web-admin && npm install && npm run dev)                             # http://localhost:3002
 ```
 
-Full stack in containers (adds Redis, a background worker, and both apps):
+Full stack in containers (adds Redis, a background worker, and all four web apps):
 
 ```bash
 docker compose up -d --build
 ```
 
-Onboarding a customer: open the admin console, **Accounts → Create a new account**, open it, **Import data**, upload
-their CSVs, confirm the column matching, **Import and train**. See `docs/operations.md`.
+Onboarding a customer: on the new admin console (3002), **Accounts → Create a new account**; on the classic console
+(8502), open it and **Import data**, upload their CSVs, confirm the column matching, **Import and train**. See
+`docs/operations.md`.
 
 ## Tests
 
