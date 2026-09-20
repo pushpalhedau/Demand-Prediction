@@ -62,6 +62,8 @@ All on the new admin console (port 3002):
 * **History → Retrain models now** rebuilds the ML models from the data already loaded.
 * **Logins**: add users (Manage = can see everything; View only = dashboards), reset a password.
 * **Access → Suspend** blocks every login for the account; data is kept. Users are signed out within 5 minutes.
+* **Access → Delete this account** removes the account, logins, data, uploads and models for good (type its short id
+  to confirm). Take a backup first if there is any doubt.
 
 ## Secrets and configuration
 
@@ -90,7 +92,7 @@ Back up Postgres (`pg_dump -Fc`), and the `uploads` and `models` volumes. Restor
 | Import "failed", nothing changed | read the message; usually a required column is missing or every date is unreadable |
 | `Refusing to start with an insecure production configuration` | `ENVIRONMENT=production` with a development default; fix what it lists |
 | Operator login says invalid credentials | wrong password, or a customer account (customer logins cannot use the console) |
-| "Too many failed attempts" | throttle: wait 15 minutes, or restart the app to clear it |
+| "Too many failed attempts" | throttle: wait 15 minutes. To clear it early, delete the `throttle:*` keys in Redis (`redis-cli -a $REDIS_PASSWORD --scan --pattern "throttle:*"`), or restart the app if `REDIS_URL` is unset |
 | Console cannot reach the auth server | `docker compose up -d auth`; check `AUTH_BASE_URL` |
 | Something failed with a reference id | search the server logs for `[ref=<id>]` |
 

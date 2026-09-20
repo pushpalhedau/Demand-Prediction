@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 
 from backend.api.app import app
 from backend.auth import client as auth_client
+from backend.core.config import get_settings
 from backend.tenancy.provision import create_operator, get_tenant_id
 
 CSRF = {"X-Requested-With": "predictax"}
@@ -210,3 +211,74 @@ def test_import_wizard_rejects_starting_without_an_upload(operator_client: TestC
     r = operator_client.post(f"/api/admin/accounts/{account['slug']}/imports/{job_id}/start",
                              json={"tables": ["sales"], "mappings": {}, "replace": True, "train": False}, headers=CSRF)
     assert r.status_code == 422
+
+
+def _upload_sales(client: TestClient, slug: str, job_id: str):
+    return client.post(f"/api/admin/accounts/{slug}/imports/{job_id}/files/sales",
+                       files={"file": ("sales.csv", b"sale_date,selling_price\n2025-01-01,100\n", "text/csv")}, headers=CSRF)
+
+
+def test_import_endpoints_refuse_anonymous_and_customer_callers(account):
+    job_id = str(uuid.uuid4())
+    anon = _client()
+    assert anon.get("/api/admin/imports/schema").status_code == 401
+    assert _upload_sales(anon, account["slug"], job_id).status_code == 401
+    assert anon.get(f"/api/admin/accounts/{account['slug']}/imports/{job_id}/sales/mapping").status_code == 401
+
+    customer = _client()
+    r = customer.post("/api/auth/login", json={"email": account["email"], "password": account["password"]}, headers=CSRF)
+    assert r.status_code == 200, r.text
+    assert customer.get("/api/admin/imports/schema").status_code == 401
+    assert _upload_sales(customer, account["slug"], job_id).status_code == 401
+
+
+def test_import_endpoints_reject_malformed_ids_and_tables(operator_client: TestClient, account):
+    slug = account["slug"]
+    assert _upload_sales(operator_client, slug, "../../etc/passwd").status_code in (404, 422)
+    assert _upload_sales(operator_client, slug, "not-a-uuid").status_code == 422
+    bad_table = operator_client.post(f"/api/admin/accounts/{slug}/imports/{uuid.uuid4()}/files/users",
+                                     files={"file": ("x.csv", b"a\n1\n", "text/csv")}, headers=CSRF)
+    assert bad_table.status_code == 422
+
+
+def test_import_files_are_scoped_to_their_own_account(operator_client: TestClient, account):
+    """A file uploaded under one account must not be readable through another account's wizard session."""
+    other = operator_client.post("/api/admin/accounts", headers=CSRF, json={
+        "name": f"Other {uuid.uuid4().hex[:6]}", "admin_email": f"o-{uuid.uuid4().hex[:8]}@example.com"}).json()
+    try:
+        job_id = str(uuid.uuid4())
+        assert _upload_sales(operator_client, account["slug"], job_id).status_code == 204
+        assert operator_client.get(f"/api/admin/accounts/{account['slug']}/imports/{job_id}/sales/mapping").status_code == 200
+        assert operator_client.get(f"/api/admin/accounts/{other['slug']}/imports/{job_id}/sales/mapping").status_code == 422
+    finally:
+        operator_client.post(f"/api/admin/accounts/{other['slug']}/delete", json={"confirm": other["slug"]}, headers=CSRF)
+
+
+def test_deleting_an_account_requires_the_typed_slug(operator_client: TestClient, account):
+    slug = account["slug"]
+    assert operator_client.post(f"/api/admin/accounts/{slug}/delete", json={"confirm": "nope"}, headers=CSRF).status_code == 422
+    assert operator_client.post(f"/api/admin/accounts/{slug}/delete", json={}, headers=CSRF).status_code == 422
+    assert operator_client.get(f"/api/admin/accounts/{slug}").status_code == 200
+    anon = _client()
+    assert anon.post(f"/api/admin/accounts/{slug}/delete", json={"confirm": slug}, headers=CSRF).status_code == 401
+
+
+def test_deleting_an_account_removes_everything_it_owned(operator_client: TestClient):
+    created = operator_client.post("/api/admin/accounts", headers=CSRF, json={
+        "name": f"Doomed {uuid.uuid4().hex[:6]}", "admin_email": f"d-{uuid.uuid4().hex[:8]}@example.com"}).json()
+    slug = created["slug"]
+    job_id = str(uuid.uuid4())
+    assert _upload_sales(operator_client, slug, job_id).status_code == 204
+    tenant_id = get_tenant_id(slug)
+    upload_folder = get_settings().upload_dir / str(tenant_id)
+    assert upload_folder.exists()
+
+    r = operator_client.post(f"/api/admin/accounts/{slug}/delete", json={"confirm": slug}, headers=CSRF)
+    assert r.status_code == 200 and r.json() == {"logins": 1}
+
+    assert operator_client.get(f"/api/admin/accounts/{slug}").status_code == 404
+    assert not upload_folder.exists()
+    assert auth_client.users_of_tenant(tenant_id) == []
+    events = operator_client.get("/api/admin/audit", params={"account": slug, "limit": 5}).json()
+    assert any(e["action"] == "account.delete" for e in events)
+    assert operator_client.post(f"/api/admin/accounts/{slug}/delete", json={"confirm": slug}, headers=CSRF).status_code == 404

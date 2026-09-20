@@ -236,3 +236,68 @@ def test_sign_in_service_locks_out_after_five_wrong_passwords(monkeypatch):
             identity.sign_in_customer("victim@example.com", "guess")
     with pytest.raises(AuthError, match="Too many failed attempts"):
         identity.sign_in_customer("victim@example.com", "the-right-password")   # even a correct one is refused
+
+
+class _FakeRedis:
+    """Just enough of redis-py for the throttle: counters, expiry and delete (expiry is tracked, not simulated)."""
+
+    def __init__(self):
+        self.data, self.ttls = {}, {}
+
+    def incr(self, k):
+        self.data[k] = int(self.data.get(k, 0)) + 1
+        return self.data[k]
+
+    def expire(self, k, s):
+        self.ttls[k] = s
+
+    def set(self, k, v, ex=None):
+        self.data[k], self.ttls[k] = v, ex
+
+    def ttl(self, k):
+        return self.ttls.get(k, -2) if k in self.data else -2
+
+    def delete(self, *keys):
+        for k in keys:
+            self.data.pop(k, None)
+            self.ttls.pop(k, None)
+
+
+@pytest.mark.unit
+def test_redis_throttle_is_shared_between_instances():
+    from backend.core.security import RedisLoginThrottle
+
+    shared = _FakeRedis()
+    a, b = RedisLoginThrottle(shared, "customer", max_failures=3), RedisLoginThrottle(shared, "customer", max_failures=3)
+    for _ in range(3):
+        a.record_failure("Sam@Example.com")
+    with pytest.raises(AuthError):
+        b.check("sam@example.com")
+    b.record_success("sam@example.com")
+    a.check("sam@example.com")
+
+
+@pytest.mark.unit
+def test_redis_throttle_separates_customer_and_operator_counters():
+    from backend.core.security import RedisLoginThrottle
+
+    shared = _FakeRedis()
+    customer, operator = RedisLoginThrottle(shared, "customer", max_failures=1), RedisLoginThrottle(shared, "operator", max_failures=1)
+    customer.record_failure("x@example.com")
+    operator.check("x@example.com")
+
+
+@pytest.mark.unit
+def test_redis_throttle_falls_back_to_a_local_limit_when_redis_is_down():
+    from backend.core.security import RedisLoginThrottle
+
+    class Down:
+        def __getattr__(self, name):
+            raise ConnectionError("redis is down")
+
+    t = RedisLoginThrottle(Down(), "customer", max_failures=2)
+    t.check("x@example.com")
+    t.record_failure("x@example.com")
+    t.record_failure("x@example.com")
+    with pytest.raises(AuthError):
+        t.check("x@example.com")

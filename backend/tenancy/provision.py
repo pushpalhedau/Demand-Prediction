@@ -1,7 +1,9 @@
 import re
 import secrets
+import shutil
 
 from backend.auth import client as auth_client
+from backend.core.config import get_settings
 from backend.db.connection import get_admin_session
 from backend.db.models import Tenant
 
@@ -95,6 +97,32 @@ def set_status(slug: str, status: str) -> None:
         db.commit()
     finally:
         db.close()
+
+
+def delete_tenant(slug: str) -> dict:
+    """
+    Permanently remove a tenant: its logins, every data row (cascade), uploaded files and trained models.
+    Irreversible. Returns counts so the caller can tell the operator what went.
+    """
+    tenant_id = get_tenant_id(slug)
+    logins = auth_client.users_of_tenant(tenant_id)
+    for user in logins:
+        auth_client.admin_delete_user(user["id"])
+
+    db = get_admin_session()
+    try:
+        db.query(Tenant).filter(Tenant.id == tenant_id).delete()
+        db.commit()
+    finally:
+        db.close()
+
+    settings = get_settings()
+    folders = [settings.upload_dir / str(tenant_id)]
+    if settings.model_dir.exists():
+        folders += [kind / str(tenant_id) for kind in settings.model_dir.iterdir() if kind.is_dir()]
+    for folder in folders:
+        shutil.rmtree(folder, ignore_errors=True)
+    return {"logins": len(logins)}
 
 
 def get_tenant(slug: str) -> dict:

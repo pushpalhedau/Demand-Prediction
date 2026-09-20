@@ -51,6 +51,10 @@ class SetStatusRequest(BaseModel):
     status: Literal["active", "suspended"]
 
 
+class DeleteAccountRequest(BaseModel):
+    confirm: Annotated[str, Field(max_length=62)]
+
+
 class AddLoginRequest(BaseModel):
     email: Annotated[str, Field(min_length=3, max_length=254)]
     password: Annotated[str | None, Field(default=None, max_length=256)] = None
@@ -98,6 +102,16 @@ def set_status(slug: Slug, body: SetStatusRequest, operator: CurrentOperator):
     _account_or_404(slug)
     accounts.set_account_status(slug, body.status)
     return {"status": body.status}
+
+
+@router.post("/{slug}/delete")
+def delete_account(slug: Slug, body: DeleteAccountRequest, operator: CurrentOperator):
+    """Irreversible. The body must repeat the slug, so a stray click or a replayed request cannot delete anything."""
+    _account_or_404(slug)
+    try:
+        return accounts.delete_account(slug, body.confirm)
+    except AppError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from None
 
 
 @router.get("/{slug}/logins")

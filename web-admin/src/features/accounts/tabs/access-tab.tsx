@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import type { AccountDetail } from "@/lib/types";
+import { DeleteAccount } from "./delete-account";
 
 export function AccessTab({ account }: { account: AccountDetail }) {
   const queryClient = useQueryClient();
@@ -21,6 +22,7 @@ export function AccessTab({ account }: { account: AccountDetail }) {
 
   if (account.status !== "active") {
     return (
+      <div className="space-y-8">
       <div className="max-w-xl space-y-4">
         <Alert variant="destructive">
           <AlertTitle>This account is suspended.</AlertTitle>
@@ -30,10 +32,13 @@ export function AccessTab({ account }: { account: AccountDetail }) {
           {setStatus.isPending && <Loader2 className="animate-spin" />} Reactivate account
         </Button>
       </div>
+      <DeleteAccount slug={account.slug} name={account.name} />
+      </div>
     );
   }
 
   return (
+    <div className="space-y-8">
     <div className="max-w-xl space-y-4">
       <p className="text-muted-foreground text-sm leading-relaxed">
         Suspending blocks every login for this account. Their data is kept. People already signed in are locked out within a few minutes.
@@ -45,6 +50,8 @@ export function AccessTab({ account }: { account: AccountDetail }) {
       <Button variant="destructive" disabled={!sure || setStatus.isPending} onClick={() => setStatus.mutate("suspended")}>
         {setStatus.isPending && <Loader2 className="animate-spin" />} Suspend account
       </Button>
+    </div>
+    <DeleteAccount slug={account.slug} name={account.name} />
     </div>
   );
 }

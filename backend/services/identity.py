@@ -16,7 +16,7 @@ from backend.auth import client as auth_client
 from backend.auth.client import Identity, Operator
 from backend.core.errors import AuthError
 from backend.core.request_context import tenant_context
-from backend.core.security import LoginThrottle
+from backend.core.security import LoginThrottle, RedisLoginThrottle, make_login_throttle
 from backend.db.models import Tenant
 from backend.db.session import session_scope
 from backend.tenancy import audit
@@ -26,8 +26,8 @@ __all__ = ["AuthError", "CustomerSession", "Identity", "Operator", "OperatorSess
            "sign_in_operator", "tenant_is_active"]
 
 
-_customer_throttle = LoginThrottle()
-_operator_throttle = LoginThrottle()
+_customer_throttle = make_login_throttle("customer")
+_operator_throttle = make_login_throttle("operator")
 
 
 @dataclass(frozen=True)
@@ -86,7 +86,7 @@ def _operator_session(tokens: dict) -> OperatorSession:
     return OperatorSession(operator, tokens.get("refresh_token"), int(claims["exp"]), tokens["access_token"])
 
 
-def _guarded(throttle: LoginThrottle, email: str, attempt):
+def _guarded(throttle: LoginThrottle | RedisLoginThrottle, email: str, attempt):
     """Run a sign-in attempt under the failed-login limiter (wrong password, wrong account kind, etc.)."""
     throttle.check(email)
     try:

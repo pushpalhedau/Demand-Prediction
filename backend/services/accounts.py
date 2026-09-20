@@ -18,7 +18,7 @@ from backend.tenancy.settings import validate_config
 from backend.tenancy.summary import account_summary
 
 __all__ = ["AuthError", "InvalidSetting", "account_summary", "add_login", "audit_trail", "create_account",
-           "get_account", "list_accounts", "list_logins", "reset_login_password", "set_account_status", "slugify",
+           "delete_account", "get_account", "list_accounts", "list_logins", "reset_login_password", "set_account_status", "slugify",
            "update_account_settings"]
 
 CURRENCY_SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£", "INR": "₹", "AED": "AED", "SAR": "SAR", "CHF": "CHF",
@@ -63,6 +63,15 @@ def update_account_settings(slug: str, config: dict) -> dict:
 def set_account_status(slug: str, status: str) -> None:
     provision.set_status(slug, status)
     audit.record("account.suspend" if status == "suspended" else "account.reactivate", tenant=slug)
+
+
+def delete_account(slug: str, confirm_slug: str) -> dict:
+    """Permanently delete an account and everything it owns. The caller must retype the slug to confirm."""
+    if confirm_slug != slug:
+        raise InvalidSetting("Type the account's short id exactly to confirm the deletion.")
+    result = provision.delete_tenant(slug)
+    audit.record("account.delete", tenant=slug, detail=result)
+    return result
 
 
 def list_logins(tenant_id) -> list[dict[str, Any]]:

@@ -58,6 +58,66 @@ class LoginThrottle:
             self._locked_until.pop(key, None)
 
 
+class RedisLoginThrottle:
+    """
+    The same limiter with its counters in Redis, so the limit holds across every API/app instance.
+
+    Uses a fixed window (first failure starts the clock) rather than a sliding one. If Redis is unreachable it
+    falls back to the per-process limiter: sign-in must never depend on Redis being up, and locking people out
+    because of an outage would be worse than a per-instance limit.
+    """
+
+    def __init__(self, client, name: str, max_failures: int = 5, window_seconds: int = 900, lockout_seconds: int = 900):
+        self._r = client
+        self._prefix = f"throttle:{name}:"
+        self.max_failures, self.window, self.lockout = max_failures, window_seconds, lockout_seconds
+        self._local = LoginThrottle(max_failures, window_seconds, lockout_seconds)
+
+    def _keys(self, identifier: str) -> tuple[str, str]:
+        key = LoginThrottle._key(identifier)
+        return f"{self._prefix}fail:{key}", f"{self._prefix}lock:{key}"
+
+    def check(self, identifier: str) -> None:
+        _, lock = self._keys(identifier)
+        try:
+            ttl = self._r.ttl(lock)
+        except Exception:  # noqa: BLE001 - Redis down: use the local limiter
+            return self._local.check(identifier)
+        if ttl and ttl > 0:
+            raise AuthError(f"Too many failed attempts. Try again in {max(1, ttl // 60 + 1)} minute(s).")
+
+    def record_failure(self, identifier: str) -> None:
+        fail, lock = self._keys(identifier)
+        try:
+            count = self._r.incr(fail)
+            if count == 1:
+                self._r.expire(fail, self.window)
+            if count >= self.max_failures:
+                self._r.set(lock, 1, ex=self.lockout)
+                self._r.delete(fail)
+        except Exception:  # noqa: BLE001
+            self._local.record_failure(identifier)
+
+    def record_success(self, identifier: str) -> None:
+        fail, lock = self._keys(identifier)
+        try:
+            self._r.delete(fail, lock)
+        except Exception:  # noqa: BLE001
+            self._local.record_success(identifier)
+
+
+def make_login_throttle(name: str):
+    """A Redis-backed throttle when REDIS_URL is set, otherwise the per-process one."""
+    from backend.core.config import get_settings
+
+    url = get_settings().redis_url
+    if not url:
+        return LoginThrottle()
+    import redis
+
+    return RedisLoginThrottle(redis.from_url(url, socket_timeout=1, socket_connect_timeout=1), name)
+
+
 MIN_PASSWORD_LENGTH = 10
 _COMMON_PASSWORDS = {"password123", "1234567890", "qwertyuiop", "administrator", "changeme123"}
 
