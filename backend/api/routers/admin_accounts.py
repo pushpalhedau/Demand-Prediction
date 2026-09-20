@@ -2,8 +2,8 @@
 Operator-facing account management: create and configure customer accounts, their logins and status.
 
 Every route here requires an operator session (see backend/api/deps.py); a customer token is refused the
-same way a wrong password would be. Import (upload/mapping/dry-run) is not exposed yet: it stays on the
-classic console while it is rebuilt.
+same way a wrong password would be. Upload, mapping and dry-run live in admin_imports.py; the jobs and
+retrain routes below are shared by both the import wizard and the plain "retrain now" button.
 """
 from __future__ import annotations
 

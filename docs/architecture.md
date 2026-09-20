@@ -6,7 +6,7 @@
  browser ──► web dashboard (Next.js)   ──/api──► backend.api (FastAPI) ─┐   web/        + backend/api
  browser ──► admin console (Next.js)  ──/api──► backend.api (FastAPI) ─┤   web-admin/  + backend/api
  browser ──► classic dashboard (Streamlit) ──────────────────────────────┤   frontend/   (being retired)
- browser ──► classic admin console (Streamlit, import wizard only) ──────┤   frontend/
+ browser ──► classic admin console (Streamlit) ──────────────────────────┤   frontend/   (superseded, not yet removed)
                                                                           ▼
                                    backend.services      ◄── the only door into the backend
                                           │
@@ -121,10 +121,12 @@ Views receive plain data (DataFrames, dicts) and never a session or an ORM objec
 
 ## Admin console (Next.js)
 
-`web-admin/` is a second, separate Next.js app: accounts, settings, logins, access (suspend/reactivate), retrain
-and the audit log, all through `backend/api/routers/admin_*.py` (its own `/api/admin/*` surface, also calling only
-`backend.services`). It is operator-only, English-only (the classic console never had a language toggle either),
-and has no charts, so it does not depend on Recharts.
+`web-admin/` is a second, separate Next.js app: accounts, settings, logins, access (suspend/reactivate), import,
+retrain and the audit log, all through `backend/api/routers/admin_*.py` (its own `/api/admin/*` surface, also
+calling only `backend.services`). It is operator-only, English-only (the classic console never had a language
+toggle either), and has no charts, so it does not depend on Recharts. It now has full parity with the classic
+console; the classic one (`frontend/admin_console`) stays available only until the new one has run in production
+for a while.
 
 * **A second app, not a second route in `web/`.** It ships as its own container (`admin-frontend`, port 3002),
   matching the classic console's rule: never publish this port, reach it over a VPN or SSH tunnel.
@@ -133,6 +135,9 @@ and has no charts, so it does not depend on Recharts.
 * **One-time credentials.** A generated password (new account, new login, a reset) is handed to the page exactly
   once, across the redirect, via `sessionStorage` (`web-admin/src/lib/flash.ts`) — never state that could survive a
   re-render or reach the server.
-* **Import is not ported yet.** Uploading files, mapping columns, dry-running and running the import is the most
-  complex screen in the product (a multi-file wizard with saved-mapping recall and background-job polling); it
-  stays on the classic console (`frontend/admin_console`) meanwhile, and the new console's Import tab links to it.
+* **Import wizard** (`backend/api/routers/admin_imports.py`, `web-admin/src/features/accounts/import/`): upload
+  per table, an auto-proposed column mapping the operator can override (with unit-conversion presets and saved-
+  mapping recall from the last import), a dry run on a sample, then the same background job and progress polling
+  the retrain button uses. The job id is a client-generated UUID that doubles as the upload folder key, so an
+  abandoned wizard session can never collide with a later one. The field catalog, table order and unit-conversion
+  constants come from `GET /api/admin/imports/schema` — the wizard has no schema knowledge baked into its own code.

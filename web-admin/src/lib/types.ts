@@ -78,6 +78,57 @@ export interface JobStatus {
   report: { loaded?: Record<string, number>; notes?: string[] } | null;
 }
 
+export type TableName = "vehicles" | "dealers" | "customers" | "external_factors" | "sales" | "inventory";
+
+export interface FieldDef {
+  name: string;
+  required: boolean;
+  derived: boolean;
+}
+
+export interface ImportSchema {
+  load_order: TableName[];
+  required_tables: TableName[];
+  tables: Record<TableName, FieldDef[]>;
+  constants: {
+    mi_to_km: number;
+    sqft_to_sqm: number;
+    hp_to_kw: number;
+    ps_to_kw: number;
+    gal_to_l: number;
+    l100_from_mpg: number;
+  };
+}
+
+export type Transform = { op: "mul" | "inv"; k: number } | null;
+
+export interface MappingChoice {
+  source: string;
+  transform: Transform;
+  confidence: "exact" | "converted" | "alias" | "fuzzy";
+}
+
+export interface MappingProposal {
+  columns: string[];
+  proposal: Record<string, MappingChoice>;
+  missing_required: string[];
+  imperial_hint: boolean;
+  saved: Record<string, { source: string; transform: Transform }> | null;
+}
+
+export interface TableMapping {
+  columns: Record<string, { source: string; transform: Transform }>;
+  extras: true;
+}
+
+export interface DryRunReport {
+  table: string;
+  rows_in: number;
+  rows_out: number;
+  coercion_failures: Record<string, number>;
+  warnings: string[];
+}
+
 export interface AuditEvent {
   at: string;
   actor: string;

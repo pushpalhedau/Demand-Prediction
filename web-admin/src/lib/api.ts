@@ -74,3 +74,14 @@ export async function api<T>(
   if (!response.ok) throw await failure(response);
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
+
+/** Uploads one file as multipart/form-data. No Content-Type header: the browser sets the boundary itself. */
+export async function apiUpload(path: string, file: File): Promise<void> {
+  const body = new FormData();
+  body.append("file", file);
+  const post = () =>
+    fetch(path, { method: "POST", credentials: "same-origin", headers: { "X-Requested-With": "predictax" }, body });
+  let response = await post();
+  if (response.status === 401 && (await refreshSession())) response = await post();
+  if (!response.ok) throw await failure(response);
+}

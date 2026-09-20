@@ -3,6 +3,7 @@ The admin (operator) HTTP API end to end: real logins against the local auth ser
     docker compose up -d db auth
 """
 import os
+import time
 import uuid
 
 import pytest
@@ -150,3 +151,62 @@ def test_retrain_starts_a_trackable_job(operator_client: TestClient, account):
     status = operator_client.get(f"/api/admin/accounts/{account['slug']}/jobs/{job_id}")
     assert status.status_code == 200 and status.json()["status"] in ("queued", "running", "failed", "succeeded")
     assert operator_client.get(f"/api/admin/accounts/{account['slug']}/jobs/{uuid.uuid4()}").status_code == 404
+
+
+def test_import_schema_lists_the_field_catalog(operator_client: TestClient):
+    body = operator_client.get("/api/admin/imports/schema").json()
+    assert "sales" in body["load_order"] and "sales" in body["required_tables"]
+    assert any(f["name"] == "sale_date" for f in body["tables"]["sales"])
+
+
+def test_import_wizard_full_flow(operator_client: TestClient, account):
+    """Upload -> mapping proposal -> dry-run -> start -> poll to completion, exactly what the wizard UI drives."""
+    slug = account["slug"]
+    job_id = str(uuid.uuid4())
+    csv_body = b"sale_date,selling_price\n2025-01-01,100\n2025-01-02,200\n"
+
+    up = operator_client.post(f"/api/admin/accounts/{slug}/imports/{job_id}/files/sales",
+                              files={"file": ("sales.csv", csv_body, "text/csv")}, headers=CSRF)
+    assert up.status_code == 204, up.text
+
+    mapping_resp = operator_client.get(f"/api/admin/accounts/{slug}/imports/{job_id}/sales/mapping")
+    assert mapping_resp.status_code == 200, mapping_resp.text
+    proposal = mapping_resp.json()
+    assert proposal["columns"] == ["sale_date", "selling_price"]
+    assert proposal["proposal"]["sale_date"]["source"] == "sale_date"
+    assert proposal["saved"] is None
+
+    mapping = {"columns": {name: {"source": c["source"], "transform": c["transform"]}
+                            for name, c in proposal["proposal"].items()}, "extras": True}
+
+    dry = operator_client.post(f"/api/admin/accounts/{slug}/imports/{job_id}/sales/dry-run",
+                               json={"mapping": mapping, "units": {"distance": "km"}, "dayfirst": False, "decimal": "."},
+                               headers=CSRF)
+    assert dry.status_code == 200, dry.text
+    assert dry.json()["rows_out"] == 2
+
+    start = operator_client.post(f"/api/admin/accounts/{slug}/imports/{job_id}/start",
+                                 json={"tables": ["sales"], "mappings": {"sales": mapping}, "units": {"distance": "km"},
+                                       "dayfirst": False, "decimal": ".", "replace": True, "train": False},
+                                 headers=CSRF)
+    assert start.status_code == 202, start.text
+    assert start.json()["job_id"] == job_id
+
+    job = None
+    for _ in range(30):
+        job = operator_client.get(f"/api/admin/accounts/{slug}/jobs/{job_id}").json()
+        if job["status"] not in ("queued", "running"):
+            break
+        time.sleep(0.5)
+    assert job["status"] == "succeeded", job
+
+    assert operator_client.post(f"/api/admin/accounts/{slug}/imports/{job_id}/done", headers=CSRF).status_code == 204
+    detail = operator_client.get(f"/api/admin/accounts/{slug}").json()
+    assert detail["summary"]["sales"] == 2
+
+
+def test_import_wizard_rejects_starting_without_an_upload(operator_client: TestClient, account):
+    job_id = str(uuid.uuid4())
+    r = operator_client.post(f"/api/admin/accounts/{account['slug']}/imports/{job_id}/start",
+                             json={"tables": ["sales"], "mappings": {}, "replace": True, "train": False}, headers=CSRF)
+    assert r.status_code == 422

@@ -20,6 +20,7 @@ from backend.ingestion.catalog import (
     LOAD_ORDER,
     MI_TO_KM,
     PS_TO_KW,
+    REQUIRED_TABLES,
     SQFT_TO_SQM,
     TABLES,
 )
@@ -29,8 +30,9 @@ from backend.tenancy import audit
 from backend.tenancy.capabilities import get_capabilities
 
 __all__ = ["AUTO_CONFIDENCE", "GAL_TO_L", "HP_TO_KW", "IngestError", "L100_FROM_MPG", "LOAD_ORDER", "MI_TO_KM",
-           "PS_TO_KW", "SQFT_TO_SQM", "TABLES", "dry_run", "job_status", "propose", "publish_data_changes",
-           "recent_jobs", "read_header", "save_upload", "saved_mapping", "start_import", "start_retrain"]
+           "PS_TO_KW", "SQFT_TO_SQM", "TABLES", "dry_run", "job_status", "mapping_proposal", "propose",
+           "publish_data_changes", "recent_jobs", "read_header", "save_upload", "saved_mapping", "schema",
+           "start_import", "start_retrain", "upload_path"]
 
 PREVIEW_ROWS = 3000
 
@@ -45,6 +47,10 @@ def save_upload(tenant_id, job_id: str, table: str, content: bytes | memoryview)
     return path
 
 
+def upload_path(tenant_id, job_id: str, table: str) -> Path:
+    return jobs.job_dir(tenant_id, job_id) / f"{table}.csv"
+
+
 def read_header(path: str) -> list[str]:
     return list(pd.read_csv(path, nrows=1, dtype=str).columns)
 
@@ -55,6 +61,40 @@ def propose(table: str, columns: list[str]) -> Proposal:
 
 def saved_mapping(tenant_id, table: str) -> dict | None:
     return jobs.load_saved_mapping(tenant_id, table)
+
+
+def mapping_proposal(tenant_id, job_id: str, table: str) -> dict:
+    """Columns found in the uploaded file, an auto-proposed mapping, and a compatible saved mapping if there is one."""
+    path = upload_path(tenant_id, job_id, table)
+    if not path.exists():
+        raise IngestError(f"{table}: upload the file first.")
+    cols = read_header(str(path))
+    prop = propose(table, cols)
+    saved = saved_mapping(tenant_id, table)
+    saved_columns = saved["columns"] if saved and all(c["source"] in cols for c in saved["columns"].values()) else None
+    return {
+        "columns": cols,
+        "proposal": {name: choice.to_json() for name, choice in prop.choices.items()},
+        "missing_required": prop.missing_required,
+        "imperial_hint": prop.imperial_hint,
+        "saved": saved_columns,
+    }
+
+
+def schema() -> dict:
+    """Static catalog data the import wizard renders from: table order, fields, unit-conversion constants."""
+    return {
+        "load_order": list(LOAD_ORDER),
+        "required_tables": list(REQUIRED_TABLES),
+        "tables": {
+            table: [{"name": f.name, "required": f.required, "derived": f.derived} for f in fields]
+            for table, fields in TABLES.items()
+        },
+        "constants": {
+            "mi_to_km": MI_TO_KM, "sqft_to_sqm": SQFT_TO_SQM, "hp_to_kw": HP_TO_KW,
+            "ps_to_kw": PS_TO_KW, "gal_to_l": GAL_TO_L, "l100_from_mpg": L100_FROM_MPG,
+        },
+    }
 
 
 def dry_run(table: str, path: str, mapping: dict, units: dict, dayfirst: bool, decimal: str) -> dict:

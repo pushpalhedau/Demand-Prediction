@@ -18,6 +18,7 @@ from backend.api.routers import (
     admin_accounts,
     admin_audit,
     admin_auth,
+    admin_imports,
     auth,
     comparison,
     customers,
@@ -77,7 +78,7 @@ def create_app() -> FastAPI:
 
     for router in (auth.router, workspace.router, overview.router, regional.router, comparison.router,
                    forecasting.router, customers.router, inventory.router, sentiment.router,
-                   admin_auth.router, admin_accounts.router, admin_audit.router):
+                   admin_auth.router, admin_accounts.router, admin_audit.router, admin_imports.router):
         app.include_router(router, prefix="/api")
     return app
 

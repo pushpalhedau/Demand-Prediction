@@ -35,18 +35,18 @@ cd web-admin && npm install && npm run dev                      # admin console 
 python -m backend.cli create-operator --email you@example.com     # prints a generated password once
 ```
 
-Sign in at the admin console (port 3002) for accounts, settings, logins, access and the audit log. **Import data**
-is not ported yet: use the classic console (port 8502) for that step, then return to port 3002 for everything else.
-To change an operator's password, use the auth server admin API or delete and recreate the login. Every sign-in and
-action is in **Audit log**.
+Sign in at the admin console (port 3002) for accounts, settings, logins, access, import and the audit log. The
+classic console (port 8502) still works and shares the same accounts, but is kept only until the new one has run
+in production for a while. To change an operator's password, use the auth server admin API or delete and recreate
+the login. Every sign-in and action is in **Audit log**.
 
 ## Onboard a customer
 
 1. **Accounts → Create a new account** (port 3002). Name, currency, language, what they call regions ("State",
    "Emirate"…), country for local news, and their first admin's email. The password is shown once: send it over a
    secure channel.
-2. On the **classic console** (port 8502), open the account → **Import data**. Upload their CSVs (only the sales
-   file is required; the templates list the standard columns, but their own names are matched automatically).
+2. Open the account → **Import data**. Upload their CSVs (only the sales file is required; the templates list the
+   standard columns, but their own names are matched automatically).
 3. Check the column matching, especially anything marked as a guess, the distance unit (km/miles), date order and
    decimal separator. **Check the data** dry-runs a sample.
 4. **Import and train.** Watch progress; the account's dashboards go live when it finishes. A failed import changes
