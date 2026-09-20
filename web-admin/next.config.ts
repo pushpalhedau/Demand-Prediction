@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  // CSV imports are large. Next's proxy drops any request body over 10 MB by default, which broke uploads of
+  // customers/sales files; allow up to the API's own 500 MB limit (plus multipart overhead).
+  experimental: { proxyClientMaxBodySize: "520mb" },
   agentRules: false,
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];
