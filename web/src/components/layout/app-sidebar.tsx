@@ -64,9 +64,7 @@ export function AppSidebar({ me }: { me: Me }) {
       <SidebarHeader className="h-14 justify-center border-b px-4 group-data-[collapsible=icon]:px-2">
         <Link href="/" className="flex items-center" aria-label="PredictaX">
           <Image src="/logo.png" alt="PredictaX" width={132} height={33} priority className="h-auto w-[132px] group-data-[collapsible=icon]:hidden" />
-          <span className="bg-primary text-primary-foreground hidden size-8 items-center justify-center rounded-md text-sm font-bold group-data-[collapsible=icon]:flex">
-            P
-          </span>
+          <Image src="/logo-mark.png" alt="PredictaX" width={32} height={32} priority className="hidden size-8 group-data-[collapsible=icon]:block" />
         </Link>
       </SidebarHeader>
 

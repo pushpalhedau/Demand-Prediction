@@ -82,6 +82,7 @@ pip-audit -r requirements/lock.txt
 
 ## Documentation
 
+- [`docs/developer-guide.md`](docs/developer-guide.md) — **start here**: the whole system in order (stack and why, data flow, security, running, recipes)
 - [`docs/architecture.md`](docs/architecture.md) — layers, request flow, tenancy model, data flow
 - [`docs/security.md`](docs/security.md) — threat model, controls, production checklist, known limits
 - [`docs/operations.md`](docs/operations.md) — runbook: onboarding, retraining, secrets, backups, troubleshooting

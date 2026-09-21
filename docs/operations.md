@@ -62,7 +62,7 @@ All on the new admin console (port 3002):
   release that changes the models), run inside the stack: `docker compose exec worker python -m backend.cli train --all`.
   Models live in the `models` volume, so run it in a container, not from a local shell.
 * **Logins**: add users (Manage = can see everything; View only = dashboards), reset a password.
-* **Access → Suspend** blocks every login for the account; data is kept. Users are signed out within 5 minutes.
+* **Access → Suspend** blocks every login for the account; data is kept. Users are locked out within about a minute.
 * **Access → Delete this account** removes the account, logins, data, uploads and models for good (type its short id
   to confirm). Take a backup first if there is any doubt.
 

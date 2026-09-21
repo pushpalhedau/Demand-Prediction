@@ -24,7 +24,7 @@
 * Customer and operator logins are different kinds; each app rejects the other's tokens.
 * Tenant and role come from `app_metadata`, which users cannot edit (tested: editing `user_metadata` changes nothing).
 * Sign-in is throttled per account on the server (5 failures → 15-minute lockout, shared across instances via Redis); the auth server rate-limits too.
-* Tokens are verified on every refresh; a suspended account is signed out within 5 minutes.
+* Tokens are verified on every refresh; a suspended account is locked out within about a minute.
 * Operators are signed out after 30 minutes idle; passwords chosen by a person must be ≥ 10 characters.
 * Deleting an account is irreversible and needs the account's short id typed twice (UI and API); it removes the
   logins, every row, uploads and models, and the audit trail keeps a record.
