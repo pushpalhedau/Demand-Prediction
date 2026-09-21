@@ -42,3 +42,7 @@ logincreds.txt
 
 Accounts-Datasets/
 DEPLOYMENT-EC2.md
+DEPLOYMENT-EC2-MICRO.md
+.deploy-dist/
+models-cloud/
+data/uploads-cloud/

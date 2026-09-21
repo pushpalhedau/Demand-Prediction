@@ -76,17 +76,33 @@ def _jwks_client() -> "jwt.PyJWKClient":
     return jwt.PyJWKClient(f"{_url()}/.well-known/jwks.json", cache_keys=True)
 
 
+_ASYMMETRIC_ALGORITHMS = ["RS256", "ES256"]
+
+
 def verify_access_token(token: str) -> dict:
-    """Validate signature, expiry and audience. HS256 shared secret (legacy projects) or JWKS (asymmetric keys)."""
+    """
+    Validate signature, expiry and audience.
+
+    The token's own `alg` header only chooses WHICH verification path runs; each path then accepts nothing but its own
+    algorithms, so a token can never downgrade itself (for example an HS256 token "signed" with a public key, or
+    alg=none). HS256 tokens (self-hosted GoTrue, legacy Supabase projects) are checked against the shared secret.
+    RS256/ES256 tokens (Supabase projects using asymmetric signing keys) are checked against the auth server's
+    published public keys (JWKS), so no signing secret is needed for them.
+    """
     try:
         # `require` matters: PyJWT does not insist on an expiry by default, so a token minted
         # without one would otherwise be accepted forever.
         options = {"require": ["exp", "sub", "aud"]}
-        secret = get_settings().supabase_jwt_secret
-        if secret:
+        algorithm = jwt.get_unverified_header(token).get("alg")
+        if algorithm == "HS256":
+            secret = get_settings().supabase_jwt_secret
+            if not secret:
+                raise jwt.InvalidTokenError("HS256 token but no shared secret is configured")
             return jwt.decode(token, secret, algorithms=["HS256"], audience="authenticated", options=options)
-        key = _jwks_client().get_signing_key_from_jwt(token).key
-        return jwt.decode(token, key, algorithms=["RS256", "ES256"], audience="authenticated", options=options)
+        if algorithm in _ASYMMETRIC_ALGORITHMS:
+            key = _jwks_client().get_signing_key_from_jwt(token).key
+            return jwt.decode(token, key, algorithms=_ASYMMETRIC_ALGORITHMS, audience="authenticated", options=options)
+        raise jwt.InvalidAlgorithmError(f"unsupported token algorithm: {algorithm}")
     except jwt.ExpiredSignatureError:
         raise AuthError("Your session has expired. Please sign in again.") from None
     except jwt.PyJWTError:
