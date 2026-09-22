@@ -13,6 +13,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # The /api proxy target is fixed when the image is built; override with --build-arg for another topology.
 ARG API_URL=http://api:8000
 ENV API_URL=$API_URL
+# Largest request body the /api proxy accepts (admin CSV uploads). Lower it for a small server: bodies are buffered in memory.
+ARG PROXY_BODY_LIMIT=520mb
+ENV PROXY_BODY_LIMIT=$PROXY_BODY_LIMIT
 RUN npm run build
 
 # ── runtime: only the standalone server, non-root, read-only friendly ──────────────────────────────

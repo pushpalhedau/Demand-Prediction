@@ -28,12 +28,13 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await api("/api/auth/login", {
+      const result = await api<{ kind: "customer" | "operator" }>("/api/auth/login", {
         method: "POST",
         body: { email: String(data.get("email") ?? ""), password: String(data.get("password") ?? "") },
       });
-      await queryClient.invalidateQueries({ queryKey: ["me"] });
-      router.replace("/");
+      // The account (not the form) decides: operators go to the admin console, everyone else to their dashboard.
+      await queryClient.invalidateQueries({ queryKey: [result.kind === "operator" ? "admin-me" : "me"] });
+      router.replace(result.kind === "operator" ? "/admin" : "/");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not reach the server. Please try again.");
       setBusy(false);
@@ -64,7 +65,7 @@ export default function LoginPage() {
                 <ShieldCheck className="size-3.5" /> Secure workspace
               </span>
               <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
-              <p className="text-sm text-white/60">Sign in with the credentials provided for your organisation.</p>
+              <p className="text-sm text-white/60">Sign in with the credentials you were given.</p>
             </div>
 
             <form onSubmit={submit} className="mt-8 space-y-5" noValidate>

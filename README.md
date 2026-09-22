@@ -8,8 +8,8 @@ Two web apps:
 
 | App | Who | What | Default URL |
 |---|---|---|---|
-| **Dashboard** (`web/`, Next.js + FastAPI) | dealer-group staff | the new customer dashboard, light and dark themes, all seven tabs | http://localhost:3000 |
-| **Admin console** (`web-admin/`, Next.js + FastAPI) | PredictaX operators only | accounts, settings, logins, access, import, retrain, audit log | http://localhost:3002 |
+| **Web app** (`web/`, Next.js + FastAPI) | everyone, one login page | customers land on their dashboard (light and dark themes, all seven tabs); PredictaX operators land on the admin console at `/admin` (accounts, settings, logins, access, import, retrain, audit log). The account decides, not the form. | http://localhost:3000 |
+| Standalone admin console (`web-admin/`) | operators only | the previous, separate copy of the console. It still builds and works on its own port, but the same console is now part of `web/`. | http://localhost:3002 |
 
 ## Repository layout
 
@@ -53,11 +53,10 @@ cp .env.example .env
 docker compose up -d db auth                            # Postgres + auth server
 python -m backend.cli init-db                           # tables, row-level security, grants
 
-# an operator login for the admin console, then start the API and the two Next.js apps
+# an operator login for the admin console, then start the API and the web app
 python -m backend.cli create-operator --email you@example.com
 python -m uvicorn backend.api.app:app --port 8000
-(cd web && npm install && npm run dev)                                   # http://localhost:3000
-(cd web-admin && npm install && npm run dev)                             # http://localhost:3002
+(cd web && npm install && npm run dev)                                   # http://localhost:3000 (sign in as the operator: you land on /admin)
 ```
 
 Full stack in containers (adds Redis, a background worker, the API and both web apps):
@@ -66,7 +65,7 @@ Full stack in containers (adds Redis, a background worker, the API and both web 
 docker compose up -d --build
 ```
 
-Onboarding a customer: on the admin console (3002), **Accounts → Create a new account**, open it, **Import data**,
+Onboarding a customer: sign in as the operator (the console is at `/admin`), **Accounts → Create a new account**, open it, **Import data**,
 upload their CSVs, confirm the column matching, **Import and train**. See `docs/operations.md`.
 
 ## Tests

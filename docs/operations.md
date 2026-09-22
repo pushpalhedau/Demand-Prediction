@@ -35,7 +35,7 @@ cd web-admin && npm install && npm run dev                      # admin console 
 python -m backend.cli create-operator --email you@example.com     # prints a generated password once
 ```
 
-Sign in at the admin console (port 3002) for accounts, settings, logins, access, import and the audit log. To change an operator's password, use the auth server admin API or delete and recreate
+Sign in on the normal login page (http://localhost:3000/login) with an operator account: you land on the admin console at `/admin` (the standalone `web-admin/` copy on port 3002 also still works) for accounts, settings, logins, access, import and the audit log. To change an operator's password, use the auth server admin API or delete and recreate
 the login. Every sign-in and action is in **Audit log**.
 
 ## Onboard a customer

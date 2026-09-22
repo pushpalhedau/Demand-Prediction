@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,7 +52,9 @@ function saveLang(lang: Lang): void {
 /** UI language: the user's saved choice, else their organisation's default, else English. */
 function PresentationProvider({ children }: { children: ReactNode }) {
   const saved = useSyncExternalStore(subscribe, storedLang, () => null);
-  const { data } = useMe();
+  // Operators have no organisation: do not probe for a customer session on the admin console.
+  const onAdmin = usePathname().startsWith("/admin");
+  const { data } = useMe(!onAdmin);
   const lang: Lang = saved ?? data?.organisation.language ?? "en";
   // Set during render (not in an effect) so requests fired by child effects already carry the right language.
   setApiLanguage(lang);
@@ -99,8 +102,8 @@ export function usePresentation(): Presentation {
   return value;
 }
 
-export function useMe() {
-  return useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/api/me"), staleTime: 5 * 60_000 });
+export function useMe(enabled = true) {
+  return useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/api/me"), staleTime: 5 * 60_000, enabled });
 }
 
 /** Number/money/percent formatters bound to the signed-in organisation and the UI language. */

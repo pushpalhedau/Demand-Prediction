@@ -4,6 +4,10 @@ import type { NextConfig } from "next";
 // and session cookies stay first-party (SameSite=Strict).
 const API_URL = process.env.API_URL ?? "http://localhost:8000";
 const isDev = process.env.NODE_ENV !== "production";
+// The admin console (served from this app under /admin) uploads CSV files through the /api proxy, and Next drops any proxied
+// request body over 10 MB by default. The proxy buffers the body in memory, so a small server should build with a lower limit
+// (PROXY_BODY_LIMIT=40mb) and load big files with the command line instead; the API enforces MAX_UPLOAD_MB either way.
+const PROXY_BODY_LIMIT = (process.env.PROXY_BODY_LIMIT ?? "520mb") as NonNullable<NextConfig["experimental"]>["proxyClientMaxBodySize"];
 
 const csp = [
   "default-src 'self'",
@@ -23,6 +27,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  experimental: { proxyClientMaxBodySize: PROXY_BODY_LIMIT },
   agentRules: false,
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];

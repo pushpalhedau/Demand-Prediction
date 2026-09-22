@@ -3,8 +3,8 @@
 ## Shape of the system
 
 ```
- browser ──► web dashboard (Next.js)   ──/api──► backend.api (FastAPI) ─┐   web/        + backend/api
- browser ──► admin console (Next.js)  ──/api──► backend.api (FastAPI) ─┤   web-admin/  + backend/api
+ browser ──► web app (Next.js): dashboard + /admin ──/api──► backend.api (FastAPI) ─┐   web/  + backend/api
+ browser ──► standalone admin console (Next.js)    ──/api──► backend.api (FastAPI) ─┤   web-admin/  (optional, private)
                                                                           ▼
                                    backend.services      ◄── the only door into the backend
                                           │
@@ -122,13 +122,18 @@ afterwards. Routers receive plain data (DataFrames, dicts) and never a session o
 
 ## Admin console (Next.js)
 
-`web-admin/` is a second, separate Next.js app: accounts, settings, logins, access (suspend/reactivate), import,
+The console lives in `web/src/admin/` and is served by the web app under `/admin` (routes in `web/src/app/admin/`). `web-admin/` is the
+previous standalone build of the same console and still works on its own port. It offers: accounts, settings, logins, access (suspend/reactivate), import,
 retrain and the audit log, all through `backend/api/routers/admin_*.py` (its own `/api/admin/*` surface, also
 calling only `backend.services`). It is operator-only, English-only, and has no charts, so it does not depend on Recharts. It replaced the original Streamlit console,
 which has been removed.
 
-* **A second app, not a second route in `web/`.** It ships as its own container (`admin-frontend`, port 3002),
-  never publish this port, reach it over a VPN or SSH tunnel.
+* **One login page for both kinds of user.** `POST /api/auth/login` checks the password once, then reads the account's `app_metadata`
+  (writable only with the service-role key) to decide: `platform_admin` with no tenant is an operator (admin cookies, redirect to `/admin`);
+  anything else must belong to an active tenant (customer cookies, redirect to `/`). `backend/services/identity.py: sign_in`. The two
+  cookie namespaces stay separate and signing in as one kind clears the other, so a browser never holds both.
+* **Publishing the web app publishes the console.** Serve the standalone `web-admin/` build privately instead (its own container,
+  `admin-frontend`, port 3002, reached over a VPN or SSH tunnel) if you need the console off the internet.
 * **Idle sign-out.** Operators are signed out after 30 minutes idle; `web-admin/src/lib/idle.ts`
   enforces that in the browser (a passive activity listener, checked every 30s).
 * **One-time credentials.** A generated password (new account, new login, a reset) is handed to the page exactly

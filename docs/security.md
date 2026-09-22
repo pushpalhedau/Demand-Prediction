@@ -28,8 +28,12 @@
 * Operators are signed out after 30 minutes idle; passwords chosen by a person must be ≥ 10 characters.
 * Deleting an account is irreversible and needs the account's short id typed twice (UI and API); it removes the
   logins, every row, uploads and models, and the audit trail keeps a record.
-* The customer app and the admin console use different session-cookie names and different FastAPI dependencies
-  (`backend/api/deps.py`), so a browser with both open at once can never mix the two up.
+* Customers and operators sign in on the same page (`POST /api/auth/login`), but the account decides which session it gets: the
+  kind is read from `app_metadata`, which only the service-role key can write, never from the form. Operator sessions and customer
+  sessions use different cookie names and different FastAPI dependencies (`backend/api/deps.py`); signing in as one kind clears the
+  other's cookies, so a browser is never left holding both, an operator has no customer dashboard, and a customer token is refused
+  by every `/api/admin` route. A failed sign-in gives the same message for every kind of account and is not audited (an
+  unauthenticated caller must not be able to fill the audit table); operator sign-ins that succeed are.
 
 **Application**
 * React escapes everything it renders and no page injects raw HTML; news links must be plain http(s) (`web/src/lib/safe.ts`).
@@ -56,7 +60,10 @@
 3. Put a TLS-terminating reverse proxy in front of the customer dashboard. Add: HSTS, `X-Content-Type-Options: nosniff`,
    `Referrer-Policy: same-origin`, `Content-Security-Policy: frame-ancestors 'none'` (the API already sends nosniff,
    no-referrer-style and frame-deny headers on its own responses).
-4. Do **not** publish the admin console. Reach it over a VPN or SSH tunnel.
+4. The admin console is part of the web app (`/admin`), so publishing the app publishes the console. Before you do: **add operator MFA**
+   (Supabase Auth supports TOTP; the app has no enrolment screen yet), give operators long random passwords, and know that the
+   sign-in limiter is per address, not per IP, so a known address can be locked out by someone failing five times. If you cannot accept
+   that, keep the console private: run the standalone `web-admin/` build on an internal port and reach it over a VPN or SSH tunnel.
 5. Configure SMTP on the auth server and set `GOTRUE_MAILER_AUTOCONFIRM` to `false` so password reset and
    invitation emails work.
 6. Back up Postgres (it holds data, users and the audit trail) and the `models`/`uploads` volumes; test a restore.

@@ -45,7 +45,7 @@ forecasting, store performance, comparisons, customer intelligence, inventory an
 | Kind | Who | Belongs to | Uses |
 |---|---|---|---|
 | Customer user | dealer-group staff | exactly one tenant | the customer dashboard (`web/`, port 3000) |
-| Operator | PredictaX staff | no tenant (`platform_admin`) | the admin console (`web-admin/`, port 3002) |
+| Operator | PredictaX staff | no tenant (`platform_admin`) | the admin console, at `/admin` in the same web app (`web/src/admin/`); the older standalone `web-admin/` (port 3002) still works. One login page for both kinds: the account's `app_metadata` decides where you land |
 
 **Onboarding is operator-run, on purpose.** Customers cannot upload data or edit settings. An operator creates the account,
 imports the customer's CSV exports, checks the column mapping, and lets the platform train the models. This gives quality control
