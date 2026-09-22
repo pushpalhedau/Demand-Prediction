@@ -21,13 +21,14 @@ from backend.db.models import Tenant
 from backend.db.session import session_scope
 from backend.tenancy import audit
 
-__all__ = ["AuthError", "CustomerSession", "Identity", "Operator", "OperatorSession", "auth_configured", "customer_from_access_token",
-           "load_active_tenant", "operator_from_access_token", "refresh_customer", "refresh_operator", "sign_in_customer",
-           "sign_in_operator", "tenant_is_active"]
+__all__ = ["AuthError", "CustomerSession", "Identity", "Operator", "OperatorSession", "SignedIn", "auth_configured",
+           "customer_from_access_token", "load_active_tenant", "operator_from_access_token", "refresh_customer",
+           "refresh_operator", "sign_in", "sign_in_customer", "sign_in_operator", "tenant_is_active"]
 
 
 _customer_throttle = make_login_throttle("customer")
 _operator_throttle = make_login_throttle("operator")
+_login_throttle = make_login_throttle("login")           # the shared sign-in form, where the kind is not known up front
 
 
 @dataclass(frozen=True)
@@ -72,18 +73,24 @@ def tenant_is_active(tenant_id) -> bool:
     return True
 
 
-def _customer_session(tokens: dict) -> CustomerSession:
-    claims = auth_client.verify_access_token(tokens["access_token"])
+def _customer_session_from(tokens: dict, claims: dict) -> CustomerSession:
     identity = auth_client.identity_from_claims(claims)
     tenant = load_active_tenant(identity.tenant_id)
     return CustomerSession(identity, tenant.name, dict(tenant.config or {}), tokens.get("refresh_token"),
                            int(claims["exp"]), tokens["access_token"])
 
 
-def _operator_session(tokens: dict) -> OperatorSession:
-    claims = auth_client.verify_access_token(tokens["access_token"])
+def _operator_session_from(tokens: dict, claims: dict) -> OperatorSession:
     operator = auth_client.operator_from_claims(claims)
     return OperatorSession(operator, tokens.get("refresh_token"), int(claims["exp"]), tokens["access_token"])
+
+
+def _customer_session(tokens: dict) -> CustomerSession:
+    return _customer_session_from(tokens, auth_client.verify_access_token(tokens["access_token"]))
+
+
+def _operator_session(tokens: dict) -> OperatorSession:
+    return _operator_session_from(tokens, auth_client.verify_access_token(tokens["access_token"]))
 
 
 def _guarded(throttle: LoginThrottle | RedisLoginThrottle, email: str, attempt):
@@ -148,3 +155,43 @@ def sign_in_operator(email: str, password: str) -> OperatorSession:
 
 def refresh_operator(refresh_token: str) -> OperatorSession:
     return _operator_session(auth_client.refresh(refresh_token))
+
+
+@dataclass(frozen=True)
+class SignedIn:
+    """The outcome of the shared sign-in form: exactly one of the two sessions is set."""
+    kind: str                                    # "customer" or "operator"
+    customer: CustomerSession | None = None
+    operator: OperatorSession | None = None
+
+
+def _kind_of(claims: dict) -> str:
+    """
+    Which kind of account signed in. Decided ONLY from `app_metadata`, which can be written with the service-role key
+    alone (a user cannot edit it), never from anything the person typed or chose on the form.
+    """
+    meta = claims.get("app_metadata") or {}
+    if meta.get("role") == "platform_admin":
+        if meta.get("tenant_id"):
+            raise AuthError("This account is not set up correctly. Contact support.")   # an operator must belong to no tenant
+        return "operator"
+    return "customer"
+
+
+def sign_in(email: str, password: str) -> SignedIn:
+    """
+    One sign-in for everyone: the password is checked once, then the account's own (trusted) claims decide whether
+    it is an operator or belongs to a customer organisation. A failed attempt says nothing about which kind the
+    address would have been, so the form cannot be used to discover operator accounts.
+    """
+    def attempt() -> SignedIn:
+        tokens = auth_client.sign_in(email, password)
+        claims = auth_client.verify_access_token(tokens["access_token"])
+        if _kind_of(claims) == "operator":
+            return SignedIn("operator", operator=_operator_session_from(tokens, claims))
+        return SignedIn("customer", customer=_customer_session_from(tokens, claims))
+
+    signed_in = _guarded(_login_throttle, email, attempt)
+    if signed_in.operator is not None:
+        audit.record("operator.sign_in", actor=signed_in.operator.operator.email)
+    return signed_in

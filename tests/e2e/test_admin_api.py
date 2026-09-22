@@ -381,3 +381,53 @@ def test_a_failed_retrain_does_not_leave_the_old_model_scoring_new_data(operator
         assert _lead_form(account)["status"]["state"] == "trained"
     finally:
         _forget_models(account)
+
+
+# ── the shared sign-in form: one login page for operators and customers ─────────────────────────────
+
+def test_the_shared_form_signs_an_operator_into_the_admin_console(operator_login):
+    c = _client()
+    r = c.post("/api/auth/login", json=operator_login, headers=CSRF)
+    assert r.status_code == 200, r.text
+    assert r.json() == {"kind": "operator", "email": operator_login["email"], "organisation": None}
+    assert "px_admin_access" in c.cookies and "px_access" not in c.cookies
+    assert c.get("/api/admin/auth/me").json() == {"email": operator_login["email"]}
+    assert c.get("/api/admin/accounts").status_code == 200
+    assert c.get("/api/me").status_code == 401                  # an operator has no customer dashboard
+
+
+def test_the_shared_form_signs_a_customer_into_their_own_dashboard(account):
+    c = _client()
+    r = c.post("/api/auth/login", json={"email": account["email"], "password": account["password"]}, headers=CSRF)
+    assert r.status_code == 200, r.text
+    assert r.json()["kind"] == "customer" and r.json()["organisation"] == account["name"]
+    assert "px_access" in c.cookies and "px_admin_access" not in c.cookies
+    assert c.get("/api/me").status_code == 200
+    assert c.get("/api/admin/accounts").status_code == 401       # a customer never reaches the admin API
+
+
+def test_signing_in_as_the_other_kind_replaces_the_first_session(operator_login, account):
+    """One browser is never left holding an operator session and a customer session at once."""
+    c = _client()
+    assert c.post("/api/auth/login", json=operator_login, headers=CSRF).json()["kind"] == "operator"
+    assert c.post("/api/auth/login", json={"email": account["email"], "password": account["password"]}, headers=CSRF).json()["kind"] == "customer"
+    assert "px_access" in c.cookies and "px_admin_access" not in c.cookies
+    assert c.get("/api/admin/accounts").status_code == 401
+    assert c.post("/api/auth/login", json=operator_login, headers=CSRF).json()["kind"] == "operator"
+    assert "px_admin_access" in c.cookies and "px_access" not in c.cookies
+    assert c.get("/api/me").status_code == 401
+
+
+def test_the_shared_form_gives_the_same_answer_for_a_wrong_password_and_an_unknown_address(operator_login):
+    wrong = _client().post("/api/auth/login", json={"email": operator_login["email"], "password": "not-the-password"}, headers=CSRF)
+    unknown = _client().post("/api/auth/login", json={"email": f"nobody-{uuid.uuid4().hex[:8]}@example.com", "password": "not-the-password"}, headers=CSRF)
+    assert wrong.status_code == unknown.status_code == 401
+    assert wrong.json() == unknown.json() == {"detail": "Invalid email or password."}
+    assert not wrong.headers.get_list("set-cookie") and not unknown.headers.get_list("set-cookie")
+
+
+def test_the_operator_sign_in_through_the_shared_form_is_audited(operator_login):
+    c = _client()
+    assert c.post("/api/auth/login", json=operator_login, headers=CSRF).status_code == 200
+    events = c.get("/api/admin/audit", params={"limit": 20}).json()
+    assert any(e["actor"] == operator_login["email"] and e["action"] == "operator.sign_in" for e in events)

@@ -25,6 +25,24 @@ def _issue(response: Response, session: identity.CustomerSession) -> dict:
 
 @router.post("/login")
 def login(body: LoginBody, response: Response):
+    """
+    The one sign-in form for customers and operators. The account decides which session it gets (see
+    identity.sign_in), and the browser is never left holding both kinds: signing in as one clears the other's cookies.
+    """
+    signed_in = identity.sign_in(body.email.strip(), body.password)
+    if signed_in.operator is not None:
+        session = signed_in.operator
+        cookies.clear_session(response)
+        cookies.set_admin_session(response, access_token=session.access_token or "", refresh_token=session.refresh_token,
+                                  expires_in=session.expires_at - int(time.time()))
+        return {"kind": "operator", "email": session.operator.email, "organisation": None}
+    cookies.clear_admin_session(response)
+    return {"kind": "customer", **_issue(response, signed_in.customer)}
+
+
+@router.post("/login/customer")
+def login_customer(body: LoginBody, response: Response):
+    """Customer-only sign-in (refuses operator accounts). Kept for clients that must never receive an operator session."""
     return _issue(response, identity.sign_in_customer(body.email.strip(), body.password))
 
 
