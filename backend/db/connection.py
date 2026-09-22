@@ -17,6 +17,17 @@ def _build_engine(url: str):
         pool_size=_settings.db_pool_size,
         max_overflow=_settings.db_max_overflow,
         pool_recycle=1800,
+        connect_args={
+            # Without this, a stalled TCP handshake or a connection pooler that never grants a slot hangs the
+            # driver indefinitely instead of raising. 10s is generous for any reachable Postgres (local or hosted).
+            "connect_timeout": 10,
+            # If a client dies mid-transaction (killed process, dropped connection) before COMMIT/ROLLBACK, Postgres
+            # otherwise leaves that transaction open indefinitely, holding whatever locks it acquired and silently
+            # blocking every later query that touches the same rows. A hosted database's own role often cannot
+            # terminate other sessions (no superuser), so the only recovery was restarting the whole database.
+            # This makes Postgres abort any transaction that sits idle for 60s on its own, instead.
+            "options": "-c idle_in_transaction_session_timeout=60000",
+        },
     )
 
 
