@@ -54,11 +54,12 @@ def admin_headers() -> dict:
     return {"apikey": service, "Authorization": f"Bearer {service}", "Content-Type": "application/json"}
 
 
-# Keys must be the legacy JWT-style ones: the app sends the service key as a Bearer token.
+# Both legacy JWT-style keys (start eyJ...) and the newer sb_publishable_.../sb_secret_... keys work: the app
+# just sends whichever value it is given as the apikey/Bearer header, and Supabase's gateway accepts either
+# family. This is informational only, not a failure.
 for label, key in (("anon key", anon), ("service_role key", service)):
     if key.startswith("sb_"):
-        check(f"{label} is a legacy JWT key", False,
-              "it starts with 'sb_' (new-style key). Use the *Legacy* tab under Project Settings -> API Keys.")
+        print(f"[INFO] {label} is a new-style key (sb_...), not the legacy eyJ... format. Both work.")
 
 email = f"smoke-{uuid.uuid4().hex[:8]}@example.com"
 password = f"Smoke-{uuid.uuid4().hex[:12]}-Aa1"

@@ -29,7 +29,6 @@ backend/                 all logic; knows nothing about any web framework except
   cli.py                 operator command line (python -m backend.cli)
 web/                     Next.js dashboard: src/app (routes), features/, components/, lib/ (api, i18n, format)
 web-admin/               Next.js admin console: accounts, settings, logins, access, import, audit log
-deploy/postgres/         database bootstrap (roles, default-deny)
 data/samples/            demo datasets (Germany)
 docs/                    architecture, security, operations (archive/ = pre-multi-tenant material)
 requirements/            base.txt (ranges), lock.txt (pinned, audited), dev.txt
@@ -43,15 +42,15 @@ backend.
 
 ## Quick start (local development)
 
-Requires Python 3.11+ and Docker.
+No Docker, no local database or auth server: every environment (local dev included) talks to a hosted Supabase
+project (Postgres + Auth). Requires Python 3.11+ and Node 22.
 
 ```bash
 python -m venv venv && venv/Scripts/activate            # Windows; use `source venv/bin/activate` elsewhere
 pip install -r requirements/dev.txt && pip install -e . --no-deps
-cp .env.example .env
+cp .env.example .env                                    # fill in your Supabase project's URL, keys and DB passwords
 
-docker compose up -d db auth                            # Postgres + auth server
-python -m backend.cli init-db                           # tables, row-level security, grants
+python -m backend.cli init-db                           # tables, row-level security, grants (idempotent)
 
 # an operator login for the admin console, then start the API and the web app
 python -m backend.cli create-operator --email you@example.com
@@ -59,20 +58,19 @@ python -m uvicorn backend.api.app:app --port 8000
 (cd web && npm install && npm run dev)                                   # http://localhost:3000 (sign in as the operator: you land on /admin)
 ```
 
-Full stack in containers (adds Redis, a background worker, the API and both web apps):
-
-```bash
-docker compose up -d --build
-```
-
 Onboarding a customer: sign in as the operator (the console is at `/admin`), **Accounts → Create a new account**, open it, **Import data**,
 upload their CSVs, confirm the column matching, **Import and train**. See `docs/operations.md`.
+
+**If your local `.env` points at the same Supabase project other people or a live deployment use**, treat it as a real
+production database, not a sandbox: it holds whatever accounts and data are on it, and there is no separate copy to
+reset. In particular, be careful with `reset-db` (drops every table) and the integration/e2e test suites below, which
+create and delete tenants against whatever `DATABASE_URL`/`ADMIN_DATABASE_URL` your `.env` has configured.
 
 ## Tests
 
 ```bash
-pytest -m unit                    # no services needed
-pytest -m "unit or integration"   # needs: docker compose up -d db
+pytest -m unit                    # no database needed
+pytest -m "unit or integration"   # integration tests need a real Postgres -- see the warning above before running
 pytest                            # everything; tests skip themselves when a service they need is down
 ruff check backend tests
 bandit -r backend -ll

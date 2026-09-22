@@ -1,26 +1,24 @@
 # Operations runbook
 
+No Docker: there is no local database, auth server, queue or worker container. Every environment -- local
+development included -- talks to a hosted Supabase project (Postgres + Auth) over the network, configured entirely
+through `.env` (see `.env.example`). The API and each Next.js app are plain processes (`uvicorn`, `next dev`/`next
+start`, or a systemd unit in production); there is nothing to "start the stack".
+
 ## Start and stop
 
-```bash
-docker compose up -d db auth              # minimum for local development
-docker compose up -d --build              # full stack: + redis, worker, api, frontend (3000), admin-frontend (3002)
-docker compose stop                       # stop, keep data
-docker compose down -v                    # DANGER: also deletes the database, uploads and models
-```
-
-First run on an empty database, and after every schema or model change:
+First run on an empty database, and after every schema change:
 
 ```bash
 python -m backend.cli init-db             # creates tables, applies row-level security and grants (idempotent)
 ```
 
-`reset-db --yes` drops every table (development only).
+`reset-db --yes` drops every table. **This is irreversible and, if your `.env` points at a shared or production
+project, destroys everyone's data** -- there is no separate "the container's volume" to fall back on any more.
 
 ## Run the new dashboard from source (development)
 
 ```bash
-docker compose up -d db auth
 python -m uvicorn backend.api.app:app --reload --port 8000     # API (docs at /api/docs in development)
 cd web && npm install && npm run dev                            # dashboard on http://localhost:3000
 cd web-admin && npm install && npm run dev                      # admin console on http://localhost:3002
@@ -59,8 +57,9 @@ All on the new admin console (port 3002):
 
 * **History → Retrain models now** rebuilds the ML models from the data already loaded.
 * Every import trains the account's models automatically. To retrain every account at once (for example after a
-  release that changes the models), run inside the stack: `docker compose exec worker python -m backend.cli train --all`.
-  Models live in the `models` volume, so run it in a container, not from a local shell.
+  release that changes the models), run `python -m backend.cli train --all` from a shell that has the same `.env`
+  (same `MODEL_DIR`) as wherever the API reads model files from -- training on a machine that saves to a different
+  `MODEL_DIR` than the API reads from will make training look like it worked while the API still sees the old models.
 * **Logins**: add users (Manage = can see everything; View only = dashboards), reset a password.
 * **Access → Suspend** blocks every login for the account; data is kept. Users are locked out within about a minute.
 * **Access → Delete this account** removes the account, logins, data, uploads and models for good (type its short id
@@ -74,16 +73,22 @@ Rotate `SUPABASE_JWT_SECRET`: existing logins stop working and **all saved model
 
 ## Backups and restore
 
-Back up Postgres (`pg_dump -Fc`), and the `uploads` and `models` volumes. Restore into an empty database, run
-`init-db`, then restore the volumes. Models can always be rebuilt with **Retrain**.
+The database is Supabase's to back up (check your plan's backup schedule and retention; the free tier has none).
+Additionally back up the `UPLOAD_DIR` and `MODEL_DIR` directories on whatever disk the API runs from. Restore into
+an empty database, run `init-db`, then restore those two directories. Models can always be rebuilt with **Retrain**
+instead, as long as the imported data is still there.
 
 ## Scaling notes
 
-* Add capacity for imports by scaling workers: `docker compose up -d --scale worker=3`.
+* Imports run in a background thread inside the API process (no separate worker/queue); a very large import can
+  compete with request handling on that same process. If import volume grows, the fix is to run more API instances
+  behind a load balancer, or reintroduce a Redis-backed queue (`REDIS_URL`, already supported in `backend/ingestion/jobs.py`)
+  and a separate worker process.
 * The API and both web apps are stateless (sessions are cookies holding signed tokens), so they scale horizontally
   behind a load balancer with no sticky sessions.
-* Put PgBouncer in front of Postgres in transaction-pooling mode if connections become the limit; tenant scoping is
-  transaction-local, so it is compatible.
+* Use Supabase's session pooler (not a direct connection) if you run more than a handful of API instances against
+  it, and keep each instance's `DB_POOL_SIZE`/`DB_MAX_OVERFLOW` modest -- the pooler's own connection limit is shared
+  across every instance and every other consumer of that project.
 
 ## Troubleshooting
 
@@ -95,18 +100,6 @@ Back up Postgres (`pg_dump -Fc`), and the `uploads` and `models` volumes. Restor
 | Import "failed", nothing changed | read the message; usually a required column is missing or every date is unreadable |
 | `Refusing to start with an insecure production configuration` | `ENVIRONMENT=production` with a development default; fix what it lists |
 | Operator login says invalid credentials | wrong password, or a customer account (customer logins cannot use the console) |
-| "Too many failed attempts" | throttle: wait 15 minutes. To clear it early, delete the `throttle:*` keys in Redis (`redis-cli -a $REDIS_PASSWORD --scan --pattern "throttle:*"`), or restart the app if `REDIS_URL` is unset |
-| Console cannot reach the auth server | `docker compose up -d auth`; check `AUTH_BASE_URL` |
+| "Too many failed attempts" | throttle: wait 15 minutes. If `REDIS_URL` is set, clear it early by deleting the `throttle:*` keys in Redis (`redis-cli -a $REDIS_PASSWORD --scan --pattern "throttle:*"`); if `REDIS_URL` is unset (the default), the throttle is per-process, so restarting the API clears it |
+| Console cannot reach the auth server | check `SUPABASE_URL`/`AUTH_BASE_URL` in `.env` and that the Supabase project is reachable (not paused) |
 | Something failed with a reference id | search the server logs for `[ref=<id>]` |
-
-## Upgrading from a root-owned volume
-
-Containers now run as uid 10001. A `uploads` or `models` volume created by an older, root-run image is not writable
-by it (imports fail with "Read-only file system" or "Permission denied"). Fix once:
-
-```bash
-docker compose run --rm --no-deps -u root --cap-add CHOWN --cap-add DAC_OVERRIDE --entrypoint sh worker \
-  -c "chown -R 10001:10001 /data/uploads"
-```
-
-New volumes need nothing: they inherit ownership from the image.

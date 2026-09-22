@@ -1,6 +1,6 @@
 """
-The admin (operator) HTTP API end to end: real logins against the local auth server, real accounts in Postgres.
-    docker compose up -d db auth
+The admin (operator) HTTP API end to end: real logins against the auth server and real accounts in Postgres
+configured via .env.
 """
 import os
 import time

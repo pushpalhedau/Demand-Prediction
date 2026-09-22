@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 // The browser only ever talks to this app's own origin; /api is proxied to the backend, so the backend needs no CORS
-// and session cookies stay first-party (SameSite=Strict). This console is never published: bind it to localhost
-// only (see docker-compose.yml) and reach it over a VPN or SSH tunnel.
+// and session cookies stay first-party (SameSite=Strict). This standalone console has no operator MFA yet, so keep
+// it off the public internet: bind it to localhost only and reach it over a VPN or SSH tunnel.
 const API_URL = process.env.API_URL ?? "http://localhost:8000";
 const isDev = process.env.NODE_ENV !== "production";
 

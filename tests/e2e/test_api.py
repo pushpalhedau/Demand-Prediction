@@ -1,6 +1,6 @@
 """
-The HTTP API end to end: real logins against the local auth server, real demo tenants in Postgres.
-    docker compose up -d db auth   (and the demo tenants loaded)
+The HTTP API end to end: real logins against the auth server and real demo tenants in Postgres, both
+configured via .env (the demo tenants must already be loaded).
 """
 import os
 import uuid

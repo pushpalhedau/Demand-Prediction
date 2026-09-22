@@ -7,7 +7,7 @@ name = "predictax"
 version = "2.0.0"
 description = "PredictaX: multi-tenant demand intelligence platform for automobile dealer groups"
 requires-python = ">=3.11"
-# Runtime dependencies live in requirements/base.txt so Docker can install them without the source tree.
+# Runtime dependencies live in requirements/base.txt so a deployment can install them without the source tree.
 dynamic = ["dependencies"]
 
 [tool.setuptools.dynamic]

@@ -78,11 +78,11 @@ accounts without effort; the engine underneath would support a self-serve mode l
 
 | Layer | Choice | Version notes |
 |---|---|---|
-| Language (backend) | Python | 3.11 in Docker (runs on newer locally) |
+| Language (backend) | Python | 3.11, pinned in `requirements/lock.txt` (runs on newer locally too) |
 | HTTP API | FastAPI + Pydantic v2, served by Uvicorn | thin shell only |
 | Database | PostgreSQL 16 | Row-Level Security is the isolation mechanism |
 | ORM / SQL | SQLAlchemy 2 + psycopg2 | pandas `read_sql` for analytics |
-| Authentication | GoTrue (open-source Supabase Auth), self-hosted | JWTs, HS256 shared secret |
+| Authentication | Hosted Supabase Auth (GoTrue) | JWTs, HS256 shared secret or JWKS for ES256/RS256 projects |
 | Background jobs | Redis + RQ (thread fallback with no Redis) | one queue, `ingest` |
 | Analytics / ML | pandas, NumPy, scikit-learn, Prophet, XGBoost, SHAP | models trained per tenant |
 | News | Google News RSS + offline scorer (paid LLM optional) | `defusedxml` for parsing |
@@ -91,7 +91,6 @@ accounts without effort; the engine underneath would support a self-serve mode l
 | Client data | TanStack Query 5 | caching and polling |
 | Charts / maps | Recharts (via shadcn charts), `d3-geo` for the map | SVG, theme-coloured |
 | Theming, toasts | next-themes, sonner | light and dark |
-| Containers | Docker + Docker Compose | non-root, read-only |
 | Tests | pytest (Python), Vitest (web), Playwright used ad hoc | see section 14 |
 | Quality / security scans | ruff, bandit, pip-audit, npm audit | run in CI |
 
@@ -103,10 +102,11 @@ while the *database itself* guarantees isolation: a query cannot return another 
 `WHERE`. Section 5 explains the mechanism. The cost is that every table and every code path must respect the tenant scope, which
 the architecture tests and the request-scope design enforce.
 
-**GoTrue (Supabase Auth), self-hosted, instead of writing auth.** Password storage, token issuing, refresh and rate limits are
-security-critical and easy to get wrong. GoTrue is open source (fits "everything free"), runs as one container against the same
-Postgres (its own `auth` schema), and is API-compatible with hosted Supabase, so moving to a hosted project later is an
-environment-variable change. The tenant and role live in `app_metadata`, which users cannot edit (only the service key can).
+**Hosted Supabase (Postgres + Auth) instead of running our own.** Password storage, token issuing, refresh and rate limits are
+security-critical and easy to get wrong, and self-hosting Postgres and GoTrue ourselves means patching, backups and uptime become
+our problem. `auth/client.py` talks to whichever the environment points at (`AUTH_BASE_URL` for a self-hosted GoTrue, `SUPABASE_URL`
+for a hosted project) through the same GoTrue-compatible API either way, so nothing else in the codebase needs to know which one is
+in use. The tenant and role live in `app_metadata`, which users cannot edit (only the service key can).
 
 **FastAPI as a thin shell in front of a services layer.** The web apps must never touch the database. FastAPI gives typed request
 validation (Pydantic), dependency injection (used for authentication and tenant binding), automatic OpenAPI docs in development,
@@ -145,8 +145,10 @@ All are free and run on CPU. Section 9 also records honest findings about their 
 **Free sentiment.** News comes from Google News RSS (no key, no rate-limit trouble) and is scored by an offline rule-based scorer.
 A paid LLM path exists but is off unless explicitly enabled.
 
-**Docker Compose with hardened containers.** One command brings up the whole stack; every container runs as a non-root user with a
-read-only filesystem, all capabilities dropped, and ports bound to `127.0.0.1` only (section 13).
+**No containers.** The API and both web apps are plain processes (`uvicorn`, `next start`/`next dev`, or a systemd unit in
+production); there is no local database or auth server to run at all, since every environment talks to a hosted Supabase project.
+Fewer moving parts to keep patched and running, at the cost of every environment needing real network access and real credentials
+(section 13).
 
 ### 2.3 Decisions that are recorded elsewhere
 
@@ -213,28 +215,24 @@ anything but `backend.services` (and `core`/`api`) or a forbidden third-party mo
 backend/                 all logic (layers above)
 web/                     customer dashboard (Next.js)
 web-admin/               operator console (Next.js)
-deploy/postgres/         database bootstrap (roles, default-deny)
 scripts/                 data generators, dataset builder, backtest, map builder
 data/public/             real public reference series (FRED) used for backtests and demo data
 docs/                    architecture, security, operations, this guide, research/
 requirements/            base.txt (ranges), lock.txt (pinned, audited), dev.txt
 tests/                   unit/, integration/, e2e/
-docker-compose.yml, Dockerfile   the stack and the Python image
 .github/workflows/ci.yml         CI
 Accounts-Datasets/       (untracked) upload-ready CSV sets for the demo accounts
 ```
 
-### 3.4 Ports and services (local stack)
+### 3.4 Ports (local processes)
 
-| Service | Port | Published? | Purpose |
-|---|---|---|---|
-| `frontend` | 3000 | localhost only | customer dashboard |
-| `admin-frontend` | 3002 | localhost only | operator console |
-| `api` | 8000 | no | FastAPI |
-| `worker` | none | no | RQ worker |
-| `db` | 5432 | localhost only | Postgres |
-| `auth` | 9999 | localhost only | GoTrue |
-| `redis` | 6379 | localhost only | queue and shared throttle |
+| Process | Port | Purpose |
+|---|---|---|
+| `next dev`/`next start` in `web/` | 3000 | customer dashboard, and the admin console at `/admin` |
+| `next dev`/`next start` in `web-admin/` | 3002 | standalone copy of the admin console |
+| `uvicorn backend.api.app:app` | 8000 | FastAPI, proxied to by both Next apps |
+
+Postgres and Auth are not local processes at all: both are the hosted Supabase project configured in `.env`.
 
 ---
 
@@ -499,7 +497,7 @@ the new file, it is offered instead.
 8. **Done.** `POST .../done` clears the capabilities cache so the new data (and any newly unlocked tabs) show immediately.
 
 Retraining without importing is `POST /api/admin/accounts/{slug}/retrain`, which creates a `train_only` job. To retrain every account
-inside the stack: `docker compose exec worker python -m backend.cli train --all` (models live in the container volume, so run it there).
+from a shell instead: `python -m backend.cli train --all`, using an `.env` with the same `MODEL_DIR` the API reads from.
 
 ### 8.4 What "capabilities" do
 
@@ -619,14 +617,23 @@ src/data/regions/   boundary files for the Store Performance map
 - **Security headers:** a CSP, `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, and HSTS in production (set in `next.config.ts`).
 - **Tests:** Vitest for formatting, translations, URL safety and the map logic.
 
-### 11.2 Operator console (`web-admin/`)
+### 11.2 The admin console
 
-- Same stack and design language, English only, no charts, no Recharts. Its own port (3002), its own cookies, its own API surface (`/api/admin/*`).
+There is one login page (`POST /api/auth/login`): the account's own `app_metadata` decides whether the browser gets a customer
+session or an operator one, not anything chosen on the form (`backend/services/identity.py:sign_in`). An operator lands on `/admin`,
+served by the *same* Next.js process as the customer dashboard, from `web/src/admin/` -- same stack and design language, English
+only, no charts. `web-admin/` is a second, standalone copy of the same console (its own port, 3002, its own build) kept around from
+before the two were merged; it still works but is no longer the primary way to reach it.
+
+- **Cookies and API surface:** operator sessions use their own cookie names and their own `/api/admin/*` surface, kept strictly apart
+  from customer sessions in both apps, so a browser signed in as one kind is never mistaken for the other (section 6.3).
 - **Screens:** accounts list and create (with generated credentials shown once), account detail with tabs: **Import data** (the upload, mapping, dry-run and job
   wizard), **History & models** (retrain and job history), **Logins**, **Settings**, **Access** (suspend/reactivate and **delete account**), and the **Audit log**.
 - **One-time credentials:** generated passwords are handed to the next page once via `sessionStorage` (`lib/flash.ts`) and never persisted.
 - **Idle sign-out:** 30 minutes (`lib/idle.ts`).
-- **Upload size:** `experimental.proxyClientMaxBodySize` is set to 520 MB in `next.config.ts` so large CSVs pass the proxy.
+- **Upload size:** `experimental.proxyClientMaxBodySize` in `next.config.ts` sets how large a CSV the proxy accepts; `web/`'s build
+  defaults lower than `web-admin/`'s (a small server should not buffer huge uploads in memory -- see `DEPLOYMENT-EC2-MICRO.md`), so
+  very large files are better loaded with `backend.cli load-csv` from a shell than through the browser.
 
 ---
 
@@ -641,11 +648,16 @@ This section lists the controls in the order an attacker would meet them. [secur
 - **Production refuses to start** with development secrets, weak JWT secrets, identical app/owner roles, non-https auth URLs, or a passwordless Redis.
 - Secrets are provided through the platform's secret store in production, never baked into images.
 
-### 12.2 Network and containers
+### 12.2 Network and process hardening
 
-- Every published port is bound to `127.0.0.1`; the API is not published at all. The admin console must be reached over a VPN or SSH tunnel.
-- Containers run as a **non-root user (uid 10001)**, with a **read-only filesystem**, `cap_drop: ALL`, `no-new-privileges`, and tmpfs for scratch space.
-- Redis requires a password; images are tag-pinned; Python dependencies are pinned in `requirements/lock.txt`.
+- The API is never published on its own; the browser only ever reaches it through a Next.js app's `/api` proxy.
+- In production (see `DEPLOYMENT-EC2-MICRO.md`), each process runs as an unprivileged systemd service with a read-only system
+  (`ProtectSystem=strict`), no privilege escalation (`NoNewPrivileges`), and no home directory access.
+- **The admin console currently has no operator MFA.** Publishing it (it now lives at `/admin` in the same app as the customer
+  dashboard, so publishing the dashboard publishes it) means one stolen or guessed operator password gives full control of every
+  tenant. Give operators long random passwords, and keep the standalone `web-admin/` build private (behind a VPN or SSH tunnel) as
+  an alternative if that risk is not acceptable yet.
+- Python dependencies are pinned in `requirements/lock.txt` and audited (`pip-audit`) in CI.
 
 ### 12.3 Authentication and sessions
 
@@ -708,52 +720,58 @@ Account deletion is real: it removes logins, rows, uploads and models.
 
 ## 13. Infrastructure and deployment
 
-### 13.1 Docker Compose services
+No containers, anywhere: not locally, and not on the EC2 deployment this project currently runs on
+(`DEPLOYMENT-EC2-MICRO.md`, git-ignored). Every environment is the API and the two Next.js apps as plain processes
+(systemd units in production), all pointed at a hosted Supabase project for Postgres and Auth.
 
-| Service | Image / build | Notes |
+### 13.1 What runs, and how
+
+| Process | Runs as | Notes |
 |---|---|---|
-| `db` | `postgres:16-alpine` | bootstrap script creates roles and default-deny grants |
-| `auth` | `supabase/gotrue:v2.170.0` | sign-up disabled; email autoconfirm on for development (turn off in production and configure SMTP) |
-| `redis` | `redis:7-alpine` | password, append-only file |
-| `api` | Python image | `uvicorn backend.api.app:app`, health check `/api/health` |
-| `worker` | Python image | `rq worker ingest`; no HTTP server |
-| `frontend` | `./web` | Next standalone server, proxies `/api` to `http://api:8000` (baked at build) |
-| `admin-frontend` | `./web-admin` | same, port 3002 |
+| `api` | `uvicorn backend.api.app:app` | a systemd unit in production; `--reload` in development |
+| `frontend` (`web/`) | `node server.js` (built) or `next dev` | proxies `/api` to the API (baked in at build time via `API_URL`) |
+| `admin-frontend` (`web-admin/`) | same, on its own port | optional standalone copy of the admin console |
+| Postgres, Auth | not a local process at all | the hosted Supabase project in `.env` |
 
-Volumes: `pgdata`, `redisdata`, `uploads` (`/data/uploads`), `models` (`/app/models`).
+There is no worker process either: imports and retraining run in a background thread inside the API process unless
+`REDIS_URL` is set, in which case they go through Redis/RQ instead (`backend/ingestion/jobs.py`) -- neither Redis
+nor a worker is provisioned by default.
 
-### 13.2 The Python image
+### 13.2 The Python environment
 
-Multi-stage: a builder installs `requirements/lock.txt` into a virtualenv; the runtime stage has no compilers, runs as uid 10001, and defaults to
-`ENVIRONMENT=production` (Compose overrides this for local use). Default command is the API.
+`requirements/lock.txt` is the pinned, audited dependency set (installed into a venv, or with `uv` in production --
+see `DEPLOYMENT-EC2-MICRO.md`); `requirements/base.txt` is the looser range file it is generated from.
+`ENVIRONMENT=production` enables the startup guard (`assert_production_ready()`); development is the default.
 
 ### 13.3 Environment variables
 
 | Variable | Purpose |
 |---|---|
 | `ENVIRONMENT` | `development` or `production` (production enables the startup guard) |
-| `DATABASE_URL` / `ADMIN_DATABASE_URL` | app role (RLS enforced) / owner role (schema, provisioning, audit); must differ |
-| `APP_DB_PASSWORD`, `OWNER_DB_PASSWORD`, `AUTH_DB_PASSWORD` | database passwords Compose sets on first start |
-| `AUTH_BASE_URL` | GoTrue URL (or set `SUPABASE_URL` + keys for hosted Supabase) |
-| `SUPABASE_JWT_SECRET` | signs and verifies tokens and (derived) model files; at least 32 random characters in production |
-| `REDIS_URL`, `REDIS_PASSWORD` | queue and shared throttle; unset means threads |
-| `UPLOAD_DIR`, `MODEL_DIR`, `MAX_UPLOAD_MB` | file locations and the upload limit |
+| `DATABASE_URL` / `ADMIN_DATABASE_URL` | app role (RLS enforced) / owner role (schema, provisioning, audit); must differ. Use Supabase's session pooler connection string, not the transaction pooler or a direct (IPv6-only) connection, unless you know the caller can reach it |
+| `AUTH_BASE_URL` | a self-hosted GoTrue URL, if you have one; leave unset and set `SUPABASE_URL` + keys instead for the normal hosted-Supabase path |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | the hosted Supabase project |
+| `SUPABASE_JWT_SECRET` | verifies HS256 tokens (asymmetric/ES256 projects verify via JWKS instead) and, derived, signs saved model files; at least 32 random characters in production |
+| `REDIS_URL`, `REDIS_PASSWORD` | queue and shared throttle; unset (the default) means threads and a per-process throttle |
+| `UPLOAD_DIR`, `MODEL_DIR`, `MAX_UPLOAD_MB` | file locations and the upload limit -- **every process that reads or writes models must agree on `MODEL_DIR`**, since nothing syncs it between machines |
 | `XAI_API_KEY`, `ALLOW_PAID_SENTIMENT` | optional paid sentiment scoring (off by default) |
-| `LOG_LEVEL`, `DB_POOL_SIZE`, `DB_MAX_OVERFLOW` | tuning |
+| `LOG_LEVEL`, `DB_POOL_SIZE`, `DB_MAX_OVERFLOW` | tuning -- keep the pool small if several processes share one hosted project's connection pooler |
 
 ### 13.4 Production checklist (summary)
 
-Set `ENVIRONMENT=production` and generate real secrets; TLS-terminating reverse proxy in front of the customer dashboard; keep the admin console private;
-configure SMTP and turn off email autoconfirm; back up Postgres and the `uploads` and `models` volumes; rotate any key that was ever committed.
+Set `ENVIRONMENT=production` and generate real secrets; put a TLS-terminating reverse proxy (or a tunnel service) in front of the
+customer dashboard; keep the admin console private unless it has operator MFA; configure SMTP and turn off email autoconfirm on the
+auth project; back up the database (via the hosting provider) and the `UPLOAD_DIR`/`MODEL_DIR` directories; rotate any key that was
+ever committed or pasted somewhere it shouldn't have been.
 The full list is in [security.md](security.md); runbook tasks (onboarding, retraining, suspension, backups, troubleshooting) are in [operations.md](operations.md).
 
 ### 13.5 Scaling notes
 
-Scale imports with more workers (`--scale worker=3`). The API and both web apps are stateless (sessions are cookies with signed tokens), so they scale horizontally
-behind a load balancer. Put PgBouncer in transaction-pooling mode in front of Postgres if connections become the limit: tenant scoping is transaction-local, so it is
-compatible.
-
----
+Imports run in the API process's own thread pool by default (no separate worker); add a Redis-backed queue and a
+separate worker process if import volume grows enough to compete with request handling. The API and both web apps
+are stateless (sessions are cookies with signed tokens), so they scale horizontally behind a load balancer with no
+sticky sessions. If several instances share one hosted Supabase project, watch its connection pooler's limit --
+that is now the shared resource, not local Postgres.
 
 ## 14. Testing and quality gates
 
@@ -768,15 +786,19 @@ compatible.
 Tests skip themselves when a service they need is down. Useful commands:
 
 ```bash
-pytest -m unit                            # no services needed
-pytest -m "unit or integration"           # needs: docker compose up -d db
-AUTH_BASE_URL=http://localhost:9999 pytest   # everything (needs db, auth, redis)
+pytest -m unit                            # no database needed
+pytest -m "unit or integration"           # needs a real Postgres via .env -- see the warning below
+pytest                                    # everything; tests skip themselves when a service they need is down
 ruff check backend tests
 bandit -r backend -ll
 pip-audit -r requirements/lock.txt --no-deps --disable-pip
 ```
 
-**Do not run two pytest processes against the same database at once** (DDL tests can deadlock).
+**Do not run two pytest processes against the same database at once** (DDL tests can deadlock). **If `.env` points at a
+hosted Supabase project that anyone else, or a live deployment, also uses: do not run `tests/integration` or
+`tests/e2e` against it.** Those suites create and delete tenants and users for real, against whatever
+`DATABASE_URL`/`ADMIN_DATABASE_URL` is configured -- fine against a disposable local or per-developer project, a real
+risk against a shared one.
 
 ### 14.2 Web (Vitest, lint, types, build)
 
@@ -803,41 +825,39 @@ feature looks and behaves right.
 ```bash
 python -m venv venv && venv/Scripts/activate            # Windows; use `source venv/bin/activate` elsewhere
 pip install -r requirements/dev.txt && pip install -e . --no-deps
-cp .env.example .env
+cp .env.example .env                                     # fill in a Supabase project's URL, keys and DB passwords
 
-docker compose up -d db auth                            # Postgres + auth server
-python -m backend.cli init-db                           # tables, row-level security, grants
+python -m backend.cli init-db                            # tables, row-level security, grants
 python -m backend.cli create-operator --email you@example.com   # prints a generated password once
 ```
 
 ### 15.2 Run
 
 ```bash
-docker compose up -d --build           # full stack: db, auth, redis, worker, api, both web apps
-# or from source:
 python -m uvicorn backend.api.app:app --reload --port 8000
-(cd web && npm install && npm run dev)            # http://localhost:3000
-(cd web-admin && npm install && npm run dev)      # http://localhost:3002
+(cd web && npm install && npm run dev)            # http://localhost:3000 (sign in as the operator: you land on /admin)
+(cd web-admin && npm install && npm run dev)       # http://localhost:3002, the standalone admin console
 ```
 
-The Next apps read `API_URL` (default `http://localhost:8000`) to know where to proxy `/api`. In Docker it is baked in at image build time.
-Working logins for local development are kept in the untracked `logincreds.txt` at the repository root; they are for local use only.
+The Next apps read `API_URL` (default `http://localhost:8000`) to know where to proxy `/api`; in a built (`next start`) app this is
+baked in at build time, not read live. Working logins for local development are kept in the untracked `logincreds.txt` at the
+repository root; they are for local use only.
 
 ### 15.3 The CLI (`python -m backend.cli ...`)
 
-`init-db`, `reset-db --yes` (dev only), `list`, `create-tenant`, `create-user`, `create-operator`, `set-config`, `load-csv --tenant <slug> --dir <folder>`,
-`train --tenant <slug>` or `train --all`.
+`init-db`, `reset-db --yes` (**irreversible; drops every table in whatever database `.env` points at**), `list`, `create-tenant`,
+`create-user`, `create-operator`, `set-config`, `load-csv --tenant <slug> --dir <folder>`, `train --tenant <slug>` or `train --all`.
 
-**Remember:** models are saved under `MODEL_DIR`. In Docker that is the `models` volume, so train inside a container (`docker compose exec worker ...`); training from
-your own shell writes to a different folder that the containers never read.
+**Remember:** models are saved under `MODEL_DIR`. Training and the API must agree on it -- training from a shell with a different
+`MODEL_DIR` than the API's `.env` writes files the API will never see, and looks like a silent failure (the account just stays
+"not trained").
 
 ### 15.4 Tips for this environment
 
-- After changing code that runs in containers, rebuild the image (`docker compose build api frontend admin-frontend`) and `docker compose up -d`.
-- On Windows, if a port misbehaves only from the host, look for a leftover local dev-server process holding it.
+- Windows: if a port misbehaves, check for a leftover process (another `next dev`/`uvicorn`) still holding it from an earlier run.
 - Very long shell heredocs can fail; write files with an editor instead.
-
----
+- The direct (non-pooler) Supabase connection string is IPv6-only; if it will not connect, use the session pooler connection
+  string from the project's "Connect" dialog instead.
 
 ## 16. Recipes: common changes
 
@@ -900,9 +920,10 @@ customer's real data, and never quote forecast accuracy measured on them (the ge
 - Do not run DDL tests while other database work runs (deadlocks). Do not run two test processes at once.
 - `d3-geo` needs clockwise exterior rings; GeoJSON's standard is the opposite.
 - Next.js drops proxied bodies over 10 MB unless configured (both for uploads).
-- Models live in the container volume; train inside the stack.
+- Models are plain files under `MODEL_DIR`; train from a shell whose `.env` has the same `MODEL_DIR` the API reads from, or the
+  training "succeeds" while the API keeps reporting the account as untrained.
 - FastAPI file parameters should be `Annotated[UploadFile, File()]`, not a default `File(...)` (ruff `B008`).
-- Windows: a leftover local dev server can silently hold a Docker-published port.
+- Windows: a leftover local dev server can silently hold a port another process expects to bind.
 
 ### 18.3 Known limitations and open work
 
@@ -947,6 +968,6 @@ customer's real data, and never quote forecast accuracy measured on them (the ge
 | operator screens | `web-admin/src/features/` |
 | models | `backend/ml/` |
 | news | `backend/sentiment/` |
-| config and secrets | `backend/core/config.py`, `.env.example`, `docker-compose.yml` |
+| config and secrets | `backend/core/config.py`, `.env.example` |
 | security rules | `docs/security.md`, this guide section 12 |
 | the layer rules | `tests/unit/test_architecture.py` |

@@ -1,7 +1,6 @@
 """
-Real login flow against the local Supabase Auth (GoTrue) container:
-  docker compose up -d db auth
-Skipped when it is not running.
+Real login flow against the auth server and database configured in .env.
+Skipped when the auth server is not reachable.
 """
 import os
 import uuid
