@@ -52,6 +52,39 @@ def apply_rls(admin_engine) -> None:
         conn.execute(text("DROP FUNCTION IF EXISTS update_own_tenant_config(jsonb)"))
 
 
+def resync_sequences(admin_engine, tables: list[str] | None = None) -> dict[str, int]:
+    """Move every serial id sequence past MAX(id), so rows loaded with explicit ids (restore, migration)
+    cannot make later inserts collide on the primary key. Returns {table: new sequence value}.
+
+    Tenant tables have FORCE ROW LEVEL SECURITY, so even the owner would only see the (unset) tenant's rows.
+    FORCE is lifted and restored inside one transaction (transactional DDL) so MAX sees every tenant's rows.
+    """
+    import backend.db.models  # noqa: F401  (registers every table on Base.metadata)
+    done: dict[str, int] = {}
+    with admin_engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            name = table.name
+            if tables is not None and name not in tables:
+                continue
+            pk = list(table.primary_key.columns)
+            if len(pk) != 1 or not pk[0].autoincrement or pk[0].type.python_type is not int:
+                continue
+            col = pk[0].name
+            seq = conn.execute(text("SELECT pg_get_serial_sequence(:t, :c)"), {"t": name, "c": col}).scalar()
+            if not seq:
+                continue
+            forced = "tenant_id" in table.c
+            if forced:
+                conn.execute(text(f'ALTER TABLE "{name}" NO FORCE ROW LEVEL SECURITY'))
+            top = conn.execute(text(f'SELECT COALESCE(MAX("{col}"), 0) FROM "{name}"')).scalar()
+            if forced:
+                conn.execute(text(f'ALTER TABLE "{name}" FORCE ROW LEVEL SECURITY'))
+            # is_called=true: the next value is top + 1 (an empty table restarts at 2, harmless).
+            conn.execute(text("SELECT setval(CAST(:s AS regclass), :v, true)"), {"s": seq, "v": max(top, 1)})
+            done[name] = top
+    return done
+
+
 def _install_audit_immutability(conn) -> None:
     """The audit trail is append-only: any UPDATE or DELETE on it is rejected by the database itself."""
     conn.execute(text("""

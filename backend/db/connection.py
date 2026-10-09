@@ -78,6 +78,7 @@ def get_admin_session():
 def init_all_tables():
     """Create all tables and (re)apply row-level security (idempotent). Runs as the table owner."""
     import backend.db.models  # noqa: F401
-    from backend.db.rls import apply_rls
+    from backend.db.rls import apply_rls, resync_sequences
     Base.metadata.create_all(_admin_engine)
     apply_rls(_admin_engine)
+    resync_sequences(_admin_engine)

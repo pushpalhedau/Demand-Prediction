@@ -22,12 +22,18 @@ import time
 from datetime import date, datetime, timedelta
 
 import requests
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
-from backend.db.connection import get_db_session
+from backend.db.connection import get_admin_engine, get_db_session
 from backend.db.models import NewsArticle, SentimentSignal
 
 logger = logging.getLogger(__name__)
+
+
+def _resync_news_articles_sequence() -> None:
+    from backend.db.rls import resync_sequences
+    resync_sequences(get_admin_engine(), ["news_articles"])
 
 
 class GdeltUnavailableError(RuntimeError):
@@ -635,6 +641,7 @@ def save_articles_to_db(articles: list[dict]) -> dict[str, int]:
         }
 
         now = datetime.utcnow()
+        records: list[NewsArticle] = []
         for art in articles:
             url = (art.get("url") or "").strip()
             if not url:
@@ -645,7 +652,7 @@ def save_articles_to_db(articles: list[dict]) -> dict[str, int]:
                 continue
 
             try:
-                record = NewsArticle(
+                records.append(NewsArticle(
                     url=url,
                     title=(art.get("title") or "").strip() or None,
                     source_domain=art.get("domain"),
@@ -655,15 +662,31 @@ def save_articles_to_db(articles: list[dict]) -> dict[str, int]:
                     search_query=art.get("_query_name"),
                     language=art.get("language"),
                     social_image_url=art.get("socialimage"),
-                )
-                session.add(record)
+                ))
                 existing_urls.add(url)
                 inserted += 1
             except Exception as e:
                 logger.warning("Failed to build NewsArticle for '%s': %s", url, e)
                 errors += 1
 
-        session.commit()
+        try:
+            session.add_all(records)
+            session.commit()
+        except IntegrityError as e:
+            # news_articles.id comes from a serial sequence. If rows were ever loaded with explicit
+            # ids (restore / migration), the sequence lags behind MAX(id) and every insert collides
+            # on the primary key. Resync it once and retry.
+            session.rollback()
+            if "news_articles_pkey" not in str(e):
+                raise
+            logger.warning("news_articles id sequence is behind MAX(id); resyncing and retrying")
+            _resync_news_articles_sequence()
+            session.add_all([
+                NewsArticle(**{c.key: getattr(r, c.key) for c in NewsArticle.__table__.columns
+                               if c.key not in ("id", "tenant_id")})
+                for r in records
+            ])
+            session.commit()
         logger.info("DB save | inserted=%d skipped=%d errors=%d", inserted, skipped, errors)
 
     except Exception as e:
