@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>PredictaX · Presentation</title>
+<!--
+  PredictaX presentation, version 2. Open this file in Chrome or Edge (double-click works, no server needed).
+  One click or key press = one slide. Slides build themselves in; there are no click-to-reveal steps.
+  Keys: → / Space next · ← back · F fullscreen · P presenter view · G jump to slide · L open live app
+        B fallback clip for the current tab · M mute video · T light/dark · N notes overlay · ? help
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Design tokens: copied from web/src/app/globals.css so the deck and the product are one brand. */
+  :root {
+    --background: oklch(0.965 0.012 245);
+    --foreground: oklch(0.24 0.05 250);
+    --card: oklch(1 0 0);
+    --muted-foreground: oklch(0.5 0.045 250);
+    --primary: oklch(0.56 0.17 246);
+    --accent: oklch(0.93 0.035 238);
+    --accent-foreground: oklch(0.32 0.1 250);
+    --border: oklch(0.9 0.018 245);
+    --success: oklch(0.55 0.13 152);
+    --destructive: oklch(0.58 0.2 25);
+    --warning: oklch(0.7 0.15 75);
+    --brand-from: oklch(0.6 0.17 245);
+    --brand-to: oklch(0.76 0.17 155);
+    --sidebar: oklch(0.985 0.007 245);
+    --sidebar-border: oklch(0.9 0.018 245);
+    --sidebar-accent: oklch(0.93 0.035 238);
+    --sidebar-accent-foreground: oklch(0.3 0.1 250);
+    --font-display: "Manrope", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+    --radius: 8px;
+  }
+  :root[data-theme="dark"] {
+    --background: oklch(0.19 0.035 250);
+    --foreground: oklch(0.95 0.01 245);
+    --card: oklch(0.235 0.04 250);
+    --muted-foreground: oklch(0.72 0.03 245);
+    --primary: oklch(0.72 0.14 240);
+    --accent: oklch(0.31 0.055 245);
+    --accent-foreground: oklch(0.95 0.01 245);
+    --border: oklch(0.34 0.045 250);
+    --success: oklch(0.76 0.15 152);
+    --destructive: oklch(0.7 0.18 25);
+    --warning: oklch(0.82 0.14 80);
+    --brand-from: oklch(0.68 0.16 242);
+    --brand-to: oklch(0.8 0.17 155);
+    --sidebar: oklch(0.165 0.035 252);
+    --sidebar-border: oklch(0.3 0.04 250);
+    --sidebar-accent: oklch(0.28 0.05 248);
+    --sidebar-accent-foreground: oklch(0.96 0.01 245);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #02060f; color: var(--foreground); font-family: var(--font-body); }
+  body { -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* A fixed 1920x1080 stage, scaled to fit any screen. Sizes below are stage pixels. */
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: center; background: var(--background); overflow: hidden; }
+  .slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s linear .35s; background: var(--background); }
+  .slide.active { opacity: 1; visibility: visible; transition: opacity .35s ease, visibility 0s; }
+  aside.notes { display: none; }
+
+  /* Everything on a slide builds itself in on load: no clicks. */
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .slide.active .pg > *, .slide.active .dk-in > * { animation: rise .6s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--k, 0) * 90ms); }
+  .slide.active .stag > * { animation: rise .6s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(.3s + var(--k, 0) * 80ms); }
+  @media (prefers-reduced-motion: reduce) { .slide.active * { animation: none !important; } }
+
+  /* ---- The product shell: sidebar, header, filter bar, page ---- */
+  .app { position: absolute; inset: 0; display: grid; grid-template-columns: 372px 1fr; }
+  .sb { background: var(--sidebar); border-right: 1px solid var(--sidebar-border); display: flex; flex-direction: column; }
+  .sb .logo { height: 84px; display: flex; align-items: center; padding: 0 28px; border-bottom: 1px solid var(--sidebar-border); }
+  .sb .logo img { width: 232px; height: auto; }
+  .sb .navgrp { padding: 28px 18px 0; flex: 1; }
+  .sb .glabel { font: 500 21px/1 var(--font-body); color: var(--muted-foreground); padding: 0 14px 16px; }
+  .sb .item { position: relative; display: flex; align-items: center; gap: 16px; height: 62px; padding: 0 16px; margin-bottom: 4px; border-radius: 8px; font: 500 23px/1 var(--font-body); white-space: nowrap; color: color-mix(in oklab, var(--foreground) 88%, transparent); }
+  .sb .item .i { font-size: 26px; color: var(--muted-foreground); }
+  .sb .item.on { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); font-weight: 600; }
+  .sb .item.on .i { color: var(--primary); }
+  .sb .item.on::before { content: ""; position: absolute; left: -18px; top: 8px; bottom: 8px; width: 5px; border-radius: 3px; background: linear-gradient(180deg, var(--brand-from), var(--brand-to)); }
+  .sb .foot { border-top: 1px solid var(--sidebar-border); padding: 18px 20px; display: flex; align-items: center; gap: 16px; }
+  .sb .av { width: 52px; height: 52px; border-radius: 8px; background: color-mix(in oklab, var(--primary) 14%, transparent); color: var(--primary); display: grid; place-items: center; font: 700 22px var(--font-display); }
+  .sb .who { font: 600 24px/1.2 var(--font-body); }
+
+  .inset { display: flex; flex-direction: column; min-width: 0; position: relative; }
+  .hd { height: 84px; flex: none; display: flex; align-items: center; gap: 18px; padding: 0 36px; border-bottom: 1px solid var(--border); background: color-mix(in oklab, var(--background) 92%, transparent); position: relative; }
+  .hd::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: linear-gradient(90deg, var(--brand-from), var(--brand-to)); }
+  .hd .i { font-size: 28px; color: var(--muted-foreground); }
+  .hd .sep { width: 1px; height: 26px; background: var(--border); }
+  .hd .crumb { font: 500 25px/1 var(--font-body); color: var(--muted-foreground); }
+  .hd .crumb b { color: var(--foreground); font-weight: 600; margin-left: 12px; }
+  .hd .sp { margin-left: auto; }
+  .fb { height: 76px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 36px; border-bottom: 1px solid var(--border); }
+  .fb .sel { display: inline-flex; align-items: center; gap: 12px; height: 46px; padding: 0 18px; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in oklab, var(--card) 70%, transparent); font: 500 22px/1 var(--font-body); color: var(--muted-foreground); }
+  .fb .sel b { color: var(--foreground); font-weight: 600; }
+  .fb .sel .i { font-size: 18px; }
+  .fb .r { margin-left: auto; font: 500 21px/1 var(--font-body); color: var(--muted-foreground); }
+  .pg { flex: 1; min-height: 0; padding: 40px 60px 0; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ---- Page parts: the same patterns the dashboards use ---- */
+  .eyebrow { font: 600 19px/1 var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted-foreground); }
+  h1.hl { font: 600 54px/1.14 var(--font-display); letter-spacing: -.012em; margin: 18px 0 0; max-width: 1360px; }
+  h1.hl em { font-style: normal; background: linear-gradient(90deg, var(--brand-from), var(--brand-to)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+  .shot { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); box-shadow: 0 1px 2px rgba(10,20,50,.06), 0 10px 30px -12px rgba(10,20,50,.18); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .cap { margin-top: 10px; font-size: 19px; color: var(--muted-foreground); }
+  .bottom { margin-top: 26px; padding: 20px 28px; border-left: 5px solid var(--primary); background: color-mix(in oklab, var(--card) 80%, transparent); border-radius: 0 var(--radius) var(--radius) 0; }
+  .bottom small { display: block; font: 600 16px/1 var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 8px; }
+  .bottom div { font: 600 31px/1.25 var(--font-display); }
+
+  /* numbered list rows, like "What to do next" and "Signals to work" */
+  .rows { margin-top: 14px; }
+  .row { display: grid; grid-template-columns: 54px 1fr auto; gap: 8px 22px; padding: 16px 0; border-top: 1px solid var(--border); align-items: start; }
+  .row:first-child { border-top: 0; }
+  .row .n { font: 500 25px/1.3 var(--font-display); color: var(--muted-foreground); opacity: .8; padding-top: 4px; }
+  .row .tag { display: flex; align-items: center; gap: 10px; font: 700 16px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+  .row .tag::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+  .row .tag.t-p { color: var(--primary); } .row .tag.t-g { color: var(--success); } .row .tag.t-r { color: var(--destructive); } .row .tag.t-v { color: oklch(0.55 0.16 290); }
+  .row .t { font: 600 27px/1.25 var(--font-display); margin-top: 8px; }
+  .row .d { font-size: 21px; line-height: 1.4; color: var(--muted-foreground); margin-top: 6px; }
+  .kbd { display: inline-block; min-width: 38px; text-align: center; padding: 3px 10px; border: 1px solid var(--border); border-bottom-width: 3px; border-radius: 6px; font: 700 20px/1.3 var(--font-display); background: var(--card); color: var(--foreground); }
+  .cue { display: flex; gap: 14px; align-items: center; margin-top: 14px; font-size: 21px; color: var(--muted-foreground); }
+
+  /* tab slides */
+  .act { display: grid; grid-template-columns: 600px 1fr; gap: 56px; margin-top: 8px; flex: 1; min-height: 0; }
+  .act .l h1.hl { font-size: 44px; max-width: none; }
+  .act .shots { display: grid; gap: 18px; align-content: start; padding-top: 6px; }
+
+  /* ---- Bare and dark slides ---- */
+  .slide.bare, .slide.dk {
+    --foreground: oklch(0.95 0.01 245); --card: oklch(0.235 0.04 250); --muted-foreground: oklch(0.74 0.03 245);
+    --border: oklch(0.34 0.045 250); --primary: oklch(0.72 0.14 240); --accent: oklch(0.31 0.055 245);
+    --brand-from: oklch(0.68 0.16 242); --brand-to: oklch(0.8 0.17 155); color: var(--foreground);
+  }
+  .slide.bare { background: #03142a; }
+  .slide.dk { background:
+      radial-gradient(900px 600px at 6% 12%, oklch(0.45 0.12 240 / .35), transparent 70%),
+      radial-gradient(800px 560px at 96% 100%, oklch(0.55 0.13 155 / .22), transparent 70%),
+      linear-gradient(oklch(0.6 0.08 240 / .07) 1px, transparent 1px) 0 0 / 64px 64px,
+      linear-gradient(90deg, oklch(0.6 0.08 240 / .07) 1px, transparent 1px) 0 0 / 64px 64px,
+      #03142a;
+    padding: 96px 120px 110px; display: flex; flex-direction: column; }
+  .dk .brand { position: absolute; left: 120px; bottom: 40px; display: flex; align-items: center; gap: 16px; font-size: 24px; color: var(--muted-foreground); }
+  .dk .brand img { width: 40px; height: 40px; }
+  .dk .count { position: absolute; right: 120px; bottom: 40px; font-size: 24px; color: var(--muted-foreground); }
+  .dk .eyebrow { display: flex; align-items: center; gap: 18px; color: var(--primary); letter-spacing: .18em; font-size: 24px; }
+  .dk .eyebrow::before { content: ""; width: 56px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--brand-from), var(--brand-to)); }
+  .dk h1 { font: 800 76px/1.06 var(--font-display); letter-spacing: -.025em; margin: 28px 0 0; max-width: 1560px; }
+  .dk h1 em, .dk h2 em { font-style: normal; background: linear-gradient(90deg, var(--brand-from), var(--brand-to)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .dk h2 { font: 800 76px/1.06 var(--font-display); letter-spacing: -.02em; margin: 26px 0 0; }
+  .dk .sub { margin-top: 22px; font-size: 30px; color: var(--muted-foreground); }
+  .dk .sub i { font-style: normal; margin: 0 12px; opacity: .6; }
+
+  .five { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-top: 36px; }
+  .five .t { padding: 26px 26px 28px; border: 1px solid var(--border); border-radius: var(--radius); background: color-mix(in oklab, var(--card) 85%, transparent); }
+  .five .lab { font: 700 18px/1.25 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted-foreground); min-height: 46px; }
+  .five .val { font: 700 34px/1.2 var(--font-display); letter-spacing: -.01em; margin-top: 12px; min-height: 124px; }
+  .five .note { margin-top: 12px; font-size: 24px; color: var(--primary); }
+  .bl { margin-top: 30px; padding: 26px 34px; border-left: 6px solid var(--primary); background: color-mix(in oklab, var(--card) 70%, transparent); border-radius: 0 var(--radius) var(--radius) 0; }
+  .bl small { display: block; font: 700 19px/1 var(--font-body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 12px; }
+  .bl div { font: 700 38px/1.2 var(--font-display); letter-spacing: -.01em; }
+
+  .drows { display: grid; gap: 14px; margin-top: 34px; }
+  .drow { display: grid; grid-template-columns: 64px 470px 1fr; gap: 26px; align-items: center; padding: 14px 22px; border: 1px solid var(--border); border-radius: var(--radius); background: color-mix(in oklab, var(--card) 85%, transparent); }
+  .dnum { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, var(--brand-from), var(--brand-to)); color: oklch(0.16 0.04 250); font: 800 28px var(--font-display); }
+  .dl { font: 800 31px/1.15 var(--font-display); }
+  .dv { margin-top: 6px; font-size: 24px; color: var(--muted-foreground); }
+  .dtabs { display: flex; gap: 14px; }
+  .dtab { flex: 1; padding: 12px 18px; border-radius: 6px; background: oklch(0.2 0.04 250 / .7); border: 1px solid var(--border); }
+  .dth { display: flex; align-items: center; gap: 12px; }
+  .dth .i { font-size: 26px; color: var(--primary); }
+  .dth b { font: 700 25px/1.15 var(--font-display); }
+  .dtq { margin-top: 6px; font-size: 21px; line-height: 1.3; color: var(--muted-foreground); }
+
+  .dk .flow { margin-top: 36px; }
+  .dk .node { background: color-mix(in oklab, var(--card) 85%, transparent); }
+  .dk .chip { background: oklch(0.25 0.05 250); color: oklch(0.92 0.02 245); }
+  .dk .team { margin-top: 28px; padding: 16px 28px; background: color-mix(in oklab, var(--card) 85%, transparent); }
+  .dk .hp { margin-top: 14px; background: color-mix(in oklab, var(--card) 85%, transparent); }
+  .dk .hp .s { background: oklch(0.28 0.06 245 / .6); }
+  .dk .chal { margin-top: 30px; }
+  .dk .chal .hp { margin-top: 22px; }
+  .dk .chal .hp > div { padding: 34px 40px; }
+  .dk .chal .hp small { font-size: 18px; margin-bottom: 14px; }
+  .dk .chal .hp b { font-size: 38px; line-height: 1.25; }
+  .dk .hp b { font-size: 28px; }
+  .cmp { width: 100%; border-collapse: separate; border-spacing: 0 6px; margin-top: 12px; }
+  .cmp th, .cmp td { text-align: left; font: 500 21px/1.28 var(--font-body); padding: 8px 14px; vertical-align: middle; }
+  .cmp thead th { font: 700 23px/1.2 var(--font-display); color: var(--foreground); padding-bottom: 6px; vertical-align: bottom; }
+  .cmp thead th small { display: block; margin-top: 4px; font: 500 17px/1.2 var(--font-body); color: var(--muted-foreground); }
+  .cmp thead th.ours { color: var(--primary); }
+  .cmp tbody th { background: color-mix(in oklab, var(--card) 85%, transparent); border-radius: 6px 0 0 6px; width: 25%; }
+  .cmp tbody th > span { display: inline-block; vertical-align: middle; }
+  .cmp tbody th b { font: 700 22px/1.2 var(--font-display); }
+  .cmp tbody th { white-space: nowrap; }
+  .dn.sub { background: none; color: var(--muted-foreground); }
+  .dn { width: 34px; height: 34px; border-radius: 50%; margin-right: 12px; text-align: center; line-height: 34px; background: linear-gradient(135deg, var(--brand-from), var(--brand-to)); color: oklch(0.16 0.04 250); font: 800 18px/34px var(--font-display); }
+  .cmp tbody td { background: color-mix(in oklab, var(--card) 85%, transparent); color: var(--muted-foreground); width: 25%; }
+  .cmp tbody td:last-child { border-radius: 0 6px 6px 0; }
+  .cmp tbody td.ours { background: oklch(0.3 0.07 245 / .55); color: var(--foreground); font-weight: 600; }
+  .dot { display: inline-block; width: 13px; height: 13px; border-radius: 50%; margin-right: 10px; vertical-align: 1px; }
+  .c-y .dot, .dot.y { background: oklch(0.76 0.15 152); }
+  .c-p .dot, .dot.p { background: oklch(0.82 0.14 80); }
+  .c-n .dot, .dot.n { background: transparent; border: 2px solid oklch(0.62 0.03 245); }
+  .c-n { color: oklch(0.66 0.03 245) !important; }
+  .legend2 { display: flex; gap: 30px; margin-top: 4px; font-size: 19px; color: var(--muted-foreground); }
+  .legend2 .dot { margin-right: 8px; }
+  .ahead { margin-top: 10px; padding: 10px 20px; border-left: 5px solid oklch(0.82 0.14 80); background: color-mix(in oklab, var(--card) 70%, transparent); border-radius: 0 8px 8px 0; font-size: 21px; line-height: 1.3; }
+  .ahead b { color: oklch(0.86 0.12 80); }
+  .srcline { margin-top: 6px; font-size: 17px; color: var(--muted-foreground); }
+  .qa { align-items: center; justify-content: center; text-align: center; }
+  .qa img.mark { width: 200px; height: 200px; margin-bottom: 18px; }
+  .qa .big { font: 800 190px/1 var(--font-display); letter-spacing: -.03em; }
+  .qa .hint { margin-top: 24px; font-size: 38px; color: var(--muted-foreground); }
+
+  /* logo slides */
+  .logo-stage { position: absolute; inset: 0; }
+  .logo-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .35s ease; }
+  .logo-caption { position: absolute; left: 0; right: 0; bottom: 150px; text-align: center; font: 600 40px/1.3 var(--font-display); color: oklch(0.9 0.02 245); opacity: 0; transition: opacity 1s ease; }
+  .logo-caption.on { opacity: 1; }
+
+  /* trailer */
+  .s-video { background: #02060f; }
+  .s-video .vwrap { position: absolute; left: 80px; top: 60px; width: 1760px; height: 990px; border-radius: 8px; overflow: hidden; box-shadow: 0 30px 90px rgba(0,0,0,.6); background: #000; }
+  .s-video video { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .vcover { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(transparent 50%, rgba(2,6,15,.55)); transition: opacity .3s; cursor: pointer; }
+  .vcover.hide { opacity: 0; pointer-events: none; }
+  .vplay { width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,.14); border: 3px solid rgba(255,255,255,.85); display: grid; place-items: center; backdrop-filter: blur(6px); }
+  .vplay svg { width: 56px; height: 56px; margin-left: 8px; fill: #fff; }
+  .vhint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 22px; color: rgba(255,255,255,.55); }
+
+  /* under the hood */
+  .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 30px; }
+  .node { position: relative; margin-right: 40px; padding: 24px 22px; }
+  .node:last-child { margin-right: 0; }
+  .node:not(:last-child)::after { content: ""; position: absolute; right: -41px; top: 50%; width: 40px; height: 4px; transform: translateY(-50%); background: linear-gradient(90deg, var(--brand-from), var(--brand-to)); }
+  .node:not(:last-child)::before { content: ""; position: absolute; right: -46px; top: 50%; transform: translateY(-50%); border: 9px solid transparent; border-left: 12px solid var(--brand-to); z-index: 1; }
+  .node .k { font: 700 17px/1 var(--font-body); letter-spacing: .12em; color: var(--primary); }
+  .node h4 { font: 700 30px/1.15 var(--font-display); margin: 12px 0; }
+  .node p { font-size: 22px; line-height: 1.35; color: var(--muted-foreground); margin: 0; }
+  .node.key { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary) inset; }
+  .chips { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+  .chip { display: inline-block; padding: 6px 16px; border-radius: 999px; font: 600 21px/1.3 var(--font-body); background: var(--accent); color: var(--accent-foreground); border: 1px solid var(--border); }
+  .guards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 22px; }
+  .guard { padding: 18px 24px; border-left: 5px solid var(--success); background: color-mix(in oklab, var(--card) 80%, transparent); border-radius: 0 var(--radius) var(--radius) 0; font-size: 22px; line-height: 1.35; color: var(--muted-foreground); }
+  .guard b { display: block; font: 700 25px/1.2 var(--font-display); color: var(--foreground); margin-bottom: 4px; }
+
+  /* challenges */
+  .team { padding: 18px 30px; display: flex; align-items: center; gap: 30px; margin-top: 24px; }
+  .team .big { font: 700 32px/1.2 var(--font-display); }
+  .hp { display: grid; grid-template-columns: 1fr 1fr; margin-top: 14px; overflow: hidden; }
+  .hp > div { padding: 18px 28px; }
+  .hp .p { border-right: 1px solid var(--border); }
+  .hp small { display: block; font: 600 16px/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 8px; }
+  .hp b { font: 600 27px/1.3 var(--font-display); }
+  .hp .s { background: color-mix(in oklab, var(--accent) 55%, transparent); }
+
+  /* ---- Chrome ---- */
+  #bar { position: fixed; left: 0; bottom: 0; height: 4px; width: 0; background: linear-gradient(90deg, var(--brand-from), var(--brand-to)); z-index: 50; transition: width .4s ease; }
+  #toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); background: #0b1428; color: #e6edf7; border: 1px solid #25334d; padding: 12px 20px; border-radius: 8px; font: 500 15px/1.4 var(--font-body); opacity: 0; transition: .25s; z-index: 80; pointer-events: none; max-width: 80vw; }
+  #toast.on { opacity: 1; transform: translate(-50%, 0); }
+  #cursor-hide { cursor: none; }
+  .overlay { position: fixed; inset: 0; background: rgba(2,6,15,.88); z-index: 70; display: none; place-items: center; }
+  .overlay.on { display: grid; }
+  .panel { background: #0b1428; color: #e6edf7; border: 1px solid #25334d; border-radius: 12px; padding: 24px 28px; max-width: min(900px, 90vw); max-height: 86vh; overflow: auto; font: 16px/1.5 var(--font-body); }
+  .panel h3 { margin: 0 0 14px; font: 700 18px var(--font-display); }
+  .jump { display: grid; gap: 6px; min-width: 520px; }
+  .jump button { text-align: left; background: transparent; border: 1px solid transparent; padding: 9px 12px; border-radius: 8px; color: inherit; display: flex; gap: 14px; }
+  .jump button:hover, .jump button.cur { background: #12203d; border-color: #2d4268; }
+  .jump button span:first-child { color: #7dd3fc; width: 26px; font-variant-numeric: tabular-nums; }
+  .jump button em { margin-left: auto; font-style: normal; color: #8fa0ba; }
+  .help td { padding: 4px 18px 4px 0; vertical-align: top; }
+  .help td:first-child { white-space: nowrap; color: #7dd3fc; font-weight: 600; }
+  #notes { position: fixed; left: 0; right: 0; bottom: 0; max-height: 40vh; overflow: auto; background: rgba(8,14,30,.96); color: #e6edf7; border-top: 1px solid #25334d; padding: 18px 28px; font: 18px/1.55 var(--font-body); z-index: 60; display: none; white-space: pre-line; }
+  #notes.on { display: block; }
+  #clip { background: #000; }
+  #clip .cwrap { width: min(1400px, 92vw); }
+  #clip video { width: 100%; border-radius: 8px; display: block; }
+  #clip .cbar { display: flex; justify-content: space-between; margin-top: 10px; font: 15px var(--font-body); color: #8fa0ba; }
+
+  /* Presenter view (?presenter) */
+  body.presenter { overflow: auto; background: #0a1020; }
+  body.presenter #stage, body.presenter #bar { display: none; }
+  #pv { display: none; }
+  body.presenter #pv { display: grid; grid-template-columns: 1.7fr 1fr; gap: 28px; padding: 28px; height: 100vh; font-family: var(--font-body); color: #e6edf7; }
+  #pv .main, #pv .side { background: #0f1830; border: 1px solid #25334d; border-radius: 12px; padding: 26px 30px; overflow: auto; }
+  #pv .tag { font: 700 14px var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: #7dd3fc; }
+  #pv h1.pt { font: 800 44px/1.1 var(--font-display); margin: 8px 0 6px; max-width: none; }
+  #pv .meta { color: #8fa0ba; font-size: 17px; }
+  #pv .nt { margin-top: 22px; font-size: 26px; line-height: 1.55; white-space: pre-line; }
+  #pv .timer { font: 800 72px/1 var(--font-display); font-variant-numeric: tabular-nums; margin: 6px 0 16px; }
+  #pv .btns { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 24px; }
+  #pv .btns button { background: #16264a; border: 1px solid #2d4268; padding: 12px 20px; border-radius: 8px; font-size: 17px; color: #e6edf7; }
+  #pv .btns button:hover { border-color: #7dd3fc; }
+  #pv .nx { margin-top: 10px; font: 700 28px/1.25 var(--font-display); }
+  #pv .prog { height: 8px; border-radius: 4px; background: #16264a; overflow: hidden; margin: 12px 0 22px; }
+  #pv .prog i { display: block; height: 100%; background: linear-gradient(90deg, var(--brand-from), var(--brand-to)); }
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+<div id="stage">
+
+  <!-- 0 · Logo reveal -->
+  <section class="slide bare" data-title="Logo reveal" data-for="Everyone" data-section="Opening" data-min="0.5" data-enter="logo">
+    <div class="logo-stage">
+      <img class="still" src="assets/logo-reveal-last.png" alt="PredictaX">
+      <img class="anim" data-src="assets/logo-reveal.webp" data-ms="6900" alt="">
+    </div>
+    <div class="logo-caption">Demand intelligence for automotive retail groups</div>
+    <aside class="notes"></aside>
+  </section>
+
+  <!-- 1 · Trailer -->
+  <section class="slide s-video" data-title="Trailer (90 seconds)" data-for="Everyone" data-section="Trailer" data-min="1.7" data-enter="video">
+    <div class="vwrap">
+      <video id="vid" src="assets/predictax-intro.mp4" poster="assets/poster.jpg" preload="auto" playsinline></video>
+      <div class="vcover" id="vcover"><div class="vplay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+    </div>
+    <div class="vhint">Space play / pause · M mute · → continue</div>
+    <aside class="notes"></aside>
+  </section>
+
+  <!-- 2 · The problem (simple) -->
+  <section class="slide dk" data-title="Every decision is a prediction" data-for="Everyone" data-section="The problem" data-min="1.5">
+    <div class="dk-in">
+      <div class="eyebrow">The problem</div>
+      <h1>Every decision a dealer group makes rests on a <em>prediction</em> about next quarter.</h1>
+      <div class="sub">Five decisions<i>·</i>every quarter<i>·</i>one question underneath each</div>
+      <div class="five">
+        <div class="t"><div class="lab">What to stock</div><div class="val">How many, which model, where</div><div class="note">Rests on: demand</div></div>
+        <div class="t"><div class="lab">Which customers to call</div><div class="val">Who will buy, who will leave</div><div class="note">Rests on: behaviour</div></div>
+        <div class="t"><div class="lab">Which stores need help</div><div class="val">Where the year will land</div><div class="note">Rests on: pace</div></div>
+        <div class="t"><div class="lab">How to plan the quarter</div><div class="val">What sales will be</div><div class="note">Rests on: the forecast</div></div>
+        <div class="t"><div class="lab">How to read the market</div><div class="val">What it does next</div><div class="note">Rests on: signals</div></div>
+      </div>
+      <div class="bl"><small>Bottom line</small><div>Most groups answer all five from last month's reports. That is steering by the rear-view mirror.</div></div>
+    </div>
+    <div class="brand"><img src="assets/logo-mark.png" alt=""><span>PredictaX</span></div><div class="count" data-count></div>
+    <aside class="notes"></aside>
+  </section>
+
+  <!-- 3 · Which tab answers which question (simple) -->
+  <section class="slide dk" data-title="Five decisions, seven dashboards" data-for="Everyone" data-section="The product" data-min="1.5">
+    <div class="dk-in">
+      <div class="eyebrow">How the product answers them</div>
+      <h2>Five decisions. <em>Seven dashboards.</em></h2>
+      <div class="drows"><div class="drow"><div class="dnum">1</div><div class="dtxt"><div class="dl">What to stock</div><div class="dv">How many, which model, where</div></div><div class="dtabs"><div class="dtab"><div class="dth"><svg class="i"><use href="#i-boxes"/></svg><b>Inventory &amp; Placement</b></div><div class="dtq">Is the right stock in the right store?</div></div></div></div><div class="drow"><div class="dnum">2</div><div class="dtxt"><div class="dl">Which customers to call</div><div class="dv">Who will buy, who will leave</div></div><div class="dtabs"><div class="dtab"><div class="dth"><svg class="i"><use href="#i-users"/></svg><b>Customer Intelligence</b></div><div class="dtq">Who is likely to buy, and who is about to leave?</div></div></div></div><div class="drow"><div class="dnum">3</div><div class="dtxt"><div class="dl">Which stores need help</div><div class="dv">Where the year will land</div></div><div class="dtabs"><div class="dtab"><div class="dth"><svg class="i"><use href="#i-store"/></svg><b>Store Performance</b></div><div class="dtq">Which stores carry the group, and which need help?</div></div><div class="dtab"><div class="dth"><svg class="i"><use href="#i-grid"/></svg><b>Comparative Analytics</b></div><div class="dtq">Are we ahead of last year, and was that us or the market?</div></div></div></div><div class="drow"><div class="dnum">4</div><div class="dtxt"><div class="dl">How to plan the quarter</div><div class="dv">What sales will be</div></div><div class="dtabs"><div class="dtab"><div class="dth"><svg class="i"><use href="#i-trend"/></svg><b>Demand Forecasting</b></div><div class="dtq">What's coming, and what if conditions change?</div></div><div class="dtab"><div class="dth"><svg class="i"><use href="#i-bars"/></svg><b>Executive Overview</b></div><div class="dtq">How is the group doing, and what should we do about it?</div></div></div></div><div class="drow"><div class="dnum">5</div><div class="dtxt"><div class="dl">How to read the market</div><div class="dv">What it does next</div></div><div class="dtabs"><div class="dtab"><div class="dth"><svg class="i"><use href="#i-msg"/></svg><b>Market Sentiment</b></div><div class="dtq">What is the market saying that sales don't show yet?</div></div></div></div></div>
+    </div>
+    <div class="brand"><img src="assets/logo-mark.png" alt=""><span>PredictaX</span></div><div class="count" data-count></div>
+    <aside class="notes"></aside>
+  </section>
+
+  <!-- 4 · Inventory & Placement -->
+  <section class="slide" data-title="Inventory &amp; Placement" data-nav="5" data-crumb="Inventory &amp; Placement" data-label="Decision" data-section="1 · What to stock" data-for="Managers · Operations" data-min="2" data-act="0">
+    <div class="eyebrow">Decision 1 of 5 · What to stock</div>
+    <div class="act">
+      <div class="l">
+        <h1 class="hl">Is the right stock <em>in the right store?</em></h1>
+        <div class="bottom"><small>Decision 1 · What to stock</small><div>What to reorder, move or mark down.</div></div>
+        <div class="rows stag"><div class="row"><div class="n">01</div><div><div class="tag t-p">Stock vs demand</div><div class="t">Does stock cover the forecast?</div><div class="d">Stock on hand and inbound against 30, 60 and 90-day forecast demand.</div></div><div></div></div><div class="row"><div class="n">02</div><div><div class="tag t-g">Reorder priorities</div><div class="t">What is short, and what it costs</div><div class="d">Dealer and vehicle, with gross profit at risk.</div></div><div></div></div></div>
+      </div>
+      <div class="shots stag" style="width:772px"><div><div class="shot"><img src="assets/screens/inv-top.jpg" alt="Inventory &amp; Placement · stock and days of supply"></div><div class="cap">Inventory &amp; Placement · stock and days of supply</div></div><div><div class="shot"><img src="assets/screens/inv-reorder.jpg" alt="Inventory &amp; Placement · reorder priorities"></div><div class="cap">Inventory &amp; Placement · reorder priorities</div></div></div>
+    </div>
+    <aside class="notes"></aside>
+  </section>
+  <!-- 5 · Customer Intelligence -->
+  <section class="slide" data-title="Customer Intelligence" data-nav="4" data-crumb="Customer Intelligence" data-label="Decision" data-section="2 · Which customers to call" data-for="Sales · Managers" data-min="2" data-act="1">
+    <div class="eyebrow">Decision 2 of 5 · Which customers to call</div>
+    <div class="act">
+      <div class="l">
+        <h1 class="hl">Who is likely to buy, and <em>who is about to leave?</em></h1>
+        <div class="bottom"><small>Decision 2 · Which customers to call</small><div>Who to call this week, and why.</div></div>
+        <div class="rows stag"><div class="row"><div class="n">01</div><div><div class="tag t-p">Retention</div><div class="t">Due for outreach</div><div class="d">The action queue: who to contact, the reason, the owning store.</div></div><div></div></div><div class="row"><div class="n">02</div><div><div class="tag t-g">Ownership cycle</div><div class="t">Due back, going quiet, likely lost</div><div class="d">Buyers by where they sit in the ownership cycle.</div></div><div></div></div></div>
+      </div>
+      <div class="shots stag" style="width:772px"><div><div class="shot"><img src="assets/screens/cu-top.jpg" alt="Customer Intelligence · retention and actions"></div><div class="cap">Customer Intelligence · retention and actions</div></div><div><div class="shot"><img src="assets/screens/cu-cycle.jpg" alt="Customer Intelligence · buyers by ownership cycle"></div><div class="cap">Customer Intelligence · buyers by ownership cycle</div></div></div>
+    </div>
+    <aside class="notes"></aside>
+  </section>
+  <!-- 6 · Store Performance -->
+  <section class="slide" data-title="Store Performance" data-nav="3" data-crumb="Store Performance" data-label="Decision" data-section="3 · Which stores need help" data-for="Managers" data-min="1.5" data-act="2">
+    <div class="eyebrow">Decision 3 of 5 · Which stores need help</div>
+    <div class="act">
+      <div class="l">
+        <h1 class="hl">Which stores carry the group, and <em>which need help?</em></h1>
+        <div class="bottom"><small>Decision 3 · Which stores need help</small><div>Where management attention goes first.</div></div>
+        <div class="rows stag"><div class="row"><div class="n">01</div><div><div class="tag t-r">Network</div><div class="t">The two ends of the network</div><div class="d">The rooftop that needs attention, and the one carrying the group.</div></div><div></div></div><div class="row"><div class="n">02</div><div><div class="tag t-g">Map</div><div class="t">Where the rooftops are</div><div class="d">Bubble size is units sold; colour is pace against target.</div></div><div></div></div></div>
+      </div>
+      <div class="shots stag" style="width:681px"><div><div class="shot"><img src="assets/screens/st-ends.jpg" alt="Store Performance · the two ends of the network"></div><div class="cap">Store Performance · the two ends of the network</div></div><div><div class="shot"><img src="assets/screens/st-map.jpg" alt="Store Performance · where the rooftops are"></div><div class="cap">Store Performance · where the rooftops are</div></div></div>
+    </div>
+    <aside class="notes"></aside>
+  </section>
+  <!-- 7 · Comparative Analytics -->
+  <section class="slide" data-title="Comparative Analytics" data-nav="2" data-crumb="Comparative Analytics" data-label="Decision" data-section="3 · Which stores need help" data-for="Leadership · Managers" data-min="2" data-act="3">
+    <div class="eyebrow">Decision 3 of 5 · Which stores need help</div>
+    <div class="act">
+      <div class="l">
+        <h1 class="hl">Are we ahead of last year, and <em>was that us or the market?</em></h1>
+        <div class="bottom"><small>Decision 3 · Which stores need help</small><div>Which results to credit to the store, and which to the market.</div></div>
+        <div class="rows stag"><div class="row"><div class="n">01</div><div><div class="tag t-p">Pace</div><div class="t">2026 against 2025, month by month</div><div class="d">Booked units and the forecast, against last year.</div></div><div></div></div><div class="row"><div class="n">02</div><div><div class="tag t-g">Attribution</div><div class="t">What moved it, by store</div><div class="d">Each move is split into the part that followed the group and the part that is the rooftop&#x27;s own.</div></div><div></div></div></div>
+      </div>
+      <div class="shots stag" style="width:772px"><div><div class="shot"><img src="assets/screens/cmp-top.jpg" alt="Comparative Analytics · the year at the current pace"></div><div class="cap">Comparative Analytics · the year at the current pace</div></div><div><div class="shot"><img src="assets/screens/cmp-move.jpg" alt="Comparative Analytics · what moved it, by store"></div><div class="cap">Comparative Analytics · what moved it, by store</div></div></div>
+    </div>
+    <aside class="notes"></aside>
+  </section>
+  <!-- 8 · Demand Forecasting -->
+  <section class="slide" data-title="Demand Forecasting" data-nav="1" data-crumb="Demand Forecasting" data-label="Decision" data-section="4 · How to plan the quarter" data-for="Leadership" data-min="2.5" data-act="4">
+    <div class="eyebrow">Decision 4 of 5 · How to plan the quarter</div>
+    <div class="act">
+      <div class="l">
+        <h1 class="hl">What's coming, and <em>what if conditions change?</em></h1>
+        <div class="bottom"><small>Decision 4 · How to plan the quarter</small><div>How much to plan for, and how far it can move.</div></div>
+        <div class="rows stag"><div class="row"><div class="n">01</div><div><div class="tag t-p">Forecast</div><div class="t">Read the fan</div><div class="d">Optimistic, expected and conservative, with an 80% range.</div></div><div></div></div><div class="row"><div class="n">02</div><div><div class="tag t-g">What-if</div><div class="t">Drag auto-loan APR</div><div class="d">Watch the projected units shift as conditions change.</div></div><div></div></div><div class="row"><div class="n">03</div><div><div class="tag t-v">Plan</div><div class="t">Stock and order toward the expected number</div><div class="d">Plan on the middle, prepare for the edges.</div></div><div></div></div></div>
+      </div>
+      <div class="shots stag" style="width:772px"><div><div class="shot"><img src="assets/screens/fc-whatif.jpg" alt="Demand Forecasting · what-if: conditions you can change"></div><div class="cap">Demand Forecasting · what-if: conditions you can change</div></div><div><div class="shot"><img src="assets/screens/fc-chart.jpg" alt="Demand Forecasting · where the next 3 months are expected to land"></div><div class="cap">Demand Forecasting · where the next 3 months are expected to land</div></div></div>
+    </div>
+    <aside class="notes"></aside>
+  </section>
+  <!-- 9 · Executive Overview -->
+  <section class="slide" data-title="Executive Overview" data-nav="0" data-crumb="Executive Overview" data-label="Decision" data-section="4 · How to plan the quarter" data-for="Leadership" data-min="2" data-act="5">
+    <div class="eyebrow">Decision 4 of 5 · How to plan the quarter</div>
+    <div class="act">
+      <div class="l">
+        <h1 class="hl">How is the group doing, and <em>what should we do about it?</em></h1>
+        <div class="bottom"><small>Decision 4 · How to plan the quarter</small><div>Where to focus this quarter.</div></div>
+        <div class="rows stag"><div class="row"><div class="n">01</div><div><div class="tag t-p">Recommendations</div><div class="t">Where the year lands</div><div class="d">The year against plan, with the profit at stake.</div></div><div></div></div><div class="row"><div class="n">02</div><div><div class="tag t-g">Recommendations</div><div class="t">What to do next</div><div class="d">Plain-language actions, ranked by the estimated value of acting on each.</div></div><div></div></div></div>
+      </div>
+      <div class="shots stag" style="width:631px"><div><div class="shot"><img src="assets/screens/ov-top.jpg" alt="Executive Overview · headline and KPIs"></div><div class="cap">Executive Overview · headline and KPIs</div></div><div><div class="shot"><img src="assets/screens/ov-rec.jpg" alt="Executive Overview · Recommendations"></div><div class="cap">Executive Overview · Recommendations</div></div></div>
+    </div>
+    <aside class="notes"></aside>
+  </section>
+  <!-- 10 · Market Sentiment -->
+  <section class="slide" data-title="Market Sentiment" data-nav="6" data-crumb="Market Sentiment" data-label="Decision" data-section="5 · How to read the market" data-for="Marketing · Leadership" data-min="2" data-act="6">
+    <div class="eyebrow">Decision 5 of 5 · How to read the market</div>
+    <div class="act">
+      <div class="l">
+        <h1 class="hl">What is the market saying that <em>sales don't show yet?</em></h1>
+        <div class="bottom"><small>Decision 5 · How to read the market</small><div>Whether to lean in or hold back.</div></div>
+        <div class="rows stag"><div class="row"><div class="n">01</div><div><div class="tag t-r">Signal</div><div class="t">What&#x27;s driving the signal</div><div class="d">Headwinds and tailwinds, scored from the news.</div></div><div></div></div><div class="row"><div class="n">02</div><div><div class="tag t-g">Signals to work</div><div class="t">A real headline, and its demand impact</div><div class="d">Published this morning, already in the signal.</div></div><div></div></div><div class="row"><div class="n">03</div><div><div class="tag t-p">Live</div><div class="t">Refresh the news</div><div class="d">Pull the latest headlines on stage.</div></div><div></div></div></div>
+      </div>
+      <div class="shots stag" style="width:772px"><div><div class="shot"><img src="assets/screens/se-drive.jpg" alt="Market Sentiment · what&#x27;s driving the signal"></div><div class="cap">Market Sentiment · what&#x27;s driving the signal</div></div><div><div class="shot"><img src="assets/screens/se-signals.jpg" alt="Market Sentiment · signals to work"></div><div class="cap">Market Sentiment · signals to work</div></div></div>
+    </div>
+    <aside class="notes"></aside>
+  </section>
+
+  <!-- 11 · Under the hood -->
+  <section class="slide dk" data-title="Under the hood" data-section="Under the hood" data-for="IT &amp; developers" data-min="2">
+    <div class="dk-in">
+    <div class="eyebrow">Under the hood · for IT and engineering</div>
+    <h2 style="font-size:68px">One account's data <em>never meets another's.</em></h2>
+    <div class="flow stag">
+      <div class="card node"><div class="k">01 · IN</div><h4>Your exports</h4><p>Sales, customers, inventory and vehicle CSVs. Columns matched on import.</p></div>
+      <div class="card node"><div class="k">02 · PREDICT</div><h4>Import &amp; train</h4><p>Forecasting, segmentation and scoring. Models are signed artifacts.</p></div>
+      <div class="card node key"><div class="k">03 · ISOLATE</div><h4>Private database</h4><p>Postgres with row-level security: each account sees only its own rows.</p></div>
+      <div class="card node"><div class="k">04 · SERVE</div><h4>API</h4><p>FastAPI shell. It reaches the backend only through one services layer.</p></div>
+      <div class="card node"><div class="k">05 · SEE</div><h4>Dashboards</h4><p>Next.js. One sign-in; the account decides customer or operator. EN / DE.</p></div>
+    </div>
+    <div class="chips"><span class="chip">Next.js</span><span class="chip">FastAPI</span><span class="chip">Postgres + row-level security</span><span class="chip">Prophet</span><span class="chip">Supabase Auth</span><span class="chip">Google News RSS</span></div>
+    <div class="guards stag">
+      <div class="guard"><b>Isolation in the database</b>Enforced by Postgres, not by every query remembering to filter.</div>
+      <div class="guard"><b>Layering is tested</b>The architecture rules run as unit tests, so drift fails the build.</div>
+      <div class="guard"><b>Operator audit trail</b>Account, import and retrain actions are logged.</div>
+    </div>
+    </div>
+    <div class="brand"><img src="assets/logo-mark.png" alt=""><span>PredictaX</span></div><div class="count" data-count></div>
+    <aside class="notes"></aside>
+  </section>
+
+  <!-- 12 · Challenges -->
+  <section class="slide dk" data-title="Challenges and how we dealt with them" data-section="Challenges" data-for="Everyone" data-min="1.5">
+    <div class="dk-in">
+    <div class="eyebrow">The challenges we faced</div>
+    <h2 style="font-size:68px">Two challenges, <em>and how we dealt with them.</em></h2>
+    <div class="card team" id="teamcard"><div class="eyebrow">Built by</div><div class="big">The PredictaX team</div><div id="names" style="display:flex;gap:10px;flex-wrap:wrap"></div></div>
+    <div class="stag chal">
+      <div class="card hp"><div class="p"><small>Challenge 1</small><b>Choosing the right AI/ML model for the use case.</b></div><div class="s"><small>How we dealt with it</small><b>Replayed history to compare candidate models head to head, and kept the evidence.</b></div></div>
+      <div class="card hp"><div class="p"><small>Challenge 2</small><b>Keeping every customer's data private in one shared database.</b></div><div class="s"><small>How we dealt with it</small><b>PostgreSQL row-level security: the database itself enforces who sees which rows.</b></div></div>
+    </div>
+    </div>
+    <div class="brand"><img src="assets/logo-mark.png" alt=""><span>PredictaX</span></div><div class="count" data-count></div>
+    <aside class="notes"></aside>
+  </section>
+
+  <!-- 14 · Similar products -->
+  <section class="slide dk" data-title="Similar products in the market" data-section="The market" data-for="Everyone" data-min="1.5">
+    <div class="dk-in">
+      <div class="eyebrow">Similar products in the market</div>
+      <h2 style="font-size:56px;margin-top:18px">Others cover parts of it. <em>PredictaX connects all five.</em></h2>
+      <table class="cmp">
+        <thead><tr><th>The five decisions</th><th class="ours">PredictaX</th><th>vAuto Provision<small>Cox Automotive</small></th><th>automotiveMastermind<small>Dealer-group solutions</small></th></tr></thead>
+        <tbody><tr><th><span class="dn">1</span><span><b>What to stock</b></span></th><td class="c-y ours"><span class="dot"></span>Stock vs forecast demand, reorder priorities, aged-stock actions</td><td class="c-y"><span class="dot"></span>Stocking, appraisal, pricing; group transfers</td><td class="c-p"><span class="dot"></span>Listed under dealer-group solutions</td></tr><tr><th><span class="dn">2</span><span><b>Which customers to call</b></span></th><td class="c-y ours"><span class="dot"></span>Retention queue: due back, going quiet, likely lost</td><td class="c-n"><span class="dot"></span>Not published</td><td class="c-y"><span class="dot"></span>Behavior score 0–100, retention campaigns</td></tr><tr><th><span class="dn">3</span><span><b>Which stores need help</b></span></th><td class="c-y ours"><span class="dot"></span>Store performance and what moved each store, year on year</td><td class="c-p"><span class="dot"></span>Group and store inventory reporting</td><td class="c-y"><span class="dot"></span>Performance benchmarking</td></tr><tr><th><span class="dn">4</span><span><b>How to plan the quarter</b></span></th><td class="c-y ours"><span class="dot"></span>Demand forecast with an 80% range</td><td class="c-n"><span class="dot"></span>Not published</td><td class="c-p"><span class="dot"></span>"Forecasting and budgeting" listed</td></tr><tr><th><span class="dn sub">↳</span><span><b>…and if conditions change</b></span></th><td class="c-y ours"><span class="dot"></span>What-if levers: fuel, oil, loan rate</td><td class="c-n"><span class="dot"></span>Not published</td><td class="c-n"><span class="dot"></span>Not published</td></tr><tr><th><span class="dn">5</span><span><b>How to read the market</b></span></th><td class="c-y ours"><span class="dot"></span>News and sentiment turned into a demand signal</td><td class="c-n"><span class="dot"></span>Not published</td><td class="c-n"><span class="dot"></span>Not published</td></tr></tbody>
+      </table>
+      <div class="legend2"><span><i class="dot y"></i>Published capability</span><span><i class="dot p"></i>Listed or partial</span><span><i class="dot n"></i>Not published</span></div>
+      <div class="ahead"><b>Where they are ahead of us:</b> vAuto prices against live market listings and appraises trade-ins; Mastermind scores individual prospects using third-party household data. PredictaX works only from the group's own exports.</div>
+      <div class="srcline">Based on each vendor's public product pages, checked 13 Oct 2026. "Not published" means not stated there, not that it is absent. Confirm before quoting.</div>
+    </div>
+    <div class="brand"><img src="assets/logo-mark.png" alt=""><span>PredictaX</span></div><div class="count" data-count></div>
+    <aside class="notes"></aside>
+  </section>
+
+  <!-- 13 · Q&A -->
+  <section class="slide dk qa" data-title="Questions" data-for="Everyone" data-section="Q&amp;A" data-min="3">
+    <div class="dk-in" style="display:flex;flex-direction:column;align-items:center">
+      <img class="mark" src="assets/logo-mark.png" alt="">
+      <div class="big">Questions</div>
+      <div class="hint">Anything. Including the awkward ones.</div>
+    </div>
+    <aside class="notes"></aside>
+  </section>
+
+  <!-- 14 · Thank you -->
+  <section class="slide bare" data-title="Thank you" data-for="Everyone" data-section="Close" data-min="0.3" data-enter="logo">
+    <div class="logo-stage">
+      <img class="still" src="assets/logo-reprise-last.png" alt="PredictaX">
+      <img class="anim" data-src="assets/logo-reprise.webp" data-ms="4800" alt="">
+    </div>
+    <div class="logo-caption">Thank you</div>
+    <aside class="notes"></aside>
+  </section>
+
+</div>
+
+<!-- SVG icon sprite (lucide paths, as used by the product's sidebar) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bars" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/><path d="M3 9h18"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-boxes" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M7 8h10"/><path d="M7 12h6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+</svg>
+
+<div id="notes"></div>
+<div id="toast"></div>
+
+<div class="overlay" id="jump"><div class="panel"><h3>Jump to slide</h3><div class="jump" id="jumplist"></div></div></div>
+<div class="overlay" id="help"><div class="panel"><h3>Keyboard</h3>
+  <table class="help">
+    <tr><td>→  Space  Enter</td><td>Next slide</td></tr>
+    <tr><td>←  Backspace</td><td>Previous slide</td></tr>
+    <tr><td>Home / End</td><td>First / last slide</td></tr>
+    <tr><td>F</td><td>Fullscreen</td></tr>
+    <tr><td>P</td><td>Open presenter view (notes, timer, next slide) in a second window</td></tr>
+    <tr><td>G</td><td>Jump to any slide</td></tr>
+    <tr><td>L</td><td>Open the live app (set LIVE_URL in this file)</td></tr>
+    <tr><td>B</td><td>Fallback clip from the trailer for the current tab</td></tr>
+    <tr><td>Space (trailer slide)</td><td>Play / pause the trailer</td></tr>
+    <tr><td>M</td><td>Mute / unmute the trailer</td></tr>
+    <tr><td>T</td><td>Light / dark theme (product slides)</td></tr>
+    <tr><td>N</td><td>Notes overlay on this screen</td></tr>
+    <tr><td>Esc</td><td>Close any panel</td></tr>
+  </table></div></div>
+<div class="overlay" id="clip"><div class="cwrap"><video id="clipvid" src="assets/predictax-intro.mp4" playsinline></video><div class="cbar"><span id="cliplabel"></span><span>Esc to close</span></div></div></div>
+
+<div id="pv">
+  <div class="main">
+    <div class="tag" id="pvTag"></div>
+    <h1 class="pt" id="pvTitle"></h1>
+    <div class="meta" id="pvMeta"></div>
+    <div class="prog"><i id="pvProg"></i></div>
+    <div class="nt" id="pvNotes"></div>
+  </div>
+  <div class="side">
+    <div class="tag">Elapsed</div>
+    <div class="timer" id="pvTimer">00:00</div>
+    <div class="meta" id="pvTarget"></div>
+    <div class="btns">
+      <button id="pvPrev">← Back</button><button id="pvNext">Next →</button>
+      <button id="pvLive">Live app (L)</button><button id="pvReset">Reset timer</button>
+    </div>
+    <div class="tag">Up next</div>
+    <div class="nx" id="pvNextTitle"></div>
+    <div class="meta" id="pvNextMeta"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---- Edit these -----------------------------------------------------------------------------------------------
+  const LIVE_URL = "";   // e.g. "http://localhost:3000" or your ngrok URL. Press L (or the button in presenter view) to open it.
+  const TEAM = [];       // e.g. ["Pushpal Hedau", "Name Surname"]; shown as chips on the "challenges" slide.
+  // ----------------------------------------------------------------------------------------------------------------
+
+  // Fallback clip windows inside the trailer, in seconds, one per product tab (from brag-output/brag-plan.md beat table).
+  // Index = the slide's data-act, in deck order: Inventory, Customers, Store, Comparative, Forecasting, Overview, Sentiment.
+  const CLIPS = [[69.5, 76.5], [62.5, 69.5], [33.5, 40.5], [26.5, 33.5], [40.5, 52.5], [19.5, 26.5], [52.5, 59.5]];
+  const CLIP_LABELS = ["Inventory & Placement", "Customer Intelligence", "Store Performance", "Comparative Analytics", "Demand Forecasting", "Executive Overview", "Market Sentiment"];
+  // The product's own navigation (web/src/lib/nav.ts), in order.
+  const NAV = [
+    ["Executive Overview", "i-bars"], ["Demand Forecasting", "i-trend"], ["Comparative Analytics", "i-grid"],
+    ["Store Performance", "i-store"], ["Customer Intelligence", "i-users"], ["Inventory & Placement", "i-boxes"],
+    ["Market Sentiment", "i-msg"],
+  ];
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const stage = $("#stage");
+  const slides = $$(".slide");
+  const isPresenter = new URLSearchParams(location.search).has("presenter");
+  const chan = "BroadcastChannel" in window ? new BroadcastChannel("predictax-deck-v2") : null;
+  let idx = -1, timers = [];
+
+  const save = (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) {} };
+  const load = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+  const toast = (m) => { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2600); };
+  const ico = (id) => `<svg class="i"><use href="#${id}"/></svg>`;
+
+  // ---- Build the product shell around every product-layout slide ----
+  slides.forEach((s, i) => {
+    if (s.dataset.nav === undefined) return;     // simple, trailer and logo slides have no product shell
+    const nav = parseInt(s.dataset.nav, 10);
+    const crumb = s.dataset.crumb || s.dataset.title;
+    const kids = [...s.children].filter((c) => !c.classList.contains("notes"));
+    const app = document.createElement("div"); app.className = "app";
+    app.innerHTML = `
+      <aside class="sb">
+        <div class="logo"><img src="assets/logo.png" alt="PredictaX"></div>
+        <div class="navgrp"><div class="glabel">Dashboards</div>
+          ${NAV.map(([n, ic], k) => `<div class="item${k === nav ? " on" : ""}">${ico(ic)}<span>${n.replace("&", "&amp;")}</span></div>`).join("")}
+        </div>
+        <div class="foot"><div class="av">PX</div><div class="who">PredictaX</div></div>
+      </aside>
+      <div class="inset">
+        <header class="hd">${ico("i-panel")}<span class="sep"></span>
+          <span class="crumb">PredictaX<b>${crumb}</b></span><span class="sp">${ico("i-sun")}</span></header>
+        <div class="fb">
+          <span class="sel">${ico("i-cal")}<span>${s.dataset.label || "Topic"}</span><b>${s.dataset.section}</b>${ico("i-down")}</span>
+          <span class="r">${i + 1} / ${slides.length}</span>
+        </div>
+        <main class="pg"></main>
+      </div>`;
+    const pg = $(".pg", app);
+    kids.forEach((k) => pg.appendChild(k));
+    s.insertBefore(app, s.firstChild);
+  });
+  $$("[data-count]").forEach((el) => { const i = slides.indexOf(el.closest(".slide")); el.textContent = `${i + 1} / ${slides.length}`; });
+
+  // Stagger the entrance of everything on a slide (pure CSS; no clicks).
+  $$(".pg, .dk-in, .stag").forEach((p) => [...p.children].forEach((c, k) => c.style.setProperty("--k", k)));
+
+  // ---- Challenges: team chips ----
+  const names = $("#names");
+  if (TEAM.length) TEAM.forEach((n) => { const c = document.createElement("span"); c.className = "chip"; c.textContent = n; names.appendChild(c); });
+  else $("#teamcard .eyebrow").style.display = "none";
+
+  // ---- Scaling ----
+  const fit = () => { const k = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `translate(-50%,-50%) scale(${k})`; };
+  addEventListener("resize", fit); fit();
+
+  // ---- Per-slide entry behaviour ----
+  const vid = $("#vid"), vcover = $("#vcover");
+  function onEnter(s) {
+    timers.forEach(clearTimeout); timers = [];
+    const kind = s.dataset.enter;
+    if (kind === "logo") {
+      const anim = $(".anim", s), cap = $(".logo-caption", s);
+      cap.classList.remove("on"); anim.style.opacity = 1;
+      anim.src = anim.dataset.src + "?t=" + Date.now();   // restarts the animation each time
+      timers.push(setTimeout(() => { anim.style.opacity = 0; }, +anim.dataset.ms + 150));
+      timers.push(setTimeout(() => cap.classList.add("on"), +anim.dataset.ms + 300));
+    }
+    if (kind !== "video" && !vid.paused) vid.pause();
+  }
+  // At the end of the trailer the last frame (the logo) simply holds; nothing is overlaid on it.
+  const setVideoUI = () => vcover.classList.toggle("hide", !vid.paused || vid.ended);
+  vid.addEventListener("play", setVideoUI); vid.addEventListener("pause", setVideoUI); vid.addEventListener("ended", setVideoUI);
+  vcover.addEventListener("click", toggleVideo);
+  function toggleVideo() { if (vid.ended) vid.currentTime = 0; vid.paused ? vid.play() : vid.pause(); }
+
+  // ---- Navigation: one press, one slide ----
+  function render(i, silent) {
+    const changed = i !== idx;
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, k) => s.classList.toggle("active", k === idx));
+    $("#bar").style.width = (idx / (slides.length - 1) * 100) + "%";
+    $("#notes").textContent = $(".notes", slides[idx]).textContent.trim();
+    document.title = `PredictaX · ${idx + 1}/${slides.length} · ${slides[idx].dataset.title}`;
+    if (changed) onEnter(slides[idx]);
+    if (location.hash !== "#" + (idx + 1)) history.replaceState(null, "", "#" + (idx + 1));
+    save("px2-idx", idx);
+    renderPresenter();
+    if (!silent && chan) chan.postMessage({ idx });
+  }
+  const next = () => { render(idx + 1); startTimer(); };
+  const prev = () => render(idx - 1);
+
+  // ---- Fallback clip & live app ----
+  function openClip() {
+    const a = slides[idx].dataset.act;
+    if (a === undefined) return toast("Fallback clips are available on the seven product-tab slides.");
+    const [s, e] = CLIPS[+a], cv = $("#clipvid");
+    vid.pause();
+    $("#cliplabel").textContent = "Fallback clip · " + CLIP_LABELS[+a];
+    $("#clip").classList.add("on");
+    cv.muted = vid.muted; cv.currentTime = s; cv.play();
+    cv.ontimeupdate = () => { if (cv.currentTime >= e) { cv.pause(); cv.ontimeupdate = null; } };
+  }
+  function closePanels() { $$(".overlay.on").forEach((o) => o.classList.remove("on")); const cv = $("#clipvid"); cv.pause(); cv.ontimeupdate = null; }
+  function openLive() { if (!LIVE_URL) return toast("Set LIVE_URL near the top of the script in index.html, then press L."); window.open(LIVE_URL, "predictax-live"); }
+
+  // ---- Jump list ----
+  const jl = $("#jumplist");
+  slides.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.innerHTML = `<span>${i + 1}</span><span>${s.dataset.title}</span><em>${s.dataset.min} min</em>`;
+    b.addEventListener("click", () => { closePanels(); render(i); });
+    jl.appendChild(b);
+  });
+
+  // ---- Presenter view ----
+  let t0 = null;
+  const fmt = (ms) => { const s = Math.floor(ms / 1000); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
+  function startTimer() { if (t0 === null) t0 = Date.now(); }
+  function renderPresenter() {
+    if (!isPresenter) return;
+    const s = slides[idx], n = slides[idx + 1];
+    $("#pvTag").textContent = `Slide ${idx + 1} of ${slides.length}`;
+    $("#pvTitle").textContent = s.dataset.title;
+    $("#pvMeta").textContent = `For ${s.dataset.for} · target ${s.dataset.min} min`;
+    $("#pvNotes").textContent = $(".notes", s).textContent.trim();
+    $("#pvProg").style.width = (idx / (slides.length - 1) * 100) + "%";
+    const total = slides.reduce((a, x) => a + parseFloat(x.dataset.min), 0), used = slides.slice(0, idx).reduce((a, x) => a + parseFloat(x.dataset.min), 0);
+    $("#pvTarget").textContent = `Plan: ${used.toFixed(1)} of ${total.toFixed(1)} min by the start of this slide`;
+    $("#pvNextTitle").textContent = n ? n.dataset.title : "End";
+    $("#pvNextMeta").textContent = n ? `For ${n.dataset.for}` : "";
+  }
+  if (isPresenter) {
+    document.body.classList.add("presenter");
+    setInterval(() => { $("#pvTimer").textContent = t0 === null ? "00:00" : fmt(Date.now() - t0); }, 500);
+    $("#pvPrev").onclick = () => chan && chan.postMessage({ cmd: "prev" });
+    $("#pvNext").onclick = () => { startTimer(); chan && chan.postMessage({ cmd: "next" }); };
+    $("#pvLive").onclick = openLive;
+    $("#pvReset").onclick = () => { t0 = null; };
+  }
+  function openPresenter() {
+    const w = window.open(location.pathname + "?presenter#" + (idx + 1), "predictax-presenter-v2", "width=1280,height=800");
+    if (!w) toast("Allow pop-ups for this page to open the presenter view.");
+  }
+  if (chan) chan.onmessage = (e) => {
+    const m = e.data;
+    if (m.cmd === "next") { if (!isPresenter) next(); }
+    else if (m.cmd === "prev") { if (!isPresenter) prev(); }
+    else if (typeof m.idx === "number") render(m.idx, true);
+  };
+
+  // ---- Input ----
+  addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const onVideo = slides[idx].dataset.enter === "video";
+    const k = e.key;
+    if (k === "Escape") return closePanels();
+    if ($(".overlay.on") && k !== "?") return;
+    if (isPresenter) {
+      if (k === "ArrowRight" || k === " " || k === "PageDown") { e.preventDefault(); $("#pvNext").click(); }
+      else if (k === "ArrowLeft" || k === "PageUp") { e.preventDefault(); $("#pvPrev").click(); }
+      else if (k.toLowerCase() === "l") openLive();
+      return;
+    }
+    if (k === " " && onVideo) { e.preventDefault(); return toggleVideo(); }
+    if (["ArrowRight", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); next(); }
+    else if (["ArrowLeft", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); prev(); }
+    else if (k === "Home") render(0);
+    else if (k === "End") render(slides.length - 1);
+    else if (k.toLowerCase() === "f") { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); }
+    else if (k.toLowerCase() === "p") openPresenter();
+    else if (k.toLowerCase() === "g") { $("#jump").classList.add("on"); $$("#jumplist button").forEach((b, i) => b.classList.toggle("cur", i === idx)); }
+    else if (k.toLowerCase() === "l") openLive();
+    else if (k.toLowerCase() === "b") openClip();
+    else if (k.toLowerCase() === "m") { vid.muted = !vid.muted; toast(vid.muted ? "Trailer muted" : "Trailer sound on"); }
+    else if (k.toLowerCase() === "t") { const r = document.documentElement; r.dataset.theme = r.dataset.theme === "dark" ? "light" : "dark"; }
+    else if (k.toLowerCase() === "n") $("#notes").classList.toggle("on");
+    else if (k === "?" || k === "/") $("#help").classList.toggle("on");
+  });
+  stage.addEventListener("click", (e) => { if (e.target.closest(".vcover")) return; next(); });
+  let tx = null;
+  addEventListener("touchstart", (e) => { tx = e.touches[0].clientX; }, { passive: true });
+  addEventListener("touchend", (e) => { if (tx === null) return; const d = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(d) > 60) (d < 0 ? next() : prev()); });
+  $$(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o) closePanels(); }));
+
+  // Hide the cursor after a pause so it never sits on a slide.
+  let ch; addEventListener("mousemove", () => { document.body.id = ""; clearTimeout(ch); ch = setTimeout(() => { document.body.id = "cursor-hide"; }, 2500); });
+
+  // Start where the URL (#7) or this tab's last position says; otherwise the first slide.
+  const h = parseInt(location.hash.slice(1), 10);
+  const start = Number.isFinite(h) ? h - 1 : (parseInt(load("px2-idx"), 10) || 0);
+  render(Math.max(0, Math.min(slides.length - 1, start)), true);
+  if (!isPresenter) toast("Press F for fullscreen · P for presenter view · ? for all keys");
+})();
+</script>
+</body>
+</html>
